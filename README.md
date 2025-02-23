@@ -1,17 +1,55 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
+
+Install fnm
+```
+输入which fnm 查看路径（查到路径后可以问gpt对应的配置命令）
+
+# fnm
+mac
+export PATH="$HOME/Library/Application Support/fnm:$PATH"
+eval "`fnm env`"
+
+windows
+export PATH="$HOME/D/fnm:$PATH"
+eval "`fnm env`"
+```
+
+Install nodejs
+```
+# 安装nodejs
+fnm install v19.8.1
+# 查看 nodejs 版本
+node -v
+# 查看 npm 版本
+npm -v
+```
+
+Install pnpm (a better tool to manage dependency)
+```
+# 安装 pnpm
+npm i -g pnpm
+# 查看 pnpm 版本
+pnpm -v
+```
+
+run these commands for pnpm
+
+```
+export PATH="$HOME/Library/Application Support/fnm:$PATH"
+eval "`fnm env`"
+export PATH="$HOME/D/fnm:$PATH"
+eval "`fnm env`"
+
+```
+
 ## Getting Started
 
 First, run the development server:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
+```
 pnpm dev
-# or
-bun dev
+
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
