@@ -1,0 +1,16 @@
+@baseUri=http://localhost:3000
+
+### Test Stripe Checkout Creation
+POST {{baseUri}}/api/checkout
+Content-Type: application/json
+
+{
+    "amount": 5000,
+    "currency": "usd"
+}
+
+### Test Success Page
+GET {{baseUri}}/checkout/success?session_id=cs_test_123
+
+### Test Cancel Page
+GET {{baseUri}}/checkout/cancel 
