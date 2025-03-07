@@ -1,18 +1,20 @@
-'use client';
-
-import { useState } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
+'use client'
+import { useState } from 'react'
+import { loadStripe } from '@stripe/stripe-js'
+import Link from 'next/link'
 
 // Initialize Stripe outside of component to avoid recreating it on each render
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const stripePromise = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
+)
 
 export default function Home() {
-  const [amount, setAmount] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [amount, setAmount] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+    e.preventDefault()
+    setLoading(true)
 
     try {
       const response = await fetch('/api/checkout', {
@@ -24,32 +26,37 @@ export default function Home() {
           amount: parseInt(amount) * 100, // Convert to cents
           currency: 'usd',
         }),
-      });
+      })
 
-      const { sessionId } = await response.json();
-      
+      const { sessionId } = await response.json()
+
       // Get Stripe.js instance
-      const stripe = await stripePromise;
+      const stripe = await stripePromise
 
       // Redirect to Stripe Checkout
       const { error } = await stripe!.redirectToCheckout({
         sessionId,
-      });
+      })
 
       if (error) {
-        console.error('Stripe error:', error);
-        alert(error.message);
+        console.error('Stripe error:', error)
+        alert(error.message)
       }
     } catch (error) {
-      console.error('Error:', error);
-      alert('Something went wrong. Please try again.');
+      console.error('Error:', error)
+      alert('Something went wrong. Please try again.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      <Link href="/login" legacyBehavior>
+        <a className="absolute top-4 right-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-700 transition duration-200">
+          Login
+        </a>
+      </Link>
       <div className="container mx-auto px-4 py-16">
         {/* Hero Section */}
         <div className="text-center mb-16">
@@ -69,7 +76,10 @@ export default function Home() {
             </h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="amount"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Amount (USD)
                 </label>
                 <div className="mt-1 relative rounded-md shadow-sm">
@@ -92,9 +102,10 @@ export default function Home() {
                 type="submit"
                 disabled={loading || !amount}
                 className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
-                  ${loading || !amount 
-                    ? 'bg-blue-300 cursor-not-allowed' 
-                    : 'bg-blue-600 hover:bg-blue-700'
+                  ${
+                    loading || !amount
+                      ? 'bg-blue-300 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700'
                   }`}
               >
                 {loading ? 'Processing...' : 'Proceed to Payment'}
@@ -104,5 +115,5 @@ export default function Home() {
         </div>
       </div>
     </main>
-  );
+  )
 }
