@@ -51,69 +51,69 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <Link href="/login" legacyBehavior>
-        <a className="absolute top-4 right-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-700 transition duration-200">
-          Login
-        </a>
-      </Link>
-      <div className="container mx-auto px-4 py-16">
-        {/* Hero Section */}
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-blue-900 mb-4">
+    <div className="min-h-screen bg-gray-50">
+      <main className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Welcome to MentorUp
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Connect with expert mentors and accelerate your professional growth
+          <p className="text-lg text-gray-600">
+            Explore our features and get started
           </p>
         </div>
 
-        {/* Payment Form */}
-        <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
-          <div className="p-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-              Book a Mentoring Session
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label
-                  htmlFor="amount"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {/* Authentication Cards */}
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Authentication</h2>
+              <div className="space-y-3">
+                <Link 
+                  href="/login"
+                  className="block w-full text-center px-4 py-2 border border-blue-500 text-blue-500 rounded-md hover:bg-blue-50 transition-colors"
                 >
-                  Amount (USD)
-                </label>
-                <div className="mt-1 relative rounded-md shadow-sm">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-500 sm:text-sm">$</span>
-                  </div>
-                  <input
-                    type="number"
-                    name="amount"
-                    id="amount"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md"
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
+                  Login
+                </Link>
+                <Link 
+                  href="/register"
+                  className="block w-full text-center px-4 py-2 border border-green-500 text-green-500 rounded-md hover:bg-green-50 transition-colors"
+                >
+                  Register
+                </Link>
               </div>
-              <button
-                type="submit"
-                disabled={loading || !amount}
-                className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
-                  ${
-                    loading || !amount
-                      ? 'bg-blue-300 cursor-not-allowed'
-                      : 'bg-blue-600 hover:bg-blue-700'
-                  }`}
-              >
-                {loading ? 'Processing...' : 'Proceed to Payment'}
-              </button>
-            </form>
+            </div>
+          </div>
+
+          {/* Features Cards */}
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Features</h2>
+              <div className="space-y-3">
+                <Link 
+                  href="/booking/calendar"
+                  className="block w-full text-center px-4 py-2 border border-purple-500 text-purple-500 rounded-md hover:bg-purple-50 transition-colors"
+                >
+                  Booking Calendar
+                </Link>
+                <Link 
+                  href="/checkout/cancel"
+                  className="block w-full text-center px-4 py-2 border border-orange-500 text-orange-500 rounded-md hover:bg-orange-50 transition-colors"
+                >
+                  Checkout Cancel
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </main>
+
+        {/* Quick Start Guide */}
+        <div className="mt-12 text-center">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Getting Started</h3>
+          <p className="text-gray-600">
+            Create an account or log in to access all features
+          </p>
+        </div>
+      </main>
+    </div>
   )
 }
