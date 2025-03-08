@@ -54,7 +54,7 @@ export default function BookingCalendar() {
   };
 
   return (
-    <div className="h-full">
+    <div className="h-full [&_.rbc-header]:text-gray-900 [&_.rbc-time-header-content]:text-gray-900 [&_.rbc-label]:text-gray-900 [&_.rbc-event]:!bg-green-600 [&_.rbc-event]:!text-white [&_.rbc-today]:!bg-blue-50">
       <Calendar
         localizer={localizer}
         events={events}
@@ -70,11 +70,14 @@ export default function BookingCalendar() {
         max={new Date(0, 0, 0, 17, 0, 0)} // 5:00 PM
         eventPropGetter={() => ({
           style: {
-            backgroundColor: '#4CAF50',
+            backgroundColor: '#16a34a', // green-600
             color: 'white',
+            border: 'none'
           },
         })}
+        className="text-gray-900"
       />
     </div>
   );
-} 
+}
+ 
