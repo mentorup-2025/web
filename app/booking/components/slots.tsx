@@ -225,6 +225,7 @@ export default function TimeSlotsPage() {
               marginBottom: '30px',
               paddingBottom: '20px',
               borderBottom: '1px solid #ccc',
+              color: 'black',
             }}
           >
             <h3>
