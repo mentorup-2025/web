@@ -1,9 +1,12 @@
+import { Mentor } from "./mentor";
+
 export interface User {
   id: string;           // Unique identifier
   username: string;     // User's chosen username
   email: string;        // User's email address
   password_hash: string; // Hashed password (never store plain passwords)
   created_at: string;   // ISO timestamp
+  mentor?: Mentor | null; // Optional mentor ID, defaults to null
 }
 
 export interface CreateUserInput {

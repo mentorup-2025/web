@@ -38,4 +38,28 @@ export async function upsertMentor(mentor: Mentor): Promise<Mentor> {
         console.error('Error in upsertMentor:', error);
         throw error;
     }
-} 
+}
+
+export async function getMentor(userId: string): Promise<Mentor | null> {
+    try {
+        const { data, error } = await getSupabaseClient()
+            .from('mentors')
+            .select('*')
+            .eq('user_id', userId)
+            .single();
+
+        if (error) {
+            if (error.code === 'PGRST116') { // No rows returned
+                return null;
+            }
+            console.error('Error fetching mentor:', error);
+            throw error;
+        }
+
+        return data as Mentor;
+
+    } catch (error) {
+        console.error('Error in getMentor:', error);
+        throw error;
+    }
+}

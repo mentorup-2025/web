@@ -20,13 +20,13 @@ POST {{baseUri}}/api/user/insert
 Content-Type: application/json
 
 {
-    "username": "testuser",
-    "email": "test@example.com",
+    "username": "testuser2",
+    "email": "test2@example.com",
     "password": "Test123!@#"
 }
 
 ### Test Get User by ID
-GET {{baseUri}}/api/user/6972686b-6156-4d21-950a-821093ffd068
+GET {{baseUri}}/api/user/93137255-d7ac-4219-90d9-a886ae987733
 Content-Type: application/json
 
 ### Test Upsert Mentor
