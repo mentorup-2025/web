@@ -13,4 +13,14 @@ Content-Type: application/json
 GET {{baseUri}}/checkout/success?session_id=cs_test_123
 
 ### Test Cancel Page
-GET {{baseUri}}/checkout/cancel 
+GET {{baseUri}}/checkout/cancel
+
+### Test User Signup
+POST {{baseUri}}/api/signup
+Content-Type: application/json
+
+{
+    "username": "testuser",
+    "email": "test@example.com",
+    "password": "Test123!@#"
+} 
