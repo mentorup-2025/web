@@ -12,4 +12,17 @@ create table users (
 
 -- Create indexes for faster lookups
 create index users_email_idx on users (email);
-create index users_username_idx on users (username); 
+create index users_username_idx on users (username);
+
+-- Mentor Info table
+create table mentors (
+  user_id uuid primary key,
+  role text not null,
+  industry text not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  
+  constraint fk_user
+    foreign key (user_id)
+    references users(id)
+    on delete restrict
+);
