@@ -1,6 +1,6 @@
 import { respJson } from '@/app/lib/resp';
 import { upsertMentor } from '@/app/lib/mentor';
-import { Mentor, UpsertMentorInput } from '@/app/types/mentor';
+import { Mentor, UpsertMentorInput } from '@/app/types';
 
 export async function POST(
     request: Request,

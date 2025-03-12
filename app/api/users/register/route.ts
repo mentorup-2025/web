@@ -1,5 +1,6 @@
-import { saveUser } from '@/lib/user';
-import { CreateUserInput } from '@/types';
+import { saveUser } from "@/app/lib/user";
+import { CreateUserInput } from "@/app/types";
+
 
 export async function POST(request: Request) {
     try {
