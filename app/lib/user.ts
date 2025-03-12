@@ -42,15 +42,22 @@ export async function saveUser(input: CreateUserInput): Promise<User> {
   }
 }
 
-export async function getUserByEmail(email: string): Promise<User | null> {
+export async function getUser(userId: string): Promise<User | null> {
   const { data, error } = await getSupabaseClient()
     .from('users')
     .select('*')
-    .eq('email', email)
+    .eq('user_id', userId) // Changed from user_id to id based on schema
     .single();
 
   if (error) {
+    if (error.code === 'PGRST116') { // No rows returned
+      return null;
+    }
     console.error('Error fetching user:', error);
+    throw error;
+  }
+
+  if (!data) {
     return null;
   }
 

@@ -4,7 +4,6 @@ export interface User {
   email: string;        // User's email address
   password_hash: string; // Hashed password (never store plain passwords)
   created_at: string;   // ISO timestamp
-  updated_at?: string;  // Optional last update timestamp
 }
 
 export interface CreateUserInput {

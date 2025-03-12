@@ -16,11 +16,15 @@ GET {{baseUri}}/checkout/success?session_id=cs_test_123
 GET {{baseUri}}/checkout/cancel
 
 ### Test User Signup
-POST {{baseUri}}/api/signup
+POST {{baseUri}}/api/user/insert
 Content-Type: application/json
 
 {
     "username": "testuser",
     "email": "test@example.com",
     "password": "Test123!@#"
-} 
+}
+
+### Test Get User by ID
+GET {{baseUri}}/api/user/6972686b-6156-4d21-950a-821093ffd068
+Content-Type: application/json 
