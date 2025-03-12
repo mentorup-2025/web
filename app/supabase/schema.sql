@@ -1,6 +1,6 @@
 -- Users table
 create table users (
-  id uuid primary key default uuid_generate_v4(),
+  user_id uuid primary key default uuid_generate_v4(),
   username text not null unique,
   email text not null unique,
   password_hash text not null,
@@ -14,15 +14,10 @@ create table users (
 create index users_email_idx on users (email);
 create index users_username_idx on users (username);
 
--- Mentor Info table
+-- Mentors table
 create table mentors (
-  user_id uuid primary key,
+  user_id uuid primary key references users(user_id),
   role text not null,
   industry text not null,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  
-  constraint fk_user
-    foreign key (user_id)
-    references users(id)
-    on delete restrict
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );

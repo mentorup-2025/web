@@ -27,4 +27,13 @@ Content-Type: application/json
 
 ### Test Get User by ID
 GET {{baseUri}}/api/user/6972686b-6156-4d21-950a-821093ffd068
-Content-Type: application/json 
+Content-Type: application/json
+
+### Test Upsert Mentor
+POST {{baseUri}}/api/mentor/upsert/6972686b-6156-4d21-950a-821093ffd068
+Content-Type: application/json
+
+{
+    "role": "Senior Software Engineer",
+    "industry": "Technology"
+} 
