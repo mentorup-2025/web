@@ -66,19 +66,15 @@ export default function Home() {
           {/* Authentication Cards */}
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Authentication</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Authentication
+              </h2>
               <div className="space-y-3">
-                <Link 
+                <Link
                   href="/login"
                   className="block w-full text-center px-4 py-2 border border-blue-500 text-blue-500 rounded-md hover:bg-blue-50 transition-colors"
                 >
                   Login
-                </Link>
-                <Link 
-                  href="/register"
-                  className="block w-full text-center px-4 py-2 border border-green-500 text-green-500 rounded-md hover:bg-green-50 transition-colors"
-                >
-                  Register
                 </Link>
               </div>
             </div>
@@ -87,15 +83,17 @@ export default function Home() {
           {/* Features Cards */}
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Features</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Features
+              </h2>
               <div className="space-y-3">
-                <Link 
+                <Link
                   href="/booking/calendar"
                   className="block w-full text-center px-4 py-2 border border-purple-500 text-purple-500 rounded-md hover:bg-purple-50 transition-colors"
                 >
                   Booking Calendar
                 </Link>
-                <Link 
+                <Link
                   href="/checkout/cancel"
                   className="block w-full text-center px-4 py-2 border border-orange-500 text-orange-500 rounded-md hover:bg-orange-50 transition-colors"
                 >
@@ -108,11 +106,14 @@ export default function Home() {
 
         {/* Quick Start Guide */}
         <div className="mt-12 text-center">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Getting Started</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Getting Started
+          </h3>
           <p className="text-gray-600">
             Create an account or log in to access all features
           </p>
         </div>
+        <div className="relative w-0 h-0 border-l-[15px] border-r-[15px] border-b-[26px] border-l-transparent border-r-transparent border-b-black" />
       </main>
     </div>
   )
