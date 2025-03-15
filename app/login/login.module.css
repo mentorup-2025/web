@@ -1,0 +1,108 @@
+.container {
+  min-height: 100vh;
+  padding: 48px;
+  background-color: #fff;
+}
+
+.loginForm {
+  max-width: 400px;
+}
+
+.welcomeText {
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+.formGroup {
+  margin-bottom: 16px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.error {
+  color: #ff4d4f;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.rememberForgot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.rememberMe {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.forgotLink {
+  color: rgba(0, 0, 0, 0.88);
+}
+
+.loginButton {
+  background-color: #1f1f1f !important;
+  margin-bottom: 24px;
+}
+
+.loginButton:hover {
+  background-color: #333 !important;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 24px 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.divider span {
+  padding: 0 10px;
+  color: #666;
+  font-size: 14px;
+}
+
+.googleButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.signupSection {
+  text-align: center;
+}
+
+.signupLink {
+  color: #1f1f1f;
+  font-weight: 600;
+  text-decoration: none;
+} 
