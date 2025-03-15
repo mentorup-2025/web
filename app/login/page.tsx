@@ -1,22 +1,11 @@
-'use client';
-
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
-
+import React from "react";
+import { Metadata } from "next";
+import Page from "./index";
+export const metadata: Metadata = {
+  title: "Log In to Your MentorUp Account - Access Mentorship Opportunities",
+  description:
+    "Welcome back to MentorUp! Log in to your account to continue your journey towards career growth. Securely access mentorship opportunities and resources.",
+};
 export default function LoginPage() {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <h1 className="text-2xl font-bold">This is my login page</h1>
-    </div>
-  );
-} 
+  return <Page />;
+}
