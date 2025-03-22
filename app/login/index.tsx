@@ -26,8 +26,8 @@ export default function Login() {
           <Form.Item
             label="Password"
             name="password"
-            validateStatus="error"
-            help="Incorrect user name or Password"
+            // validateStatus="error"
+            // help="Incorrect user name or Password"
           >
             <Input.Password placeholder="Input your password" size="large" />
           </Form.Item>

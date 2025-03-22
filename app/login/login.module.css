@@ -1,11 +1,24 @@
 .container {
   min-height: 100vh;
+  display: flex;
+}
+
+.leftSection {
+  width: 50%;
+  display: flex;
+  align-items: center;
   padding: 48px;
   background-color: #fff;
 }
 
+.rightSection {
+  width: 50%;
+  background-color: #f5f5f5;
+}
+
 .loginForm {
-  max-width: 400px;
+  width: 400px;
+  max-width: 100%;
 }
 
 .welcomeText {
@@ -95,6 +108,8 @@
   justify-content: center;
   gap: 8px;
   margin-bottom: 24px;
+  background: #eaf1fe;
+  color: #568cf0;
 }
 
 .signupSection {
@@ -105,4 +120,24 @@
   color: #1f1f1f;
   font-weight: 600;
   text-decoration: none;
+}
+
+/* Add responsive styles for smaller screens */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .leftSection {
+    width: 100%;
+    padding: 24px;
+  }
+
+  .rightSection {
+    display: none;
+  }
+
+  .loginForm {
+    width: 100%;
+  }
 } 
