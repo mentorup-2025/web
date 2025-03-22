@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, Avatar, Rate, Tag } from 'antd';
+import { Card, Avatar, Tag, Button } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import styles from '../search.module.css';
 
@@ -11,7 +11,6 @@ export default function MentorGrid() {
       name: 'John Doe',
       title: 'Senior Software Engineer',
       company: 'Google',
-      rating: 4.5,
       price: 100,
       tags: ['React', 'Node.js', 'Python']
     },
@@ -20,7 +19,6 @@ export default function MentorGrid() {
       name: 'Jane Smith',
       title: 'Product Manager',
       company: 'Microsoft',
-      rating: 5,
       price: 150,
       tags: ['Product Strategy', 'Agile', 'UX']
     },
@@ -29,7 +27,6 @@ export default function MentorGrid() {
       name: 'Mike Johnson',
       title: 'Data Scientist',
       company: 'Amazon',
-      rating: 4.8,
       price: 120,
       tags: ['Machine Learning', 'Python', 'SQL']
     },
@@ -38,7 +35,6 @@ export default function MentorGrid() {
       name: 'Sarah Williams',
       title: 'UX Designer',
       company: 'Apple',
-      rating: 4.7,
       price: 90,
       tags: ['UI/UX', 'Figma', 'User Research']
     },
@@ -47,7 +43,6 @@ export default function MentorGrid() {
       name: 'David Brown',
       title: 'Frontend Engineer',
       company: 'Facebook',
-      rating: 4.6,
       price: 110,
       tags: ['React', 'TypeScript', 'CSS']
     },
@@ -56,7 +51,6 @@ export default function MentorGrid() {
       name: 'Emily Davis',
       title: 'Backend Engineer',
       company: 'Netflix',
-      rating: 4.9,
       price: 130,
       tags: ['Java', 'Spring', 'Microservices']
     }
@@ -66,16 +60,19 @@ export default function MentorGrid() {
     <div className={styles.mentorGrid}>
       {mentors.map(mentor => (
         <Card key={mentor.id} className={styles.mentorCard}>
-          <div className={styles.mentorHeader}>
-            <Avatar size={64} icon={<UserOutlined />} />
-            <div className={styles.mentorInfo}>
-              <h3>{mentor.name}</h3>
-              <p>{mentor.title}</p>
-              <p>{mentor.company}</p>
-            </div>
+          <div className={styles.avatarContainer}>
+            <Avatar 
+              size={80} 
+              icon={<UserOutlined />} 
+              className={styles.avatar}
+            />
           </div>
           
-          <Rate disabled defaultValue={mentor.rating} />
+          <div className={styles.mentorInfo}>
+            <h3>{mentor.name}</h3>
+            <p>{mentor.title}</p>
+            <p>{mentor.company}</p>
+          </div>
           
           <div className={styles.mentorTags}>
             {mentor.tags.map(tag => (
@@ -83,8 +80,13 @@ export default function MentorGrid() {
             ))}
           </div>
           
-          <div className={styles.mentorPrice}>
-            ${mentor.price}/hour
+          <div className={styles.cardFooter}>
+            <span className={styles.mentorPrice}>
+              ${mentor.price}/hour
+            </span>
+            <Button type="primary" className={styles.scheduleButton}>
+              Schedule
+            </Button>
           </div>
         </Card>
       ))}
