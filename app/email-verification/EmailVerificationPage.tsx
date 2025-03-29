@@ -1,7 +1,7 @@
 'use client';
 
 import { Button, Typography, Divider } from 'antd';
-import { GoogleOutlined } from '@ant-design/icons';
+import Image from 'next/image';
 import styles from './email-verification.module.css';
 import { useState, useEffect } from 'react';
 
@@ -29,9 +29,11 @@ export default function EmailVerificationPage() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.leftSection}>
+      <div className={styles.background}></div>
+      <div className={styles.formSection}>
         <div className={styles.verificationForm}>
-          <Title level={2} style={{ marginBottom: 32 }}>
+          <Text>Verify your email</Text>
+          <Title level={2} style={{ marginTop: 8, marginBottom: 24 }}>
             Email Verification
           </Title>
 
@@ -76,16 +78,21 @@ export default function EmailVerificationPage() {
           <Divider plain>Or</Divider>
 
           <Button 
-            icon={<GoogleOutlined />}
             block 
             size="large"
             className={styles.googleButton}
           >
+            <Image 
+              src="/google-icon.png" 
+              alt="Google" 
+              width={20} 
+              height={20} 
+              className={styles.googleIcon}
+            />
             Sign up with Google
           </Button>
         </div>
       </div>
-      <div className={styles.rightSection}></div>
     </div>
   );
 } 

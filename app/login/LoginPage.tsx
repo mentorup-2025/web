@@ -1,7 +1,7 @@
 'use client';
 
 import { Button, Checkbox, Form, Input, Typography, Divider } from 'antd';
-import { GoogleOutlined } from '@ant-design/icons';
+import Image from 'next/image';
 import styles from './login.module.css';
 import Link from 'next/link';
 
@@ -10,6 +10,7 @@ const { Title, Text } = Typography;
 export default function Login() {
   return (
     <div className={styles.container}>
+      <div className={styles.background}></div>
       <div className={styles.leftSection}>
         <div className={styles.loginForm}>
           <Text>Welcome back!</Text>
@@ -48,11 +49,17 @@ export default function Login() {
             <Divider plain>Or</Divider>
 
             <Button 
-              icon={<GoogleOutlined />}
               block 
               size="large"
               className={styles.googleButton}
             >
+              <Image 
+                src="/google-icon.png" 
+                alt="Google" 
+                width={20} 
+                height={20} 
+                className={styles.googleIcon}
+              />
               Sign in with Google
             </Button>
 
@@ -65,7 +72,6 @@ export default function Login() {
           </Form>
         </div>
       </div>
-      <div className={styles.rightSection}></div>
     </div>
   );
 } 
