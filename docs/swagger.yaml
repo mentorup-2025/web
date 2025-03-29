@@ -1,0 +1,266 @@
+# Copy this file to https://editor.swagger.io/ and view.
+
+openapi: 3.0.0
+info:
+  title: MentorUp API
+  version: 1.0.0
+  description: API documentation for MentorUp platform
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+          minLength: 3
+        email:
+          type: string
+          format: email
+        created_at:
+          type: string
+          format: date-time
+        mentor:
+          $ref: '#/components/schemas/Mentor'
+          nullable: true
+
+    CreateUserInput:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 3
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    Mentor:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+        industry:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    UpsertMentorInput:
+      type: object
+      required:
+        - role
+        - industry
+      properties:
+        role:
+          type: string
+        industry:
+          type: string
+
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: int
+        message:
+          type: string
+        data:
+          type: object
+
+    CheckoutInput:
+      type: object
+      required:
+        - amount
+        - currency
+      properties:
+        amount:
+          type: integer
+          description: Amount in cents
+          example: 5000
+        currency:
+          type: string
+          description: Three-letter currency code
+          example: "usd"
+
+    CheckoutResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          description: Stripe checkout session ID
+
+paths:
+  /api/user/insert:
+    post:
+      summary: Create a new user
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserInput'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request
+        '500':
+          description: Server error
+
+  /api/user/{id}:
+    get:
+      summary: Get user by ID
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+        '500':
+          description: Server error
+
+  /api/mentor/upsert/{id}:
+    post:
+      summary: Create or update mentor profile
+      tags:
+        - Mentors
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertMentorInput'
+      responses:
+        '200':
+          description: Mentor profile updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Mentor'
+        '404':
+          description: User not found
+        '500':
+          description: Server error
+
+  /api/mentor/{id}:
+    get:
+      summary: Get mentor profile
+      tags:
+        - Mentors
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Mentor found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Mentor'
+        '404':
+          description: Mentor not found
+        '500':
+          description: Server error
+
+  /api/checkout:
+    post:
+      summary: Create a Stripe checkout session
+      tags:
+        - Payments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckoutInput'
+      responses:
+        '200':
+          description: Checkout session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckoutResponse'
+        '400':
+          description: Invalid input
+        '500':
+          description: Server error
+
+  /api/checkout/webhook:
+    post:
+      summary: Handle Stripe webhook events
+      tags:
+        - Payments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook processed successfully
+        '400':
+          description: Invalid webhook payload
+        '500':
+          description: Server error 
