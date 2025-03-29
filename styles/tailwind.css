@@ -1,0 +1,63 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@layer base {
+  :root {
+    /*------Color variables------*/
+    --black_900: #000000;
+    --black_900_0a: #0000000a;
+    --black_900_d8: #000000d8;
+    --blue_200: #91d5ff;
+    --blue_400: #40a9ff;
+    --blue_400_19: #40a9ff19;
+    --blue_50: #e8f1ff;
+    --blue_500: #1890ff;
+    --blue_a200: #4285f4;
+    --blue_gray_100: #d9d9d9;
+    --blue_gray_800: #313f53;
+    --blue_gray_900: #09244b;
+    --blue_gray_900_01: #353535;
+    --gray_100: #f5f5f5;
+    --gray_200: #ededed;
+    --gray_200_01: #ebebeb;
+    --gray_300: #dbdbdb;
+    --gray_300_01: #dedede;
+    --gray_400: #bdbdbd;
+    --gray_500: #aaaaaa;
+    --gray_700: #585858;
+    --gray_800: #3c3c43;
+    --gray_800_01: #414141;
+    --gray_900: #181818;
+    --gray_900_01: #212121;
+    --light_blue_700: #0094c6;
+    --red_500: #ff3838;
+    --red_500_01: #eb4335;
+    --white_a700: #ffffff;
+    --white_a700_ed: #ffffffed;
+    /*------Shadow variables------*/
+    --shadow-xs: 0 2px 1px 0 #0000000a;
+    /*------Border radius variables------*/
+    --radius-xs: 2px;
+    --radius-sm: 4px;
+    --radius-md: 5px;
+    --radius-lg: 6px;
+    --radius-xl: 8px;
+    --radius-2xl: 12px;
+    --radius-3xl: 18px;
+    /*------Spacing variables------*/
+    --space-xs: 2px;
+    --space-sm: 4px;
+    --space-md: 6px;
+    --space-lg: 8px;
+    --space-xl: 10px;
+    --space-2xl: 12px;
+    --space-3xl: 14px;
+    --space-4xl: 16px;
+    --space-5xl: 24px;
+    --space-6xl: 26px;
+    --space-7xl: 28px;
+    --space-8xl: 32px;
+    --space-9xl: 40px;
+  }
+}
