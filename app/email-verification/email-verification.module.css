@@ -1,0 +1,95 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+}
+
+.leftSection {
+  width: 50%;
+  display: flex;
+  align-items: center;
+  padding: 48px;
+  background-color: #fff;
+}
+
+.rightSection {
+  width: 50%;
+  background-color: #f5f5f5;
+}
+
+.verificationForm {
+  width: 400px;
+  max-width: 100%;
+}
+
+.messageBox {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.verificationText {
+  display: block;
+  font-size: 16px;
+  line-height: 1.5;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.emailText {
+  display: block;
+  font-size: 18px;
+  margin: 12px 0;
+}
+
+.verifyButton {
+  background-color: #1f1f1f !important;
+  margin-bottom: 24px;
+}
+
+.verifyButton:hover {
+  background-color: #333 !important;
+}
+
+.resendSection {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.resendText {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.resendButton {
+  padding: 0;
+  color: #1f1f1f !important;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.googleButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  background: #eaf1fe;
+  color: #568cf0;
+}
+
+/* Add responsive styles for smaller screens */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .leftSection {
+    width: 100%;
+    padding: 24px;
+  }
+
+  .rightSection {
+    display: none;
+  }
+
+  .verificationForm {
+    width: 100%;
+  }
+} 

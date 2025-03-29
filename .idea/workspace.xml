@@ -2,7 +2,36 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="b07e732c-30ea-4749-a7f1-2be25dd5144b" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/app/email-verification/EmailVerificationPage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/email-verification/email-verification.module.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/email-verification/page.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/login/LoginPage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/login/index.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/login/login.module.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/login/metadata.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/search/SearchPage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/search/components/MentorGrid.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/search/components/Navbar.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/search/components/SearchFilters.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/search/page.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/search/search.module.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/signup/page.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/signup/signup.module.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/docs/swagger.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pages/_app.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/public/defaultNoData.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/styles/index.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/styles/tailwind.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/globals.css" beforeDir="false" afterPath="$PROJECT_DIR$/styles/globals.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/login/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/login/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pnpm-lock.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pnpm-lock.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prisma/migrations/20250304133431_init/migration.sql" beforeDir="false" afterPath="$PROJECT_DIR$/prisma/migrations/20250304133431_init/migration.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prisma/migrations/migration_lock.toml" beforeDir="false" afterPath="$PROJECT_DIR$/prisma/migrations/migration_lock.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prisma/schema.prisma" beforeDir="false" afterPath="$PROJECT_DIR$/prisma/schema.prisma" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -59,6 +88,24 @@
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
+  <component name="RunManager">
+    <configuration default="true" type="SwaggerCodegen">
+      <option name="activeConfigurationType" value="FILE" />
+      <option name="configurationPath" value="" />
+      <option name="customJreEnabled" value="false" />
+      <option name="customTemplatesPath" value="" />
+      <option name="enableDebugLogging" value="false" />
+      <option name="generateToPath" value="$PROJECT_DIR$/gen" />
+      <option name="generationParameters">
+        <list />
+      </option>
+      <option name="generatorPath" value="https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/5.0.0/openapi-generator-cli-5.0.0.jar" />
+      <option name="jdkPath" value="" />
+      <option name="language" value="java" />
+      <option name="specificationPath" value="$PROJECT_DIR$/docs/swagger.yaml" />
+      <method v="2" />
+    </configuration>
+  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -72,7 +119,8 @@
       <workItem from="1742016875639" duration="179000" />
       <workItem from="1742018241980" duration="195000" />
       <workItem from="1742019565375" duration="17583000" />
-      <workItem from="1743134108622" duration="1664000" />
+      <workItem from="1743134108622" duration="2366000" />
+      <workItem from="1743275703794" duration="3779000" />
     </task>
     <servers />
   </component>

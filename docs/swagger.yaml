@@ -1,0 +1,584 @@
+# Copy this file to https://editor.swagger.io/ and view.
+
+openapi: 3.0.0
+info:
+  title: MentorUp API
+  version: 1.0.0
+  description: API documentation for MentorUp platform
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+          minLength: 3
+        email:
+          type: string
+          format: email
+        created_at:
+          type: string
+          format: date-time
+        mentor:
+          $ref: '#/components/schemas/Mentor'
+          nullable: true
+
+    CreateUserInput:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 3
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    Mentor:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+        industry:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    UpsertMentorInput:
+      type: object
+      required:
+        - role
+        - industry
+      properties:
+        role:
+          type: string
+        industry:
+          type: string
+
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        data:
+          type: object
+
+    CheckoutInput:
+      type: object
+      required:
+        - amount
+        - currency
+      properties:
+        amount:
+          type: integer
+          description: Amount in cents
+          example: 5000
+        currency:
+          type: string
+          description: Three-letter currency code
+          example: "usd"
+
+    CheckoutResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          description: Stripe checkout session ID
+    MentorAvailability:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        status:
+          type: string
+          example: available/booked
+
+    CreateAvailabilityInput:
+      type: object
+      required:
+        - user_id
+        - start_time
+        - end_time
+      properties:
+        user_id:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        status:
+          type: string
+          example: available
+    MentorList:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mentor_name:
+          type: string
+        jobtitle:
+          type: string
+        industry:
+          type: string
+        year_of_experience:
+          type: integer
+        level:
+          type: string
+        price:
+          type: number
+          format: float
+        company_or_school:
+          type: string
+        services:
+          type: string
+        about_me:
+          type: string
+        picture:
+          type: string
+          format: uri
+        availability:
+          type: string
+          description: 可用时间段（如 JSON 字符串）
+        created_at:
+          type: string
+          format: date-time
+
+    CreateMentorListInput:
+      type: object
+      required:
+        - mentor_name
+        - jobtitle
+        - industry
+        - year_of_experience
+        - level
+        - price
+        - company_or_school
+        - services
+        - about_me
+        - picture
+        - availability
+      properties:
+        mentor_name:
+          type: string
+        jobtitle:
+          type: string
+        industry:
+          type: string
+        year_of_experience:
+          type: integer
+        level:
+          type: string
+        price:
+          type: number
+        company_or_school:
+          type: string
+        services:
+          type: string
+        about_me:
+          type: string
+        picture:
+          type: string
+          format: uri
+        availability:
+          type: string
+paths:
+  /api/user/insert:
+    post:
+      summary: Create a new user
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserInput'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request
+        '500':
+          description: Server error
+
+  /api/user/{id}:
+    get:
+      summary: Get user by ID
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+        '500':
+          description: Server error
+
+  /api/mentor/upsert/{id}:
+    post:
+      summary: Create or update mentor profile
+      tags:
+        - Mentors
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertMentorInput'
+      responses:
+        '200':
+          description: Mentor profile updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Mentor'
+        '404':
+          description: User not found
+        '500':
+          description: Server error
+
+  /api/mentor/{id}:
+    get:
+      summary: Get mentor profile
+      tags:
+        - Mentors
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Mentor found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Mentor'
+        '404':
+          description: Mentor not found
+        '500':
+          description: Server error
+
+  /api/checkout:
+    post:
+      summary: Create a Stripe checkout session
+      tags:
+        - Payments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckoutInput'
+      responses:
+        '200':
+          description: Checkout session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckoutResponse'
+        '400':
+          description: Invalid input
+        '500':
+          description: Server error
+
+  /api/checkout/webhook:
+    post:
+      summary: Handle Stripe webhook events
+      tags:
+        - Payments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Webhook processed successfully
+        '400':
+          description: Invalid webhook payload
+        '500':
+          description: Server error
+
+  /api/availability:
+    get:
+      summary: Get all mentor availability records
+      tags: [ Mentor Availability ]
+      responses:
+        '200':
+          description: Availability list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MentorAvailability'
+
+    post:
+      summary: Create new mentor availability
+      tags: [ Mentor Availability ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAvailabilityInput'
+      responses:
+        '201':
+          description: Created
+        '400':
+          description: Invalid input
+
+  /api/availability/{id}:
+    get:
+      summary: Get availability by ID
+      tags: [ Mentor Availability ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorAvailability'
+    put:
+      summary: Update availability by ID
+      tags: [ Mentor Availability ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAvailabilityInput'
+      responses:
+        '200':
+          description: Updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MentorAvailability'
+        '400':
+          description: Invalid input or time not aligned
+        '404':
+          description: Record not found
+        '500':
+          description: Server error
+
+    delete:
+      summary: Delete availability by ID
+      tags: [ Mentor Availability ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          description: Not found
+        '500':
+          description: Server error
+  /api/mentor_list:
+    get:
+      summary: Get all mentors
+      tags: [ Mentor List ]
+      responses:
+        '200':
+          description: List of mentors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Mentor'
+
+    post:
+      summary: Add a new mentor
+      tags: [ Mentor List ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMentorInput'
+      responses:
+        '201':
+          description: Mentor created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mentor'
+        '500':
+          description: Server error
+
+  /api/mentor_list/{id}:
+    get:
+      summary: Get mentor by ID
+      tags: [ Mentor List ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Mentor found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorList'
+        '404':
+          description: Mentor not found
+
+    put:
+      summary: Update mentor by ID
+      tags: [ Mentor List ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMentorInput'
+      responses:
+        '200':
+          description: Mentor updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorList'
+        '500':
+          description: Server error
+
+    delete:
+      summary: Delete mentor by ID
+      tags: [ Mentor List ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Mentor deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '500':
+        description: Server error
