@@ -77,7 +77,7 @@ components:
       type: object
       properties:
         code:
-          type: int
+          type: integer
         message:
           type: string
         data:
@@ -104,7 +104,114 @@ components:
         sessionId:
           type: string
           description: Stripe checkout session ID
+    MentorAvailability:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        status:
+          type: string
+          example: available/booked
 
+    CreateAvailabilityInput:
+      type: object
+      required:
+        - user_id
+        - start_time
+        - end_time
+      properties:
+        user_id:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        status:
+          type: string
+          example: available
+    MentorList:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mentor_name:
+          type: string
+        jobtitle:
+          type: string
+        industry:
+          type: string
+        year_of_experience:
+          type: integer
+        level:
+          type: string
+        price:
+          type: number
+          format: float
+        company_or_school:
+          type: string
+        services:
+          type: string
+        about_me:
+          type: string
+        picture:
+          type: string
+          format: uri
+        availability:
+          type: string
+          description: 可用时间段（如 JSON 字符串）
+        created_at:
+          type: string
+          format: date-time
+
+    CreateMentorListInput:
+      type: object
+      required:
+        - mentor_name
+        - jobtitle
+        - industry
+        - year_of_experience
+        - level
+        - price
+        - company_or_school
+        - services
+        - about_me
+        - picture
+        - availability
+      properties:
+        mentor_name:
+          type: string
+        jobtitle:
+          type: string
+        industry:
+          type: string
+        year_of_experience:
+          type: integer
+        level:
+          type: string
+        price:
+          type: number
+        company_or_school:
+          type: string
+        services:
+          type: string
+        about_me:
+          type: string
+        picture:
+          type: string
+          format: uri
+        availability:
+          type: string
 paths:
   /api/user/insert:
     post:
@@ -263,4 +370,215 @@ paths:
         '400':
           description: Invalid webhook payload
         '500':
-          description: Server error 
+          description: Server error
+
+  /api/availability:
+    get:
+      summary: Get all mentor availability records
+      tags: [ Mentor Availability ]
+      responses:
+        '200':
+          description: Availability list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MentorAvailability'
+
+    post:
+      summary: Create new mentor availability
+      tags: [ Mentor Availability ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAvailabilityInput'
+      responses:
+        '201':
+          description: Created
+        '400':
+          description: Invalid input
+
+  /api/availability/{id}:
+    get:
+      summary: Get availability by ID
+      tags: [ Mentor Availability ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorAvailability'
+    put:
+      summary: Update availability by ID
+      tags: [ Mentor Availability ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAvailabilityInput'
+      responses:
+        '200':
+          description: Updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MentorAvailability'
+        '400':
+          description: Invalid input or time not aligned
+        '404':
+          description: Record not found
+        '500':
+          description: Server error
+
+    delete:
+      summary: Delete availability by ID
+      tags: [ Mentor Availability ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '404':
+          description: Not found
+        '500':
+          description: Server error
+  /api/mentor_list:
+    get:
+      summary: Get all mentors
+      tags: [ Mentor List ]
+      responses:
+        '200':
+          description: List of mentors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Mentor'
+
+    post:
+      summary: Add a new mentor
+      tags: [ Mentor List ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMentorInput'
+      responses:
+        '201':
+          description: Mentor created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mentor'
+        '500':
+          description: Server error
+
+  /api/mentor_list/{id}:
+    get:
+      summary: Get mentor by ID
+      tags: [ Mentor List ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Mentor found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorList'
+        '404':
+          description: Mentor not found
+
+    put:
+      summary: Update mentor by ID
+      tags: [ Mentor List ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMentorInput'
+      responses:
+        '200':
+          description: Mentor updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MentorList'
+        '500':
+          description: Server error
+
+    delete:
+      summary: Delete mentor by ID
+      tags: [ Mentor List ]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Mentor deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '500':
+        description: Server error
