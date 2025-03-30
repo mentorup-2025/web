@@ -1,8 +1,8 @@
 import { getSupabaseClient } from '../services/supabase';
-import { AppointmentResponse, CreateAppointmentInput } from '@/app/types';
+import { ReserveAppointmentResponse, CreateAppointmentInput } from '@/app/types';
 
 
-export async function createAppointment(input: CreateAppointmentInput): Promise<AppointmentResponse> {
+export async function createAppointment(input: CreateAppointmentInput): Promise<ReserveAppointmentResponse> {
     try {
         const { data, error } = await getSupabaseClient()
             .rpc('reserve_slot', {
@@ -33,7 +33,7 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
             throw error;
         }
 
-        return data as AppointmentResponse;
+        return data as ReserveAppointmentResponse;
 
     } catch (error) {
         console.error('Error in createAppointment:', error);

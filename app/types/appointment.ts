@@ -19,7 +19,7 @@ export interface CreateAppointmentInput {
     price: number;
 }
 
-export interface AppointmentResponse {
+export interface ReserveAppointmentResponse {
     hold_id: string;
     appointment_id: string;
     expires_at: string;      // UTC timestamp

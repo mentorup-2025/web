@@ -6,6 +6,93 @@ info:
   version: 1.0.0
   description: API documentation for the mentorship platform
 
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+  - url: https://api.mentorship.com
+    description: Production server (example)
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    AvailabilityResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              start_time:
+                type: string
+                format: date-time
+              end_time:
+                type: string
+                format: date-time
+
+    BlockAvailabilityRequest:
+      type: object
+      required:
+        - mentor_id
+        - start_date
+        - end_date
+      properties:
+        mentor_id:
+          type: string
+          format: uuid
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+      example:
+        mentor_id: "93137255-d7ac-4219-90d9-a886ae987732"
+        start_date: "2025-03-12"
+        end_date: "2025-03-13"
+
+    CreateAppointmentRequest:
+      type: object
+      required:
+        - mentor_id
+        - mentee_id
+        - start_time
+        - end_time
+        - service_type
+        - price
+      properties:
+        mentor_id:
+          type: string
+          format: uuid
+        mentee_id:
+          type: string
+          format: uuid
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        service_type:
+          type: string
+        price:
+          type: number
+          format: float
+      example:
+        mentor_id: "93137255-d7ac-4219-90d9-a886ae987732"
+        mentee_id: "6972686b-6156-4d21-950a-821093ffd068"
+        start_time: "2025-03-17T14:00:00Z"
+        end_time: "2025-03-17T15:00:00Z"
+        service_type: "consultation"
+        price: 100.00
+
 paths:
   # User APIs
   /api/user/insert:
@@ -279,96 +366,4 @@ paths:
                 currency: "usd"
       responses:
         200:
-          description: Checkout session created
-
-components:
-  schemas:
-    AvailabilityResponse:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            type: object
-            properties:
-              start_time:
-                type: string
-                format: date-time
-              end_time:
-                type: string
-                format: date-time
-
-    BlockAvailabilityRequest:
-      type: object
-      required:
-        - mentor_id
-        - start_date
-        - end_date
-      properties:
-        mentor_id:
-          type: string
-          format: uuid
-        start_date:
-          type: string
-          format: date
-        end_date:
-          type: string
-          format: date
-      example:
-        mentor_id: "93137255-d7ac-4219-90d9-a886ae987732"
-        start_date: "2025-03-12"
-        end_date: "2025-03-13"
-
-    CreateAppointmentRequest:
-      type: object
-      required:
-        - mentor_id
-        - mentee_id
-        - start_time
-        - end_time
-        - service_type
-        - price
-      properties:
-        mentor_id:
-          type: string
-          format: uuid
-        mentee_id:
-          type: string
-          format: uuid
-        start_time:
-          type: string
-          format: date-time
-        end_time:
-          type: string
-          format: date-time
-        service_type:
-          type: string
-        price:
-          type: number
-          format: float
-      example:
-        mentor_id: "93137255-d7ac-4219-90d9-a886ae987732"
-        mentee_id: "6972686b-6156-4d21-950a-821093ffd068"
-        start_time: "2025-03-17T14:00:00Z"
-        end_time: "2025-03-17T15:00:00Z"
-        service_type: "consultation"
-        price: 100.00
-
-    AppointmentResponse:
-      type: object
-      properties:
-        data:
-          type: object
-          properties:
-            hold_id:
-              type: string
-              format: uuid
-            appointment_id:
-              type: string
-              format: uuid
-            expires_at:
-              type: string
-              format: date-time
-            utc_time_slot:
-              type: string
-              description: PostgreSQL tstzrange 
+          description: Checkout session created 
