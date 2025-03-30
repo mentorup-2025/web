@@ -1,6 +1,5 @@
 import { getSupabaseClient } from '../services/supabase';
-import { SetAvailabilityInput, Availability, isValidAvailability } from '../types/availability';
-import { getUser } from './user';
+import { BlockAvailabilityInput, isValidAvailability, SetAvailabilityInput } from '@/app/types';
 
 export async function setRegularAvailability(input: SetAvailabilityInput): Promise<void> {
     try {
@@ -57,6 +56,55 @@ export async function getMentorAvailability(input: {
 
     } catch (error) {
         console.error('Error in getMentorAvailability:', error);
+        throw error;
+    }
+}
+
+export async function blockAvailability(input: BlockAvailabilityInput): Promise<void> {
+    try {
+        // For single day blocks or date ranges, we want to block the entire day(s)
+        const startDateTime = `${input.start_date}T00:00:00Z`;  // Start of day in UTC
+        const endDateTime = `${input.end_date}T23:59:59.999Z`;  // End of day in UTC
+
+        // Insert block into mentor_blocks table
+        const { error } = await getSupabaseClient()
+            .from('mentor_blocks')
+            .insert({
+                mentor_id: input.mentor_id,
+                // Use timestamptz range for the entire day(s)
+                blocked_range: `[${startDateTime},${endDateTime}]`,
+            });
+
+        if (error) {
+            console.error('Error blocking availability:', error);
+            throw error;
+        }
+
+    } catch (error) {
+        console.error('Error in blockAvailability:', error);
+        throw error;
+    }
+}
+
+
+export async function getMentorDailyAvailability(mentor_id: string, date: Date): Promise<any[]> {
+    try {
+        const { data, error } = await getSupabaseClient()
+            .rpc('get_mentor_daily_availability', {
+                p_mentor_id: mentor_id,
+                query_date: date
+            });
+
+        if (error) {
+            console.error('Error getting mentor daily availability:', error);
+            throw error;
+        }
+
+        // RPC returns array of available time slots
+        return data || [];
+
+    } catch (error) {
+        console.error('Error in getMentorDailyAvailability:', error);
         throw error;
     }
 } 
