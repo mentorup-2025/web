@@ -1,4 +1,3 @@
-import { getMentor } from '@/app/lib/mentor';
 import { respJson } from '@/app/lib/resp';
 import { getUser } from '@/app/lib/user';
 
@@ -8,7 +7,6 @@ export async function GET(
 ) {
     try {
         const userPromise = getUser(params.id);
-        const mentorPromise = getMentor(params.id);
 
         // Check user first while mentor loads in background
         const user = await userPromise;
@@ -16,15 +14,9 @@ export async function GET(
             return respJson(404, 'User not found');
         }
 
-        // Wait for mentor to complete if we got this far
-        const mentor = await mentorPromise;
 
         // Remove password_hash from response
         const { password_hash, ...safeUser } = user;
-        // attach mentor to user
-        if (mentor) {
-            safeUser.mentor = mentor;
-        }
         return respJson(200, 'User found', safeUser);
 
     } catch (error) {

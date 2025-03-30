@@ -44,25 +44,35 @@ export async function saveUser(input: CreateUserInput): Promise<User> {
 }
 
 export async function getUser(userId: string): Promise<User | null> {
-  const { data, error } = await getSupabaseClient()
-    .from('users')
-    .select('*')
-    .eq('user_id', userId) // Changed from user_id to id based on schema
-    .single();
+  try {
+    const { data, error } = await getSupabaseClient()
+      .from('users')
+      .select(`
+        *,
+        mentor:mentors(*)
+      `)
+      .eq('user_id', userId)
+      .single();
 
-  if (error) {
-    if (error.code === 'PGRST116') { // No rows returned
+    if (error) {
+      if (error.code === 'PGRST116') { // No rows returned
+        return null;
+      }
+      console.error('Error fetching user:', error);
+      throw error;
+    }
+
+    if (!data) {
       return null;
     }
-    console.error('Error fetching user:', error);
+
+    // Transform the response to match User interface
+    return data as User;
+
+  } catch (error) {
+    console.error('Error in getUser:', error);
     throw error;
   }
-
-  if (!data) {
-    return null;
-  }
-
-  return data as User;
 }
 
 export async function verifyPassword(user: User, password: string): Promise<boolean> {

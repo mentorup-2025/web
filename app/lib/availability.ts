@@ -1,150 +1,63 @@
-import { supabase } from '@/app/supabase/client';
-import { Availability, SetAvailabilityRequest } from '@/app/types/availability';
-import { startOfWeek, addDays, parse, format } from 'date-fns';
+import { getSupabaseClient } from '../services/supabase';
+import { SetAvailabilityInput, Availability, isValidAvailability } from '../types/availability';
+import { getUser } from './user';
 
-// 将时间槽转换为可用性数据
-export const convertSlotsToAvailability = (
-  userId: string,
-  slots: Array<{ start: Date; end: Date }>
-): Omit<Availability, 'id' | 'created_at' | 'updated_at'>[] => {
-  return slots.map(slot => {
-    const dayOfWeek = slot.start.getDay();
-    return {
-      user_id: userId,
-      day_of_week: dayOfWeek,
-      start_time: format(slot.start, 'HH:mm'),
-      end_time: format(slot.end, 'HH:mm')
-    };
-  });
-};
+export async function setRegularAvailability(input: SetAvailabilityInput): Promise<void> {
+    try {
+       
+        // Validate all availabilities first
+        const invalidSlots = input.availabilities.filter(slot => !isValidAvailability(slot));
+        if (invalidSlots.length > 0) {
+            throw new Error('Invalid availability slots provided');
+        }
 
-// 将可用性数据转换为日历事件
-export const convertAvailabilityToEvents = (
-  availabilities: Availability[]
-): Array<{ start: Date; end: Date; title: string }> => {
-  const currentWeekStart = startOfWeek(new Date());
-  
-  return availabilities.flatMap(availability => {
-    const dayDate = addDays(currentWeekStart, availability.day_of_week);
-    
-    const start = parse(
-      `${format(dayDate, 'yyyy-MM-dd')} ${availability.start_time}`,
-      'yyyy-MM-dd HH:mm',
-      new Date()
-    );
-    
-    const end = parse(
-      `${format(dayDate, 'yyyy-MM-dd')} ${availability.end_time}`,
-      'yyyy-MM-dd HH:mm',
-      new Date()
-    );
+        // Call the set_weekly_availability RPC function
+        const { data, error } = await getSupabaseClient()
+            .rpc('set_weekly_availability', {
+                p_mentor_id: input.user_id,
+                availability: input.availabilities.map(slot => ({
+                    day_of_week: slot.day_of_week,
+                    start_time: slot.start_time,
+                    end_time: slot.end_time
+                }))
+            });
 
-    return {
-      start,
-      end,
-      title: 'Available'
-    };
-  });
-};
+        if (error) {
+            console.error('Error setting availability:', error);
+            throw error;
+        }
 
-// 获取导师可用时间
-export const getMentorAvailability = async (userId: string) => {
-  const { data, error } = await supabase
-    .from('mentor_availability')
-    .select('*')
-    .eq('user_id', userId);
+        return data;
 
-  if (error) {
-    throw new Error('Failed to fetch mentor availability');
-  }
+    } catch (error) {
+        console.error('Error in setRegularAvailability:', error);
+        throw error;
+    }
+}
 
-  return data as Availability[];
-};
+export async function getMentorAvailability(input: { 
+    mentor_id: string, 
+    start_date: Date, 
+    end_date: Date 
+}): Promise<any[]> {
+    try {
+        const { data, error } = await getSupabaseClient()
+            .rpc('get_mentor_availability', {
+                p_mentor_id: input.mentor_id,
+                start_date: input.start_date,
+                end_date: input.end_date
+            });
 
-// 设置导师可用时间
-export const setMentorAvailability = async (
-  request: SetAvailabilityRequest
-) => {
-  const { user_id, availabilities } = request;
+        if (error) {
+            console.error('Error getting mentor availability:', error);
+            throw error;
+        }
 
-  // 首先删除现有的可用时间
-  const { error: deleteError } = await supabase
-    .from('mentor_availability')
-    .delete()
-    .eq('user_id', user_id);
+        return data || [];
 
-  if (deleteError) {
-    throw new Error('Failed to delete existing availability');
-  }
+    } catch (error) {
+        console.error('Error in getMentorAvailability:', error);
+        throw error;
+    }
+} 
 
-  // 插入新的可用时间
-  const { data, error } = await supabase
-    .from('mentor_availability')
-    .insert(
-      availabilities.map(availability => ({
-        user_id,
-        ...availability
-      }))
-    )
-    .select();
-
-  if (error) {
-    throw new Error('Failed to set availability');
-  }
-
-  return data as Availability[];
-};
-
-// 更新特定的可用时间
-export const updateAvailability = async (
-  id: string,
-  availability: Partial<Availability>
-) => {
-  const { data, error } = await supabase
-    .from('mentor_availability')
-    .update(availability)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) {
-    throw new Error('Failed to update availability');
-  }
-
-  return data as Availability;
-};
-
-// 删除特定的可用时间
-export const deleteAvailability = async (id: string) => {
-  const { error } = await supabase
-    .from('mentor_availability')
-    .delete()
-    .eq('id', id);
-
-  if (error) {
-    throw new Error('Failed to delete availability');
-  }
-};
-
-// 检查时间段是否有效
-export const isValidTimeSlot = (
-  start: Date,
-  end: Date,
-  existingSlots: Array<{ start: Date; end: Date }>
-) => {
-  // 检查时间是否在工作时间内 (9:00 AM - 5:00 PM)
-  const startHour = start.getHours();
-  const endHour = end.getHours();
-  if (startHour < 9 || endHour > 17) {
-    return false;
-  }
-
-  // 检查是否与现有时间段重叠
-  return !existingSlots.some(slot => {
-    return (
-      (start >= slot.start && start < slot.end) ||
-      (end > slot.start && end <= slot.end) ||
-      (start <= slot.start && end >= slot.end)
-    );
-  });
-}; 

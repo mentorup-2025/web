@@ -45,4 +45,59 @@ Content-Type: application/json
 
 ### Test Get Single Mentor
 GET {{baseUri}}/api/user/[mentor1_id]
-Content-Type: application/json 
+Content-Type: application/json
+
+### Test Update Mentor Availability
+POST {{baseUri}}/api/availability/update
+Content-Type: application/json
+
+{
+    "user_id": "93137255-d7ac-4219-90d9-a886ae987732",
+    "availabilities": [
+        {
+            "day_of_week": 0,
+            "start_time": "09:00",
+            "end_time": "17:00"
+        },
+        {
+            "day_of_week": 1,
+            "start_time": "09:00",
+            "end_time": "17:00"
+        },
+        {
+            "day_of_week": 2,
+            "start_time": "09:00",
+            "end_time": "17:00"
+        },
+        {
+            "day_of_week": 3,
+            "start_time": "09:00",
+            "end_time": "17:00"
+        },
+        {
+            "day_of_week": 4,
+            "start_time": "09:00",
+            "end_time": "17:00"
+        },
+        {
+            "day_of_week": 5,
+            "start_time": "09:00",
+            "end_time": "17:00"
+        },
+        {
+            "day_of_week": 6,
+            "start_time": "09:00",
+            "end_time": "17:00"
+        }
+    ]
+}
+
+### Test View Mentor Availability
+POST {{baseUri}}/api/availability/view
+Content-Type: application/json
+
+{
+    "user_id": "93137255-d7ac-4219-90d9-a886ae987732",
+    "start_date": "2024-03-10",
+    "end_date": "2024-03-16"
+}
