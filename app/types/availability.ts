@@ -21,6 +21,10 @@ export interface BlockAvailabilityInput {
   end_date: Date;
 }
 
+export interface DeleteAvailabilityInput {
+  block_id: string;
+}
+
 // Validation helper
 export function isValidAvailability(availability: Availability): boolean {
     return (

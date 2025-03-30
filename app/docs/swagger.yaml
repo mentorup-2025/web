@@ -40,13 +40,9 @@ components:
     BlockAvailabilityRequest:
       type: object
       required:
-        - mentor_id
         - start_date
         - end_date
       properties:
-        mentor_id:
-          type: string
-          format: uuid
         start_date:
           type: string
           format: date
@@ -54,9 +50,19 @@ components:
           type: string
           format: date
       example:
-        mentor_id: "93137255-d7ac-4219-90d9-a886ae987732"
         start_date: "2025-03-12"
         end_date: "2025-03-13"
+
+    DeleteBlockRequest:
+      type: object
+      required:
+        - block_id
+      properties:
+        block_id:
+          type: string
+          format: uuid
+      example:
+        block_id: "da912d0a-fb2e-4b86-ad4c-546633b066e4"
 
     CreateAppointmentRequest:
       type: object
@@ -183,6 +189,117 @@ paths:
           description: Mentor profile updated successfully
 
   # Availability APIs
+  /api/availability_block/{id}:
+    get:
+      summary: Get all blocks for a mentor
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Mentor's UUID
+      responses:
+        200:
+          description: List of mentor's blocks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        mentor_id:
+                          type: string
+                          format: uuid
+                        blocked_range:
+                          type: string
+                          description: PostgreSQL tstzrange
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /api/availability_block/{id}/insert:
+    post:
+      summary: Create a new block for mentor's availability
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Mentor's UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockAvailabilityRequest'
+      responses:
+        200:
+          description: Block created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: string
+                    example: "Availability blocked successfully"
+
+  /api/availability_block/{id}/delete:
+    post:
+      summary: Delete a specific block
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Mentor's UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteBlockRequest'
+      responses:
+        200:
+          description: Block deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: string
+                    example: "Block deleted successfully"
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Missing required field: block_id"
+
   /api/availability/{id}/view:
     get:
       summary: Get mentor's availability for a date range
@@ -214,29 +331,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        start_time:
-                          type: string
-                          format: date-time
-                        end_time:
-                          type: string
-                          format: date-time
-        400:
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "Missing required parameters: start_date, end_date"
+                $ref: '#/components/schemas/AvailabilityResponse'
 
   /api/availability/{id}/viewdaily:
     get:
@@ -256,7 +351,6 @@ paths:
             type: string
             format: date
           example: "2025-03-17"
-          description: Date to check (YYYY-MM-DD)
       responses:
         200:
           description: List of available time slots for the day
@@ -264,16 +358,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AvailabilityResponse'
-        400:
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "Missing required parameter: date"
 
   /api/availability/update:
     post:
@@ -295,33 +379,57 @@ paths:
                   type: array
                   items:
                     type: object
+                    required:
+                      - day_of_week
+                      - start_time
+                      - end_time
                     properties:
                       day_of_week:
                         type: integer
                         minimum: 0
                         maximum: 6
+                        description: 0-6 representing Sunday to Saturday
                       start_time:
                         type: string
                         pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+                        description: "24-hour format HH:mm"
                       end_time:
                         type: string
                         pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+                        description: "24-hour format HH:mm"
               example:
                 user_id: "93137255-d7ac-4219-90d9-a886ae987732"
                 availabilities:
                   - day_of_week: 1
                     start_time: "09:00"
                     end_time: "17:00"
-
-  /api/availability/block:
-    post:
-      summary: Block mentor's availability for a date range
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BlockAvailabilityRequest'
+                  - day_of_week: 2
+                    start_time: "09:00"
+                    end_time: "17:00"
+                  - day_of_week: 3
+                    start_time: "09:00"
+                    end_time: "17:00"
+      responses:
+        200:
+          description: Weekly availability updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: string
+                    example: "Availability updated successfully"
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid availability slots provided"
 
   # Appointment APIs
   /api/appointment/insert:
