@@ -1,0 +1,374 @@
+# Copy this file to https://editor.swagger.io/ and view
+
+openapi: 3.0.0
+info:
+  title: Mentorship Platform API
+  version: 1.0.0
+  description: API documentation for the mentorship platform
+
+paths:
+  # User APIs
+  /api/user/insert:
+    post:
+      summary: Create a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - password
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+              example:
+                username: "testuser2"
+                email: "test2@example.com"
+                password: "Test123!@#"
+      responses:
+        200:
+          description: User created successfully
+        400:
+          description: Bad request
+
+  /api/user/{id}:
+    get:
+      summary: Get user by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: User details
+        404:
+          description: User not found
+
+  # Mentor APIs
+  /api/mentor/list:
+    get:
+      summary: List all mentors
+      responses:
+        200:
+          description: List of all mentors
+
+  /api/mentor/upsert/{id}:
+    post:
+      summary: Create or update mentor profile
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - role
+                - industry
+              properties:
+                role:
+                  type: string
+                industry:
+                  type: string
+              example:
+                role: "Senior Software Engineer"
+                industry: "Technology"
+      responses:
+        200:
+          description: Mentor profile updated successfully
+
+  # Availability APIs
+  /api/availability/{id}/view:
+    get:
+      summary: Get mentor's availability for a date range
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Mentor's UUID
+        - in: query
+          name: start_date
+          required: true
+          schema:
+            type: string
+            format: date
+          example: "2025-03-16"
+        - in: query
+          name: end_date
+          required: true
+          schema:
+            type: string
+            format: date
+          example: "2025-03-18"
+      responses:
+        200:
+          description: List of available time slots
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        start_time:
+                          type: string
+                          format: date-time
+                        end_time:
+                          type: string
+                          format: date-time
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Missing required parameters: start_date, end_date"
+
+  /api/availability/{id}/viewdaily:
+    get:
+      summary: Get mentor's availability for a specific day
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Mentor's UUID
+        - in: query
+          name: date
+          required: true
+          schema:
+            type: string
+            format: date
+          example: "2025-03-17"
+          description: Date to check (YYYY-MM-DD)
+      responses:
+        200:
+          description: List of available time slots for the day
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityResponse'
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Missing required parameter: date"
+
+  /api/availability/update:
+    post:
+      summary: Update mentor's regular weekly availability
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - availabilities
+              properties:
+                user_id:
+                  type: string
+                  format: uuid
+                availabilities:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      day_of_week:
+                        type: integer
+                        minimum: 0
+                        maximum: 6
+                      start_time:
+                        type: string
+                        pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+                      end_time:
+                        type: string
+                        pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+              example:
+                user_id: "93137255-d7ac-4219-90d9-a886ae987732"
+                availabilities:
+                  - day_of_week: 1
+                    start_time: "09:00"
+                    end_time: "17:00"
+
+  /api/availability/block:
+    post:
+      summary: Block mentor's availability for a date range
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockAvailabilityRequest'
+
+  # Appointment APIs
+  /api/appointment/insert:
+    post:
+      summary: Create a new appointment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAppointmentRequest'
+      responses:
+        200:
+          description: Appointment created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
+
+  # Checkout APIs
+  /api/checkout:
+    post:
+      summary: Create a Stripe checkout session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+                - currency
+              properties:
+                amount:
+                  type: integer
+                  description: Amount in cents
+                currency:
+                  type: string
+                  enum: [usd]
+              example:
+                amount: 5000
+                currency: "usd"
+      responses:
+        200:
+          description: Checkout session created
+
+components:
+  schemas:
+    AvailabilityResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              start_time:
+                type: string
+                format: date-time
+              end_time:
+                type: string
+                format: date-time
+
+    BlockAvailabilityRequest:
+      type: object
+      required:
+        - mentor_id
+        - start_date
+        - end_date
+      properties:
+        mentor_id:
+          type: string
+          format: uuid
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+      example:
+        mentor_id: "93137255-d7ac-4219-90d9-a886ae987732"
+        start_date: "2025-03-12"
+        end_date: "2025-03-13"
+
+    CreateAppointmentRequest:
+      type: object
+      required:
+        - mentor_id
+        - mentee_id
+        - start_time
+        - end_time
+        - service_type
+        - price
+      properties:
+        mentor_id:
+          type: string
+          format: uuid
+        mentee_id:
+          type: string
+          format: uuid
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        service_type:
+          type: string
+        price:
+          type: number
+          format: float
+      example:
+        mentor_id: "93137255-d7ac-4219-90d9-a886ae987732"
+        mentee_id: "6972686b-6156-4d21-950a-821093ffd068"
+        start_time: "2025-03-17T14:00:00Z"
+        end_time: "2025-03-17T15:00:00Z"
+        service_type: "consultation"
+        price: 100.00
+
+    AppointmentResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            hold_id:
+              type: string
+              format: uuid
+            appointment_id:
+              type: string
+              format: uuid
+            expires_at:
+              type: string
+              format: date-time
+            utc_time_slot:
+              type: string
+              description: PostgreSQL tstzrange 
