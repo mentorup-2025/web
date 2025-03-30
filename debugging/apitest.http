@@ -36,4 +36,13 @@ Content-Type: application/json
 {
     "role": "Senior Software Engineer",
     "industry": "Technology"
-} 
+}
+
+
+### Test List All Mentors
+GET {{baseUri}}/api/mentor/list
+Content-Type: application/json
+
+### Test Get Single Mentor
+GET {{baseUri}}/api/user/[mentor1_id]
+Content-Type: application/json 

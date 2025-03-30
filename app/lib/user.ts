@@ -67,4 +67,27 @@ export async function getUser(userId: string): Promise<User | null> {
 
 export async function verifyPassword(user: User, password: string): Promise<boolean> {
   return bcrypt.compare(password, user.password_hash);
+}
+
+export async function listUsers(): Promise<User[]> {
+  try {
+    const { data, error } = await getSupabaseClient()
+      .from('users')
+      .select(`
+        *,
+        mentor:mentors(*)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error listing users:', error);
+      throw error;
+    }
+
+    return (data || []) as User[];
+
+  } catch (error) {
+    console.error('Error in listUsers:', error);
+    throw error;
+  }
 } 
