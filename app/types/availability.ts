@@ -15,6 +15,12 @@ export interface ViewAvailabilityInput {
   end_date: Date;
 }
 
+export interface BlockAvailabilityInput {
+  mentor_id: string;
+  start_date: Date;
+  end_date: Date;
+}
+
 // Validation helper
 export function isValidAvailability(availability: Availability): boolean {
     return (
