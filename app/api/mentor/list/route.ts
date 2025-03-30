@@ -1,9 +1,9 @@
 import { respJson } from '@/app/lib/resp';
-import { listUsers } from '@/app/lib/user';
+import { listMentorUsers } from '@/app/lib/user';
 
 export async function GET() {
     try {
-        const users = await listUsers();
+        const users = await listMentorUsers();
         
         // Filter to only users who have mentor profiles
         const mentors = users.filter(user => user.mentor !== null);

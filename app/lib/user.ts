@@ -69,13 +69,13 @@ export async function verifyPassword(user: User, password: string): Promise<bool
   return bcrypt.compare(password, user.password_hash);
 }
 
-export async function listUsers(): Promise<User[]> {
+export async function listMentorUsers(): Promise<User[]> {
   try {
     const { data, error } = await getSupabaseClient()
       .from('users')
       .select(`
         *,
-        mentor:mentors(*)
+        mentor:mentors!inner(*)
       `)
       .order('created_at', { ascending: false });
 
