@@ -90,12 +90,22 @@ Content-Type: application/json
 ### Test View Mentor Availability
 GET {{baseUri}}/api/availability/93137255-d7ac-4219-90d9-a886ae987732/view?start_date=2025-03-16&end_date=2025-03-18
 
-### Test Block Mentor Availability
-POST {{baseUri}}/api/availability/block
+### Test Get Mentor Blocks
+GET {{baseUri}}/api/availability_block/93137255-d7ac-4219-90d9-a886ae987732
+
+### Test Delete Mentor Block
+POST {{baseUri}}/api/availability_block/93137255-d7ac-4219-90d9-a886ae987732/delete
 Content-Type: application/json
 
 {
-    "mentor_id": "93137255-d7ac-4219-90d9-a886ae987732",
+    "block_id": "da912d0a-fb2e-4b86-ad4c-546633b066e4"
+}
+
+### Test Block Mentor Availability
+POST {{baseUri}}/api/availability_block/93137255-d7ac-4219-90d9-a886ae987732/insert
+Content-Type: application/json
+
+{
     "start_date": "2025-03-12",
     "end_date": "2025-03-13"
 }

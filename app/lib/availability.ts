@@ -109,3 +109,52 @@ export async function getMentorDailyAvailability(mentor_id: string, date: Date):
     }
 } 
 
+export async function getMentorBlocks(mentor_id: string): Promise<any[]> {
+    try {
+
+        // Query mentor_blocks table for blocks that overlap with the given date
+        const { data, error } = await getSupabaseClient()
+            .from('mentor_blocks')
+            .select('*')
+            .eq('mentor_id', mentor_id);
+
+        if (error) {
+            console.error('Error getting mentor blocks:', error);
+            throw error;
+        }
+
+        return data || [];
+
+    } catch (error) {
+        console.error('Error in getMentorBlock:', error);
+        throw error;
+    }
+}
+
+export async function deleteMentorBlock(mentor_id: string, block_id: string): Promise<void> {
+    try {
+        // Delete block with the given ID
+        const { error } = await getSupabaseClient()
+            .from('mentor_blocks')
+            .delete()
+            .eq('mentor_id', mentor_id)
+            .eq('id', block_id);
+
+        if (error) {
+            // If the error is not a "not found" error, then throw it
+            if (!error.message.includes('not found')) {
+                console.error('Error deleting mentor block:', error);
+                throw error;
+            }
+            // Otherwise, ignore the error (block already deleted)
+            console.log(`Block ${block_id} already deleted or doesn't exist`);
+        }
+
+    } catch (error) {
+        // Only throw if it's not a "not found" error
+        if (error instanceof Error && !error.message.includes('not found')) {
+            console.error('Error in deleteMentorBlock:', error);
+            throw error;
+        }
+    }
+}
