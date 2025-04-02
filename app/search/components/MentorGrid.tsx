@@ -3,63 +3,56 @@
 import { Card, Avatar, Tag, Button } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import styles from '../search.module.css';
+import { useEffect, useState } from 'react';
+
+interface Mentor {
+  user_id: string;
+  username: string;
+  email: string;
+  mentor: {
+    role: string;
+    industry: string;
+    user_id: string;
+    created_at: string;
+  };
+}
+
+interface ApiResponse {
+  code: number;
+  message: string;
+  data: Mentor[];
+}
 
 export default function MentorGrid() {
-  const mentors = [
-    {
-      id: 1,
-      name: 'John Doe',
-      title: 'Senior Software Engineer',
-      company: 'Google',
-      price: 100,
-      tags: ['React', 'Node.js', 'Python']
-    },
-    {
-      id: 2,
-      name: 'Jane Smith',
-      title: 'Product Manager',
-      company: 'Microsoft',
-      price: 150,
-      tags: ['Product Strategy', 'Agile', 'UX']
-    },
-    {
-      id: 3,
-      name: 'Mike Johnson',
-      title: 'Data Scientist',
-      company: 'Amazon',
-      price: 120,
-      tags: ['Machine Learning', 'Python', 'SQL']
-    },
-    {
-      id: 4,
-      name: 'Sarah Williams',
-      title: 'UX Designer',
-      company: 'Apple',
-      price: 90,
-      tags: ['UI/UX', 'Figma', 'User Research']
-    },
-    {
-      id: 5,
-      name: 'David Brown',
-      title: 'Frontend Engineer',
-      company: 'Facebook',
-      price: 110,
-      tags: ['React', 'TypeScript', 'CSS']
-    },
-    {
-      id: 6,
-      name: 'Emily Davis',
-      title: 'Backend Engineer',
-      company: 'Netflix',
-      price: 130,
-      tags: ['Java', 'Spring', 'Microservices']
-    }
-  ];
+  const [mentors, setMentors] = useState<Mentor[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMentors = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/api/mentor/list');
+        const data: ApiResponse = await response.json();
+        if (data.code === 200) {
+          setMentors(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching mentors:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMentors();
+  }, []);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className={styles.mentorGrid}>
       {mentors.map(mentor => (
-        <Card key={mentor.id} className={styles.mentorCard}>
+        <Card key={mentor.user_id} className={styles.mentorCard}>
           <div className={styles.avatarContainer}>
             <Avatar 
               size={80} 
@@ -69,21 +62,17 @@ export default function MentorGrid() {
           </div>
           
           <div className={styles.mentorInfo}>
-            <h3>{mentor.name}</h3>
-            <p>{mentor.title}</p>
-            <p>{mentor.company}</p>
+            <h3>{mentor.username}</h3>
+            <p>{mentor.mentor.role}</p>
+            <p>{mentor.mentor.industry}</p>
           </div>
           
           <div className={styles.mentorTags}>
-            {mentor.tags.map(tag => (
-              <Tag key={tag}>{tag}</Tag>
-            ))}
+            <Tag>{mentor.mentor.industry}</Tag>
           </div>
           
           <div className={styles.cardFooter}>
-            <span className={styles.mentorPrice}>
-              ${mentor.price}/hour
-            </span>
+            {/* Removed price since it's not in the API response */}
             <Button type="primary" className={styles.scheduleButton}>
               Schedule
             </Button>
@@ -92,4 +81,4 @@ export default function MentorGrid() {
       ))}
     </div>
   );
-} 
+}
