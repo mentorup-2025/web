@@ -112,7 +112,11 @@
 }
 
 .mentorInfo {
+<<<<<<< HEAD
   text-align: left;
+=======
+  text-align: center;
+>>>>>>> 5bde215 (WIP: Save progress in login/signup)
   margin-bottom: 16px;
 }
 
@@ -233,6 +237,7 @@
     opacity: 1;
     transform: translateY(0);
   }
+<<<<<<< HEAD
 }
 
 .noResults {
@@ -254,4 +259,6 @@
   color: rgba(0, 0, 0, 0.45);
   font-size: 16px;
   line-height: 1.5;
+=======
+>>>>>>> 5bde215 (WIP: Save progress in login/signup)
 } 

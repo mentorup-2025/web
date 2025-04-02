@@ -26,13 +26,21 @@ export default function Navbar() {
         <div className={styles.headerLeft}>
           <h1 className={styles.logo}>MentorUp</h1>
           
+<<<<<<< HEAD
           {/* <Search
+=======
+          <Search
+>>>>>>> 5bde215 (WIP: Save progress in login/signup)
             placeholder="Search mentors..."
             allowClear
             enterButton={<SearchOutlined />}
             size="large"
             className={styles.searchBar}
+<<<<<<< HEAD
           /> */}
+=======
+          />
+>>>>>>> 5bde215 (WIP: Save progress in login/signup)
         </div>
 
         <div className={styles.headerRight}>
