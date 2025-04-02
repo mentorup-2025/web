@@ -24,13 +24,7 @@ export default function Navbar() {
     <Header className={styles.header}>
       <div className={styles.headerContent}>
         <div className={styles.headerLeft}>
-          <Image 
-            src="/logo.png" 
-            alt="MentorUp Logo" 
-            width={120} 
-            height={40} 
-            className={styles.logo}
-          />
+          <h1 className={styles.logo}>MentorUp</h1>
           
           <Search
             placeholder="Search mentors..."
