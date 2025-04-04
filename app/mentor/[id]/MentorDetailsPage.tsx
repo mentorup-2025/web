@@ -4,6 +4,7 @@ import { Layout, Typography, Card, Tag } from 'antd';
 import { LinkedinFilled, GithubOutlined } from '@ant-design/icons';
 import Navbar from '@/components/Navbar';
 import styles from './mentorDetails.module.css';
+import MentorAvailability from '@/components/MentorAvailability';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -19,7 +20,8 @@ export default function MentorDetailsPage() {
     introduction: 'Senior Software Engineer with 8+ years of experience in full-stack development. Passionate about mentoring and helping others grow in their tech careers.',
     industry: 'Technology, E-commerce',
     yearsOfExperience: 8,
-    services: ['Resume Review', 'Mock Interview', 'Career Guidance', 'System Design', 'Coding Interview']
+    services: ['Resume Review', 'Mock Interview', 'Career Guidance', 'System Design', 'Coding Interview'],
+    user_id: '93137255-d7ac-4219-90d9-a886ae987732'
   };
 
   return (
@@ -82,9 +84,7 @@ export default function MentorDetailsPage() {
 
             {/* Right Section - 1/3 width */}
             <div className={styles.rightSection}>
-              <Card title="Mentor's Availability" className={styles.availabilityCard}>
-                <p>Calendar and booking functionality coming soon...</p>
-              </Card>
+              <MentorAvailability mentorId={mentor.user_id} />
             </div>
           </div>
         </div>

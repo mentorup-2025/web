@@ -1,0 +1,56 @@
+.availabilityCard {
+  position: sticky;
+  top: 88px;
+}
+
+.availabilityDot {
+  width: 8px;
+  height: 8px;
+  background-color: #1890ff;
+  border-radius: 50%;
+  margin: 4px auto;
+}
+
+.timeSlots {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+
+.timeSlot {
+  width: 100%;
+  text-align: center;
+  cursor: pointer;
+  padding: 8px 12px;
+  margin: 4px 0;
+  border-radius: 6px;
+  border: 1px solid #e6e6e6;
+  transition: all 0.3s;
+  background-color: #fafafa;
+}
+
+.timeSlot:hover {
+  background-color: #e6f7ff;
+  border-color: #91d5ff;
+}
+
+.timeSlot.selected {
+  background-color: #e6f7ff;
+  border-color: #1890ff;
+  color: #1890ff;
+}
+
+.scheduleButton {
+  margin-top: 16px;
+  background-color: #1890ff;
+}
+
+.scheduleButton:disabled {
+  background-color: #f5f5f5;
+  color: rgba(0, 0, 0, 0.25);
+}
+
+.calendarHeader {
+  padding: 8px;
+}
