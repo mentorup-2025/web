@@ -1,6 +1,7 @@
 'use client';
 
 import { Card, Avatar, Tag, Button } from 'antd';
+import Link from 'next/link';
 import { UserOutlined } from '@ant-design/icons';
 import styles from '../search.module.css';
 import { useEffect, useState } from 'react';
@@ -73,9 +74,11 @@ export default function MentorGrid() {
           
           <div className={styles.cardFooter}>
             {/* Removed price since it's not in the API response */}
-            <Button type="primary" className={styles.scheduleButton}>
-              Schedule
-            </Button>
+            <Link href={`/mentor/${mentor.user_id}`}>
+              <Button type="primary" className={styles.scheduleButton}>
+                Schedule
+              </Button>
+            </Link>
           </div>
         </Card>
       ))}
