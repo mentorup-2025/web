@@ -2,7 +2,7 @@
 
 import { Layout } from 'antd';
 import styles from './search.module.css';
-import Navbar from './components/Navbar';
+import Navbar from '../components/Navbar';
 import SearchFilters from './components/SearchFilters';
 import MentorGrid from './components/MentorGrid';
 

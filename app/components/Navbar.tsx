@@ -3,7 +3,7 @@
 import { Layout, Input, Button, Dropdown, Avatar } from 'antd';
 import { UserOutlined, SearchOutlined } from '@ant-design/icons';
 import Image from 'next/image';
-import styles from '../search.module.css';
+import styles from './navbar.module.css';
 
 const { Header } = Layout;
 const { Search } = Input;
@@ -25,14 +25,6 @@ export default function Navbar() {
       <div className={styles.headerContent}>
         <div className={styles.headerLeft}>
           <h1 className={styles.logo}>MentorUp</h1>
-          
-          {/* <Search
-            placeholder="Search mentors..."
-            allowClear
-            enterButton={<SearchOutlined />}
-            size="large"
-            className={styles.searchBar}
-          /> */}
         </div>
 
         <div className={styles.headerRight}>
