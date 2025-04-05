@@ -2,9 +2,9 @@
 
 import { Layout, Typography, Card, Tag } from 'antd';
 import { LinkedinFilled, GithubOutlined } from '@ant-design/icons';
-import Navbar from '@/components/Navbar';
+import Navbar from '../../components/Navbar';
 import styles from './mentorDetails.module.css';
-import MentorAvailability from '@/components/MentorAvailability';
+import MentorAvailability from '../../components/MentorAvailability';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
