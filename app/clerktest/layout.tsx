@@ -8,7 +8,6 @@ import {
   UserButton,
 } from '@clerk/nextjs'
 import { GeistSans, GeistMono } from 'geist/font'
-import './globals.css'
 
 const geistSans = GeistSans
 const geistMono = GeistMono
