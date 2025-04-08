@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import Link from 'next/link'
-
+import ResumeUpload from '@/components/ResumeUpload' // 路径根据你项目实际位置调整
 // Initialize Stripe outside of component to avoid recreating it on each render
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
@@ -11,6 +11,7 @@ const stripePromise = loadStripe(
 export default function Home() {
   const [amount, setAmount] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showUploader, setShowUploader] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -107,6 +108,12 @@ export default function Home() {
                 >
                   Checkout Cancel
                 </Link>
+                <Link
+                    href="/resume"
+                    className="block w-full text-center px-4 py-2 border border-indigo-500 text-indigo-500 rounded-md hover:bg-indigo-50 transition-colors"
+                >
+                  Upload Resume
+                </Link>
               </div>
             </div>
           </div>
@@ -119,6 +126,7 @@ export default function Home() {
             Create an account or log in to access all features
           </p>
         </div>
+
       </main>
     </div>
   )
