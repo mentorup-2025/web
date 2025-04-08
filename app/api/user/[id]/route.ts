@@ -1,4 +1,4 @@
-import { respJson } from '@/app/lib/resp';
+import { respJson, respErr } from '@/app/lib/resp';
 import { getUser } from '@/app/lib/user';
 
 export async function GET(
@@ -6,21 +6,15 @@ export async function GET(
     { params }: { params: { id: string } }
 ) {
     try {
-        const userPromise = getUser(params.id);
-
-        // Check user first while mentor loads in background
-        const user = await userPromise;
+        const user = await getUser(params.id);
         if (!user) {
-            return respJson(404, 'User not found');
+            return respErr('User not found');
         }
 
-
-        // Remove password_hash from response
-        const { password_hash, ...safeUser } = user;
-        return respJson(200, 'User found', safeUser);
+        return respJson(200, 'User found', user);
 
     } catch (error) {
-        console.error('Error fetching user:', error);
-        return respJson(500, 'Failed to fetch user');
+        console.error('Error in get user:', error);
+        return respErr('Failed to get user');
     }
 } 

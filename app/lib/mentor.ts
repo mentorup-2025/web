@@ -1,21 +1,32 @@
 import { getSupabaseClient } from '../services/supabase';
-import { Mentor } from '../types/mentor';
+import { Mentor, UpsertMentorInput } from '@/app/types';
 
-export async function upsertMentor(mentor: Mentor): Promise<Mentor> {
+// Helper to convert UpsertMentorInput to Mentor
+export const createMentorData = (
+    userId: string, 
+    input: UpsertMentorInput,
+    existing?: boolean
+): Mentor => ({
+    user_id: userId,
+    title: input.title,
+    company: input.company,
+    years_of_experience: input.years_of_experience,
+    years_of_experience_recorded_date: input.years_of_experience_recorded_date,
+    introduction: input.introduction,
+    industries: input.industries,
+    services: input.services || '',
+    created_at: existing ? new Date().toISOString() : new Date().toISOString()
+});
+
+export async function upsertMentor(userId: string, input: UpsertMentorInput): Promise<Mentor> {
     try {
-        // Check if mentor exists
         const { data: existing } = await getSupabaseClient()
             .from('mentors')
-            .select('user_id')
-            .eq('user_id', mentor.user_id)
+            .select('*')
+            .eq('user_id', userId)
             .single();
 
-        const mentorData = {
-            user_id: mentor.user_id,
-            role: mentor.role,
-            industry: mentor.industry,
-            ...(existing ? {} : { created_at: new Date().toISOString() })
-        };
+        const mentorData = createMentorData(userId, input, !!existing);
 
         const { data, error } = await getSupabaseClient()
             .from('mentors')
@@ -23,16 +34,8 @@ export async function upsertMentor(mentor: Mentor): Promise<Mentor> {
             .select()
             .single();
 
-        if (error) {
-            console.error('Error upserting mentor:', error);
-            throw error;
-        }
-
-        if (!data) {
-            throw new Error('Failed to upsert mentor');
-        }
-
-        return data as Mentor;
+        if (error) throw error;
+        return data;
 
     } catch (error) {
         console.error('Error in upsertMentor:', error);

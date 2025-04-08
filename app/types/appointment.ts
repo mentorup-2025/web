@@ -20,8 +20,6 @@ export interface CreateAppointmentInput {
 }
 
 export interface ReserveAppointmentResponse {
-    hold_id: string;
     appointment_id: string;
-    expires_at: string;      // UTC timestamp
-    utc_time_slot: string;   // PostgreSQL tstzrange
+    status: string;
 }

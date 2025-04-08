@@ -4,18 +4,21 @@ export interface User {
   id: string;           // Unique identifier
   username: string;     // User's chosen username
   email: string;        // User's email address
-  password_hash: string; // Hashed password (never store plain passwords)
   created_at: string;   // ISO timestamp
+  github?: string;      // Optional GitHub profile
+  linkedin?: string;    // Optional LinkedIn profile
+  resume?: string;      // Optional resume URL
   mentor?: Mentor | null; // Optional mentor ID, defaults to null
 }
 
 export interface CreateUserInput {
   username: string;
   email: string;
-  password: string;    // Plain password (will be hashed before storage)
+  github?: string;      // Optional GitHub profile
+  linkedin?: string;    // Optional LinkedIn profile
+  resume?: string;      // Optional resume URL
 }
 
 export interface UserCredentials {
   email: string;
-  password: string;
-} 
+}
