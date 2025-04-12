@@ -495,4 +495,88 @@ paths:
                 - to
                 - subject
                 - type
-                - message 
+                - message
+              properties:
+                from:
+                  type: string
+                  format: email
+                  description: Sender email address
+                  example: "contactus@mentorup.info"
+                to:
+                  type: string
+                  format: email
+                  description: Recipient email address
+                  example: "user@example.com"
+                subject:
+                  type: string
+                  description: Email subject line
+                  example: "Appointment Confirmation - Mentorship Session"
+                type:
+                  type: string
+                  enum: ["MenteeApptConfirmationEmail"]
+                  description: Email template type
+                  example: "MenteeApptConfirmationEmail"
+                message:
+                  type: object
+                  description: Template-specific data
+                  required:
+                    - userName
+                    - serviceName
+                    - price
+                    - mentorName
+                    - appointmentDate
+                    - appointmentTime
+                  properties:
+                    userName:
+                      type: string
+                      example: "John Doe"
+                    serviceName:
+                      type: string
+                      example: "Career Consultation"
+                    price:
+                      type: number
+                      example: 150
+                    mentorName:
+                      type: string
+                      example: "Jane Smith"
+                    appointmentDate:
+                      type: string
+                      format: date
+                      example: "2024-03-20"
+                    appointmentTime:
+                      type: string
+                      format: time
+                      example: "14:00"
+      responses:
+        '200':
+          description: Email sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: "ok"
+                  data:
+                    type: object
+                    nullable: true
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: -1
+                  message:
+                    type: string
+                    example: "Missing required fields: from, to, subject, type, message"
+                  data:
+                    type: object
+                    nullable: true 
