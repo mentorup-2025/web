@@ -1,5 +1,5 @@
-import { respJson } from '@/app/lib/resp';
-import { listMentorUsers } from '@/app/lib/user';
+import { respJson } from '@/lib/resp';
+import { listMentorUsers } from '@/lib/user';
 
 export async function GET() {
     try {
