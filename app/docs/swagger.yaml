@@ -475,3 +475,24 @@ paths:
       responses:
         200:
           description: Checkout session created 
+
+  /api/email:
+    post:
+      summary: Send an email using a template
+      description: |
+        Sends an email using a specified template with provided data.
+        Currently supports MenteeApptConfirmationEmail template.
+      tags:
+        - Email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - from
+                - to
+                - subject
+                - type
+                - message 
