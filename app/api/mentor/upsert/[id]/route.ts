@@ -1,27 +1,20 @@
-import { respJson } from '@/app/lib/resp';
+import { respErr, respJson } from '@/app/lib/resp';
 import { upsertMentor } from '@/app/lib/mentor';
 import { Mentor, UpsertMentorInput } from '@/app/types';
+import { NextResponse } from 'next/server';
 
 export async function POST(
     request: Request,
     { params }: { params: { id: string } }
 ) {
     try {
-        const input: UpsertMentorInput = await request.json();
+        const body = await request.json();
+        console.log('API received body:', body);
         
-        // Construct Mentor object
-        const mentor: Mentor = {
-            user_id: params.id,
-            role: input.role,
-            industry: input.industry
-        };
-
-        const result = await upsertMentor( mentor);
-        
-        return respJson(200, 'Mentor updated successfully', result);
-
+        const mentor = await upsertMentor(params.id, body);
+        return respJson(200, 'Mentor updated successfully', mentor);
     } catch (error) {
-        console.error('Error upserting mentor:', error);
-        return respJson(500, 'Failed to update mentor');
+        console.error('API error:', error);
+        return respErr("Failed to upsert mentor");
     }
 } 

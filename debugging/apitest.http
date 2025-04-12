@@ -29,15 +29,36 @@ Content-Type: application/json
 GET {{baseUri}}/api/user/93137255-d7ac-4219-90d9-a886ae987733
 Content-Type: application/json
 
-### Test Upsert Mentor
-POST {{baseUri}}/api/mentor/upsert/6972686b-6156-4d21-950a-821093ffd068
+### Test Create User
+POST {{baseUri}}/api/user/insert
 Content-Type: application/json
 
 {
-    "role": "Senior Software Engineer",
-    "industry": "Technology"
+    "username": "testmentor",
+    "email": "mentor@example.com",
+    "github": "https://github.com/testmentor",
+    "linkedin": "https://linkedin.com/in/testmentor",
+    "resume": "https://resume.com/testmentor"
 }
 
+### Test Upsert Mentor
+POST {{baseUri}}/api/mentor/upsert/93137255-d7ac-4219-90d9-a886ae987732
+Content-Type: application/json
+
+{
+    "title": "Senior Software Engineer",
+    "company": "Tech Corp",
+    "years_of_experience": 8,
+    "years_of_experience_recorded_date": "2025-04-07T00:00:00Z",
+    "introduction": "Experienced software engineer specializing in web development",
+    "industries": ["Technology", "E-commerce", "Finance"],
+    "services": {
+        "consultation": 100,
+        "resume_review": 50,
+        "mock_interview": 150,
+        "career_guidance": 80
+    }
+}
 
 ### Test List All Mentors
 GET {{baseUri}}/api/mentor/list

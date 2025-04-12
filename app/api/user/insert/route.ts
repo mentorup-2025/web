@@ -1,15 +1,12 @@
 import {  respJson } from '@/app/lib/resp';
-import { saveUser } from '@/app/lib/user';
+import { createUser } from '@/app/lib/user';
 import { CreateUserInput } from '@/app/types';
 
 export async function POST(request: Request) {
     try {
         const input: CreateUserInput = await request.json();
         
-        const user = await saveUser(input);
-        
-        // Remove password_hash from response
-        const { password_hash, ...safeUser } = user;
+        const user = await createUser(input);
 
         return respJson(201, 'user created successfully', user)
 
