@@ -1,39 +1,44 @@
-import { Resend } from 'resend';
+import { createElement } from 'react';
+import { getResendClient } from '@/services/resend';
+import { EmailTemplate } from '@/types/email';
+import MenteeApptConfirmationEmail, { PaymentConfirmationProps } from '@/types/email_template/mentee_appt_confirmation';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = getResendClient();
 
-export async function sendPaymentConfirmationEmail(
-  customerEmail: string,
-  amount: number,
-  sessionId: string
+const getEmailComponent = (type: EmailTemplate, data: Record<string, any>) => {
+  switch (type) {
+    case EmailTemplate.MENTEE_APPOINTMENT_CONFIRMATION.toString():
+      return createElement(MenteeApptConfirmationEmail, data as PaymentConfirmationProps);
+    default:
+      throw new Error(`Unknown email template: ${type}`);
+  }
+};
+
+export async function sendEmail(
+  from: string,
+  to: string,
+  subject: string,
+  type: EmailTemplate,
+  message: Record<string, any>
 ) {
   try {
-    console.log('Attempting to send email with Resend...', {
-      to: customerEmail,
-      amount,
-      sessionId
+    const emailComponent = getEmailComponent(type, message);
+
+    const { data, error } = await resend.emails.send({
+      from,
+      to,
+      subject,
+      react: emailComponent
     });
 
-    const data = await resend.emails.send({
-      from: 'onboarding@resend.dev', // Use Resend's default sending domain for testing
-      to: customerEmail,
-      subject: 'Payment Confirmation - MentorUp',
-      html: `
-        <h1>Thank you for your payment!</h1>
-        <p>Your payment of $${(amount / 100).toFixed(2)} has been successfully processed.</p>
-        <p>Transaction ID: ${sessionId}</p>
-        <br/>
-        <p>If you have any questions, please don't hesitate to contact us.</p>
-        <br/>
-        <p>Best regards,</p>
-        <p>The MentorUp Team</p>
-      `,
-    });
+    if (error) {
+      throw new Error(`Resend API error: ${error.message}`);
+    }
 
-    console.log('Email sent successfully:', data);
     return data;
+
   } catch (error) {
     console.error('Error sending email:', error);
-    throw error; // Re-throw to handle in webhook
+    throw error instanceof Error ? error : new Error('Unknown error sending email');
   }
-} 
+}
