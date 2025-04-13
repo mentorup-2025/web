@@ -1,5 +1,6 @@
+import { CreateAppointmentInput, ReserveAppointmentResponse } from '@/types';
 import { getSupabaseClient } from '../services/supabase';
-import { ReserveAppointmentResponse, CreateAppointmentInput } from '@/app/types';
+import { respOk } from './resp';
 
 
 export async function createAppointment(input: CreateAppointmentInput): Promise<ReserveAppointmentResponse> {
@@ -39,4 +40,28 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
         console.error('Error in createAppointment:', error);
         throw error;
     }
+}
+
+export async function confirmAppointment(
+  holdId: string,
+  appointmentId: string
+) {
+  try {
+    const { data, error } = await getSupabaseClient()
+      .rpc('confirm_booking', {
+        hold_id: holdId,
+        appointment_id: appointmentId
+      });
+
+    if (error) {
+      console.error('Error confirming booking:', error);
+      throw error;
+    }
+
+     return respOk;
+
+  } catch (error) {
+    console.error('Error in confirmBooking:', error);
+    throw error;
+  }
 }
