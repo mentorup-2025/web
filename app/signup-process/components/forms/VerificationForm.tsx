@@ -67,7 +67,7 @@ export default function VerificationForm({ formData, onFormChange, onNext }: Ver
           label="LinkedIn Profile Link"
           name="linkedinProfile"
           rules={[
-            { required: true, message: 'Please input your LinkedIn profile link!' },
+            { required: false, message: 'Please input your LinkedIn profile link!' },
             { type: 'url', message: 'Please enter a valid URL!' }
           ]}
         >

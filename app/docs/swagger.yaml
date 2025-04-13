@@ -174,16 +174,53 @@ paths:
             schema:
               type: object
               required:
-                - role
-                - industry
+                - title
+                - company
+                - years_of_experience
+                - years_of_experience_recorded_date
+                - introduction
+                - industries
+                - services
               properties:
-                role:
+                title:
                   type: string
-                industry:
+                  description: Mentor's job title
+                company:
                   type: string
+                  description: Mentor's current company
+                years_of_experience:
+                  type: integer
+                  description: Number of years of experience
+                years_of_experience_recorded_date:
+                  type: string
+                  format: date-time
+                  description: Date when years of experience was recorded
+                introduction:
+                  type: string
+                  description: Mentor's self introduction
+                industries:
+                  type: array
+                  items:
+                    type: string
+                  description: List of industries the mentor specializes in
+                services:
+                  type: object
+                  additionalProperties:
+                    type: number
+                  description: Map of service names to their prices
               example:
-                role: "Senior Software Engineer"
-                industry: "Technology"
+                title: "Senior Software Engineer"
+                company: "Tech Corp"
+                years_of_experience: 8
+                years_of_experience_recorded_date: "2025-04-07T00:00:00Z"
+                introduction: "Experienced software engineer specializing in web development"
+                industries: ["Technology", "E-commerce", "Finance"]
+                services: {
+                  "consultation": 100,
+                  "resume_review": 50,
+                  "mock_interview": 150,
+                  "career_guidance": 80
+                }
       responses:
         200:
           description: Mentor profile updated successfully

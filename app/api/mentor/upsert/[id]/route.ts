@@ -1,6 +1,6 @@
-import { respErr, respJson } from '@/app/lib/resp';
-import { upsertMentor } from '@/app/lib/mentor';
-import { Mentor, UpsertMentorInput } from '@/app/types';
+import { respErr, respJson } from '@/lib/resp';
+import { upsertMentor } from '@/lib/mentor';
+import { Mentor, UpsertMentorInput } from '@/types';
 import { NextResponse } from 'next/server';
 
 export async function POST(
