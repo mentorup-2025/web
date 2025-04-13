@@ -2,27 +2,83 @@
 
 import { Layout, Collapse, Checkbox, Slider, Button } from 'antd';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from '../search.module.css';
 
 const { Sider } = Layout;
 const { Panel } = Collapse;
 
-export default function SearchFilters() {
+interface SearchFiltersProps {
+  onFiltersChange: (filters: {
+    jobTitle?: string;
+    industries?: string[];
+    minExperience?: number;
+    maxExperience?: number;
+    minPrice?: number;
+    maxPrice?: number;
+  }) => void;
+}
+
+export default function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
   const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    jobTitle: '',
+    industries: [] as string[],
+    minExperience: 0,
+    maxExperience: 50,
+    minPrice: 0,
+    maxPrice: 500
+  });
 
   const jobTitles = ['Software Engineer', 'Product Manager', 'Data Scientist', 'UX Designer'];
-  const industries = ['Technology', 'Finance', 'Healthcare', 'Education'];
+  const industries = ['Technology', 'Finance', 'Healthcare', 'Education', 'E-commerce'];
   const experiences = ['1-3 years', '3-5 years', '5-10 years', '10+ years'];
   const languages = ['English', 'Spanish', 'Chinese', 'French', 'German'];
   const availability = ['Weekdays', 'Weekends', 'Evenings', 'Mornings'];
   const mentorshipTypes = ['Career Guidance', 'Technical Skills', 'Leadership', 'Interview Prep'];
 
+  useEffect(() => {
+    onFiltersChange(filters);
+  }, [filters, onFiltersChange]);
+
+  const handleJobTitleChange = (title: string) => {
+    setFilters(prev => ({
+      ...prev,
+      jobTitle: title
+    }));
+  };
+
+  const handleIndustriesChange = (selectedIndustries: string[]) => {
+    setFilters(prev => ({
+      ...prev,
+      industries: selectedIndustries
+    }));
+  };
+
+  const handleExperienceChange = (value: [number, number]) => {
+    setFilters(prev => ({
+      ...prev,
+      minExperience: value[0],
+      maxExperience: value[1]
+    }));
+  };
+
+  const handlePriceChange = (value: [number, number]) => {
+    setFilters(prev => ({
+      ...prev,
+      minPrice: value[0],
+      maxPrice: value[1]
+    }));
+  };
+
   return (
     <Sider width={280} className={styles.sider}>
       <Collapse defaultActiveKey={['jobTitle']} ghost>
         <Panel header="Job Title" key="jobTitle">
-          <Checkbox.Group className={styles.checkboxGroup}>
+          <Checkbox.Group 
+            className={styles.checkboxGroup}
+            onChange={(values) => handleJobTitleChange(values[0] as string)}
+          >
             {jobTitles.map(title => (
               <Checkbox key={title} value={title}>
                 {title}
@@ -32,7 +88,10 @@ export default function SearchFilters() {
         </Panel>
 
         <Panel header="Industry" key="industry">
-          <Checkbox.Group className={styles.checkboxGroup}>
+          <Checkbox.Group 
+            className={styles.checkboxGroup}
+            onChange={(values) => handleIndustriesChange(values as string[])}
+          >
             {industries.map(industry => (
               <Checkbox key={industry} value={industry}>
                 {industry}
@@ -42,13 +101,21 @@ export default function SearchFilters() {
         </Panel>
 
         <Panel header="Years of Experience" key="experience">
-          <Checkbox.Group className={styles.checkboxGroup}>
-            {experiences.map(exp => (
-              <Checkbox key={exp} value={exp}>
-                {exp}
-              </Checkbox>
-            ))}
-          </Checkbox.Group>
+          <Slider
+            range
+            min={0}
+            max={50}
+            defaultValue={[0, 50]}
+            onChange={handleExperienceChange}
+            marks={{
+              0: '0',
+              10: '10',
+              20: '20',
+              30: '30',
+              40: '40',
+              50: '50+'
+            }}
+          />
         </Panel>
 
         <Panel header="Price Range" key="price">
@@ -56,10 +123,15 @@ export default function SearchFilters() {
             range
             min={0}
             max={500}
-            defaultValue={[50, 200]}
+            defaultValue={[0, 500]}
+            onChange={handlePriceChange}
             marks={{
               0: '$0',
-              500: '$500'
+              100: '$100',
+              200: '$200',
+              300: '$300',
+              400: '$400',
+              500: '$500+'
             }}
           />
         </Panel>
