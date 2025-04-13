@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, Avatar, Tag, Button } from 'antd';
+import { Card, Avatar, Tag, Button, Empty } from 'antd';
 import Link from 'next/link';
 import { UserOutlined } from '@ant-design/icons';
 import styles from '../search.module.css';
@@ -112,6 +112,21 @@ export default function MentorGrid({ filters }: MentorGridProps) {
 
   if (loading) {
     return <div>Loading...</div>;
+  }
+
+  if (filteredMentors.length === 0) {
+    return (
+      <div className={styles.noResults}>
+        <Empty
+          description={
+            <span>
+              No mentors found matching your criteria. <br />
+              Please try adjusting your filters.
+            </span>
+          }
+        />
+      </div>
+    );
   }
 
   return (

@@ -2,7 +2,7 @@
 
 import { Layout, Collapse, Checkbox, Slider, Button } from 'antd';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import styles from '../search.module.css';
 
 const { Sider } = Layout;
@@ -24,10 +24,10 @@ export default function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
   const [filters, setFilters] = useState({
     jobTitle: '',
     industries: [] as string[],
-    minExperience: 0,
-    maxExperience: 50,
+    minExperience: 1,
+    maxExperience: 20,
     minPrice: 0,
-    maxPrice: 500
+    maxPrice: 200
   });
 
   const jobTitles = ['Software Engineer', 'Product Manager', 'Data Scientist', 'UX Designer'];
@@ -37,9 +37,15 @@ export default function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
   const availability = ['Weekdays', 'Weekends', 'Evenings', 'Mornings'];
   const mentorshipTypes = ['Career Guidance', 'Technical Skills', 'Leadership', 'Interview Prep'];
 
+  // Memoize the filter change handler
+  const handleFiltersChange = useCallback((newFilters: typeof filters) => {
+    onFiltersChange(newFilters);
+  }, [onFiltersChange]);
+
+  // Only update parent when filters change
   useEffect(() => {
-    onFiltersChange(filters);
-  }, [filters, onFiltersChange]);
+    handleFiltersChange(filters);
+  }, [filters, handleFiltersChange]);
 
   const handleJobTitleChange = (title: string) => {
     setFilters(prev => ({
@@ -55,7 +61,7 @@ export default function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
     }));
   };
 
-  const handleExperienceChange = (value: [number, number]) => {
+  const handleExperienceChange = (value: number[]) => {
     setFilters(prev => ({
       ...prev,
       minExperience: value[0],
@@ -63,7 +69,7 @@ export default function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
     }));
   };
 
-  const handlePriceChange = (value: [number, number]) => {
+  const handlePriceChange = (value: number[]) => {
     setFilters(prev => ({
       ...prev,
       minPrice: value[0],
@@ -103,17 +109,16 @@ export default function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
         <Panel header="Years of Experience" key="experience">
           <Slider
             range
-            min={0}
-            max={50}
-            defaultValue={[0, 50]}
+            min={1}
+            max={20}
+            defaultValue={[1, 20]}
             onChange={handleExperienceChange}
             marks={{
-              0: '0',
+              1: '1',
+              5: '5',
               10: '10',
-              20: '20',
-              30: '30',
-              40: '40',
-              50: '50+'
+              15: '15',
+              20: '20+'
             }}
           />
         </Panel>
@@ -122,16 +127,15 @@ export default function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
           <Slider
             range
             min={0}
-            max={500}
-            defaultValue={[0, 500]}
+            max={200}
+            defaultValue={[0, 200]}
             onChange={handlePriceChange}
             marks={{
               0: '$0',
+              50: '$50',
               100: '$100',
-              200: '$200',
-              300: '$300',
-              400: '$400',
-              500: '$500+'
+              150: '$150',
+              200: '$200+'
             }}
           />
         </Panel>
