@@ -11,8 +11,12 @@ interface Mentor {
   username: string;
   email: string;
   mentor: {
-    role: string;
-    industry: string;
+    title: string;
+    introduction: string;
+    company: string;
+    years_of_experience: number;
+    industries: string[];
+    services: string[];
     user_id: string;
     created_at: string;
   };
@@ -52,8 +56,8 @@ export default function MentorGrid() {
 
   return (
     <div className={styles.mentorGrid}>
-      {mentors.map(mentor => (
-        <Card key={mentor.user_id} className={styles.mentorCard}>
+      {mentors.map(user => (
+        <Card key={user.user_id} className={styles.mentorCard}>
           <div className={styles.avatarContainer}>
             <Avatar 
               size={80} 
@@ -63,18 +67,18 @@ export default function MentorGrid() {
           </div>
           
           <div className={styles.mentorInfo}>
-            <h3>{mentor.username}</h3>
-            <p>{mentor.mentor.role}</p>
-            <p>{mentor.mentor.industry}</p>
+            <h3>{user.username}</h3>
+            <p>{user.mentor.title} at {user.mentor.company}</p>
+            <p>{user.mentor.years_of_experience} YOE</p>
           </div>
           
           <div className={styles.mentorTags}>
-            <Tag>{mentor.mentor.industry}</Tag>
+            {user.mentor.industries.map(industry=> <Tag>{industry}</Tag>)}
           </div>
           
           <div className={styles.cardFooter}>
             {/* Removed price since it's not in the API response */}
-            <Link href={`/mentor/${mentor.user_id}`}>
+            <Link href={`/mentor/${user.user_id}`}>
               <Button type="primary" className={styles.scheduleButton}>
                 Schedule
               </Button>
