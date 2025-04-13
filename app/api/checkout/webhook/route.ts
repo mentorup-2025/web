@@ -1,7 +1,8 @@
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { sendPaymentConfirmationEmail } from '@/app/lib/email';
+import { sendEmail } from '@/lib/email';
+import { EmailTemplate } from '@/types/email';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY! || "");
 
@@ -31,25 +32,28 @@ export async function POST(request: Request) {
     switch (event.type) {
       case 'checkout.session.completed':
         const session = event.data.object as Stripe.Checkout.Session;
-        console.log('this is the customer details', session.customer_details);
-        
         const customerEmail = session.customer_email || session.customer_details?.email;
         
-        // Send confirmation email
         if (customerEmail) {
           try {
-            const emailResult = await sendPaymentConfirmationEmail(
+            await sendEmail(
+              'appointments@mentorup.com',
               customerEmail,
-              session.amount_total || 0,
-              session.id
+              'Payment Confirmation - MentorUp',
+              EmailTemplate.MENTEE_APPOINTMENT_CONFIRMATION,
+              {
+                userName: session.customer_details?.name || 'Valued Customer',
+                serviceName: "Mentorship Session",
+                price: session.amount_total! / 100,
+                mentorName: "Your Mentor",
+                appointmentDate: "2024-03-20",
+                appointmentTime: "14:00"
+              }
             );
-            console.log('Confirmation email sent successfully:', emailResult);
+            console.log('Confirmation email sent successfully to:', customerEmail);
           } catch (emailError) {
             console.error('Failed to send confirmation email:', emailError);
-            // Don't throw here to ensure webhook still returns 200
           }
-        } else {
-          console.log('No customer email found in session:', session.id);
         }
         break;
       

@@ -146,3 +146,44 @@ Content-Type: application/json
 
 ### Test View Mentor Daily Availability
 GET {{baseUri}}/api/availability/93137255-d7ac-4219-90d9-a886ae987732/viewdaily?date=2025-03-17
+
+### Test Email API with Appointment Confirmation
+POST {{baseUri}}/api/email
+Content-Type: application/json
+
+{
+  "from": "contactus@mentorup.info",
+  "to": "bensonguan10@gmail.com",
+  "subject": "Appointment Confirmation - Mentorship Session",
+  "type": "MenteeApptConfirmationEmail",
+  "message": {
+    "userName": "John Doe",
+    "serviceName": "Career Consultation",
+    "price": 150,
+    "mentorName": "Jane Smith",
+    "appointmentDate": "2024-03-20",
+    "appointmentTime": "14:00"
+  }
+}
+
+### Test Email API Error Cases
+# Missing required fields
+POST {{baseUri}}/api/email
+Content-Type: application/json
+
+{
+  "from": "appointments@mentorup.com",
+  "to": "test@example.com"
+}
+
+### Test Email API Error Cases
+# Invalid email format
+POST {{baseUri}}/api/email
+Content-Type: application/json
+
+{
+  "from": "invalid-email",
+  "to": "test@example.com",
+  "subject": "Test",
+  "message": {}
+}
