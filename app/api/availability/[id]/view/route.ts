@@ -1,6 +1,6 @@
-import { respData, respErr } from '@/app/lib/resp';
-import { getUser } from '@/app/lib/user';
-import { getMentorAvailability } from '@/app/lib/availability';
+ import { respData, respErr } from '@/lib/resp';
+import { getUser } from '@/lib/user';
+import { getMentorAvailability } from '@/lib/availability';
 
 export async function GET(
     request: Request,

@@ -1,5 +1,5 @@
-import { respJson, respErr } from '@/app/lib/resp';
-import { getUser } from '@/app/lib/user';
+import { respJson, respErr } from '@/lib/resp';
+import { getUser } from '@/lib/user';
 
 export async function GET(
     request: Request,

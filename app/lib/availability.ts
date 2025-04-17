@@ -1,5 +1,5 @@
 import { getSupabaseClient } from '../services/supabase';
-import { BlockAvailabilityInput, isValidAvailability, SetAvailabilityInput } from '@/app/types';
+import { BlockAvailabilityInput, isValidAvailability, SetAvailabilityInput } from '@/types';
 
 export async function setRegularAvailability(input: SetAvailabilityInput): Promise<void> {
     try {

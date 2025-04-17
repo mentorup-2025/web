@@ -1,7 +1,7 @@
-import { respData, respErr } from '@/app/lib/resp';
-import { createAppointment } from '@/app/lib/appointment';
-import { CreateAppointmentInput } from '@/app/types';
-import { getUser } from '@/app/lib/user';
+ import { respData, respErr } from '@/lib/resp';
+import { createAppointment } from '@/lib/appointment';
+import { CreateAppointmentInput } from '@/types';
+import { getUser } from '@/lib/user';
 
 export async function POST(request: Request) {
     try {

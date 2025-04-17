@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { getSupabaseClient } from '../services/supabase';
-import { User, CreateUserInput } from '@/app/types';
+import { User, CreateUserInput } from '@/types';
 
 export async function createUser(input: CreateUserInput): Promise<User> {
     try {

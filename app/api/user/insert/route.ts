@@ -1,6 +1,6 @@
-import {  respJson } from '@/app/lib/resp';
-import { createUser } from '@/app/lib/user';
-import { CreateUserInput } from '@/app/types';
+import {  respJson } from '@/lib/resp';
+import { createUser } from '@/lib/user';
+import { CreateUserInput } from '@/types';
 
 export async function POST(request: Request) {
     try {
