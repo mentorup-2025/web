@@ -1,5 +1,4 @@
- import { respData, respErr } from '@/lib/resp';
-import { getUser } from '@/lib/user';
+import { respData, respErr } from '@/lib/resp';
 import { deleteMentorBlock } from '@/lib/availability';
 import { DeleteAvailabilityInput } from '@/types';
 

@@ -1,7 +1,5 @@
-import { respErr, respJson } from '@/lib/resp';
 import { upsertMentor } from '@/lib/mentor';
-import { Mentor, UpsertMentorInput } from '@/types';
-import { NextResponse } from 'next/server';
+import { respErr, respJson } from '@/lib/resp';
 
 export async function POST(
     request: Request,
@@ -10,7 +8,7 @@ export async function POST(
     try {
         const body = await request.json();
         console.log('API received body:', body);
-        
+
         const mentor = await upsertMentor(params.id, body);
         return respJson(200, 'Mentor updated successfully', mentor);
     } catch (error) {
