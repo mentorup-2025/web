@@ -1,7 +1,7 @@
-import { respData, respErr } from '@/app/lib/resp';
-import { getUser } from '@/app/lib/user';
-import { blockAvailability } from '@/app/lib/availability';
-import { BlockAvailabilityInput } from '@/app/types';
+ import { respData, respErr } from '@/lib/resp';
+import { getUser } from '@/lib/user';
+import { blockAvailability } from '@/lib/availability';
+import { BlockAvailabilityInput } from '@/types';
 
 export async function POST(
     request: Request,

@@ -1,5 +1,5 @@
 import { getSupabaseClient } from '../services/supabase';
-import { Mentor, UpsertMentorInput } from '@/app/types';
+import { Mentor, UpsertMentorInput } from '@/types';
 
 // Helper to convert UpsertMentorInput to Mentor
 export const createMentorData = (

@@ -1,7 +1,7 @@
-import { respData, respErr } from '@/app/lib/resp';
-import { getUser } from '@/app/lib/user';
-import { deleteMentorBlock } from '@/app/lib/availability';
-import { DeleteAvailabilityInput } from '@/app/types';
+ import { respData, respErr } from '@/lib/resp';
+import { getUser } from '@/lib/user';
+import { deleteMentorBlock } from '@/lib/availability';
+import { DeleteAvailabilityInput } from '@/types';
 
 export async function POST(
     request: Request,

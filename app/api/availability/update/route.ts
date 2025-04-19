@@ -1,7 +1,7 @@
-import { respErr, respJson, respOk } from '@/app/lib/resp';
-import { setRegularAvailability } from '@/app/lib/availability';
-import { SetAvailabilityInput } from '@/app/types/availability';
-import { getUser } from '@/app/lib/user';
+import { respErr, respJson, respOk } from '@/lib/resp';
+import { setRegularAvailability } from '@/lib/availability';
+import { SetAvailabilityInput } from '@/types/availability';
+import { getUser } from '@/lib/user';
 
 export async function POST(request: Request) {
     try {
