@@ -1,6 +1,6 @@
+import { generateUploadUrl } from '@/lib/s3';
+import { getSupabaseClient } from '@/services/supabase';
 import { NextResponse } from 'next/server';
-import { generateUploadUrl } from '../../lib/s3';
-import { getSupabaseClient } from '../../services/supabase'; // 路径根据你项目结构调整
 
 export async function POST(request: Request) {
   try {

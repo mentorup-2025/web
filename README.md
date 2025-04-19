@@ -86,3 +86,17 @@ RESEND_API_KEY=re_bt8XZifJ_NfZK5vtDf1momEcdmEswCLYk
 NEXT_PUBLIC_SUPABASE_URL=https://bktwqkmnziitatemdecj.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrdHdxa21uemlpdGF0ZW1kZWNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE0MTQyOTksImV4cCI6MjA1Njk5MDI5OX0.5Oy7j_K3rB2IjxV8bMMPE5vp2hVhTI0yMD0z2wd2c9Y
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrdHdxa21uemlpdGF0ZW1kZWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MTQxNDI5OSwiZXhwIjoyMDU2OTkwMjk5fQ.mp9Nvhz583e-xH9ND4ldIXSiBSmAZsNmDMpOZAy7tlk
+
+## Local test of stripe backend
+
+首先需要安装ngrok来获得代理地址
+```
+brew install --cask ngrok
+```
+
+使用代理地址覆盖localhost
+```
+ngrok http 3000
+```
+
+把生成的代理地址，如https://82e9-2600-1700-6f0e-0-dd58-4ced-b17c-906a.ngrok-free.app，然后去stripe dashboard-developers-webhooks，把Webhook endpoints中原先的地址换成新生成的，保存

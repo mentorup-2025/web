@@ -1,91 +1,70 @@
 'use client';
 
-import {
-    CardElement,
-    useStripe,
-    useElements,
-} from '@stripe/react-stripe-js';
+import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { useState } from 'react';
+import { Button, message } from 'antd';
+import { supabase } from '../lib/supabaseClient';
 
-interface CheckoutFormProps {
-    amount: number;
-}
-
-export default function CheckoutForm({ amount }: CheckoutFormProps) {
+export default function CheckoutForm({ amount }: { amount: number }) {
     const stripe = useStripe();
     const elements = useElements();
-    const [error, setError] = useState<string | null>(null);
-    const [processing, setProcessing] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
 
         if (!stripe || !elements) return;
 
-        setProcessing(true);
-        setError(null);
+        setLoading(true);
 
         try {
-            const response = await fetch('/api/create-payment-intent', {
+            const res = await fetch('/api/create-payment-intent', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ amount }) // 使用传入的金额
+                body: JSON.stringify({ amount }),
             });
 
-            const { clientSecret } = await response.json();
+            const { clientSecret, paymentIntentId } = await res.json();
 
-            const { error: stripeError } = await stripe.confirmCardPayment(clientSecret, {
+            const result = await stripe.confirmCardPayment(clientSecret, {
                 payment_method: {
                     card: elements.getElement(CardElement)!,
-                }
+                },
             });
 
-            if (stripeError) {
-                throw new Error(stripeError.message);
-            }
+            if (result.error) {
+                message.error(result.error.message || 'Payment failed');
+            } else if (result.paymentIntent?.status === 'succeeded') {
+                message.success('Payment successful');
 
-            window.location.href = '/payment/success';
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Payment failed');
-            setProcessing(false);
+                // const { error } = await supabase.from('orders').insert([
+                //     {
+                //         amount,
+                //         status: 'paid',
+                //         payment_intent: paymentIntentId,
+                //         created: new Date().toISOString(),
+                //     },
+                // ]);
+
+                // if (error) {
+                //     console.error('Supabase error:', error);
+                //     message.warning('Payment succeeded, but failed to save order');
+                // }
+            }
+        } catch (err: any) {
+            console.error('Error:', err);
+            message.error('Unexpected error');
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
         <form onSubmit={handleSubmit}>
-            {/* 信用卡输入区域 */}
-            <div className="mb-6 border rounded-lg p-3 bg-gray-50">
-                <CardElement
-                    options={{
-                        style: {
-                            base: {
-                                fontSize: '16px',
-                                color: '#424770',
-                                '::placeholder': {
-                                    color: '#aab7c4',
-                                },
-                            },
-                            invalid: {
-                                color: '#9e2146',
-                            },
-                        },
-                    }}
-                />
-            </div>
-
-            {/* 错误提示 */}
-            {error && (
-                <div className="text-red-500 mb-4 text-center">{error}</div>
-            )}
-
-            {/* 支付按钮 */}
-            <button
-                type="submit"
-                disabled={!stripe || processing}
-                className="w-full bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 disabled:bg-gray-300 transition-colors font-semibold text-lg"
-            >
-                {processing ? 'Processing Payment...' : `Pay $${(amount / 100).toFixed(2)}`}
-            </button>
+            <CardElement />
+            <Button type="primary" htmlType="submit" loading={loading} className="mt-4">
+                Pay ${(amount / 100).toFixed(2)}
+            </Button>
         </form>
     );
 }

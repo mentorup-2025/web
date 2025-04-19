@@ -114,6 +114,12 @@ export default function Home() {
                 >
                   Upload Resume
                 </Link>
+                <Link
+                    href="/booking/payment"
+                    className="block w-full text-center px-4 py-2 border border-orange-500 text-orange-500 rounded-md hover:bg-orange-50 transition-colors"
+                >
+                  Payment page
+                </Link>
               </div>
             </div>
           </div>
