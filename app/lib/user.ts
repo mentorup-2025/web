@@ -1,5 +1,5 @@
 import { getSupabaseClient } from '../services/supabase';
-import { User, CreateUserInput } from '@/types';
+import { User, CreateUserInput, UpdateUserInput } from '@/types';
 
 export async function createUser(input: CreateUserInput): Promise<User> {
     try {
@@ -75,6 +75,46 @@ export async function listMentorUsers(): Promise<User[]> {
 
     } catch (error) {
         console.error('Error in listMentorUsers:', error);
+        throw error;
+    }
+}
+
+export async function updateUser(userId: string, input: UpdateUserInput): Promise<User> {
+    try {
+        // Filter out null values and create update object
+        const updateData = Object.entries(input).reduce((acc, [key, value]) => {
+            // Only include fields where value is not null
+            if (value !== null) {
+                acc[key] = value;
+            }
+            return acc;
+        }, {} as Record<string, any>);
+
+        // If no valid updates, return existing user
+        if (Object.keys(updateData).length === 0) {
+            return await getUser(userId) as User;
+        }
+
+        // Update user in database
+        const { data, error } = await getSupabaseClient()
+            .from('users')
+            .update(updateData)
+            .eq('user_id', userId)
+            .select(`
+                *,
+                mentor:mentors(*)
+            `)
+            .single();
+
+        if (error) {
+            console.error('Error updating user:', error);
+            throw error;
+        }
+
+        return data;
+
+    } catch (error) {
+        console.error('Error in updateUser:', error);
         throw error;
     }
 } 

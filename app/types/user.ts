@@ -23,6 +23,16 @@ export interface CreateUserInput {
   resume?: string;      // Optional resume URL
 }
 
+export interface UpdateUserInput {
+  username?: string | null;     // Optional username update
+  email?: string | null;        // Optional email update
+  github?: string | null;       // Optional GitHub profile update
+  linkedin?: string | null;     // Optional LinkedIn profile update
+  resume?: string | null;       // Optional resume URL update
+  industries?: string[] | null; // Optional industries update
+  wechat?: string | null;       // Optional WeChat ID update
+}
+
 export interface UserCredentials {
   email: string;
 }

@@ -187,3 +187,42 @@ Content-Type: application/json
   "subject": "Test",
   "message": {}
 }
+
+### Test Update User
+POST {{baseUri}}/api/user/update
+Content-Type: application/json
+
+{
+    "userId": "93137255-d7ac-4219-90d9-a886ae987732",
+    "linkedin": "https://linkedin.com/in/updatedprofile",
+    "wechat": "newWeChatId",
+    "industries": ["Technology", "Education", "Finance"],
+    "github": null,
+    "resume": "https://newresume.com/myresume.pdf"
+}
+
+### Test Update User - Missing userId
+POST {{baseUri}}/api/user/update
+Content-Type: application/json
+
+{
+    "linkedin": "https://linkedin.com/in/updatedprofile",
+    "wechat": "newWeChatId"
+}
+
+### Test Update User - Empty Update
+POST {{baseUri}}/api/user/update
+Content-Type: application/json
+
+{
+    "userId": "93137255-d7ac-4219-90d9-a886ae987732"
+}
+
+### Test Update User - Invalid userId
+POST {{baseUri}}/api/user/update
+Content-Type: application/json
+
+{
+    "userId": "invalid-id",
+    "linkedin": "https://linkedin.com/in/updatedprofile"
+}
