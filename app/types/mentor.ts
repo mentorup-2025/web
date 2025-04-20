@@ -5,7 +5,6 @@ export interface Mentor {
     years_of_experience: number;
     years_of_experience_recorded_date: string;  // ISO date when experience was recorded
     introduction: string;            // Mentor's bio/introduction
-    industries: string[];            // List of industries
     services: Record<string, number>; // Map of service name to price
     created_at: string;
 }
@@ -16,7 +15,6 @@ export interface UpsertMentorInput {
     years_of_experience: number;
     years_of_experience_recorded_date: string;
     introduction: string;
-    industries: string[];
     services: Record<string, number>; // e.g. { "consultation": 100, "resume_review": 50 }
 }
 

@@ -8,6 +8,8 @@ export interface User {
   github?: string;      // Optional GitHub profile
   linkedin?: string;    // Optional LinkedIn profile
   resume?: string;      // Optional resume URL
+  industries?: string[]; // Optional industries
+  wechat?: string;      // Optional WeChat ID
   mentor?: Mentor | null; // Optional mentor ID, defaults to null
 }
 
@@ -16,6 +18,8 @@ export interface CreateUserInput {
   email: string;
   github?: string;      // Optional GitHub profile
   linkedin?: string;    // Optional LinkedIn profile
+  industries?: string[]; // Optional industries
+  wechat?: string;      // Optional WeChat ID
   resume?: string;      // Optional resume URL
 }
 

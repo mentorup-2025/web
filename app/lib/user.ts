@@ -1,4 +1,3 @@
-import bcrypt from 'bcryptjs';
 import { getSupabaseClient } from '../services/supabase';
 import { User, CreateUserInput } from '@/types';
 
@@ -11,6 +10,8 @@ export async function createUser(input: CreateUserInput): Promise<User> {
             github: input.github,
             linkedin: input.linkedin,
             resume: input.resume,
+            industries: input.industries,
+            wechat: input.wechat,
             created_at: new Date().toISOString()
         };
 
