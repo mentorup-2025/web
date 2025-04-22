@@ -10,6 +10,7 @@ export interface User {
   resume?: string;      // Optional resume URL
   industries?: string[]; // Optional industries
   wechat?: string;      // Optional WeChat ID
+  status?: UserStatus;  // Optional status
   mentor?: Mentor | null; // Optional mentor ID, defaults to null
 }
 
@@ -21,6 +22,7 @@ export interface CreateUserInput {
   industries?: string[]; // Optional industries
   wechat?: string;      // Optional WeChat ID
   resume?: string;      // Optional resume URL
+  status?: UserStatus;  // Optional status
 }
 
 export interface UpdateUserInput {
@@ -31,8 +33,18 @@ export interface UpdateUserInput {
   resume?: string | null;       // Optional resume URL update
   industries?: string[] | null; // Optional industries update
   wechat?: string | null;       // Optional WeChat ID update
+  status?: UserStatus | null;   // Optional status update
 }
 
 export interface UserCredentials {
   email: string;
+}
+
+export enum UserStatus {
+  STUDENT = 'Student',
+  NEW_GRADUATE = 'New Graduate',
+  EMPLOYED = 'Employed',
+  UNEMPLOYED = 'Unemployed',
+  CAREER_SWITCH = 'Career Switch',
+  FREELANCER = 'Freelancer'
 }

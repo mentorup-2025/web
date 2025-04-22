@@ -12,6 +12,7 @@ export async function createUser(input: CreateUserInput): Promise<User> {
             resume: input.resume,
             industries: input.industries,
             wechat: input.wechat,
+            status: input.status,
             created_at: new Date().toISOString()
         };
 
