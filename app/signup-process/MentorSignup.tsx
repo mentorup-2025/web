@@ -64,49 +64,37 @@ export default function MentorSignup() {
           </Form.Item>
           <Form.Item label="Services & Prices">
             <Form.Item
-              name={['services', 'consultation']}
-              label="Consultation"
-              style={{ marginBottom: 8 }}
+              name="basePrice"
+              label="Price for All Services"
+              rules={[{ required: true, message: 'Please enter a base price!' }]}
             >
               <InputNumber
                 min={0}
                 placeholder="Price in USD"
                 style={{ width: '100%' }}
+                onChange={(value) => {
+                  if (value) {
+                    form.setFieldsValue({
+                      services: {
+                        consultation: value,
+                        resume_review: value,
+                        mock_interview: value,
+                        career_guidance: value
+                      }
+                    });
+                  }
+                }}
               />
             </Form.Item>
-            <Form.Item
-              name={['services', 'resume_review']}
-              label="Resume Review"
-              style={{ marginBottom: 8 }}
-            >
-              <InputNumber
-                min={0}
-                placeholder="Price in USD"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-            <Form.Item
-              name={['services', 'mock_interview']}
-              label="Mock Interview"
-              style={{ marginBottom: 8 }}
-            >
-              <InputNumber
-                min={0}
-                placeholder="Price in USD"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-            <Form.Item
-              name={['services', 'career_guidance']}
-              label="Career Guidance"
-              style={{ marginBottom: 8 }}
-            >
-              <InputNumber
-                min={0}
-                placeholder="Price in USD"
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
+            <div className={styles.serviceTypes}>
+              <p>This price will be applied to all services, as a mentor, you can control the length of each session</p>
+              <ul>
+                <li>Consultation</li>
+                <li>Resume Review</li>
+                <li>Mock Interview</li>
+                <li>Career Guidance</li>
+              </ul>
+            </div>
           </Form.Item>
         </>
       ),
