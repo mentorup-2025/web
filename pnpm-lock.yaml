@@ -23,9 +23,12 @@ importers:
       '@react-email/components':
         specifier: ^0.0.36
         version: 0.0.36(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@stripe/react-stripe-js':
+        specifier: ^3.6.0
+        version: 3.6.0(@stripe/stripe-js@5.10.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@stripe/stripe-js':
-        specifier: ^5.7.0
-        version: 5.8.0
+        specifier: ^5.10.0
+        version: 5.10.0
       '@supabase/supabase-js':
         specifier: ^2.49.1
         version: 2.49.1
@@ -812,8 +815,15 @@ packages:
   '@selderee/plugin-htmlparser2@0.11.0':
     resolution: {integrity: sha512-P33hHGdldxGabLFjPPpaTxVolMrzrcegejx+0GxjrIb9Zv48D8yAIA/QTDR2dFl7Uz7urX8aX6+5bCZslr+gWQ==}
 
-  '@stripe/stripe-js@5.8.0':
-    resolution: {integrity: sha512-o41SYzMDu/aE7iXSW6dNH9XGLfMJyj5sfazbkMz6LdNI1vDPs1h1aldtXJNLKH22RGxjvFUd5AlEw2G2OA7bug==}
+  '@stripe/react-stripe-js@3.6.0':
+    resolution: {integrity: sha512-zEnaUmTOsu7zhl3RWbZ0l1dRiad+QIbcAYzQfF+yYelURJowhAwesRHKWH+qGAIBEpkO6/VCLFHhVLH9DtPlnw==}
+    peerDependencies:
+      '@stripe/stripe-js': '>=1.44.1 <8.0.0'
+      react: '>=16.8.0 <20.0.0'
+      react-dom: '>=16.8.0 <20.0.0'
+
+  '@stripe/stripe-js@5.10.0':
+    resolution: {integrity: sha512-PTigkxMdMUP6B5ISS7jMqJAKhgrhZwjprDqR1eATtFfh0OpKVNp110xiH+goeVdrJ29/4LeZJR4FaHHWstsu0A==}
     engines: {node: '>=12.16'}
 
   '@supabase/auth-js@2.68.0':
@@ -3941,7 +3951,14 @@ snapshots:
       domhandler: 5.0.3
       selderee: 0.11.0
 
-  '@stripe/stripe-js@5.8.0': {}
+  '@stripe/react-stripe-js@3.6.0(@stripe/stripe-js@5.10.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@stripe/stripe-js': 5.10.0
+      prop-types: 15.8.1
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+
+  '@stripe/stripe-js@5.10.0': {}
 
   '@supabase/auth-js@2.68.0':
     dependencies:
