@@ -1,23 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { Steps, Button, Form, Input, InputNumber, Card } from 'antd';
+import { Steps, Button, Form, Input, InputNumber, notification } from 'antd';
 import { useRouter } from 'next/navigation';
 import styles from './signupProcess.module.css';
 
 const { Step } = Steps;
 
-interface ServicePrices {
-  consultation?: number;
-  resume_review?: number;
-  mock_interview?: number;
-  career_guidance?: number;
+interface MentorSignupProps {
+  userId: string;
 }
 
-export default function MentorSignup() {
+export default function MentorSignup({ userId }: MentorSignupProps) {
   const [current, setCurrent] = useState(0);
   const [form] = Form.useForm();
   const router = useRouter();
+  const [formData, setFormData] = useState<any>({});
 
   const steps = [
     {
@@ -39,7 +37,7 @@ export default function MentorSignup() {
           <Form.Item
             name="company"
             label="Company/School"
-            rules={[{ required: true, message: 'Please input your company/school!' }]}
+            rules={[{ required: false }]}
           >
             <Input placeholder="Enter your company or school name" />
           </Form.Item>
@@ -53,7 +51,6 @@ export default function MentorSignup() {
           <Form.Item
             name="yearsOfExperience"
             label="Years of Professional Experience"
-            rules={[{ required: true, message: 'Please select your years of experience!' }]}
           >
             <InputNumber
               min={1}
@@ -62,6 +59,7 @@ export default function MentorSignup() {
               style={{ width: '100%' }}
             />
           </Form.Item>
+
           <Form.Item label="Services & Prices">
             <Form.Item
               name="basePrice"
@@ -73,21 +71,18 @@ export default function MentorSignup() {
                 placeholder="Price in USD"
                 style={{ width: '100%' }}
                 onChange={(value) => {
-                  if (value) {
-                    form.setFieldsValue({
-                      services: {
-                        consultation: value,
-                        resume_review: value,
-                        mock_interview: value,
-                        career_guidance: value
-                      }
-                    });
-                  }
+                  const services = [
+                    { type: 'consultation', price: value },
+                    { type: 'resume_review', price: value },
+                    { type: 'mock_interview', price: value },
+                    { type: 'career_guidance', price: value }
+                  ];
+                  form.setFieldsValue({ services });
                 }}
               />
             </Form.Item>
             <div className={styles.serviceTypes}>
-              <p>This price will be applied to all services, as a mentor, you can control the length of each session</p>
+              <p>This price will be applied to all services. As a mentor, you can control the session length.</p>
               <ul>
                 <li>Consultation</li>
                 <li>Resume Review</li>
@@ -95,6 +90,11 @@ export default function MentorSignup() {
                 <li>Career Guidance</li>
               </ul>
             </div>
+          </Form.Item>
+
+          {/* Hidden input to hold services structure */}
+          <Form.Item name="services" noStyle>
+            <Input type="hidden" />
           </Form.Item>
         </>
       ),
@@ -107,7 +107,6 @@ export default function MentorSignup() {
             name="linkedin"
             label="LinkedIn Profile"
             rules={[
-              { required: true, message: 'Please input your LinkedIn profile!' },
               { type: 'url', message: 'Please enter a valid URL!' }
             ]}
           >
@@ -120,6 +119,13 @@ export default function MentorSignup() {
           >
             <Input placeholder="Enter your WeChat ID" />
           </Form.Item>
+          <Form.Item
+            name="introduction"
+            label="Introduction"
+            rules={[{ required: true, message: 'Please enter an introduction!' }]}
+          >
+            <Input.TextArea rows={4} placeholder="Write a short introduction about yourself" />
+          </Form.Item>
         </>
       ),
     },
@@ -127,7 +133,6 @@ export default function MentorSignup() {
       title: 'Confirmation',
       content: (
         <div className={styles.confirmationContent}>
-          <h2>Thank You & Welcome!</h2>
           <p>Thank you for submitting your information! Welcome to the MentorUp App.</p>
           <Button 
             type="primary" 
@@ -141,27 +146,74 @@ export default function MentorSignup() {
     },
   ];
 
-  const next = () => {
-    setCurrent(current + 1);
+  const next = async () => {
+    try {
+      const values = await form.validateFields();
+      const updated = { ...formData, ...values };
+      setFormData(updated);
+
+      if (current === 2) {
+        await onFinish(updated);
+        setCurrent(current + 1);
+      } else {
+        setCurrent(current + 1);
+        form.setFieldsValue(updated);
+      }
+    } catch (error) {
+      console.error('Validation failed:', error);
+    }
   };
 
   const prev = () => {
     setCurrent(current - 1);
+    form.setFieldsValue(formData);
   };
 
-  const onFinish = (values: any) => {
-    console.log('Form values:', values);
-    next();
+  const onFinish = async (allValues: any) => {
+    try {
+      const mentorData = {
+        displayName: allValues.displayName,
+        company: allValues.company,
+        title: allValues.title,
+        yearsOfExperience: Number(allValues.yearsOfExperience),
+        years_of_experience_recorded_date: new Date(),
+        services: allValues.services,
+        linkedin: allValues.linkedin,
+        wechat: allValues.wechat,
+        introduction: allValues.introduction
+      };
+
+      const response = await fetch(`/api/mentor/upsert/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(mentorData),
+      });
+
+      const data = await response.json();
+
+      if (data.code === -1) {
+        notification.error({
+          message: 'Error',
+          description: data.message || 'Failed to create mentor profile',
+        });
+        throw new Error(data.message);
+      }
+
+      notification.success({
+        message: 'Success',
+        description: 'Mentor profile created successfully!',
+      });
+    } catch (error) {
+      console.error('Error creating mentor profile:', error);
+    }
   };
 
   const handleStepClick = (step: number) => {
-    // Allow going back to previous steps
     if (step < current) {
       setCurrent(step);
-    }
-    // For steps after current, only allow going to next step
-    else if (step === current + 1) {
-      setCurrent(step);
+      form.setFieldsValue(formData);
+    } else if (step === current + 1) {
+      next();
     }
   };
 
@@ -186,7 +238,6 @@ export default function MentorSignup() {
           <Form
             form={form}
             layout="vertical"
-            onFinish={onFinish}
             className={styles.form}
           >
             {steps[current].content}
@@ -208,4 +259,4 @@ export default function MentorSignup() {
       </div>
     </div>
   );
-} 
+}

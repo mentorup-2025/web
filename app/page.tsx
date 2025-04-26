@@ -88,7 +88,7 @@ export default function Home() {
                   Search Page
                 </Link>
                 <Link 
-                  href="/signup-process/mentor"
+                  href="/signup-process/mentor/123"
                   className="block w-full text-center px-4 py-2 border border-blue-500 text-blue-500 rounded-md hover:bg-blue-50 transition-colors mt-4"
                 >
                   Mentor Signup
