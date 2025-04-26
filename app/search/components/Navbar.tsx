@@ -1,57 +1,49 @@
-'use client';
+'use client'
 
-import { Layout, Input, Button, Dropdown, Avatar } from 'antd';
-import { UserOutlined, SearchOutlined } from '@ant-design/icons';
-import Image from 'next/image';
-import styles from '../search.module.css';
+import { Layout, Input, Button, Dropdown, Avatar } from 'antd'
+import { UserOutlined, SearchOutlined } from '@ant-design/icons'
+import Image from 'next/image'
+import styles from '../search.module.css'
 
-const { Header } = Layout;
-const { Search } = Input;
+const { Header } = Layout
+const { Search } = Input
 
 export default function Navbar() {
   const userMenuItems = [
     {
       key: 'edit',
-      label: 'Edit Profile'
+      label: 'Edit Profile',
     },
     {
       key: 'logout',
-      label: 'Logout'
-    }
-  ];
+      label: 'Logout',
+    },
+  ]
 
   return (
     <Header className={styles.header}>
       <div className={styles.headerContent}>
         <div className={styles.headerLeft}>
           <h1 className={styles.logo}>MentorUp</h1>
-          
-<<<<<<< HEAD
-          {/* <Search
-=======
+
           <Search
->>>>>>> 5bde215 (WIP: Save progress in login/signup)
             placeholder="Search mentors..."
             allowClear
             enterButton={<SearchOutlined />}
             size="large"
             className={styles.searchBar}
-<<<<<<< HEAD
-          /> */}
-=======
           />
->>>>>>> 5bde215 (WIP: Save progress in login/signup)
         </div>
 
         <div className={styles.headerRight}>
           <Button type="primary" size="large">
             Become a Mentor
           </Button>
-          
+
           <Dropdown menu={{ items: userMenuItems }} trigger={['click']}>
-            <Avatar 
-              size="large" 
-              icon={<UserOutlined />} 
+            <Avatar
+              size="large"
+              icon={<UserOutlined />}
               className={styles.userAvatar}
               style={{ cursor: 'pointer' }}
             />
@@ -59,5 +51,5 @@ export default function Navbar() {
         </div>
       </div>
     </Header>
-  );
-} 
+  )
+}

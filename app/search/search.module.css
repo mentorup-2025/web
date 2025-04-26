@@ -112,11 +112,7 @@
 }
 
 .mentorInfo {
-<<<<<<< HEAD
-  text-align: left;
-=======
   text-align: center;
->>>>>>> 5bde215 (WIP: Save progress in login/signup)
   margin-bottom: 16px;
 }
 
@@ -237,28 +233,4 @@
     opacity: 1;
     transform: translateY(0);
   }
-<<<<<<< HEAD
-}
-
-.noResults {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 400px;
-  padding: 24px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.noResults :global(.ant-empty) {
-  padding: 24px;
-}
-
-.noResults :global(.ant-empty-description) {
-  color: rgba(0, 0, 0, 0.45);
-  font-size: 16px;
-  line-height: 1.5;
-=======
->>>>>>> 5bde215 (WIP: Save progress in login/signup)
 } 
