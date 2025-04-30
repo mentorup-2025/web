@@ -132,6 +132,12 @@ export default function Home() {
                 >
                   Payment page
                 </Link>
+                <Link
+                    href="/schedule"
+                    className="block w-full text-center px-4 py-2 border border-indigo-500 text-indigo-500 rounded-md hover:bg-indigo-50 transition-colors"
+                >
+                  Scheduling page
+                </Link>
               </div>
             </div>
           </div>
