@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { Steps, Button, Form, Input, InputNumber, notification } from 'antd';
+import { useState, useEffect } from 'react';
+import { Select, Steps, Button, Form, Input, InputNumber, Checkbox, Typography, notification } from 'antd';
 import { useRouter } from 'next/navigation';
 import styles from './signupProcess.module.css';
 
 const { Step } = Steps;
+const { Text } = Typography;
 
 interface MentorSignupProps {
   userId: string;
@@ -17,17 +18,61 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
   const router = useRouter();
   const [formData, setFormData] = useState<any>({});
 
+  // compute suggestion based on years of experience
+  const [suggestion, setSuggestion] = useState<string>('');
+  useEffect(() => {
+    const exp = form.getFieldValue('yearsOfExperience') || formData.yearsOfExperience || 0;
+    let range = '';
+    if (exp <= 2) range = '$35-50';
+    else if (exp <= 5) range = '$50-85';
+    else if (exp <= 10) range = '$85-100';
+    else range = '$100-150';
+    setSuggestion(range);
+  }, [formData.yearsOfExperience, form.getFieldValue('yearsOfExperience')]);
+
+  const serviceOptions = [
+    'Free coffee chat (15 mins)',
+    'Mock Interview',
+    'Resume Review',
+    'Behavioral Question Coaching',
+    'Job Search Guidance',
+    'General Career Advice',
+    'Salary Negotiation',
+    'Promotion Strategy',
+    'My Company / Role Deep Dive',
+    'Grad School Application Advice',
+  ];
+
+
   const steps = [
     {
-      title: 'Basic Info',
+      title: 'Current Status',
       content: (
-        <Form.Item
-          name="displayName"
-          label="Display Name"
-          rules={[{ required: true, message: 'Please input your display name!' }]}
-        >
-          <Input placeholder="Enter your display name" />
-        </Form.Item>
+        <>
+          <Form.Item
+            name="displayName"
+            label="How do you want us to call you?"
+            rules={[{ required: true, message: 'Please input your display name!' }]}
+          >
+            <Input placeholder="Enter your display name" />
+          </Form.Item>
+    
+          <Form.Item
+            name="currentStatus"
+            label="Which of the following best describes your current role?"
+            rules={[{ required: true, message: 'Please select your current status!' }]}
+          >
+            <Select placeholder="Select your current role">
+              <Select.Option value="intern">Intern</Select.Option>
+              <Select.Option value="entry">Entry-Level</Select.Option>
+              <Select.Option value="mid">Mid-Level</Select.Option>
+              <Select.Option value="senior">Senior-Level</Select.Option>
+              <Select.Option value="manager">Manager</Select.Option>
+              <Select.Option value="leadership">Leadership</Select.Option>
+              <Select.Option value="founder">Founder / Startup Leadership</Select.Option>
+            </Select>
+          </Form.Item>
+        </>
       ),
     },
     {
@@ -36,21 +81,21 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
         <>
           <Form.Item
             name="company"
-            label="Company/School"
+            label="Where do you work now?"
             rules={[{ required: false }]}
           >
             <Input placeholder="Enter your company or school name" />
           </Form.Item>
           <Form.Item
             name="title"
-            label="Your Title"
+            label="What's your current job title?"
             rules={[{ required: true, message: 'Please input your title!' }]}
           >
             <Input placeholder="Enter your professional title" />
           </Form.Item>
           <Form.Item
             name="yearsOfExperience"
-            label="Years of Professional Experience"
+            label="How many years of professional experience do you have? "
           >
             <InputNumber
               min={1}
@@ -60,41 +105,44 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
             />
           </Form.Item>
 
-          <Form.Item label="Services & Prices">
-            <Form.Item
-              name="basePrice"
-              label="Price for All Services"
-              rules={[{ required: true, message: 'Please enter a base price!' }]}
-            >
-              <InputNumber
-                min={0}
-                placeholder="Price in USD"
-                style={{ width: '100%' }}
-                onChange={(value) => {
-                  const services = [
-                    { type: 'consultation', price: value },
-                    { type: 'resume_review', price: value },
-                    { type: 'mock_interview', price: value },
-                    { type: 'career_guidance', price: value }
-                  ];
-                  form.setFieldsValue({ services });
-                }}
-              />
-            </Form.Item>
-            <div className={styles.serviceTypes}>
-              <p>This price will be applied to all services. As a mentor, you can control the session length.</p>
-              <ul>
-                <li>Consultation</li>
-                <li>Resume Review</li>
-                <li>Mock Interview</li>
-                <li>Career Guidance</li>
-              </ul>
-            </div>
-          </Form.Item>
+          
 
           {/* Hidden input to hold services structure */}
           <Form.Item name="services" noStyle>
             <Input type="hidden" />
+          </Form.Item>
+        </>
+      ),
+    },
+    {
+      title: 'Service and Pricing',
+      content: (
+        <>
+          <Form.Item
+            name="basePrice"
+            label="How much would you like to get paid per hour?"
+            rules={[{ required: true, message: 'Please enter a base price!' }]}
+          >
+            <InputNumber
+              min={0}
+              placeholder="Price in USD"
+              style={{ width: '100%' }}
+            />
+          </Form.Item>
+
+          {/* suggestion text */}
+          {suggestion && (
+            <Text type="secondary">
+              Based on your experience, we suggest you start with {suggestion}/hour
+            </Text>
+          )}
+
+          <Form.Item
+            name="servicesList"
+            label="Select the services you can provide"
+            rules={[{ required: true, message: 'Please select at least one service!' }]}
+          >
+            <Checkbox.Group options={serviceOptions} />
           </Form.Item>
         </>
       ),
@@ -152,7 +200,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
       const updated = { ...formData, ...values };
       setFormData(updated);
 
-      if (current === 2) {
+      if (current === 3) {
         await onFinish(updated);
         setCurrent(current + 1);
       } else {
@@ -171,16 +219,19 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
 
   const onFinish = async (allValues: any) => {
     try {
+      // construct services array from selected services and base price
+      const services = (allValues.servicesList || []).map((type: string) => ({ type, price: allValues.basePrice }));
+
       const mentorData = {
         displayName: allValues.displayName,
         company: allValues.company,
         title: allValues.title,
         years_of_experience: Number(allValues.yearsOfExperience),
         years_of_experience_recorded_date: new Date(),
-        services: allValues.services,
+        services,
         linkedin: allValues.linkedin,
         wechat: allValues.wechat,
-        introduction: allValues.introduction
+        introduction: allValues.introduction,
       };
 
       const response = await fetch(`/api/mentor/upsert/${userId}`, {
@@ -232,8 +283,9 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
         <div>
           {current === 0 && <h2>We would like to <span className={styles.blue}>learn more about you</span></h2>}
           {current === 1 && <h2>Tell us about <span className={styles.blue}>your work experience</span></h2>}
-          {current === 2 && <h2>Join our <span className={styles.blue}>Mentor Community</span></h2>}
-          {current === 3 && <h2><span className={styles.blue}>Thank You & Welcome!</span></h2>}
+          {current === 2 && <h2>Join our <span className={styles.blue}>hourly rate</span></h2>}
+          {current === 3 && <h2>Join our <span className={styles.blue}>Mentor Community</span></h2>}
+          {current === 4 && <h2><span className={styles.blue}>Thank You & Welcome!</span></h2>}
           
           <Form
             form={form}
