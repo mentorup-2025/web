@@ -48,10 +48,9 @@ Content-Type: application/json
 {
     "title": "Senior Software Engineer",
     "company": "Tech Corp",
-    "years_of_experience": 8,
+    "years_of_experience": 9,
     "years_of_experience_recorded_date": "2025-04-07T00:00:00Z",
     "introduction": "Experienced software engineer specializing in web development",
-    "industries": ["Technology", "E-commerce", "Finance"],
     "services": {
         "consultation": 100,
         "resume_review": 50,

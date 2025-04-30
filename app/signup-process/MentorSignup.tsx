@@ -175,7 +175,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
         displayName: allValues.displayName,
         company: allValues.company,
         title: allValues.title,
-        yearsOfExperience: Number(allValues.yearsOfExperience),
+        years_of_experience: Number(allValues.yearsOfExperience),
         years_of_experience_recorded_date: new Date(),
         services: allValues.services,
         linkedin: allValues.linkedin,
