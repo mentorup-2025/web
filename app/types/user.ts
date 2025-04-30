@@ -53,7 +53,5 @@ export enum UserStatus {
 
 export type JobTarget = {
   title?: string;
-  industry?: string;
-  location?: string;
-  [key: string]: any; // Allow for future extensibility
+  level?: string;
 };

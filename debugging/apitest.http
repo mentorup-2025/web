@@ -225,3 +225,40 @@ Content-Type: application/json
     "userId": "invalid-id",
     "linkedin": "https://linkedin.com/in/updatedprofile"
 }
+
+### Test Update User with Job Target - Complete Update
+POST {{baseUri}}/api/user/update
+Content-Type: application/json
+
+{
+    "userId": "93137255-d7ac-4219-90d9-a886ae987732",
+    "job_target": {
+        "title": "Software Engineer",
+        "level": "3"
+    }
+}
+
+### Test Update User with Job Target - Partial Update
+POST {{baseUri}}/api/user/update
+Content-Type: application/json
+
+{
+    "userId": "93137255-d7ac-4219-90d9-a886ae987732",
+    "job_target": {
+        "title": "Product Manager"
+    }
+}
+
+### Test Update User with Job Target and Other Fields
+POST {{baseUri}}/api/user/update
+Content-Type: application/json
+
+{
+    "userId": "93137255-d7ac-4219-90d9-a886ae987732",
+    "job_target": {
+        "title": "Data Scientist",
+        "level": "2"
+    },
+    "status": "Employed",
+    "industries": ["Data Science", "Finance"]
+}
