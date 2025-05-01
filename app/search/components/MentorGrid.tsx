@@ -148,7 +148,7 @@ export default function MentorGrid({ filters }: MentorGridProps) {
           </div>
           
           <div className={styles.mentorTags}>
-            {user.mentor.industries.map(industry => (
+            {user.industries.map(industry => (
               <Tag key={industry}>{industry}</Tag>
             ))}
           </div>

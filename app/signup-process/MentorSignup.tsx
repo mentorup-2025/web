@@ -63,13 +63,15 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
             rules={[{ required: true, message: 'Please select your current status!' }]}
           >
             <Select placeholder="Select your current role">
-              <Select.Option value="intern">Intern</Select.Option>
-              <Select.Option value="entry">Entry-Level</Select.Option>
-              <Select.Option value="mid">Mid-Level</Select.Option>
-              <Select.Option value="senior">Senior-Level</Select.Option>
-              <Select.Option value="manager">Manager</Select.Option>
-              <Select.Option value="leadership">Leadership</Select.Option>
-              <Select.Option value="founder">Founder / Startup Leadership</Select.Option>
+            <Select.Option value="student">Student</Select.Option>
+            <Select.Option value="new_graduate">New Graduate</Select.Option>
+            <Select.Option value="entry">Entry Level</Select.Option>
+            <Select.Option value="intermediate">Intermediate</Select.Option>
+            <Select.Option value="senior">Senior</Select.Option>
+            <Select.Option value="manager">Manager</Select.Option>
+            <Select.Option value="director">Director</Select.Option>
+            <Select.Option value="executive">Executive</Select.Option>
+            <Select.Option value="startup_founder">Startup Founder</Select.Option>
             </Select>
           </Form.Item>
         </>
