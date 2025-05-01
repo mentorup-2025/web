@@ -4,11 +4,11 @@ import { Layout, Tabs, Avatar, Typography, Space, Card, Tag } from 'antd';
 import { LinkedinFilled, GithubOutlined } from '@ant-design/icons';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import Navbar from '../components/Navbar';
-import MySessionsTab from './components/MySessionsTab';
-import AvailabilityTab from './components/AvailabilityTab';
-import PaymentTab from './components/PaymentTab';
-import styles from './mentorProfile.module.css';
+import Navbar from '../../components/Navbar';
+import MySessionsTab from '../components/MySessionsTab';
+import AvailabilityTab from '../components/AvailabilityTab';
+import PaymentTab from '../components/PaymentTab';
+import styles from '../mentorProfile.module.css';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
