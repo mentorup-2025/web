@@ -1,92 +1,131 @@
-/* ---- 通用布局 ---- */
-.content {
-  margin-top: 64px;              /* 预留 Navbar */
-  min-height: calc(100vh - 64px);
-  background: #ffffff;
-  padding: 32px 40px;
-}
+/* mentorDetails.module.css – updated with subtle separator lines */
 
-.mainContent {
+/* ------------ Navbar (Header) ------------ */
+.header {
   display: flex;
-  gap: 40px;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  padding-inline: 32px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0; /* subtle grey line */
+  z-index: 100;
 }
 
-/* 左列 65 % */
-.leftSection {
-  flex: 0 0 65%;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-/* 右列 35 %，左侧加一条竖线 */
-.rightSection {
-  flex: 0 0 35%;
-  padding-left: 40px;
-  border-left: 1px solid #e0e0e0;
-}
-
-/* ---- 头像与标题行 ---- */
-.profileRow {
+.leftGroup {
   display: flex;
   align-items: center;
   gap: 24px;
 }
 
-.avatar {
-  background: #bdbdbd;
+.logo {
+  font-size: 22px;
+  font-weight: 700;
+  color: #000;
+}
+.logo:hover {
+  color: #000;
 }
 
-.nameBlock {
-  flex: 1;
-}
-
-.name {
-  margin: 0;
-}
-
-.jobTitle {
+.link {
   font-size: 16px;
-  color: rgba(0, 0, 0, 0.6);
+  color: #555;
+  transition: color 0.2s ease;
 }
-
-.socialLinks {
-  display: flex;
-  gap: 16px;
-}
-
-.socialIcon {
-  font-size: 24px;
+.link:hover {
   color: #1890ff;
 }
-.socialIcon:hover {
-  color: #40a9ff;
+
+.rightGroup {
+  display: flex;
+  align-items: center;
+  gap: 24px;
 }
 
-/* ---- 卡片 ---- */
-.infoCard {
-  background: #ffffff;
-  border: 1px solid #e0e0e0;
-}
-.infoCard :global(.ant-card-head) {
-  border-bottom: 1px solid #e0e0e0;
-}
-
-/* ---- 右侧标题 ---- */
-.availabilityTitle {
-  margin-top: 0;
-  margin-bottom: 16px;
+.becomeBtn {
   font-weight: 600;
+  height: 40px;
 }
 
-/* ---- 响应式 ---- */
-@media (max-width: 992px) {
-  .mainContent {
-    flex-direction: column;
-  }
+.avatar {
+  cursor: pointer;
+}
 
-  .rightSection {
-    border-left: none;
-    padding-left: 0;
-  }
+/* ------------ Page Layout Wrappers ------------ */
+.content {
+  /* 移除顶部多余空白，让 header 的细线直接贴住主体 */
+  min-height: calc(100vh - 64px);
+  background: #fff;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 24px 48px;
+}
+
+.mainContent {
+  display: flex;
+  align-items: flex-start;
+  gap: 0; /* we handle spacing via padding */
+}
+
+/* ------------ Columns ------------ */
+.leftSection {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  border-right: 1px solid #f0f0f0; /* vertical separator */
+  padding-right: 48px;
+}
+
+.rightSection {
+  flex: 1;
+  min-width: 280px;
+  padding-left: 48px; /* mirror spacing */
+  position: sticky;
+  top: 96px;
+}
+
+/* ------------ Profile Header ------------ */
+.profileHeader {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 32px;
+}
+
+.profileText { display: flex; flex-direction: column; }
+.name { margin: 0; }
+.jobTitle { font-size: 16px; color: rgba(0, 0, 0, 0.65); }
+
+.socialIconWrapper { margin-left: auto; display: flex; align-items: center; }
+.socialIcon { font-size: 28px; color: #1890ff; transition: color 0.3s ease; cursor: pointer; }
+.socialIcon:hover { color: #0067d9; }
+
+/* ------------ Ant Card Overrides ------------ */
+.infoCard { width: 100%; border: 1px solid #d9d9d9; border-radius: 8px; }
+.cardTitle { font-weight: 600; font-size: 16px; }
+.infoCard :global(.ant-card-head) { border-bottom: none; }
+
+/* ------------ Services Tags ------------ */
+.serviceTags { display: flex; flex-wrap: wrap; gap: 8px; }
+.serviceTag { padding: 4px 12px; font-size: 14px; background: #fff; color: #1890ff; border: 1px solid #1890ff; border-radius: 4px; }
+
+/* ------------ Availability Section ------------ */
+.availabilityHeader { margin-top: 0; margin-bottom: 16px; }
+.availabilityCard { position: sticky; top: 88px; }
+
+/* ------------ Responsive Breakpoints ------------ */
+@media (max-width: 1024px) {
+  .container { padding: 16px 16px 32px; }
+  .leftSection { padding-right: 32px; }
+  .rightSection { padding-left: 32px; }
+}
+
+@media (max-width: 768px) {
+  .mainContent { flex-direction: column; }
+  .leftSection { border-right: none; padding-right: 0; }
+  .rightSection { position: static; top: auto; width: 100%; padding-left: 0; margin-top: 32px; border-top: 1px solid #f0f0f0; }
 }
