@@ -26,7 +26,11 @@ const industries = [
   'Non-profit'
 ];
 
-export default function MenteeSignup() {
+interface MenteeSignupProps {
+  userId: string;
+}
+
+export default function MenteeSignu({ userId }: MenteeSignupProps) {
   const [current, setCurrent] = useState(0);
   const [form] = Form.useForm();
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
