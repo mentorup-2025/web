@@ -179,7 +179,7 @@ export default function MentorAvailability({ mentorId }: MentorAvailabilityProps
         disabled={!selectedDate || !selectedSlot}
         className={styles.scheduleButton}
       >
-        Schedule Session
+        Book
       </Button>
     </Card>
   );
