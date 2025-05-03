@@ -295,6 +295,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
       // Second API call to update user profile with LinkedIn and industries
       const userUpdateData = {
         userId,
+        displayName: allValues.displayName,
         linkedin: allValues.linkedin,
         wechat: allValues.wechat,
         industries: selectedIndustries

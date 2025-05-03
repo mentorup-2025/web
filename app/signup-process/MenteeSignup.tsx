@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Steps, Button, Form, Input, Select, Card, Tag, Space } from 'antd';
+import { Steps, Button, Form, Input, Select, Card, Tag, Space, notification } from 'antd';
 import { useRouter } from 'next/navigation';
 import styles from './signupProcess.module.css';
 
@@ -34,26 +34,40 @@ export default function MenteeSignu({ userId }: MenteeSignupProps) {
   const [current, setCurrent] = useState(0);
   const [form] = Form.useForm();
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
+  const [formData, setFormData] = useState<any>({});
   const router = useRouter();
 
   const steps = [
     {
       title: 'Current Stage',
       content: (
-        <Form.Item
-          name="currentStatus"
-          label="Select your current status"
-          rules={[{ required: true, message: 'Please select your current status!' }]}
-        >
-          <Select placeholder="Select your current status">
-            <Option value="student">Student</Option>
-            <Option value="new_graduate">New Graduate (Looking for a job)</Option>
-            <Option value="employed">Employed</Option>
-            <Option value="unemployed">Unemployed</Option>
-            <Option value="career_switch">Career Switch</Option>
-            <Option value="freelancer">Freelancer</Option>
-          </Select>
-        </Form.Item>
+        <>
+          <Form.Item
+            name="displayName"
+            label="How do you want us to call you?"
+            rules={[{ required: true, message: 'Please input your display name!' }]}
+          >
+            <Input placeholder="Enter your display name" />
+          </Form.Item>
+
+          <Form.Item
+            name="wechat"
+            label="WeChat ID"
+            rules={[{ required: false }]}
+          >
+            <Input placeholder="Enter your WeChat ID" />
+          </Form.Item>
+
+          <Form.Item
+            name="linkedin"
+            label="LinkedIn Profile"
+            rules={[
+              { required: false, type: 'url', message: 'Please enter a valid URL!' }
+            ]}
+          >
+            <Input placeholder="Enter your LinkedIn profile URL" />
+          </Form.Item>
+        </>
       ),
     },
     {
@@ -82,15 +96,18 @@ export default function MenteeSignu({ userId }: MenteeSignupProps) {
             rules={[{ required: true, message: 'Please select your target level!' }]}
           >
             <Select placeholder="Select your target level">
-              <Option value="junior">Junior</Option>
+              <Option value="entry">Entry Level</Option>
               <Option value="intermediate">Intermediate</Option>
               <Option value="senior">Senior</Option>
-              <Option value="staff">Staff/Principal+</Option>
+              <Option value="lead">Lead</Option>
+              <Option value="manager">Manager</Option>
+              <Option value="director">Director</Option>
+              <Option value="executive">Executive</Option>
             </Select>
           </Form.Item>
         </>
       ),
-    },
+    }, 
     {
       title: 'Industries',
       content: (
@@ -121,7 +138,6 @@ export default function MenteeSignu({ userId }: MenteeSignupProps) {
       title: 'Confirmation',
       content: (
         <div className={styles.confirmationContent}>
-          <h2>Thank You & Welcome!</h2>
           <p>Thanks for submitting your info!</p>
           <p>Let's explore the mentor community now!</p>
           <p className={styles.smallText}>
@@ -139,17 +155,64 @@ export default function MenteeSignu({ userId }: MenteeSignupProps) {
     },
   ];
 
-  const next = () => {
-    setCurrent(current + 1);
+  const next = async () => {
+    try {
+      const values = await form.validateFields();
+      const updated = { ...formData, ...values };
+      setFormData(updated);
+
+      if (current === 2) { // When moving from Step 3 to Step 4
+        await onFinish(updated);
+      } else {
+        setCurrent(current + 1);
+        form.setFieldsValue(updated);
+      }
+    } catch (error) {
+      console.error('Validation failed:', error);
+    }
   };
 
   const prev = () => {
     setCurrent(current - 1);
+    form.setFieldsValue(formData);
   };
 
-  const onFinish = (values: any) => {
-    console.log('Form values:', values);
-    next();
+  const onFinish = async (allValues: any) => {
+    try {
+      // Update user profile with displayName, WeChat, LinkedIn, and industries
+      const userUpdateData = {
+        userId,
+        username: allValues.displayName,
+        wechat: allValues.wechat,
+        linkedin: allValues.linkedin,
+        industries: selectedIndustries
+      };
+
+      const userUpdateResponse = await fetch('/api/user/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userUpdateData),
+      });
+
+      const userUpdateResult = await userUpdateResponse.json();
+
+      if (userUpdateResult.code === -1) {
+        notification.error({
+          message: 'Error',
+          description: userUpdateResult.message || 'Failed to update user profile',
+        });
+        throw new Error(userUpdateResult.message);
+      }
+
+      notification.success({
+        message: 'Success',
+        description: 'Profile updated successfully!',
+      });
+
+      setCurrent(current + 1);
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+    }
   };
 
   const handleStepClick = (step: number) => {
