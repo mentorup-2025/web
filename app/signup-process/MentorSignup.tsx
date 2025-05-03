@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Select, Steps, Button, Form, Input, InputNumber, Checkbox, Typography, notification } from 'antd';
+import { Select, Steps, Button, Form, Input, InputNumber, Checkbox, Typography, notification, Tag } from 'antd';
 import { useRouter } from 'next/navigation';
 import styles from './signupProcess.module.css';
 
@@ -43,6 +43,20 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
     'Grad School Application Advice',
   ];
 
+  const industries = [
+    'Technology',
+    'Finance',
+    'Healthcare',
+    'Education',
+    'Consulting',
+    'Marketing',
+    'Retail',
+    'Manufacturing',
+    'Government',
+    'Non-Profit',
+  ];
+
+  const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
 
   const steps = [
     {
@@ -74,6 +88,34 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
             <Select.Option value="startup_founder">Startup Founder</Select.Option>
             </Select>
           </Form.Item>
+
+          <Form.Item
+            name="wechat"
+            label="WeChat ID"
+            rules={[{ required: true, message: 'Please input your WeChat ID!' }]}
+          >
+            <Input placeholder="Enter your WeChat ID" />
+          </Form.Item>
+
+          <Form.Item
+            name="linkedin"
+            label="LinkedIn Profile"
+            rules={[
+              { required: false, type: 'url', message: 'Please enter a valid URL!' }
+            ]}
+          >
+            <Input placeholder="Enter your LinkedIn profile URL" />
+          </Form.Item>
+
+          <Form.Item
+            name="introduction"
+            label="Please introduce yourself to your future mentees."
+            rules={[{ required: false, message: 'Please enter an introduction!' }]}
+          >
+            <Input.TextArea rows={4} placeholder="Share your experience and why you want to be a mentor." />
+          </Form.Item>
+
+          
         </>
       ),
     },
@@ -97,17 +139,18 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
           </Form.Item>
           <Form.Item
             name="yearsOfExperience"
-            label="How many years of professional experience do you have? "
+            label="How many years of professional experience do you have?"
+            rules={[{ required: true, message: 'Please select your years of experience!' }]}
           >
-            <InputNumber
-              min={1}
-              max={20}
-              placeholder="Select years of experience"
-              style={{ width: '100%' }}
-            />
+            <Select placeholder="Select years of experience">
+              {Array.from({ length: 20 }, (_, i) => (
+                <Select.Option key={i + 1} value={i + 1}>
+                  {i + 1} {i === 0 ? 'year' : 'years'}
+                </Select.Option>
+              ))}
+              <Select.Option value={20}>20+ years</Select.Option>
+            </Select>
           </Form.Item>
-
-          
 
           {/* Hidden input to hold services structure */}
           <Form.Item name="services" noStyle>
@@ -150,33 +193,29 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
       ),
     },
     {
-      title: 'Contact Info',
+      title: 'Industries',
       content: (
-        <>
-          <Form.Item
-            name="linkedin"
-            label="LinkedIn Profile"
-            rules={[
-              { type: 'url', message: 'Please enter a valid URL!' }
-            ]}
-          >
-            <Input placeholder="Enter your LinkedIn profile URL" />
-          </Form.Item>
-          <Form.Item
-            name="wechat"
-            label="WeChat ID"
-            rules={[{ required: true, message: 'Please input your WeChat ID!' }]}
-          >
-            <Input placeholder="Enter your WeChat ID" />
-          </Form.Item>
-          <Form.Item
-            name="introduction"
-            label="Introduction"
-            rules={[{ required: true, message: 'Please enter an introduction!' }]}
-          >
-            <Input.TextArea rows={4} placeholder="Write a short introduction about yourself" />
-          </Form.Item>
-        </>
+        <div className={styles.industriesSection}>
+          <div className={styles.industryBubbles}>
+            {industries.map(industry => (
+              <Tag
+                key={industry}
+                className={`${styles.industryBubble} ${
+                  selectedIndustries.includes(industry) ? styles.selected : ''
+                }`}
+                onClick={() => {
+                  if (selectedIndustries.includes(industry)) {
+                    setSelectedIndustries(prev => prev.filter(i => i !== industry));
+                  } else {
+                    setSelectedIndustries(prev => [...prev, industry]);
+                  }
+                }}
+              >
+                {industry}
+              </Tag>
+            ))}
+          </div>
+        </div>
       ),
     },
     {
@@ -236,20 +275,45 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
         introduction: allValues.introduction,
       };
 
-      const response = await fetch(`/api/mentor/upsert/${userId}`, {
+      // First API call to create/update mentor profile
+      const mentorResponse = await fetch(`/api/mentor/upsert/${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(mentorData),
       });
 
-      const data = await response.json();
+      const mentorDataResult = await mentorResponse.json();
 
-      if (data.code === -1) {
+      if (mentorDataResult.code === -1) {
         notification.error({
           message: 'Error',
-          description: data.message || 'Failed to create mentor profile',
+          description: mentorDataResult.message || 'Failed to create mentor profile',
         });
-        throw new Error(data.message);
+        throw new Error(mentorDataResult.message);
+      }
+
+      // Second API call to update user profile with LinkedIn and industries
+      const userUpdateData = {
+        userId,
+        linkedin: allValues.linkedin,
+        wechat: allValues.wechat,
+        industries: selectedIndustries
+      };
+
+      const userUpdateResponse = await fetch('/api/user/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userUpdateData),
+      });
+
+      const userUpdateResult = await userUpdateResponse.json();
+
+      if (userUpdateResult.code === -1) {
+        notification.error({
+          message: 'Error',
+          description: userUpdateResult.message || 'Failed to update user profile',
+        });
+        throw new Error(userUpdateResult.message);
       }
 
       notification.success({

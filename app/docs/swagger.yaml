@@ -149,6 +149,101 @@ paths:
         404:
           description: User not found
 
+  /api/user/update:
+    post:
+      summary: Update user information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+                  description: ID of the user to update
+                displayName:
+                  type: string
+                  description: User's display name
+                email:
+                  type: string
+                  format: email
+                  description: User's email address
+                phone:
+                  type: string
+                  description: User's phone number
+                wechat:
+                  type: string
+                  description: User's WeChat ID
+                linkedin:
+                  type: string
+                  format: url
+                  description: User's LinkedIn profile URL
+                introduction:
+                  type: string
+                  description: User's self introduction
+              example:
+                userId: "93137255-d7ac-4219-90d9-a886ae987732"
+                displayName: "John Doe"
+                email: "john.doe@example.com"
+                phone: "+1234567890"
+                wechat: "john_doe"
+                linkedin: "https://linkedin.com/in/johndoe"
+                introduction: "Experienced professional in software development"
+      responses:
+        200:
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: "ok"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      displayName:
+                        type: string
+                      email:
+                        type: string
+                        format: email
+                      phone:
+                        type: string
+                      wechat:
+                        type: string
+                      linkedin:
+                        type: string
+                        format: url
+                      introduction:
+                        type: string
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: -1
+                  message:
+                    type: string
+                    example: "Missing required field: userId"
+                  data:
+                    type: object
+                    nullable: true
+
   # Mentor APIs
   /api/mentor/list:
     get:
