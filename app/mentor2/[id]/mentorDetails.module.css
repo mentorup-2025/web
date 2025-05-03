@@ -1,0 +1,92 @@
+/* ---- 通用布局 ---- */
+.content {
+  margin-top: 64px;              /* 预留 Navbar */
+  min-height: calc(100vh - 64px);
+  background: #ffffff;
+  padding: 32px 40px;
+}
+
+.mainContent {
+  display: flex;
+  gap: 40px;
+}
+
+/* 左列 65 % */
+.leftSection {
+  flex: 0 0 65%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* 右列 35 %，左侧加一条竖线 */
+.rightSection {
+  flex: 0 0 35%;
+  padding-left: 40px;
+  border-left: 1px solid #e0e0e0;
+}
+
+/* ---- 头像与标题行 ---- */
+.profileRow {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.avatar {
+  background: #bdbdbd;
+}
+
+.nameBlock {
+  flex: 1;
+}
+
+.name {
+  margin: 0;
+}
+
+.jobTitle {
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.socialLinks {
+  display: flex;
+  gap: 16px;
+}
+
+.socialIcon {
+  font-size: 24px;
+  color: #1890ff;
+}
+.socialIcon:hover {
+  color: #40a9ff;
+}
+
+/* ---- 卡片 ---- */
+.infoCard {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+}
+.infoCard :global(.ant-card-head) {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* ---- 右侧标题 ---- */
+.availabilityTitle {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+/* ---- 响应式 ---- */
+@media (max-width: 992px) {
+  .mainContent {
+    flex-direction: column;
+  }
+
+  .rightSection {
+    border-left: none;
+    padding-left: 0;
+  }
+}
