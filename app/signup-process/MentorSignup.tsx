@@ -18,17 +18,44 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
   const router = useRouter();
   const [formData, setFormData] = useState<any>({});
 
-  // compute suggestion based on years of experience
+  // compute suggestion based on current status
   const [suggestion, setSuggestion] = useState<string>('');
   useEffect(() => {
-    const exp = form.getFieldValue('yearsOfExperience') || formData.yearsOfExperience || 0;
+    const status = form.getFieldValue('currentStatus') || formData.currentStatus;
     let range = '';
-    if (exp <= 2) range = '$35-50';
-    else if (exp <= 5) range = '$50-85';
-    else if (exp <= 10) range = '$85-100';
-    else range = '$100-150';
+    switch (status) {
+      case 'student':
+        range = '$20-60';
+        break;
+      case 'new_graduate':
+        range = '$30-75';
+        break;
+      case 'entry':
+        range = '$30-90';
+        break;
+      case 'intermediate':
+        range = '$50-110';
+        break;
+      case 'senior':
+        range = '$60-130';
+        break;
+      case 'manager':
+        range = '$90-170';
+        break;
+      case 'director':
+        range = '$120-220';
+        break;
+      case 'executive':
+        range = '$180-300';
+        break;
+      case 'startup_founder':
+        range = '$250-300';
+        break;
+      default:
+        range = '';
+    }
     setSuggestion(range);
-  }, [formData.yearsOfExperience, form.getFieldValue('yearsOfExperience')]);
+  }, [formData.currentStatus, form.getFieldValue('currentStatus')]);
 
   const serviceOptions = [
     'Free coffee chat (15 mins)',
@@ -259,9 +286,11 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
 
           {/* suggestion text */}
           {suggestion && (
-            <Text type="secondary">
-              Based on your experience, we suggest you start with {suggestion}/hour
-            </Text>
+            <div style={{ marginTop: '-8px', marginBottom: '16px' }}>
+              <Text style={{ color: '#1990ff', fontSize: '14px', fontWeight: 'normal' }}>
+                Based on your experience, we suggest you start with {suggestion}/hour
+              </Text>
+            </div>
           )}
 
           <Form.Item
@@ -269,7 +298,10 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
             label="Select the services you can provide"
             rules={[{ required: true, message: 'Please select at least one service!' }]}
           >
-            <Checkbox.Group options={serviceOptions} />
+            <Checkbox.Group 
+              options={serviceOptions} 
+              style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+            />
           </Form.Item>
         </>
       ),
@@ -346,14 +378,11 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
       const services = (allValues.servicesList || []).map((type: string) => ({ type, price: allValues.basePrice }));
 
       const mentorData = {
-        displayName: allValues.displayName,
         company: allValues.company,
         title: allValues.title,
         years_of_experience: Number(allValues.yearsOfExperience),
         years_of_experience_recorded_date: new Date(),
         services,
-        linkedin: allValues.linkedin,
-        wechat: allValues.wechat,
         introduction: allValues.introduction,
       };
 
@@ -377,7 +406,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
       // Second API call to update user profile with LinkedIn and industries
       const userUpdateData = {
         userId,
-        displayName: allValues.displayName,
+        username: allValues.displayName,
         linkedin: allValues.linkedin,
         wechat: allValues.wechat,
         industries: selectedIndustries

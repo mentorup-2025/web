@@ -6,6 +6,7 @@ export async function POST(request: Request) {
     try {
         // Get update data from request
         const updateData = await request.json() as UpdateUserInput & { userId: string };
+        console.log('Received update data:', updateData);
 
         // Validate required fields
         if (!updateData.userId) {
@@ -14,6 +15,7 @@ export async function POST(request: Request) {
 
         // Extract userId and create update input
         const { userId, ...updateInput } = updateData;
+        console.log('Update input:', updateInput);
 
         // Validate update input
         if (Object.keys(updateInput).length === 0) {
@@ -21,17 +23,25 @@ export async function POST(request: Request) {
         }
 
         // Update user
-        const updatedUser = await updateUser(userId, updateInput);
-
-        return respData(updatedUser);
+        try {
+            const updatedUser = await updateUser(userId, updateInput);
+            console.log('User updated successfully:', updatedUser);
+            return respData(updatedUser);
+        } catch (updateError) {
+            console.error('Error in updateUser function:', updateError);
+            if (updateError instanceof Error) {
+                return respErr(`Failed to update user: ${updateError.message}`);
+            }
+            return respErr('Failed to update user: Unknown error in updateUser function');
+        }
 
     } catch (error) {
-        console.error('Error updating user:', error);
+        console.error('Error in user update route:', error);
         
         if (error instanceof Error) {
-            return respErr(error.message);
+            return respErr(`Failed to update user: ${error.message}`);
         }
         
-        return respErr('Failed to update user');
+        return respErr('Failed to update user: Unknown error');
     }
 } 
