@@ -17,6 +17,39 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
   const [form] = Form.useForm();
   const router = useRouter();
   const [formData, setFormData] = useState<any>({});
+  const [countdown, setCountdown] = useState(5);
+
+  // Add auto redirect when reaching confirmation step
+  useEffect(() => {
+    if (current === 4) {
+      const timer = setTimeout(() => {
+        router.push(`/mentor-profile/${userId}`);
+      }, 5000);
+
+      // Countdown timer
+      const countdownInterval = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(countdownInterval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => {
+        clearTimeout(timer);
+        clearInterval(countdownInterval);
+      };
+    }
+  }, [current, router, userId]);
+
+  // Reset countdown when leaving confirmation step
+  useEffect(() => {
+    if (current !== 4) {
+      setCountdown(5);
+    }
+  }, [current]);
 
   // compute suggestion based on current status
   const [suggestion, setSuggestion] = useState<string>('');
@@ -336,13 +369,22 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
       title: 'Confirmation',
       content: (
         <div className={styles.confirmationContent}>
-          <p>Thank you for submitting your information! Welcome to the MentorUp App.</p>
+          <p>This page will automatically redirect to your profile in {countdown} seconds. If not, please click the button below to go to the main page.</p>
+          <Button 
+            type="default" 
+            size="large"
+            onClick={() => router.push('/search')}
+            style={{ marginRight: '16px' }}
+          >
+            Start Exploration
+          </Button>
+          {/* todo: make mentor-profile availability tab open by url */}
           <Button 
             type="primary" 
             size="large"
-            onClick={() => router.push('/search')}
+            onClick={() => router.push(`/mentor-profile/${userId}`)}
           >
-            Start Exploration
+            Setup your availability
           </Button>
         </div>
       ),
@@ -407,8 +449,8 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
       const userUpdateData = {
         userId,
         username: allValues.displayName,
-        linkedin: allValues.linkedin,
-        wechat: allValues.wechat,
+        linkedin: allValues.linkedin ?? '',
+        wechat: allValues.wechat ?? '',
         industries: selectedIndustries
       };
 
@@ -463,7 +505,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
           {current === 1 && <h2>Tell us about <span className={styles.blue}>your work experience</span></h2>}
           {current === 2 && <h2>Join our <span className={styles.blue}>hourly rate</span></h2>}
           {current === 3 && <h2>Join our <span className={styles.blue}>Mentor Community</span></h2>}
-          {current === 4 && <h2><span className={styles.blue}>Thank You & Welcome!</span></h2>}
+          {current === 4 && <h2>Welcome to the <span className={styles.blue}>MentorUp Community!</span>We're excited to have you here.</h2>}
           
           <Form
             form={form}
