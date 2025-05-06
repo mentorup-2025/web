@@ -133,9 +133,91 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
           <Form.Item
             name="title"
             label="What's your current job title?"
-            rules={[{ required: true, message: 'Please input your title!' }]}
+            rules={[{ required: true, message: 'Please select your title!' }]}
           >
-            <Input placeholder="Enter your professional title" />
+            <Select
+              showSearch
+              placeholder="Select your professional title, type to search"
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+              }
+              options={[
+                {
+                  label: 'Software & IT',
+                  options: [
+                    { value: 'Software Engineer', label: 'Software Engineer' },
+                    { value: 'Software Developer', label: 'Software Developer' },
+                    { value: 'Data Analyst', label: 'Data Analyst' },
+                    { value: 'Data Scientist', label: 'Data Scientist' },
+                    { value: 'Business Analyst', label: 'Business Analyst' },
+                    { value: 'Systems Analyst', label: 'Systems Analyst' },
+                    { value: 'Web Developer', label: 'Web Developer' },
+                    { value: 'Full Stack Developer', label: 'Full Stack Developer' },
+                    { value: 'Java Developer', label: 'Java Developer' },
+                    { value: 'Python Developer', label: 'Python Developer' },
+                    { value: 'DevOps Engineer', label: 'DevOps Engineer' },
+                    { value: 'Cloud Engineer', label: 'Cloud Engineer' },
+                    { value: 'Machine Learning Engineer', label: 'Machine Learning Engineer' },
+                    { value: 'Network Engineer', label: 'Network Engineer' },
+                    { value: 'Database Administrator', label: 'Database Administrator' },
+                    { value: 'IT Project Manager', label: 'IT Project Manager' },
+                    { value: 'Information Security Analyst', label: 'Information Security Analyst' },
+                  ],
+                },
+                {
+                  label: 'Engineering',
+                  options: [
+                    { value: 'Mechanical Engineer', label: 'Mechanical Engineer' },
+                    { value: 'Electrical Engineer', label: 'Electrical Engineer' },
+                    { value: 'Civil Engineer', label: 'Civil Engineer' },
+                    { value: 'Manufacturing Engineer', label: 'Manufacturing Engineer' },
+                    { value: 'Industrial Engineer', label: 'Industrial Engineer' },
+                    { value: 'Quality Engineer', label: 'Quality Engineer' },
+                  ],
+                },
+                {
+                  label: 'Finance & Business',
+                  options: [
+                    { value: 'Financial Analyst', label: 'Financial Analyst' },
+                    { value: 'Accountant', label: 'Accountant' },
+                    { value: 'Auditor', label: 'Auditor' },
+                    { value: 'Management Analyst', label: 'Management Analyst' },
+                    { value: 'Market Research Analyst', label: 'Market Research Analyst' },
+                    { value: 'Economist', label: 'Economist' },
+                    { value: 'Operations Research Analyst', label: 'Operations Research Analyst' },
+                  ],
+                },
+                {
+                  label: 'Healthcare & Science',
+                  options: [
+                    { value: 'Medical Scientist', label: 'Medical Scientist' },
+                    { value: 'Biochemist', label: 'Biochemist' },
+                    { value: 'Research Associate', label: 'Research Associate' },
+                    { value: 'Pharmacist', label: 'Pharmacist' },
+                    { value: 'Physical Therapist', label: 'Physical Therapist' },
+                  ],
+                },
+                {
+                  label: 'Education',
+                  options: [
+                    { value: 'Postsecondary Teacher', label: 'Postsecondary Teacher' },
+                    { value: 'Research Assistant', label: 'Research Assistant' },
+                    { value: 'Instructional Coordinator', label: 'Instructional Coordinator' },
+                  ],
+                },
+                {
+                  label: 'Other Tech & Support Roles',
+                  options: [
+                    { value: 'UI/UX Designer', label: 'UI/UX Designer' },
+                    { value: 'Product Manager', label: 'Product Manager' },
+                    { value: 'QA Analyst', label: 'QA Analyst' },
+                    { value: 'Technical Support Specialist', label: 'Technical Support Specialist' },
+                    { value: 'ERP Consultant', label: 'ERP Consultant (e.g., SAP, Oracle)' },
+                  ],
+                },
+              ]}
+            />
           </Form.Item>
           <Form.Item
             name="yearsOfExperience"
