@@ -6,31 +6,27 @@ import { UserOutlined } from '@ant-design/icons';
 import styles from '../search.module.css';
 import { useEffect, useState } from 'react';
 
+interface Service {
+  type: string;
+  price: number;
+}
+
 interface Mentor {
   user_id: string;
   username: string;
   email: string;
+  industries: string[];
   mentor: {
     title: string;
     introduction: string;
     company: string;
     years_of_experience: number;
-    industries: string[];
     services: {
-      consultation: number;
-      resume_review: number;
-      mock_interview: number;
-      career_guidance: number;
+      [key: string]: Service | number;
     };
     user_id: string;
     created_at: string;
   };
-}
-
-interface ApiResponse {
-  code: number;
-  message: string;
-  data: Mentor[];
 }
 
 interface SearchFilters {
@@ -44,31 +40,12 @@ interface SearchFilters {
 
 interface MentorGridProps {
   filters: SearchFilters;
+  mentors: Mentor[];
+  loading: boolean;
 }
 
-export default function MentorGrid({ filters }: MentorGridProps) {
-  const [mentors, setMentors] = useState<Mentor[]>([]);
+export default function MentorGrid({ filters, mentors, loading }: MentorGridProps) {
   const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchMentors = async () => {
-      try {
-        const response = await fetch('http://localhost:3000/api/mentor/list');
-        const data: ApiResponse = await response.json();
-        if (data.code === 200) {
-          setMentors(data.data);
-          setFilteredMentors(data.data);
-        }
-      } catch (error) {
-        console.error('Error fetching mentors:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMentors();
-  }, []);
 
   useEffect(() => {
     const filtered = mentors.filter(mentor => {
@@ -79,7 +56,7 @@ export default function MentorGrid({ filters }: MentorGridProps) {
 
       // Industry filter
       if (filters.industries && filters.industries.length > 0) {
-        const hasMatchingIndustry = mentor.mentor.industries.some(industry => 
+        const hasMatchingIndustry = mentor.industries.some(industry => 
           filters.industries?.includes(industry)
         );
         if (!hasMatchingIndustry) return false;
@@ -97,7 +74,9 @@ export default function MentorGrid({ filters }: MentorGridProps) {
 
       // Price range filter
       if (filters.minPrice !== undefined && filters.maxPrice !== undefined) {
-        const servicePrices = Object.values(mentor.mentor.services);
+        const servicePrices = Object.values(mentor.mentor.services).map(service => 
+          typeof service === 'number' ? service : service.price
+        );
         const hasPriceInRange = servicePrices.some(price => 
           price >= filters.minPrice! && price <= filters.maxPrice!
         );
@@ -154,7 +133,6 @@ export default function MentorGrid({ filters }: MentorGridProps) {
           </div>
           
           <div className={styles.cardFooter}>
-            {/* Removed price since it's not in the API response */}
             <Link href={`/mentor/${user.user_id}`}>
               <Button type="primary" className={styles.scheduleButton}>
                 Schedule

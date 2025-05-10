@@ -17,21 +17,29 @@ interface SearchFiltersProps {
     minPrice?: number;
     maxPrice?: number;
   }) => void;
+  jobTitles: string[];
+  industries: string[];
+  minPrice: number;
+  maxPrice: number;
 }
 
-export default function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
+export default function SearchFilters({ 
+  onFiltersChange, 
+  jobTitles, 
+  industries,
+  minPrice,
+  maxPrice 
+}: SearchFiltersProps) {
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [filters, setFilters] = useState({
     jobTitle: '',
     industries: [] as string[],
     minExperience: 1,
     maxExperience: 20,
-    minPrice: 0,
-    maxPrice: 200
+    minPrice: minPrice,
+    maxPrice: maxPrice
   });
 
-  const jobTitles = ['Software Engineer', 'Product Manager', 'Data Scientist', 'UX Designer'];
-  const industries = ['Technology', 'Finance', 'Healthcare', 'Education', 'E-commerce'];
   const experiences = ['1-3 years', '3-5 years', '5-10 years', '10+ years'];
   const languages = ['English', 'Spanish', 'Chinese', 'French', 'German'];
   const availability = ['Weekdays', 'Weekends', 'Evenings', 'Mornings'];
@@ -126,16 +134,16 @@ export default function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
         <Panel header="Price Range" key="price">
           <Slider
             range
-            min={0}
-            max={200}
-            defaultValue={[0, 200]}
+            min={minPrice}
+            max={maxPrice}
+            defaultValue={[minPrice, maxPrice]}
             onChange={handlePriceChange}
             marks={{
-              0: '$0',
-              50: '$50',
-              100: '$100',
-              150: '$150',
-              200: '$200+'
+              [minPrice]: `$${minPrice}`,
+              [Math.round((minPrice + maxPrice) / 4)]: `$${Math.round((minPrice + maxPrice) / 4)}`,
+              [Math.round((minPrice + maxPrice) / 2)]: `$${Math.round((minPrice + maxPrice) / 2)}`,
+              [Math.round((minPrice + maxPrice) * 3 / 4)]: `$${Math.round((minPrice + maxPrice) * 3 / 4)}`,
+              [maxPrice]: `$${maxPrice}+`
             }}
           />
         </Panel>
