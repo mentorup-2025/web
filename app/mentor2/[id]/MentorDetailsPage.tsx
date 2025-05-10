@@ -10,15 +10,29 @@ import {
   Button,
   Dropdown,
   MenuProps,
+  message,
+  Modal,
 } from 'antd';
 import { LinkedinFilled, UserOutlined } from '@ant-design/icons';
 import styles from './mentorDetails.module.css';
 import MentorAvailability from '../../components/MentorAvailability';
+import { useState } from 'react';
+import { supabase } from '../../services/supabase';
+import { useUser } from '../../context/UserContext';
 
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
 
 export default function MentorDetailsPage() {
+  const { user } = useUser(); // 假设你有一个用户上下文
+  console.log('Current user:', user); // 检查是否为空
+  const [isBookingModalVisible, setIsBookingModalVisible] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<{
+    date: string;
+    time: string;
+  } | null>(null);
+  const [loading, setLoading] = useState(false);
+
   // ▼ 假数据 – 后续替换为真实接口
   const mentor = {
     name: 'Name Name',
@@ -40,6 +54,55 @@ export default function MentorDetailsPage() {
     { key: '1', label: <Link href="/profile">Profile</Link> },
     { key: '2', label: <Link href="/logout">Log out</Link> },
   ];
+
+  const handleSlotSelect = (date: string, time: string) => {
+    console.log('Received slot:', date, time); // 调试
+    setSelectedSlot({ date, time });
+  };
+
+  const handleBookAppointment = async () => {
+    if (!selectedSlot || !user) {
+      message.error('Please select a time slot and make sure you are logged in');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // 解析时间段
+      const [startTimeStr, endTimeStr] = selectedSlot.time.split(' - ');
+      const startDateTime = `${selectedSlot.date} ${startTimeStr}`;
+      const endDateTime = `${selectedSlot.date} ${endTimeStr}`;
+
+      // 创建预约记录
+      const { data, error } = await supabase
+          .from('appointments')
+          .insert([
+            {
+              mentor_id: mentor.user_id,
+              mentee_id: user.id, // 假设用户上下文中有用户ID
+              time_slot: `[${startDateTime}, ${endDateTime})`,
+              status: 'pending',
+              service_type: 'Mock Interview', // 可以从服务列表中选择
+              price: 0, // 免费服务设为0，或从服务中获取价格
+            },
+          ])
+          .select();
+
+      if (error) {
+        throw error;
+      }
+
+      message.success('Appointment booked successfully!');
+      setIsBookingModalVisible(false);
+      // 这里可以添加重定向到确认页面或其他逻辑
+    } catch (error) {
+      console.error('Booking failed:', error);
+      message.error('Failed to book appointment');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
       <Layout>
@@ -71,9 +134,9 @@ export default function MentorDetailsPage() {
         <Content className={styles.content}>
           <div className={styles.container}>
             <div className={styles.mainContent}>
-              {/* -------- 左列 2/3 -------- */}
+              {/* 左列 2/3 */}
               <div className={styles.leftSection}>
-                {/* 1️⃣ 个人资料行 */}
+                {/* 个人资料行 */}
                 <div className={styles.profileHeader}>
                   <Avatar size={120} style={{ background: '#9b9b9b' }} />
 
@@ -97,7 +160,7 @@ export default function MentorDetailsPage() {
                   </div>
                 </div>
 
-                {/* 2️⃣ 介绍卡片 */}
+                {/* 介绍卡片 */}
                 <Card
                     className={styles.infoCard}
                     title={<span className={styles.cardTitle}>Introduction</span>}
@@ -106,7 +169,7 @@ export default function MentorDetailsPage() {
                   {mentor.introduction}
                 </Card>
 
-                {/* 3️⃣ Services 卡片 */}
+                {/* Services 卡片 */}
                 <Card
                     className={styles.infoCard}
                     title={<span className={styles.cardTitle}>Services</span>}
@@ -122,17 +185,43 @@ export default function MentorDetailsPage() {
                 </Card>
               </div>
 
-              {/* -------- 右列 1/3 -------- */}
+              {/* 右列 1/3 */}
               <div className={styles.rightSection}>
                 <Title level={3} className={styles.availabilityHeader}>
-                  Mentor’s Availability
+                  Mentor's Availability
                 </Title>
 
-                <MentorAvailability mentorId={mentor.user_id} />
+                <MentorAvailability
+                    mentorId={mentor.user_id}
+                    onSlotSelect={(date, time) => {
+                      console.log('Selected:', date, time); // 测试回调
+                      setSelectedSlot({ date, time });
+                    }}
+                    onBook={() => setIsBookingModalVisible(true)}
+                />
               </div>
             </div>
           </div>
         </Content>
+
+        {/* 预约确认模态框 */}
+        <Modal
+            title="Confirm Appointment"
+            open={isBookingModalVisible}
+            onOk={handleBookAppointment}
+            onCancel={() => setIsBookingModalVisible(false)}
+            confirmLoading={loading}
+            okText="Confirm Booking"
+        >
+          {selectedSlot && (
+              <div>
+                <p>You are booking a session with {mentor.name} on:</p>
+                <p><strong>Date:</strong> {selectedSlot.date}</p>
+                <p><strong>Time:</strong> {selectedSlot.time}</p>
+                <p><strong>Service:</strong> Mock Interview</p>
+              </div>
+          )}
+        </Modal>
       </Layout>
   );
 }

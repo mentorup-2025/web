@@ -23,53 +23,54 @@ interface AvailabilityResponse {
 
 interface MentorAvailabilityProps {
   mentorId: string | number;
+  onSlotSelect: (date: string, time: string) => void;
+  onBook: () => void;
 }
 
-export default function MentorAvailability({ mentorId }: MentorAvailabilityProps) {
+export default function MentorAvailability({
+                                             mentorId,
+                                             onSlotSelect,
+                                             onBook,
+                                           }: MentorAvailabilityProps) {
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [availabilityData, setAvailabilityData] = useState<Map<string, string[]>>(new Map());
-  const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs('2024-03-01'));
-
-  console.log('id', mentorId)
+  const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs());
 
   useEffect(() => {
     const fetchAvailability = async () => {
       const startDate = currentMonth.startOf('month').format('YYYY-MM-DD');
       const endDate = currentMonth.endOf('month').format('YYYY-MM-DD');
-      
+
       try {
         const response = await fetch(
-          `/api/availability/${mentorId}/view?start_date=${startDate}&end_date=${endDate}`
+            `/api/availability/${mentorId}/view?start_date=${startDate}&end_date=${endDate}`
         );
         const data: AvailabilityResponse = await response.json();
 
-        console.log('!!! data', data)
-        
         if (data.code === 0) {
           const availabilityMap = new Map<string, string[]>();
-          
+
           data.data.forEach(({ slot_time }) => {
             const cleanSlotTime = slot_time.replace(/[\[\]"]/g, '');
             const [start, end] = cleanSlotTime.split(',');
-            
+
             const startTime = dayjs(start);
             const endTime = dayjs(end.replace(')', ''));
-            
+
             const dateKey = startTime.format('YYYY-MM-DD');
             const timeSlot = `${startTime.format('HH:mm')} - ${endTime.format('HH:mm')}`;
-            
+
             if (!availabilityMap.has(dateKey)) {
               availabilityMap.set(dateKey, []);
             }
             availabilityMap.get(dateKey)?.push(timeSlot);
           });
-          console.log('availabilityMap', availabilityMap)
-          
+
           setAvailabilityData(availabilityMap);
         }
       } catch (error) {
-        // Handle error appropriately
+        console.error('Error fetching availability:', error);
       }
     };
 
@@ -99,7 +100,9 @@ export default function MentorAvailability({ mentorId }: MentorAvailabilityProps
     setSelectedSlot(null);
   };
 
-  const headerRender = ({ value, onChange }: any) => {
+  const headerRender = ({ value, onChange }: { value: Dayjs; onChange: (date: Dayjs) => void }) => {
+    if (!value) return null; // 安全保护
+
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const year = value.year();
     const month = value.month();
@@ -113,74 +116,82 @@ export default function MentorAvailability({ mentorId }: MentorAvailabilityProps
     }
 
     return (
-      <div style={{ padding: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <Button
-            style={{ marginRight: '8px' }}
-            onClick={() => onChange(value.clone().subtract(1, 'month'))}
-          >
-            {'<'}
-          </Button>
-          <span style={{ margin: '0 8px' }}>{months[month]}</span>
-          <Button
-            style={{ marginLeft: '8px' }}
-            onClick={() => onChange(value.clone().add(1, 'month'))}
-          >
-            {'>'}
-          </Button>
+        <div style={{ padding: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <Button
+                style={{ marginRight: '8px' }}
+                onClick={() => onChange(value.clone().subtract(1, 'month'))}
+            >
+              {'<'}
+            </Button>
+            <span style={{ margin: '0 8px' }}>{months[month]}</span>
+            <Button
+                style={{ marginLeft: '8px' }}
+                onClick={() => onChange(value.clone().add(1, 'month'))}
+            >
+              {'>'}
+            </Button>
+          </div>
+          <Select
+              size="small"
+              value={year}
+              options={options}
+              onChange={(newYear) => {
+                const now = value.clone().year(newYear);
+                onChange(now);
+              }}
+          />
         </div>
-        <Select
-          size="small"
-          value={year}
-          options={options}
-          onChange={(newYear) => {
-            const now = value.clone().year(newYear);
-            onChange(now);
-          }}
-        />
-      </div>
     );
   };
 
   return (
-    <Card title="Mentor's Availability" className={styles.availabilityCard}>
-      <Calendar
-        fullscreen={false}
-        onChange={handleDateSelect}
-        onPanelChange={handlePanelChange}
-        dateCellRender={dateCellRender}
-        headerRender={headerRender}
-        value={selectedDate || undefined}
-        className={styles.calendarHeader}
-      />
+      <Card title="Mentor's Availability" className={styles.availabilityCard}>
+        <Calendar
+            fullscreen={false}
+            onChange={handleDateSelect}
+            onPanelChange={handlePanelChange}
+            dateCellRender={dateCellRender}
+            headerRender={headerRender}
+            value={selectedDate || dayjs()} // 确保有默认值
+            className={styles.calendarHeader}
+        />
 
-      {selectedDate && availabilityData.has(selectedDate.format('YYYY-MM-DD')) && (
-        <div className={styles.timeSlots}>
-          <Text strong>Available Time Slots</Text>
-          <List
-            size="small"
-            className={styles.timeSlotsList}
-            dataSource={availabilityData.get(selectedDate.format('YYYY-MM-DD')) || []}
-            renderItem={(slot) => (
-              <List.Item
-                className={`${styles.timeSlot} ${selectedSlot === slot ? styles.selected : ''}`}
-                onClick={() => setSelectedSlot(slot)}
-              >
-                {slot}
-              </List.Item>
-            )}
-          />
-        </div>
-      )}
+        {selectedDate && availabilityData.has(selectedDate.format('YYYY-MM-DD')) && (
+            <div className={styles.timeSlots}>
+              <Text strong>Available Time Slots</Text>
+              <List
+                  size="small"
+                  className={styles.timeSlotsList}
+                  dataSource={availabilityData.get(selectedDate.format('YYYY-MM-DD')) || []}
+                  renderItem={(slot) => (
+                      <List.Item
+                          className={`${styles.timeSlot} ${selectedSlot === slot ? styles.selected : ''}`}
+                          onClick={() => setSelectedSlot(slot)}
+                      >
+                        {slot}
+                      </List.Item>
+                  )}
+              />
+            </div>
+        )}
 
-      <Button
-        type="primary"
-        block
-        disabled={!selectedDate || !selectedSlot}
-        className={styles.scheduleButton}
-      >
-        Book
-      </Button>
-    </Card>
+        <Button
+            type="primary"
+            block
+            disabled={!selectedDate || !selectedSlot}
+            className={styles.scheduleButton}
+            onClick={() => {
+              if (selectedDate && selectedSlot) {
+                console.log('Selected Date:', selectedDate?.format('YYYY-MM-DD'));
+                console.log('Selected Slot:', selectedSlot);
+                onSlotSelect(selectedDate.format('YYYY-MM-DD'), selectedSlot);
+                onBook();
+              }
+            }}
+        >
+          Book
+        </Button>
+      </Card>
   );
-} 
+}
