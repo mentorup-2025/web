@@ -36,6 +36,7 @@ interface SearchFilters {
   maxExperience?: number;
   minPrice?: number;
   maxPrice?: number;
+  serviceTypes?: string[];
 }
 
 interface MentorGridProps {
@@ -81,6 +82,17 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
           price >= filters.minPrice! && price <= filters.maxPrice!
         );
         if (!hasPriceInRange) return false;
+      }
+
+      // Service type filter
+      if (filters.serviceTypes && filters.serviceTypes.length > 0) {
+        const mentorServiceTypes = Object.entries(mentor.mentor.services).map(([key, value]) => 
+          typeof value === 'object' ? value.type : key
+        );
+        const hasMatchingServiceType = mentorServiceTypes.some(type => 
+          filters.serviceTypes?.includes(type)
+        );
+        if (!hasMatchingServiceType) return false;
       }
 
       return true;

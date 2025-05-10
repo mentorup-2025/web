@@ -39,6 +39,7 @@ interface SearchFilters {
   maxExperience?: number;
   minPrice?: number;
   maxPrice?: number;
+  serviceTypes?: string[];
 }
 
 export default function SearchPage() {
@@ -72,6 +73,15 @@ export default function SearchPage() {
   const uniqueJobTitles = Array.from(new Set(mentors.map(mentor => mentor.mentor.title)));
   const uniqueIndustries = Array.from(new Set(mentors.flatMap(mentor => mentor.industries)));
 
+  // Extract unique service types from mentor data
+  const uniqueServiceTypes = Array.from(new Set(
+    mentors.flatMap(mentor => 
+      Object.entries(mentor.mentor.services).map(([key, value]) => 
+        typeof value === 'object' ? value.type : key
+      )
+    )
+  ));
+
   // Calculate price range from mentor services
   const allPrices = mentors.flatMap(mentor => 
     Object.values(mentor.mentor.services).map(service => 
@@ -90,6 +100,7 @@ export default function SearchPage() {
           onFiltersChange={handleFiltersChange} 
           jobTitles={uniqueJobTitles}
           industries={uniqueIndustries}
+          serviceTypes={uniqueServiceTypes}
           minPrice={minPrice}
           maxPrice={maxPrice}
         />

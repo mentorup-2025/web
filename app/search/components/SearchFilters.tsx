@@ -1,9 +1,8 @@
 'use client';
 
-import { Layout, Collapse, Checkbox, Slider, Button } from 'antd';
-import { DownOutlined, UpOutlined } from '@ant-design/icons';
-import { useState, useEffect, useCallback } from 'react';
+import { Layout, Collapse, Checkbox, Slider } from 'antd';
 import styles from '../search.module.css';
+import { useState, useEffect, useCallback } from 'react';
 
 const { Sider } = Layout;
 const { Panel } = Collapse;
@@ -16,9 +15,11 @@ interface SearchFiltersProps {
     maxExperience?: number;
     minPrice?: number;
     maxPrice?: number;
+    serviceTypes?: string[];
   }) => void;
   jobTitles: string[];
   industries: string[];
+  serviceTypes: string[];
   minPrice: number;
   maxPrice: number;
 }
@@ -27,23 +28,19 @@ export default function SearchFilters({
   onFiltersChange, 
   jobTitles, 
   industries,
+  serviceTypes,
   minPrice,
   maxPrice 
 }: SearchFiltersProps) {
-  const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [filters, setFilters] = useState({
     jobTitle: '',
     industries: [] as string[],
     minExperience: 1,
     maxExperience: 20,
     minPrice: minPrice,
-    maxPrice: maxPrice
+    maxPrice: maxPrice,
+    serviceTypes: [] as string[]
   });
-
-  const experiences = ['1-3 years', '3-5 years', '5-10 years', '10+ years'];
-  const languages = ['English', 'Spanish', 'Chinese', 'French', 'German'];
-  const availability = ['Weekdays', 'Weekends', 'Evenings', 'Mornings'];
-  const mentorshipTypes = ['Career Guidance', 'Technical Skills', 'Leadership', 'Interview Prep'];
 
   // Memoize the filter change handler
   const handleFiltersChange = useCallback((newFilters: typeof filters) => {
@@ -66,6 +63,13 @@ export default function SearchFilters({
     setFilters(prev => ({
       ...prev,
       industries: selectedIndustries
+    }));
+  };
+
+  const handleServiceTypesChange = (selectedTypes: string[]) => {
+    setFilters(prev => ({
+      ...prev,
+      serviceTypes: selectedTypes
     }));
   };
 
@@ -147,52 +151,20 @@ export default function SearchFilters({
             }}
           />
         </Panel>
+
+        <Panel header="Service Type" key="serviceType">
+          <Checkbox.Group 
+            className={styles.checkboxGroup}
+            onChange={(values) => handleServiceTypesChange(values as string[])}
+          >
+            {serviceTypes.map(type => (
+              <Checkbox key={type} value={type}>
+                {type}
+              </Checkbox>
+            ))}
+          </Checkbox.Group>
+        </Panel>
       </Collapse>
-
-      <div className={styles.moreFiltersButton}>
-        <Button 
-          type="text" 
-          onClick={() => setShowMoreFilters(!showMoreFilters)}
-          icon={showMoreFilters ? <UpOutlined /> : <DownOutlined />}
-          block
-        >
-          {showMoreFilters ? 'Less Filters' : 'More Filters'}
-        </Button>
-      </div>
-
-      {showMoreFilters && (
-        <Collapse ghost className={styles.additionalFilters}>
-          <Panel header="Languages" key="languages">
-            <Checkbox.Group className={styles.checkboxGroup}>
-              {languages.map(language => (
-                <Checkbox key={language} value={language}>
-                  {language}
-                </Checkbox>
-              ))}
-            </Checkbox.Group>
-          </Panel>
-
-          <Panel header="Availability" key="availability">
-            <Checkbox.Group className={styles.checkboxGroup}>
-              {availability.map(time => (
-                <Checkbox key={time} value={time}>
-                  {time}
-                </Checkbox>
-              ))}
-            </Checkbox.Group>
-          </Panel>
-
-          <Panel header="Mentorship Type" key="mentorshipType">
-            <Checkbox.Group className={styles.checkboxGroup}>
-              {mentorshipTypes.map(type => (
-                <Checkbox key={type} value={type}>
-                  {type}
-                </Checkbox>
-              ))}
-            </Checkbox.Group>
-          </Panel>
-        </Collapse>
-      )}
     </Sider>
   );
 } 
