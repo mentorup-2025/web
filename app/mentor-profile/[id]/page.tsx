@@ -36,6 +36,15 @@ export default function MentorProfilePage() {
   const params = useParams();
   const [mentorData, setMentorData] = useState<MentorData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<string>('about');
+
+  // Read initial tab from URL hash
+  useEffect(() => {
+    const hash = window.location.hash?.replace('#', '');
+    if (hash) {
+      setActiveTab(hash);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchMentorData = async () => {
@@ -69,7 +78,15 @@ export default function MentorProfilePage() {
   }
 
   const formatServiceType = (type: string) => {
-    return type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    return type
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  const handleTabChange = (key: string) => {
+    setActiveTab(key);
+    window.history.replaceState(null, '', `#${key}`);
   };
 
   return (
@@ -87,7 +104,9 @@ export default function MentorProfilePage() {
               />
               <div className={styles.profileText}>
                 <Title level={2}>{mentorData.username}</Title>
-                <Text className={styles.title}>{mentorData.mentor.title} @ {mentorData.mentor.company}</Text>
+                <Text className={styles.title}>
+                  {mentorData.mentor.title} @ {mentorData.mentor.company}
+                </Text>
                 <Space className={styles.socialLinks}>
                   {mentorData.linkedin && (
                     <a href={mentorData.linkedin} target="_blank" rel="noopener noreferrer">
@@ -105,7 +124,7 @@ export default function MentorProfilePage() {
           </div>
 
           {/* Tabs Section */}
-          <Tabs defaultActiveKey="about">
+          <Tabs activeKey={activeTab} onChange={handleTabChange}>
             <TabPane tab="About Me" key="about">
               <div className={styles.tabContent}>
                 {/* Info Cards */}
@@ -150,4 +169,4 @@ export default function MentorProfilePage() {
       </Content>
     </Layout>
   );
-} 
+}

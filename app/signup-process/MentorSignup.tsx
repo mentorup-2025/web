@@ -23,7 +23,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
   useEffect(() => {
     if (current === 4) {
       const timer = setTimeout(() => {
-        router.push(`/mentor-profile/${userId}`);
+        router.push(`/mentor-profile/${userId}#availability`);
       }, 5000);
 
       // Countdown timer
