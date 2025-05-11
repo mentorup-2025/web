@@ -11,6 +11,7 @@ export interface User {
   industries?: string[]; // Optional industries
   wechat?: string;      // Optional WeChat ID
   status?: UserStatus;  // Optional status
+  job_target?: JobTarget | null; // Optional job target
   mentor?: Mentor | null; // Optional mentor ID, defaults to null
 }
 
@@ -34,6 +35,7 @@ export interface UpdateUserInput {
   industries?: string[] | null; // Optional industries update
   wechat?: string | null;       // Optional WeChat ID update
   status?: UserStatus | null;   // Optional status update
+  job_target?: JobTarget | null; // Optional job target update
 }
 
 export interface UserCredentials {
@@ -48,3 +50,8 @@ export enum UserStatus {
   CAREER_SWITCH = 'Career Switch',
   FREELANCER = 'Freelancer'
 }
+
+export type JobTarget = {
+  title?: string;
+  level?: string;
+};

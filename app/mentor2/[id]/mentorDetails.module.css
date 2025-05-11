@@ -1,0 +1,222 @@
+/* mentorDetails.module.css – update to fully hide small title & divider inside MentorAvailability */
+
+/* ======== Navbar ======== */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    padding-inline: 32px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    z-index: 100;
+}
+
+.leftGroup {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: 700;
+    color: #000;
+}
+
+.logo:hover {
+    color: #000;
+}
+
+.link {
+    font-size: 16px;
+    color: #555;
+    transition: color 0.2s ease;
+}
+
+.link:hover {
+    color: #1890ff;
+}
+
+.rightGroup {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.becomeBtn {
+    font-weight: 600;
+    height: 40px;
+}
+
+.avatar {
+    cursor: pointer;
+}
+
+/* ======== Layout ======== */
+.content {
+    min-height: calc(100vh - 64px);
+    background: #fff;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 24px 48px;
+}
+
+.mainContent {
+    display: flex;
+    align-items: flex-start;
+}
+
+/* ======== Columns ======== */
+.leftSection {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    border-right: 1px solid #f0f0f0;
+    padding-right: 48px;
+}
+
+.rightSection {
+    flex: 1;
+    min-width: 280px;
+    padding-left: 48px;
+    position: sticky;
+    top: 96px;
+}
+
+/* ======== Profile Header ======== */
+.profileHeader {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+}
+
+.profileText {
+    display: flex;
+    flex-direction: column;
+}
+
+.name {
+    margin: 0;
+}
+
+.jobTitle {
+    font-size: 16px;
+    color: rgba(0, 0, 0, 0.65);
+}
+
+.socialIconWrapper {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+}
+
+.socialIcon {
+    font-size: 28px;
+    color: #1890ff;
+    transition: color 0.3s ease;
+    cursor: pointer;
+}
+
+.socialIcon:hover {
+    color: #0067d9;
+}
+
+/* ======== Cards ======== */
+.infoCard {
+    width: 100%;
+    border: 1px solid #d9d9d9;
+    border-radius: 8px;
+}
+
+.cardTitle {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.infoCard :global(.ant-card-head) {
+    border-bottom: none;
+}
+
+/* ======== Services ======== */
+.serviceTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.serviceTag {
+    padding: 4px 12px;
+    font-size: 14px;
+    background: #fff;
+    color: #1890ff;
+    border: 1px solid #1890ff;
+    border-radius: 4px;
+}
+
+/* ======== Availability ======== */
+.availabilityHeader {
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+/* Hide inner small title & divider coming from Ant Card */
+.rightSection :global(.ant-card-head) {
+    display: none !important;
+}
+
+.rightSection :global(.ant-divider),
+.rightSection :global(h4),
+.rightSection :global(h5) {
+    display: none !important;
+}
+
+/* Remove card border / shadow */
+.rightSection :global(.ant-card) {
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.availabilityCard {
+    position: sticky;
+    top: 88px;
+}
+
+/* ======== Media Queries ======== */
+@media screen and (max-width: 1024px) {
+    .container {
+        padding: 16px 16px 32px;
+    }
+
+    .leftSection {
+        padding-right: 32px;
+    }
+
+    .rightSection {
+        padding-left: 32px;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .mainContent {
+        flex-direction: column;
+    }
+
+    .leftSection {
+        border-right: none;
+        padding-right: 0;
+    }
+
+    .rightSection {
+        position: static;
+        top: auto;
+        width: 100%;
+        padding-left: 0;
+        margin-top: 32px;
+        border-top: 1px solid #f0f0f0;
+    }
+}

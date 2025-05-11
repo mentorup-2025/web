@@ -89,14 +89,19 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhY
 
 ## Local test of stripe backend
 
-首先需要安装ngrok来获得代理地址
+首先需要安装 ngrok 来获得代理地址
 ```
 brew install --cask ngrok
 ```
 
-使用代理地址覆盖localhost
+使用代理地址覆盖 localhost
 ```
 ngrok http 3000
+```
+
+windows Powershell 启动方式
+```
+.\ngrok.exe http 3000
 ```
 
 把生成的代理地址，如https://82e9-2600-1700-6f0e-0-dd58-4ced-b17c-906a.ngrok-free.app，然后去stripe dashboard-developers-webhooks，把Webhook endpoints中原先的地址换成新生成的，保存

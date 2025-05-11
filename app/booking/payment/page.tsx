@@ -2,11 +2,11 @@
 
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
-import CheckoutForm from '../../components/CheckoutForm'; // 改成实际路径
+import CheckoutForm from '../../components/CheckoutForm';
 import { useState, useEffect } from 'react';
-import { Button, Modal, message } from 'antd';  // 引入更多Ant Design组件
+import { Button, Modal, message } from 'antd';
 
-import { supabase } from '../../services/supabase'; // 根据路径调整
+import { supabase } from '../../services/supabase';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 

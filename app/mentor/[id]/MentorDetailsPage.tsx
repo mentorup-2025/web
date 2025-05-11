@@ -12,7 +12,7 @@ const { Title, Text } = Typography;
 export default function MentorDetailsPage() {
   // Mock data - replace with real data later
   const mentor = {
-    name: 'John Doe',
+    name: 'John Doe111',
     title: 'SDE',
     company: 'Amazon',
     linkedin: 'https://linkedin.com/in/johndoe',

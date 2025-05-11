@@ -3,14 +3,14 @@
 }
 
 .mainLayout {
-  margin-top: 64px;
   padding: 24px;
+  padding-top: 100px;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(169deg, 
-    #e8f6fe 0%, 
-    #e8f6fe 30%, 
+  background: linear-gradient(175deg, 
+    #f9f0ff 0%, 
+    #f9f0ff 30%, 
     transparent 30.1%, 
     transparent 100%
   );
@@ -199,6 +199,7 @@
 @media (max-width: 768px) {
   .mainLayout {
     padding: 16px;
+    padding-top: 200px;
   }
 
   .content {

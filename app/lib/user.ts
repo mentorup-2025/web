@@ -5,6 +5,7 @@ export async function createUser(input: CreateUserInput): Promise<User> {
     try {
         // Prepare user data
         const userData = {
+            user_id: input.user_id,
             username: input.username,
             email: input.email,
             github: input.github,
