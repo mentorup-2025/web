@@ -34,8 +34,9 @@ POST {{baseUri}}/api/user/insert
 Content-Type: application/json
 
 {
-    "username": "testmentor",
-    "email": "mentor@example.com",
+    "user_id" : "absdsdfsdfsdf",
+    "username": "testmentor2222",
+    "email": "mentor333@example.com",
     "github": "https://github.com/testmentor",
     "linkedin": "https://linkedin.com/in/testmentor",
     "resume": "https://resume.com/testmentor"
