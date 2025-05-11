@@ -30,6 +30,7 @@
     "jsonwebtoken": "^9.0.2",
     "next": "^14.2.25",
     "next-auth": "^4.24.11",
+    "next-i18next": "^15.4.2",
     "react": "^18",
     "react-big-calendar": "^1.18.0",
     "react-datepicker": "^8.1.0",
