@@ -263,3 +263,7 @@ Content-Type: application/json
     "status": "Employed",
     "industries": ["Data Science", "Finance"]
 }
+
+### Get Mentor Availability
+GET  {{baseUri}}/api/availability/93137255-d7ac-4219-90d9-a886ae987732/get
+Content-Type: application/json

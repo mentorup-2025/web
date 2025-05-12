@@ -34,6 +34,19 @@ export async function setRegularAvailability(input: SetAvailabilityInput): Promi
     }
 }
 
+export async function getMentorAvailabilitySetup(mentor_id: string) {
+    const { data, error } = await getSupabaseClient()
+      .from('mentor_availability')
+      .select('*')
+      .eq('mentor_id', mentor_id);
+  
+    if (error) {
+      throw new Error(`Failed to fetch mentor availability: ${error.message}`);
+    }
+  
+    return data;
+  }
+
 export async function getMentorAvailability(input: { 
     mentor_id: string, 
     start_date: Date, 

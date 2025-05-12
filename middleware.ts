@@ -1,12 +1,24 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
-const isPublicRoute = createRouteMatcher([ '/(.*)','/login(.*)', '/signup(.*)', '/signup-process(.*)'])
+const isPublicRoute = createRouteMatcher([
+  '/(.*)',
+  '/login(.*)', 
+  '/signup(.*)', 
+  '/signup-process(.*)',
+  '/api/availability/(.*)'
+])
 
-export default clerkMiddleware(async (auth, req) => {
-  if (!isPublicRoute(req)) {
-    await auth.protect()
-  }
-})
+// Export a dummy middleware when auth is disabled
+const dummyMiddleware = () => {};
+
+// Use environment variable to toggle auth
+export default process.env.ENABLE_AUTH === 'true' 
+  ? clerkMiddleware(async (auth, req) => {
+      if (!isPublicRoute(req)) {
+        await auth.protect()
+      }
+    })
+  : dummyMiddleware;
 
 export const config = {
   signUpUrl: "/signup",
@@ -16,4 +28,4 @@ export const config = {
     // Always run for API routes
     '/(api|trpc)(.*)',
   ],
-};
+}; 
