@@ -4,8 +4,8 @@ import { useTranslation } from 'next-i18next'
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 import Link from 'next/link'
 import { Switch } from 'antd'
-import Image from 'next/image'
 import MarqueeSection from './MarqueeSection'
+import styles from './styles/features.module.css'
 
 export default function Home() {
   const { t, i18n } = useTranslation('common')
@@ -75,8 +75,9 @@ export default function Home() {
             </Link>
           </div>
         </section>
-        <div className="absolute bottom-[10vh] left-0 w-screen h-[40vw] bg-blue-100 rounded-t-[100%] z-0 overflow-hidden"></div>
-        <div className="absolute bottom-0 left-0 w-screen h-[10vh] bg-blue-100 z-0"></div>
+      
+        {/* blue circle background  */}
+        <div className={styles.backgroundCircle}></div>
 
         <MarqueeSection />
 
@@ -85,12 +86,12 @@ export default function Home() {
             {t('Why Choose Us')}
           </h2>
 
-          <div className="bg-white rounded-2xl shadow-md flex flex-col md:flex-row overflow-hidden">
+          <div className="bg-white rounded-l border border-gray-200 flex flex-col md:flex-row overflow-hidden">
             <div className="md:w-1/2 w-full p-8 flex flex-col justify-center">
               <h3 className="text-lg text-black font-semibold">
                 {t('Transform Your Potential With Personalized Support')}
               </h3>
-              <h3 className="text-lg text-blue-500 font-semibold mb-4">
+              <h3 className="text-lg text-blue-500 font-semibold mb-8">
                 {t('Personalized Support')}
               </h3>
               <p className="text-gray-600 text-base mb-6">
@@ -115,8 +116,8 @@ export default function Home() {
                   <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
                   {t('Office Hour')}
                 </li>
-                <li className="">
-                  <span className="w-2 h-2 mr-5"></span>
+                <li className="flex items-center">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
                   {t('Advice for Every Step')}
                 </li>
                 <li className="flex items-center">
@@ -153,33 +154,33 @@ export default function Home() {
 
         <section
           id="features"
-          className="w-full max-w-5xl mt-20 grid grid-cols-1 md:grid-cols-3 gap-8"
+          className={styles.featuresGrid}
         >
-          <div className="p-6 bg-white rounded-xl shadow-md">
-            <h2 className="text-black text-xl font-semibold mb-4">
+          <div className={styles.featureCard}>
+            <h2 className={styles.featureTitle}>
               {t('Discover What Skills Your Dream Job Requires ')}
             </h2>
-            <p className="text-gray-600">
+            <p className={styles.featureDescription}>
               {t(
                 'MentorUp uses specialized AI to connect you with mentors, offering tailored industry expertise and personalized alignment to help you achieve your career goals.'
               )}
             </p>
           </div>
-          <div className="p-6 bg-white rounded-xl shadow-md">
-            <h2 className="text-black text-xl font-semibold mb-4">
+          <div className={styles.featureCard}>
+            <h2 className={styles.featureTitle}>
               {t('Flexible Meetups, Your Way—Quick or In-Depth')}
             </h2>
-            <p className="text-gray-600">
+            <p className={styles.featureDescription}>
               {t(
                 'Whether you want to get to know the mentors first or just have a few questions for now, you can access exclusive advice or have more in-depth discussions in real time.'
               )}
             </p>
           </div>
-          <div className="p-6 bg-white rounded-xl shadow-md">
-            <h2 className="text-black text-xl font-semibold mb-4">
+          <div className={styles.featureCard}>
+            <h2 className={styles.featureTitle}>
               {t('Connect with Other Members in the Community')}
             </h2>
-            <p className="text-gray-600">
+            <p className={styles.featureDescription}>
               {t(
                 'Check our forum where members can participate in discussions. This is a space for knowledge sharing and networking among members worldwide.'
               )}

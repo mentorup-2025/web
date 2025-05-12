@@ -1,0 +1,100 @@
+.featureCard {
+  padding: 2.5rem 1.5rem;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.featureCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.featureTitle {
+  color: #000;
+  font-size: 1.15rem;
+  font-weight: 400;
+  margin-bottom: 1rem;
+}
+
+.featureDescription {
+  color: #4b5563;
+}
+
+.backgroundCircle {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 110%;
+  height: 90vw;
+  background-color: #dbeafe;
+  border-radius: 100% 100% 0 0;
+  top: 25vh;
+  margin-left: -5%;
+  z-index: 0;
+}
+
+/* Mobile (default) */
+.featuresGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 5rem;
+  padding: 0 1rem;
+}
+
+/* Tablet (768px and up) */
+@media (min-width: 768px) {
+  .featuresGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    max-width: 768px;
+  }
+
+  .featureTitle {
+    font-size: 1.5rem;
+  }
+
+  .backgroundCircle {
+    height: 70vw;
+  }
+}
+
+/* Standard Monitor (1024px and up) */
+@media (min-width: 1024px) {
+  .featuresGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    max-width: 1024px;
+  }
+
+  .backgroundCircle {
+    height: 55vw;
+  }
+}
+
+/* Ultrawide Monitor (1440px and up) */
+@media (min-width: 1440px) {
+  .featuresGrid {
+    max-width: 1440px;
+    gap: 2.5rem;
+  }
+
+  .featureCard {
+    padding: 2rem;
+  }
+
+  .featureTitle {
+    font-size: 1.75rem;
+  }
+
+  .featureDescription {
+    font-size: 1.125rem;
+  }
+
+  .backgroundCircle {
+    height: 30vw;
+  }
+} 
