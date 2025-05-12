@@ -8,31 +8,28 @@ import {
   Tag,
   Avatar,
   Button,
-  Dropdown,
-  MenuProps,
   message,
   Modal,
 } from 'antd';
-
 import {
   SignedIn,
   SignedOut,
   SignInButton,
-  UserButton
-} from "@clerk/nextjs";
-
-import { LinkedinFilled, UserOutlined } from '@ant-design/icons';
+  UserButton,
+  useUser,
+} from '@clerk/nextjs';
+import { LinkedinFilled } from '@ant-design/icons';
 import styles from './mentorDetails.module.css';
 import MentorAvailability from '../../components/MentorAvailability';
 import { useState } from 'react';
 import { supabase } from '../../services/supabase';
-import { useUser } from '@clerk/nextjs'; // ✅ Clerk Hook
 
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
 
 export default function MentorDetailsPage() {
-  const { user, isSignedIn } = useUser(); // ✅ 来自 Clerk
+  const { user, isSignedIn } = useUser();
+
   const [isBookingModalVisible, setIsBookingModalVisible] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{
     date: string;
@@ -47,18 +44,9 @@ export default function MentorDetailsPage() {
     linkedin: 'https://linkedin.com',
     introduction:
         'Info comes from: Please introduce yourself to your future mentees.',
-    services: [
-      'Free Coffee Chat (15 mins)',
-      'Mock Interview',
-      'Resume Review',
-    ],
+    services: ['Free Coffee Chat (15 mins)', 'Mock Interview', 'Resume Review'],
     user_id: '93137255-d7ac-4219-90d9-a886ae987732',
   };
-
-  const menuItems: MenuProps['items'] = [
-    { key: '1', label: <Link href="/profile">Profile</Link> },
-    { key: '2', label: <Link href="/logout">Log out</Link> },
-  ];
 
   const handleBookAppointment = async () => {
     if (!selectedSlot || !isSignedIn || !user) {
@@ -77,7 +65,7 @@ export default function MentorDetailsPage() {
           .insert([
             {
               mentor_id: mentor.user_id,
-              mentee_id: user.id, // ✅ Clerk 的 user.id
+              mentee_id: user.id,
               time_slot: `[${startDateTime}, ${endDateTime})`,
               status: 'pending',
               service_type: 'Mock Interview',
@@ -98,19 +86,9 @@ export default function MentorDetailsPage() {
     }
   };
 
-  if (!isSignedIn) {
-    return (
-        <div style={{ padding: '2rem', textAlign: 'center' }}>
-          <Title level={3}>Please sign in to view this page.</Title>
-          <Link href="/sign-in">
-            <Button type="primary">Go to Login</Button>
-          </Link>
-        </div>
-    );
-  }
-
   return (
       <Layout>
+        {/* ---------------- 顶部导航栏 ---------------- */}
         <Header className={styles.header}>
           <div className={styles.leftGroup}>
             <Link href="/" className={styles.logo}>
@@ -130,24 +108,23 @@ export default function MentorDetailsPage() {
 
             <SignedOut>
               <SignInButton mode="modal">
-                <Button type="default" style={{ marginLeft: '1rem' }}>Sign In</Button>
+                <Button type="default" style={{ marginLeft: '1rem' }}>
+                  Sign In
+                </Button>
               </SignInButton>
             </SignedOut>
 
             <SignedIn>
               <UserButton afterSignOutUrl="/" />
             </SignedIn>
-
-
-            <Dropdown menu={{ items: menuItems }} placement="bottomRight" trigger={['click']}>
-              <Avatar size="large" icon={<UserOutlined />} className={styles.avatar} />
-            </Dropdown>
           </div>
         </Header>
 
+        {/* ---------------- 页面主体 ---------------- */}
         <Content className={styles.content}>
           <div className={styles.container}>
             <div className={styles.mainContent}>
+              {/* 左列：导师信息 */}
               <div className={styles.leftSection}>
                 <div className={styles.profileHeader}>
                   <Avatar size={120} style={{ background: '#9b9b9b' }} />
@@ -195,23 +172,37 @@ export default function MentorDetailsPage() {
                 </Card>
               </div>
 
+              {/* 右列：导师预约 */}
               <div className={styles.rightSection}>
-                <Title level={3} className={styles.availabilityHeader}>
-                  Mentor's Availability
-                </Title>
+                <SignedIn>
+                  <Title level={3} className={styles.availabilityHeader}>
+                    Mentor's Availability
+                  </Title>
 
-                <MentorAvailability
-                    mentorId={mentor.user_id}
-                    onSlotSelect={(date, time) => {
-                      setSelectedSlot({ date, time });
-                    }}
-                    onBook={() => setIsBookingModalVisible(true)}
-                />
+                  <MentorAvailability
+                      key={isSignedIn ? 'signedIn' : 'signedOut'} // ✅ 强制刷新组件
+                      mentorId={mentor.user_id}
+                      onSlotSelect={(date, time) => {
+                        setSelectedSlot({ date, time });
+                      }}
+                      onBook={() => setIsBookingModalVisible(true)}
+                  />
+                </SignedIn>
+
+                <SignedOut>
+                  <Card>
+                    <Title level={4}>Please sign in to book an appointment</Title>
+                    <SignInButton mode="modal">
+                      <Button type="primary">Sign In</Button>
+                    </SignInButton>
+                  </Card>
+                </SignedOut>
               </div>
             </div>
           </div>
         </Content>
 
+        {/* ---------------- 预约确认模态框 ---------------- */}
         <Modal
             title="Confirm Appointment"
             open={isBookingModalVisible}
@@ -223,9 +214,15 @@ export default function MentorDetailsPage() {
           {selectedSlot && (
               <div>
                 <p>You are booking a session with {mentor.name} on:</p>
-                <p><strong>Date:</strong> {selectedSlot.date}</p>
-                <p><strong>Time:</strong> {selectedSlot.time}</p>
-                <p><strong>Service:</strong> Mock Interview</p>
+                <p>
+                  <strong>Date:</strong> {selectedSlot.date}
+                </p>
+                <p>
+                  <strong>Time:</strong> {selectedSlot.time}
+                </p>
+                <p>
+                  <strong>Service:</strong> Mock Interview
+                </p>
               </div>
           )}
         </Modal>

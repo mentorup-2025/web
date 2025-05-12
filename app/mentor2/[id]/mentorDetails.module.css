@@ -165,9 +165,9 @@
 }
 
 /* Hide inner small title & divider coming from Ant Card */
-.rightSection :global(.ant-card-head) {
-    display: none !important;
-}
+/*.rightSection :global(.ant-card-head) {*/
+/*    display: none !important;*/
+/*}*/
 
 .rightSection :global(.ant-divider),
 .rightSection :global(h4),
