@@ -1,77 +1,32 @@
 'use client';
 
-import { Button, Checkbox, Form, Input, Typography, Divider } from 'antd';
-import Image from 'next/image';
+import { Typography } from 'antd';
+import { SignIn } from '@clerk/nextjs';
 import styles from './login.module.css';
-import Link from 'next/link';
 
 const { Title, Text } = Typography;
 
 export default function Login() {
   return (
-      <div className={styles.container}>
-        <div className={styles.background}></div>
-        <div className={styles.leftSection}>
-          <div className={styles.loginForm}>
-            <Text>Welcome back!</Text>
-            <Title level={2} style={{ marginTop: 8, marginBottom: 24 }}>
-              Log In to MentorUp
-            </Title>
+    <div className={styles.container}>
+      <div className={styles.background}></div>
 
-            <Form layout="vertical">
-              <Form.Item
-                  label="User name/Email"
-                  name="username"
-              >
-                <Input placeholder="Input your user account" size="large" />
-              </Form.Item>
-
-              <Form.Item
-                  label="Password"
-                  name="password"
-                  //   validateStatus="error"
-                  //   help="Incorrect user name or Password"
-              >
-                <Input.Password placeholder="Input your password" size="large" />
-              </Form.Item>
-
-              <div className={styles.rememberForgot}>
-                <Checkbox>Remember me</Checkbox>
-                <Link href="/forgot-password" className={styles.forgotLink}>
-                  Forgot Password?
-                </Link>
-              </div>
-
-              <Button type="primary" block size="large" className={styles.loginButton}>
-                Login
-              </Button>
-
-              <Divider plain>Or</Divider>
-
-              <Button
-                  block
-                  size="large"
-                  className={styles.googleButton}
-              >
-                <Image
-                    src="/google-icon.png"
-                    alt="Google"
-                    width={20}
-                    height={20}
-                    className={styles.googleIcon}
-                />
-                Sign in with Google
-              </Button>
-
-              <div className={styles.signupSection}>
-                <Text>New User? </Text>
-                <Link href="/signup" className={styles.signupLink}>
-                  SIGN UP HERE
-                </Link>
-              </div>
-            </Form>
-          </div>
+          <div className="flex flex-col gap-4 items-center">
+            <SignIn 
+              routing="hash"
+              appearance={{
+                elements: {
+                  card: 'shadow-none',
+                  headerTitle: 'text-2xl font-bold',
+                  headerSubtitle: 'text-gray-500',
+                  formFieldLabel: 'text-gray-700',
+                  formFieldInput: 'border-gray-300',
+                  formButtonPrimary: 'bg-blue-600 hover:bg-blue-700',
+                  footerActionLink: 'text-blue-600 hover:text-blue-700'
+                }
+              }}
+            />
         </div>
-      </div>
+    </div>
   );
 }
