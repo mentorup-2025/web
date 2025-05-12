@@ -13,19 +13,26 @@ import {
   message,
   Modal,
 } from 'antd';
+
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  UserButton
+} from "@clerk/nextjs";
+
 import { LinkedinFilled, UserOutlined } from '@ant-design/icons';
 import styles from './mentorDetails.module.css';
 import MentorAvailability from '../../components/MentorAvailability';
 import { useState } from 'react';
 import { supabase } from '../../services/supabase';
-import { useUser } from '../../context/UserContext';
+import { useUser } from '@clerk/nextjs'; // ✅ Clerk Hook
 
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
 
 export default function MentorDetailsPage() {
-  const { user } = useUser(); // 假设你有一个用户上下文
-  console.log('Current user:', user); // 检查是否为空
+  const { user, isSignedIn } = useUser(); // ✅ 来自 Clerk
   const [isBookingModalVisible, setIsBookingModalVisible] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{
     date: string;
@@ -33,7 +40,6 @@ export default function MentorDetailsPage() {
   } | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // ▼ 假数据 – 后续替换为真实接口
   const mentor = {
     name: 'Name Name',
     title: 'Job Title',
@@ -49,53 +55,41 @@ export default function MentorDetailsPage() {
     user_id: '93137255-d7ac-4219-90d9-a886ae987732',
   };
 
-  // ▼ 用户菜单占位
   const menuItems: MenuProps['items'] = [
     { key: '1', label: <Link href="/profile">Profile</Link> },
-    { key: '2', label: <Link href="/logout">Log out</Link> },
+    { key: '2', label: <Link href="/logout">Log out</Link> },
   ];
 
-  const handleSlotSelect = (date: string, time: string) => {
-    console.log('Received slot:', date, time); // 调试
-    setSelectedSlot({ date, time });
-  };
-
   const handleBookAppointment = async () => {
-    if (!selectedSlot || !user) {
+    if (!selectedSlot || !isSignedIn || !user) {
       message.error('Please select a time slot and make sure you are logged in');
       return;
     }
 
     setLoading(true);
-
     try {
-      // 解析时间段
       const [startTimeStr, endTimeStr] = selectedSlot.time.split(' - ');
       const startDateTime = `${selectedSlot.date} ${startTimeStr}`;
       const endDateTime = `${selectedSlot.date} ${endTimeStr}`;
 
-      // 创建预约记录
       const { data, error } = await supabase
           .from('appointments')
           .insert([
             {
               mentor_id: mentor.user_id,
-              mentee_id: user.id, // 假设用户上下文中有用户ID
+              mentee_id: user.id, // ✅ Clerk 的 user.id
               time_slot: `[${startDateTime}, ${endDateTime})`,
               status: 'pending',
-              service_type: 'Mock Interview', // 可以从服务列表中选择
-              price: 0, // 免费服务设为0，或从服务中获取价格
+              service_type: 'Mock Interview',
+              price: 0,
             },
           ])
           .select();
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       message.success('Appointment booked successfully!');
       setIsBookingModalVisible(false);
-      // 这里可以添加重定向到确认页面或其他逻辑
     } catch (error) {
       console.error('Booking failed:', error);
       message.error('Failed to book appointment');
@@ -104,25 +98,46 @@ export default function MentorDetailsPage() {
     }
   };
 
+  if (!isSignedIn) {
+    return (
+        <div style={{ padding: '2rem', textAlign: 'center' }}>
+          <Title level={3}>Please sign in to view this page.</Title>
+          <Link href="/sign-in">
+            <Button type="primary">Go to Login</Button>
+          </Link>
+        </div>
+    );
+  }
+
   return (
       <Layout>
-        {/* ---------------- 顶部导航栏 ---------------- */}
         <Header className={styles.header}>
           <div className={styles.leftGroup}>
             <Link href="/" className={styles.logo}>
               MentorUp
             </Link>
             <Link href="/mentors" className={styles.link}>
-              Our Mentors
+              Our Mentors
             </Link>
           </div>
 
           <div className={styles.rightGroup}>
             <Link href="/become-mentor">
               <Button type="primary" className={styles.becomeBtn}>
-                Become a Mentor
+                Become a Mentor
               </Button>
             </Link>
+
+            <SignedOut>
+              <SignInButton mode="modal">
+                <Button type="default" style={{ marginLeft: '1rem' }}>Sign In</Button>
+              </SignInButton>
+            </SignedOut>
+
+            <SignedIn>
+              <UserButton afterSignOutUrl="/" />
+            </SignedIn>
+
 
             <Dropdown menu={{ items: menuItems }} placement="bottomRight" trigger={['click']}>
               <Avatar size="large" icon={<UserOutlined />} className={styles.avatar} />
@@ -130,13 +145,10 @@ export default function MentorDetailsPage() {
           </div>
         </Header>
 
-        {/* ---------------- 页面主体 ---------------- */}
         <Content className={styles.content}>
           <div className={styles.container}>
             <div className={styles.mainContent}>
-              {/* 左列 2/3 */}
               <div className={styles.leftSection}>
-                {/* 个人资料行 */}
                 <div className={styles.profileHeader}>
                   <Avatar size={120} style={{ background: '#9b9b9b' }} />
 
@@ -160,7 +172,6 @@ export default function MentorDetailsPage() {
                   </div>
                 </div>
 
-                {/* 介绍卡片 */}
                 <Card
                     className={styles.infoCard}
                     title={<span className={styles.cardTitle}>Introduction</span>}
@@ -169,7 +180,6 @@ export default function MentorDetailsPage() {
                   {mentor.introduction}
                 </Card>
 
-                {/* Services 卡片 */}
                 <Card
                     className={styles.infoCard}
                     title={<span className={styles.cardTitle}>Services</span>}
@@ -185,7 +195,6 @@ export default function MentorDetailsPage() {
                 </Card>
               </div>
 
-              {/* 右列 1/3 */}
               <div className={styles.rightSection}>
                 <Title level={3} className={styles.availabilityHeader}>
                   Mentor's Availability
@@ -194,7 +203,6 @@ export default function MentorDetailsPage() {
                 <MentorAvailability
                     mentorId={mentor.user_id}
                     onSlotSelect={(date, time) => {
-                      console.log('Selected:', date, time); // 测试回调
                       setSelectedSlot({ date, time });
                     }}
                     onBook={() => setIsBookingModalVisible(true)}
@@ -204,7 +212,6 @@ export default function MentorDetailsPage() {
           </div>
         </Content>
 
-        {/* 预约确认模态框 */}
         <Modal
             title="Confirm Appointment"
             open={isBookingModalVisible}
