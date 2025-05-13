@@ -42,8 +42,7 @@ export default function MentorDetailsPage() {
     title: 'Job Title',
     company: 'company',
     linkedin: 'https://linkedin.com',
-    introduction:
-        'Info comes from: Please introduce yourself to your future mentees.',
+    introduction: 'Info comes from: Please introduce yourself to your future mentees.',
     services: ['Free Coffee Chat (15 mins)', 'Mock Interview', 'Resume Review'],
     user_id: '93137255-d7ac-4219-90d9-a886ae987732',
   };
@@ -66,7 +65,7 @@ export default function MentorDetailsPage() {
             {
               mentor_id: mentor.user_id,
               mentee_id: user.id,
-              time_slot: `[${startDateTime}, ${endDateTime})`,
+              time_slot: [startDateTime, endDateTime],
               status: 'pending',
               service_type: 'Mock Interview',
               price: 0,
@@ -87,8 +86,7 @@ export default function MentorDetailsPage() {
   };
 
   return (
-      <Layout>
-        {/* ---------------- 顶部导航栏 ---------------- */}
+      <Layout className={styles.layout}>
         <Header className={styles.header}>
           <div className={styles.leftGroup}>
             <Link href="/" className={styles.logo}>
@@ -98,29 +96,25 @@ export default function MentorDetailsPage() {
               Our Mentors
             </Link>
           </div>
-
           <div className={styles.rightGroup}>
             <Link href="/become-mentor">
               <Button type="primary" className={styles.becomeBtn}>
                 Become a Mentor
               </Button>
             </Link>
-
             <SignedOut>
               <SignInButton mode="modal">
-                <Button type="default" style={{ marginLeft: '1rem' }}>
+                <Button type="default" style={{ marginLeft: '10px' }}>
                   Sign In
                 </Button>
               </SignInButton>
             </SignedOut>
-
             <SignedIn>
               <UserButton afterSignOutUrl="/" />
             </SignedIn>
           </div>
         </Header>
 
-        {/* ---------------- 页面主体 ---------------- */}
         <Content className={styles.content}>
           <div className={styles.container}>
             <div className={styles.mainContent}>
@@ -128,7 +122,6 @@ export default function MentorDetailsPage() {
               <div className={styles.leftSection}>
                 <div className={styles.profileHeader}>
                   <Avatar size={120} style={{ background: '#9b9b9b' }} />
-
                   <div className={styles.profileText}>
                     <Title level={2} className={styles.name}>
                       {mentor.name}
@@ -137,7 +130,6 @@ export default function MentorDetailsPage() {
                       {mentor.title} @{mentor.company}
                     </Text>
                   </div>
-
                   <div className={styles.socialIconWrapper}>
                     <a
                         href={mentor.linkedin}
@@ -148,7 +140,6 @@ export default function MentorDetailsPage() {
                     </a>
                   </div>
                 </div>
-
                 <Card
                     className={styles.infoCard}
                     title={<span className={styles.cardTitle}>Introduction</span>}
@@ -156,7 +147,6 @@ export default function MentorDetailsPage() {
                 >
                   {mentor.introduction}
                 </Card>
-
                 <Card
                     className={styles.infoCard}
                     title={<span className={styles.cardTitle}>Services</span>}
@@ -178,9 +168,8 @@ export default function MentorDetailsPage() {
                   <Title level={3} className={styles.availabilityHeader}>
                     Mentor's Availability
                   </Title>
-
                   <MentorAvailability
-                      key={isSignedIn ? 'signedIn' : 'signedOut'} // ✅ 强制刷新组件
+                      key={isSignedIn ? 'signedIn' : 'signedOut'}
                       mentorId={mentor.user_id}
                       onSlotSelect={(date, time) => {
                         setSelectedSlot({ date, time });
@@ -188,7 +177,6 @@ export default function MentorDetailsPage() {
                       onBook={() => setIsBookingModalVisible(true)}
                   />
                 </SignedIn>
-
                 <SignedOut>
                   <Card>
                     <Title level={4}>Please sign in to book an appointment</Title>
@@ -202,7 +190,6 @@ export default function MentorDetailsPage() {
           </div>
         </Content>
 
-        {/* ---------------- 预约确认模态框 ---------------- */}
         <Modal
             title="Confirm Appointment"
             open={isBookingModalVisible}

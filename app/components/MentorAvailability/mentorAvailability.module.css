@@ -1,6 +1,9 @@
 .availabilityCard {
   position: sticky;
   top: 88px;
+  z-index: 10;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .availabilityDot {
@@ -11,46 +14,87 @@
   margin: 4px auto;
 }
 
+.calendar {
+  pointer-events: auto;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.calendarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+  background-color: #fff;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.navButton {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.monthText {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.yearSelect {
+  width: 100px;
+}
+
 .timeSlots {
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid #e8e8e8;
 }
 
+.timeSlotsTitle {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
 
-.timeSlot {
+.timeSlotButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 40px;
   width: 100%;
-  text-align: center;
-  cursor: pointer;
-  padding: 8px 12px;
-  margin: 4px 0;
+  margin-bottom: 8px;
   border-radius: 6px;
-  border: 1px solid #e6e6e6;
+  font-size: 14px;
   transition: all 0.3s;
-  background-color: #fafafa;
 }
 
-.timeSlot:hover {
-  background-color: #e6f7ff;
+.timeSlotButton:hover {
   border-color: #91d5ff;
 }
 
-.timeSlot.selected {
-  background-color: #e6f7ff;
+.timeSlotButton.ant-btn-primary {
+  background-color: #1890ff;
   border-color: #1890ff;
-  color: #1890ff;
+}
+
+.noSlotsText {
+  font-size: 14px;
+  color: #888;
 }
 
 .scheduleButton {
   margin-top: 16px;
-  background-color: #1890ff;
+  height: 40px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .scheduleButton:disabled {
   background-color: #f5f5f5;
   color: rgba(0, 0, 0, 0.25);
-}
-
-.calendarHeader {
-  padding: 8px;
 }
