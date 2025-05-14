@@ -1,14 +1,94 @@
 'use client'
 import Head from 'next/head'
-import { useTranslation } from 'next-i18next'
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
 import Link from 'next/link'
 import { Switch } from 'antd'
 import MarqueeSection from './MarqueeSection'
 import styles from './styles/features.module.css'
+import { useState } from 'react'
+
+// Translation object with all your content
+const translations = {
+  en: {
+    pageTitle: 'MentorUp - Learn from the Best',
+    pageDescription: 'A marketplace for career insights and mentorship in STEM',
+    'Our Mentors': 'Our Mentors',
+    'Become a Mentor': 'Become a Mentor',
+    'Log In': 'Log In',
+    'Learn from the Best.': 'Learn from the Best.',
+    'A Marketplace for Career Insights': 'A Marketplace for Career Insights',
+    '& Mentorship in STEM.': '& Mentorship in STEM.',
+    'Connect with experienced professionals and accelerate your career.': 'Connect with experienced professionals and accelerate your career.',
+    'Meet Our Mentors': 'Meet Our Mentors',
+    'Why Choose Us': 'Why Choose Us',
+    'Transform Your Potential With Personalized Support': 'Transform Your Potential With Personalized Support',
+    'Personalized Support': 'Personalized Support',
+    'This is a descriptive paragraph explaining why our platform is the best choice for mentorship and career growth.': 'This is a descriptive paragraph explaining why our platform is the best choice for mentorship and career growth.',
+    '1v1 Coaching': '1v1 Coaching',
+    'Forum Q&A': 'Forum Q&A',
+    'Professional Career': 'Professional Career',
+    'Office Hour': 'Office Hour',
+    'Advice for Every Step': 'Advice for Every Step',
+    'Exclusive Education': 'Exclusive Education',
+    'AI Resume Review': 'AI Resume Review',
+    'Content': 'Content',
+    'Discover What Skills Your Dream Job Requires ': 'Discover What Skills Your Dream Job Requires',
+    'MentorUp uses specialized AI to connect you with mentors, offering tailored industry expertise and personalized alignment to help you achieve your career goals.': 'MentorUp uses specialized AI to connect you with mentors, offering tailored industry expertise and personalized alignment to help you achieve your career goals.',
+    'Flexible Meetups, Your Way—Quick or In-Depth': 'Flexible Meetups, Your Way—Quick or In-Depth',
+    'Whether you want to get to know the mentors first or just have a few questions for now, you can access exclusive advice or have more in-depth discussions in real time.': 'Whether you want to get to know the mentors first or just have a few questions for now, you can access exclusive advice or have more in-depth discussions in real time.',
+    'Connect with Other Members in the Community': 'Connect with Other Members in the Community',
+    'Check our forum where members can participate in discussions. This is a space for knowledge sharing and networking among members worldwide.': 'Check our forum where members can participate in discussions. This is a space for knowledge sharing and networking among members worldwide.',
+    'MentorUp': 'MentorUp',
+    'Ready to Accelerate Your Career? ': 'Ready to Accelerate Your Career?'
+  },
+  zh: {
+    pageTitle: 'MentorUp - 向最优秀的人学习',
+    pageDescription: 'STEM领域职业洞察和导师指导的市场平台',
+    'Our Mentors': '我们的导师',
+    'Become a Mentor': '成为导师',
+    'Log In': '登录',
+    'Learn from the Best.': '向最优秀的人学习。',
+    'A Marketplace for Career Insights': '职业洞察的市场平台',
+    '& Mentorship in STEM.': '及STEM领域的导师指导。',
+    'Connect with experienced professionals and accelerate your career.': '与经验丰富的专业人士建立联系，加速您的职业发展。',
+    'Meet Our Mentors': '认识我们的导师',
+    'Why Choose Us': '为什么选择我们',
+    'Transform Your Potential With Personalized Support': '通过个性化支持释放您的潜力',
+    'Personalized Support': '个性化支持',
+    'This is a descriptive paragraph explaining why our platform is the best choice for mentorship and career growth.': '这是一个描述性段落，解释为什么我们的平台是导师指导和职业发展的最佳选择。',
+    '1v1 Coaching': '1对1辅导',
+    'Forum Q&A': '论坛问答',
+    'Professional Career': '职业发展',
+    'Office Hour': '办公时间',
+    'Advice for Every Step': '每一步的建议',
+    'Exclusive Education': '独家教育',
+    'AI Resume Review': 'AI简历评估',
+    'Content': '内容',
+    'Discover What Skills Your Dream Job Requires ': '发现您梦想工作所需的技能',
+    'MentorUp uses specialized AI to connect you with mentors, offering tailored industry expertise and personalized alignment to help you achieve your career goals.': 'MentorUp使用专业的AI将您与导师联系起来，提供量身定制的行业专长和个性化匹配，帮助您实现职业目标。',
+    'Flexible Meetups, Your Way—Quick or In-Depth': '灵活的会面方式—快速或深入',
+    'Whether you want to get to know the mentors first or just have a few questions for now, you can access exclusive advice or have more in-depth discussions in real time.': '无论您是想先了解导师还是现在只有几个问题，您都可以获得独家建议或进行更深入的实时讨论。',
+    'Connect with Other Members in the Community': '与社区其他成员建立联系',
+    'Check our forum where members can participate in discussions. This is a space for knowledge sharing and networking among members worldwide.': '查看我们的论坛，成员可以参与讨论。这是全球成员知识分享和网络交流的空间。',
+    'MentorUp': 'MentorUp',
+    'Ready to Accelerate Your Career? ': '准备好加速您的职业发展了吗？'
+  }
+}
 
 export default function Home() {
-  const { t, i18n } = useTranslation('common')
+  const [language, setLanguage] = useState<'en' | 'zh'>('en')
+
+  // Custom translation function that mimics useTranslation from next-i18next
+  const t = (key: string) => {
+    return translations[language][key] || key
+  }
+
+  // Custom i18n object that mimics the behavior from next-i18next
+  const i18n = {
+    language,
+    changeLanguage: (newLang: 'en' | 'zh') => {
+      setLanguage(newLang)
+    }
+  }
 
   const toggleLanguage = () => {
     const nextLang = i18n.language === 'en' ? 'zh' : 'en'
