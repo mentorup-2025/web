@@ -123,7 +123,7 @@ export default function Home() {
                 <li className="flex items-center">
                   <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
 
-                  {t('Exclusive Educationa')}
+                  {t('Exclusive Education')}
                 </li>
                 <li className="flex items-center">
                   <span className="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
@@ -142,12 +142,8 @@ export default function Home() {
                 {t('Meet Our Mentors')}
               </Link>
             </div>
-            <div className="md:w-1/2 w-full h-64 md:h-auto">
-              <img
-                src="/app/public/landing.png"
-                alt="Feature"
-                className="w-full h-full object-cover"
-              />
+            <div className={`md:w-1/2 w-full h-64 md:h-auto ${styles.landingBg}`}>
+              {/* Content can go here if needed */}
             </div>
           </div>
         </section>
