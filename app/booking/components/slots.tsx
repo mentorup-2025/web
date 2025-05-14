@@ -248,7 +248,7 @@ export default function TimeSlotsPage() {
                       <td style={{ padding: '8px' }}>
                         <DatePicker
                           selected={seg.start}
-                          onChange={(date: Date) => handleDateChange(seg, date)}
+                          onChange={(date: Date | null) => handleDateChange(seg, date!)}
                           dateFormat="MMMM d, yyyy"
                         />
                       </td>

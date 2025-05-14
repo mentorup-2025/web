@@ -84,7 +84,8 @@ export default function MentorDetailsPage() {
 
             {/* Right Section - 1/3 width */}
             <div className={styles.rightSection}>
-              <MentorAvailability mentorId={mentor.user_id} />
+              {/* todo: need to add this onSlotSelect and onBook */}
+              <MentorAvailability mentorId={mentor.user_id} onSlotSelect={() => {}} onBook={() => {}} />
             </div>
           </div>
         </div>

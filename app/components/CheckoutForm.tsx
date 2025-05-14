@@ -3,7 +3,7 @@
 import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { useState } from 'react';
 import { Button, message } from 'antd';
-import { supabase } from '../lib/supabaseClient';
+// import { supabase } from '../lib/supabaseClient';
 
 export default function CheckoutForm({ amount }: { amount: number }) {
     const stripe = useStripe();

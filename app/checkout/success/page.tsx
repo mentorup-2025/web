@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 
 export default function CheckoutSuccessPage() {
   const searchParams = useSearchParams();
-  const sessionId = searchParams.get('session_id');
+  const sessionId = searchParams?.get('session_id');
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">

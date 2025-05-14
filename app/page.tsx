@@ -79,7 +79,7 @@ export default function Home() {
 
   // Custom translation function that mimics useTranslation from next-i18next
   const t = (key: string) => {
-    return translations[language][key] || key
+    return translations[language][key as keyof typeof translations[typeof language]] || key
   }
 
   // Custom i18n object that mimics the behavior from next-i18next

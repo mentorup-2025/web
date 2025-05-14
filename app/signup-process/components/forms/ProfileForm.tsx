@@ -3,7 +3,7 @@
 import { Form, Input, InputNumber, Select, Button, Typography } from 'antd';
 import styles from '../../signupProcess.module.css';
 
-const { Title, TextArea } = Typography;
+const { Title } = Typography;
 
 const AVAILABLE_SKILLS = [
   'JavaScript',

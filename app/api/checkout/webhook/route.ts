@@ -73,8 +73,8 @@ export async function POST(request: Request) {
   }
 }
 
-export const config = {
-  api: {
-    bodyParser: false, // Disable body parsing, need raw body for webhook signature verification
-  },
-}; 
+// export const config = {
+//   api: {
+//     bodyParser: false, // Disable body parsing, need raw body for webhook signature verification
+//   },
+// }; 

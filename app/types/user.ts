@@ -16,6 +16,7 @@ export interface User {
 }
 
 export interface CreateUserInput {
+  user_id: string;
   username: string;
   email: string;
   github?: string;      // Optional GitHub profile
