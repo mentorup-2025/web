@@ -5,7 +5,8 @@ const isPublicRoute = createRouteMatcher([
   '/login(.*)', 
   '/signup(.*)', 
   '/signup-process(.*)',
-  '/api/availability/(.*)'
+  '/api/availability/(.*)',
+  '/api/clerk_webhooks/(.*)',
 ])
 
 // Export a dummy middleware when auth is disabled
