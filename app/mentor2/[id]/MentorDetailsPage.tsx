@@ -55,6 +55,20 @@ export default function MentorDetailsPage() {
 
     setLoading(true);
     try {
+      const email = user.primaryEmailAddress?.emailAddress || '';
+      const username = email.split('@')[0]; // fallback: email 前缀当用户名
+
+      // Step 1: Ensure Clerk user exists in Supabase users table
+      await supabase.from('users').upsert(
+          [{
+            user_id: user.id,
+            email,
+            username,
+          }],
+          { onConflict: 'user_id' }
+      );
+
+      // Step 2: Insert appointment
       const [startTimeStr, endTimeStr] = selectedSlot.time.split(' - ');
       const startDateTime = `${selectedSlot.date} ${startTimeStr}`;
       const endDateTime = `${selectedSlot.date} ${endTimeStr}`;
@@ -131,27 +145,16 @@ export default function MentorDetailsPage() {
                     </Text>
                   </div>
                   <div className={styles.socialIconWrapper}>
-                    <a
-                        href={mentor.linkedin}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
+                    <a href={mentor.linkedin} target="_blank" rel="noopener noreferrer">
                       <LinkedinFilled className={styles.socialIcon} />
                     </a>
                   </div>
                 </div>
-                <Card
-                    className={styles.infoCard}
-                    title={<span className={styles.cardTitle}>Introduction</span>}
-                    bordered
-                >
+
+                <Card className={styles.infoCard} title={<span className={styles.cardTitle}>Introduction</span>} bordered>
                   {mentor.introduction}
                 </Card>
-                <Card
-                    className={styles.infoCard}
-                    title={<span className={styles.cardTitle}>Services</span>}
-                    bordered
-                >
+                <Card className={styles.infoCard} title={<span className={styles.cardTitle}>Services</span>} bordered>
                   <div className={styles.serviceTags}>
                     {mentor.services.map((service) => (
                         <Tag key={service} className={styles.serviceTag}>

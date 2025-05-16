@@ -52,7 +52,6 @@ export default function MentorAvailability({
                     const availabilityMap = new Map<string, string[]>();
                     data.data.forEach(({ slot_time }) => {
                         try {
-                            console.log('Processing slot_time:', slot_time);
                             let start: string, end: string;
                             if (slot_time.startsWith('[')) {
                                 const cleanSlotTime = slot_time.replace(/[\[\]"]/g, '');
@@ -66,10 +65,7 @@ export default function MentorAvailability({
                             const startTime = dayjs(start);
                             const endTime = dayjs(end);
 
-                            if (!startTime.isValid() || !endTime.isValid()) {
-                                console.warn('Invalid date format for slot_time:', slot_time);
-                                return;
-                            }
+                            if (!startTime.isValid() || !endTime.isValid()) return;
 
                             const dateKey = startTime.format('YYYY-MM-DD');
                             const timeSlot = `${startTime.format('HH:mm')} - ${endTime.format('HH:mm')}`;
@@ -82,7 +78,6 @@ export default function MentorAvailability({
                             console.error('Error processing slot_time:', slot_time, error);
                         }
                     });
-                    console.log('Generated availabilityMap:', Array.from(availabilityMap.entries()));
                     setAvailabilityData(availabilityMap);
                 } else {
                     console.error('API Error:', data.message);
@@ -95,12 +90,6 @@ export default function MentorAvailability({
         fetchAvailability();
     }, [currentMonth, mentorId]);
 
-    useEffect(() => {
-        console.log('selectedDate:', selectedDate?.format('YYYY-MM-DD'));
-        console.log('selectedSlot:', selectedSlot);
-        console.log('availabilityData:', Array.from(availabilityData.entries()));
-    }, [selectedDate, selectedSlot, availabilityData]);
-
     const dateCellRender = (date: Dayjs) => {
         const dateStr = date.format('YYYY-MM-DD');
         const hasSlots = availabilityData.has(dateStr);
@@ -108,17 +97,15 @@ export default function MentorAvailability({
     };
 
     const handleDateSelect = (date: Dayjs) => {
-        console.log('Date selected:', date.format('YYYY-MM-DD'));
         const dateStr = date.format('YYYY-MM-DD');
-        setSelectedDate(date); // 始终设置 selectedDate
-        setSelectedSlot(null); // 重置时间槽
+        setSelectedDate(date);
+        setSelectedSlot(null);
         if (!availabilityData.has(dateStr)) {
             message.warning('No available time slots for this date.');
         }
     };
 
     const handlePanelChange = (date: Dayjs) => {
-        console.log('Panel changed to:', date.format('YYYY-MM'));
         setCurrentMonth(date);
         setSelectedDate(null);
         setSelectedSlot(null);
@@ -126,20 +113,13 @@ export default function MentorAvailability({
 
     const headerRender = ({ value }: { value: Dayjs }) => {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
         return (
             <div className={styles.calendarHeader}>
-                <Button
-                    onClick={() => handlePanelChange(value.subtract(1, 'month'))}
-                    className={styles.navButton}
-                >
+                <Button onClick={() => handlePanelChange(value.subtract(1, 'month'))} className={styles.navButton}>
                     {'<'}
                 </Button>
                 <span className={styles.monthText}>{months[value.month()]}</span>
-                <Button
-                    onClick={() => handlePanelChange(value.add(1, 'month'))}
-                    className={styles.navButton}
-                >
+                <Button onClick={() => handlePanelChange(value.add(1, 'month'))} className={styles.navButton}>
                     {'>'}
                 </Button>
                 <Select
@@ -149,9 +129,7 @@ export default function MentorAvailability({
                         label: value.year() - 5 + i,
                         value: value.year() - 5 + i,
                     }))}
-                    onChange={(newYear) => {
-                        handlePanelChange(value.year(newYear));
-                    }}
+                    onChange={(newYear) => handlePanelChange(value.year(newYear))}
                     className={styles.yearSelect}
                 />
             </div>
@@ -176,19 +154,29 @@ export default function MentorAvailability({
                         Available Time Slots on {selectedDate.format('MMMM D, YYYY')}
                     </Text>
                     {availabilityData.has(selectedDate.format('YYYY-MM-DD')) ? (
-                        availabilityData.get(selectedDate.format('YYYY-MM-DD'))!.map((slot, i) => (
-                            <Button
-                                key={i}
-                                type={selectedSlot === slot ? 'primary' : 'default'}
-                                onClick={() => {
-                                    console.log('Slot selected:', slot);
-                                    setSelectedSlot(slot);
-                                }}
-                                className={styles.timeSlotButton}
-                            >
-                                {slot}
-                            </Button>
-                        ))
+                        availabilityData.get(selectedDate.format('YYYY-MM-DD'))!.map((slot, i) => {
+                            const [startStr] = slot.split(' - ');
+                            const slotDateTime = dayjs(`${selectedDate.format('YYYY-MM-DD')} ${startStr}`);
+                            const isDisabled = slotDateTime.isBefore(dayjs().add(24, 'hour'));
+
+                            return (
+                                <Button
+                                    key={i}
+                                    type={selectedSlot === slot ? 'primary' : 'default'}
+                                    onClick={() => {
+                                        if (isDisabled) {
+                                            message.warning('You can only book slots at least 24 hours in advance.');
+                                            return;
+                                        }
+                                        setSelectedSlot(slot);
+                                    }}
+                                    disabled={isDisabled}
+                                    className={styles.timeSlotButton}
+                                >
+                                    {slot}
+                                </Button>
+                            );
+                        })
                     ) : (
                         <Text className={styles.noSlotsText}>No available time slots.</Text>
                     )}
@@ -202,7 +190,12 @@ export default function MentorAvailability({
                 className={styles.scheduleButton}
                 onClick={() => {
                     if (selectedDate && selectedSlot) {
-                        console.log('Booking:', selectedDate.format('YYYY-MM-DD'), selectedSlot);
+                        const [startStr] = selectedSlot.split(' - ');
+                        const slotDateTime = dayjs(`${selectedDate.format('YYYY-MM-DD')} ${startStr}`);
+                        if (slotDateTime.isBefore(dayjs().add(24, 'hour'))) {
+                            message.error('Cannot book less than 24 hours in advance.');
+                            return;
+                        }
                         onSlotSelect(selectedDate.format('YYYY-MM-DD'), selectedSlot);
                         onBook();
                     }
