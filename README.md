@@ -86,10 +86,13 @@ RESEND_API_KEY=re_bt8XZifJ_NfZK5vtDf1momEcdmEswCLYk
 NEXT_PUBLIC_SUPABASE_URL=https://bktwqkmnziitatemdecj.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrdHdxa21uemlpdGF0ZW1kZWNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE0MTQyOTksImV4cCI6MjA1Njk5MDI5OX0.5Oy7j_K3rB2IjxV8bMMPE5vp2hVhTI0yMD0z2wd2c9Y
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrdHdxa21uemlpdGF0ZW1kZWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MTQxNDI5OSwiZXhwIjoyMDU2OTkwMjk5fQ.mp9Nvhz583e-xH9ND4ldIXSiBSmAZsNmDMpOZAy7tlk
-
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_ZXhjaXRpbmctZHVja2xpbmctMjcuY2xlcmsuYWNjb3VudHMuZGV2JA
+CLERK_SECRET_KEY=sk_test_Ti787y4FOKuJJJ1aMepOSupTNebCK3maQrgpVdFQHv
 ## Local test of stripe backend
 
 首先需要安装 ngrok 来获得代理地址
+
+macOS安装
 ```
 brew install --cask ngrok
 ```
@@ -99,7 +102,9 @@ brew install --cask ngrok
 ngrok http 3000
 ```
 
-windows Powershell 启动方式
+Windows 系统下载地址 https://ngrok.com/downloads/windows?tab=download
+
+然后在Powershell中
 ```
 .\ngrok.exe http 3000
 ```
