@@ -115,7 +115,7 @@ export default function MentorDetailsPage() {
 
   const handleNext = () => {
     if (step === 2) {
-      window.open('/app/booking/payment', '_blank');
+      window.open('/booking/payment', '_blank');
     }
     setStep(step + 1);
   };
