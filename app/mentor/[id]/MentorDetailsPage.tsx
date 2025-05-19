@@ -55,94 +55,52 @@ export default function MentorDetailsPage() {
     user_id: '93137255-d7ac-4219-90d9-a886ae987732',
   };
 
-  const handleFinalSubmit = async () => {
-    if (!selectedSlot || !isSignedIn || !user) return;
-
-    setLoading(true);
-    try {
-      const email = user.primaryEmailAddress?.emailAddress || '';
-      const username = email.split('@')[0];
-
-      await supabase.from('users').upsert([{ user_id: user.id, email, username }], {
-        onConflict: 'user_id',
-      });
-
-      const [startTimeStr, endTimeStr] = selectedSlot.time.split(' - ');
-      const startDateTime = `${selectedSlot.date} ${startTimeStr}`;
-      const endDateTime = `${selectedSlot.date} ${endTimeStr}`;
-
-      let resumeUrl = null;
-      if (resume) {
-        const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('resumes')
-            .upload(`${user.id}/${Date.now()}_${resume.name}`, resume);
-
-        if (uploadError) throw uploadError;
-
-        const { data: publicUrl } = supabase.storage
-            .from('resumes')
-            .getPublicUrl(uploadData.path);
-        resumeUrl = publicUrl.publicUrl;
-      }
-
-      const { error: insertError } = await supabase.from('appointments').insert([
-        {
-          mentor_id: mentor.user_id,
-          mentee_id: user.id,
-          time_slot: [startDateTime, endDateTime],
-          status: 'pending',
-          service_type: supportType || 'Mock Interview',
-          price: 0,
-          extra_info: description,
-          resume_url: resumeUrl,
-        },
-      ]);
-
-      if (insertError) throw insertError;
-
-      setIsBookingModalVisible(false);
-      setIsSuccessModalVisible(true);
-      setStep(1);
-      setSupportType(null);
-      setDescription('');
-      setResume(null);
-    } catch (error) {
-      console.error('Booking failed:', error);
-      message.error('Failed to book appointment');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleNext = async () => {
     if (step === 2) {
       let resumeUrl = null;
 
-      // 上传 resume 文件到 Supabase Storage
       if (resume) {
         try {
-          const { data: uploadData, error: uploadError } = await supabase.storage
-              .from('resumes')
-              .upload(`${user.id}/${Date.now()}_${resume.name}`, resume);
+          // 请求后端获取 AWS S3 上传链接
+          const res = await fetch('/api/resume/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: user.id,
+              fileName: `${Date.now()}_${resume.name}`,
+            }),
+          });
 
-          if (uploadError) {
-            message.error('Failed to upload resume');
+          const { signedUrl, fileUrl, error } = await res.json();
+
+          if (!signedUrl || !fileUrl || error) {
+            message.error('Failed to get S3 upload URL');
             return;
           }
 
-          const { data: publicUrl } = supabase.storage
-              .from('resumes')
-              .getPublicUrl(uploadData.path);
+          // 使用 signed URL 上传文件
+          const uploadResponse = await fetch(signedUrl, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': resume.type,
+            },
+            body: resume,
+          });
 
-          resumeUrl = publicUrl.publicUrl;
+          if (!uploadResponse.ok) {
+            message.error('Failed to upload resume to S3');
+            return;
+          }
+
+          resumeUrl = fileUrl; // ✅ 将这个 URL 用于预约信息
         } catch (err) {
-          console.error('Resume upload error:', err);
-          message.error('Unexpected error during resume upload');
+          console.error('AWS S3 resume upload failed:', err);
+          message.error('Unexpected error uploading resume');
           return;
         }
       }
 
-      // 将所有信息保存到 sessionStorage 供支付页面使用
+      // 保存预约数据到 sessionStorage
       sessionStorage.setItem(
           'bookingDetails',
           JSON.stringify({
@@ -156,7 +114,7 @@ export default function MentorDetailsPage() {
           })
       );
 
-      // 打开支付页面
+      // 打开支付页
       window.open('/booking/payment', '_blank');
     }
 
@@ -324,9 +282,15 @@ export default function MentorDetailsPage() {
             {step < 3 ? (
                 <Button type="primary" onClick={handleNext}>Next</Button>
             ) : (
-                <Button type="primary" loading={loading} onClick={handleFinalSubmit}>
-                  I have finished the payment
-                </Button>
+                // 暂时不用这个button
+                // <Button type="primary" loading={loading} onClick={handleFinalSubmit}>
+                //   I have finished the payment
+                // </Button>
+
+                <div style={{ textAlign: 'center' }}>
+                  <p>Waiting for payment to complete...</p>
+                  <p>You will be redirected after success.</p>
+                </div>
             )}
           </div>
         </Modal>
