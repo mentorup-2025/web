@@ -25,6 +25,7 @@ import { LinkedinFilled, UploadOutlined } from '@ant-design/icons';
 import styles from './mentorDetails.module.css';
 import MentorAvailability from '../../components/MentorAvailability';
 import { useState } from 'react';
+import { useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 
 const { Header, Content } = Layout;
@@ -113,10 +114,52 @@ export default function MentorDetailsPage() {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step === 2) {
+      let resumeUrl = null;
+
+      // 上传 resume 文件到 Supabase Storage
+      if (resume) {
+        try {
+          const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('resumes')
+              .upload(`${user.id}/${Date.now()}_${resume.name}`, resume);
+
+          if (uploadError) {
+            message.error('Failed to upload resume');
+            return;
+          }
+
+          const { data: publicUrl } = supabase.storage
+              .from('resumes')
+              .getPublicUrl(uploadData.path);
+
+          resumeUrl = publicUrl.publicUrl;
+        } catch (err) {
+          console.error('Resume upload error:', err);
+          message.error('Unexpected error during resume upload');
+          return;
+        }
+      }
+
+      // 将所有信息保存到 sessionStorage 供支付页面使用
+      sessionStorage.setItem(
+          'bookingDetails',
+          JSON.stringify({
+            mentorId: mentor.user_id,
+            menteeId: user.id,
+            date: selectedSlot?.date,
+            time: selectedSlot?.time,
+            serviceType: supportType,
+            description,
+            resumeUrl,
+          })
+      );
+
+      // 打开支付页面
       window.open('/booking/payment', '_blank');
     }
+
     setStep(step + 1);
   };
 
@@ -127,6 +170,19 @@ export default function MentorDetailsPage() {
       setStep(step - 1);
     }
   };
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'paymentSuccess') {
+        setIsSuccessModalVisible(true);  // 显示“Session Confirmed”弹窗
+        setIsBookingModalVisible(false); // 关闭预约步骤弹窗
+        setStep(1);                      // 重置步骤
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   return (
       <Layout className={styles.layout}>
