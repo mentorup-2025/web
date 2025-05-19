@@ -1,0 +1,4 @@
+/* 全局或对应模块的 CSS/LESS 文件里 */
+.centered-range-picker .ant-picker-input > input {
+    text-align: center;
+}

@@ -158,7 +158,7 @@ export default function MentorProfilePage() {
             </TabPane>
 
             <TabPane tab="Availability" key="availability">
-              <AvailabilityTab />
+                <AvailabilityTab userId={params.id as string} />
             </TabPane>
             
             <TabPane tab="Payment & Invoices" key="payments">
