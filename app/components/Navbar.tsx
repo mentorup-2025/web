@@ -6,23 +6,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './navbar.module.css';
+import { SignInButton, SignUpButton, UserButton, SignedIn, SignedOut } from '@clerk/nextjs';
 
 const { Header } = Layout;
 const { Search } = Input;
 
 export default function Navbar() {
   const router = useRouter();
-
-  const userMenuItems = [
-    {
-      key: 'edit',
-      label: 'Edit Profile'
-    },
-    {
-      key: 'logout',
-      label: 'Logout'
-    }
-  ];
 
   return (
     <Header className={styles.header}>
@@ -39,22 +29,18 @@ export default function Navbar() {
 
         <div className={styles.headerRight}>
           <Space>
-            <Link href="/login">
-              <Button type="text">Login</Button>
-            </Link>
-            <Link href="/signup">
-              <Button type="primary">Sign Up</Button>
-            </Link>
+            <SignedOut>
+              <SignInButton mode="modal">
+                <Button type="text">Login</Button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <Button type="primary">Sign Up</Button>
+              </SignUpButton>
+            </SignedOut>
+            <SignedIn>
+              <UserButton afterSignOutUrl="/" />
+            </SignedIn>
           </Space>
-          
-          <Dropdown menu={{ items: userMenuItems }} trigger={['click']}>
-            <Avatar 
-              size="large" 
-              icon={<UserOutlined />} 
-              className={styles.userAvatar}
-              style={{ cursor: 'pointer' }}
-            />
-          </Dropdown>
         </div>
       </div>
     </Header>
