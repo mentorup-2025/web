@@ -154,7 +154,6 @@ Content-Type: application/json
 {
   "from": "contactus@mentorup.info",
   "to": "bensonguan10@gmail.com",
-  "subject": "Appointment Confirmation - Mentorship Session",
   "type": "MenteeApptConfirmationEmail",
   "message": {
     "userName": "John Doe",
@@ -267,3 +266,17 @@ Content-Type: application/json
 ### Get Mentor Availability
 GET  {{baseUri}}/api/availability/93137255-d7ac-4219-90d9-a886ae987732/get
 Content-Type: application/json
+
+### Test New User Welcome Email
+POST {{baseUri}}/api/email
+Content-Type: application/json
+
+{
+  "from": "contactus@mentorup.info",
+  "to": "bensonguan10@gmail.com",
+  "type": "UserSignUpConfirmationEmail",
+  "message": {
+    "userName": "John Doe",
+    "userEmail": "test@example.com"
+  }
+}

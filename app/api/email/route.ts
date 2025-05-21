@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     const body = await request.json() as SendEmailProps;
 
     // Validate required fields
-    if (!body.from || !body.to || !body.subject || !body.message || !body.type) {
+    if (!body.from || !body.to ||  !body.message || !body.type) {
       return respErr('Missing required fields: from, to, subject, type, message');
     }
 
@@ -20,7 +20,6 @@ export async function POST(request: Request) {
     await sendEmail(
       body.from, 
       body.to, 
-      body.subject, 
       body.type,
       body.message
     );

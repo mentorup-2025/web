@@ -1,6 +1,7 @@
 import { verifyWebhook } from '@clerk/nextjs/webhooks'
 import { CreateUserInput } from '@/types/user'
 import { respData, respErr, respOk } from '@/lib/resp'
+import { EmailTemplate } from '@/types/email'
 
 async function saveNewUser(userId: string, email: string, username: string) {
   try {
@@ -23,10 +24,32 @@ async function saveNewUser(userId: string, email: string, username: string) {
       throw new Error(error.message || 'Failed to create user')
     }
 
-    return  respData((await response.json()).data)
+    // Send welcome email
+    const emailResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'contactus@mentorup.info',
+        to: email,
+        type: EmailTemplate.USER_SIGN_UP_CONFIRMATION,
+        message: {
+          userName: username,
+          userEmail: email
+        }
+      }),
+    })
+
+    if (!emailResponse.ok) {
+      console.error('Failed to send welcome email:', await emailResponse.json())
+      // Don't throw error here as user is already created
+    }
+
+    return respData((await response.json()).data)
   } catch (error) {
     console.error('Error saving new user:', error)
-    return respErr('Failed to create user' )
+    return respErr('Failed to create user')
   }
 }
 
