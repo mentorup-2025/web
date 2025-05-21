@@ -3,6 +3,19 @@ import { User, CreateUserInput, UpdateUserInput } from '@/types';
 
 export async function createUser(input: CreateUserInput): Promise<User> {
     try {
+        // Check if user already exists
+        const { data: existingUser } = await getSupabaseClient()
+            .from('users')
+            .select()
+            .eq('user_id', input.user_id)
+            .single();
+
+        // If user exists, return the existing user
+        if (existingUser) {
+            console.log('User already exists, returning existing user');
+            return existingUser;
+        }
+
         // Prepare user data
         const userData = {
             user_id: input.user_id,
