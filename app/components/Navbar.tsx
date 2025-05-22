@@ -1,15 +1,12 @@
 'use client';
 
-import { Layout, Input, Button, Dropdown, Avatar, Space } from 'antd';
-import { UserOutlined, SearchOutlined } from '@ant-design/icons';
-import Image from 'next/image';
-import Link from 'next/link';
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
+import { Button, Layout, Space } from 'antd';
 import { useRouter } from 'next/navigation';
 import styles from './navbar.module.css';
-import { SignInButton, SignUpButton, UserButton, SignedIn, SignedOut } from '@clerk/nextjs';
 
 const { Header } = Layout;
-const { Search } = Input;
+
 
 export default function Navbar() {
   const router = useRouter();
@@ -33,6 +30,7 @@ export default function Navbar() {
               <SignInButton mode="modal">
                 <Button type="text">Login</Button>
               </SignInButton>
+              {' '}
               <SignUpButton mode="modal">
                 <Button type="primary">Sign Up</Button>
               </SignUpButton>

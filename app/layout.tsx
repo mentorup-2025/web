@@ -1,8 +1,13 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { GoogleAnalytics } from '@next/third-parties/google'
 import { ClerkProvider } from '@clerk/nextjs'; // ✅ 添加 ClerkProvider
 import "../styles/index.css";
 import '../styles/globals.css';
+
+
+// todo: complete google analytics
+// https://nextjs.org/docs/messages/next-script-for-ga
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -22,6 +27,7 @@ export default function RootLayout({
             <body className={inter.className}>
             {children}
             </body>
+            <GoogleAnalytics gaId="G-XYZ" />
             </html>
         </ClerkProvider>
     );

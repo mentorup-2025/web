@@ -1,4 +1,6 @@
 'use client'
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
+import { Button, Space } from 'antd';
 import Head from 'next/head'
 import Link from 'next/link'
 import { Switch } from 'antd'
@@ -117,18 +119,20 @@ export default function Home() {
               />
               <span>{i18n.language === 'zh' ? '中文' : 'Eng'}</span>
             </div>
-            <Link
-              className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
-              href=""
-            >
-              {t('Become a Mentor')}
-            </Link>
-            <Link
-              className="px-6 py-2 bg-white text-gray rounded-md transition"
-              href=""
-            >
-              {t('Log In')}
-            </Link>
+            <Space>
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <Button type="text">Login</Button>
+                </SignInButton>
+                {' '}
+                <SignUpButton mode="modal">
+                  <Button type="primary">Sign Up</Button>
+                </SignUpButton>
+              </SignedOut>
+              <SignedIn>
+                <UserButton afterSignOutUrl="/" />
+              </SignedIn>
+            </Space>
           </nav>
         </header>
         <section className="relative flex flex-col justify-between h-screen overflow-hidden bg-white">
