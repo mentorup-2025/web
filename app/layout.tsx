@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { GoogleAnalytics } from '@next/third-parties/google'
+import { GoogleTagManager } from '@next/third-parties/google'
 import { ClerkProvider } from '@clerk/nextjs'; // ✅ 添加 ClerkProvider
 import "../styles/index.css";
 import '../styles/globals.css';
@@ -24,10 +24,20 @@ export default function RootLayout({
     return (
         <ClerkProvider>
             <html lang="en">
-            <body className={inter.className}>
-            {children}
-            </body>
-            <GoogleAnalytics gaId="G-XYZ" />
+                <head>
+                    <GoogleTagManager gtmId="GTM-TMNDDXXB" />
+                </head>
+                <body className={inter.className}>
+                    <noscript>
+                        <iframe
+                            src="https://www.googletagmanager.com/ns.html?id=GTM-TMNDDXXB"
+                            height="0"
+                            width="0"
+                            style={{ display: 'none', visibility: 'hidden' }}
+                        />
+                    </noscript>
+                    {children}
+                </body>
             </html>
         </ClerkProvider>
     );
