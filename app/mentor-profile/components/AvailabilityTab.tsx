@@ -342,21 +342,21 @@ export default function AvailabilityTab({ userId }: Props) {
                                                         allowClear={false}
                                                         placeholder={['Outlined Start', 'Outlined End']}
                                                         format={timeFormat}
-                                                        minuteStep={60}
+                                                        hourStep={1}
                                                         style={{
-                                                            width: '100%',        // 根据需要调整整体宽度
-                                                            borderRadius: 2,    // 圆角 2px
+                                                            width: '100%',
+                                                            borderRadius: 2,
                                                             paddingRight: 40
                                                         }}
                                                         value={[
                                                             dayjs(slot.start_time, timeFormat),
-                                                            dayjs(slot.end_time,   timeFormat)
+                                                            dayjs(slot.end_time, timeFormat)
                                                         ]}
                                                         onChange={(values) => {
                                                             const [start, end] = values || [];
                                                             updateSlot(idx, {
                                                                 start_time: start ? start.format(timeFormat) : slot.start_time,
-                                                                end_time:   end   ? end.format(timeFormat)   : slot.end_time,
+                                                                end_time: end ? end.format(timeFormat) : slot.end_time,
                                                             });
                                                         }}
                                                     />
@@ -444,7 +444,11 @@ export default function AvailabilityTab({ userId }: Props) {
                         placeholder="Select date"
                         style={{ borderRadius: 2 }}
                         disabledDate={current => current && current.isBefore(dayjs().startOf('day'))}
-                        onChange={(_d, dateStr) => dateStr && handleAddBlock(dateStr)}
+                        onChange={(_d, dateStr) => {
+                            if (typeof dateStr === 'string') {
+                                handleAddBlock(dateStr);
+                            }
+                        }}
                     />
                 </Space>
 

@@ -5,6 +5,7 @@ import { Calendar, momentLocalizer, SlotInfo } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 
 const localizer = momentLocalizer(moment);
 
@@ -17,6 +18,8 @@ interface Event {
 export default function MyCalendar() {
   const [events, setEvents] = useState<Event[]>([]);
   const router = useRouter();
+  const params = useParams();
+  const mentorId = params?.id as string;
 
   useEffect(() => {
     try {

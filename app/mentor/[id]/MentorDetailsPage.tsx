@@ -66,8 +66,8 @@ export default function MentorDetailsPage() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              userId: user.id,
-              fileName: `${Date.now()}_${resume.name}`,
+              userId: user?.id,
+              fileName: `${Date.now()}_${resume?.name}`,
             }),
           });
 
@@ -105,7 +105,7 @@ export default function MentorDetailsPage() {
           'bookingDetails',
           JSON.stringify({
             mentorId: mentor.user_id,
-            menteeId: user.id,
+            menteeId: user?.id,
             date: selectedSlot?.date,
             time: selectedSlot?.time,
             serviceType: supportType,
@@ -261,7 +261,12 @@ export default function MentorDetailsPage() {
                       setResume(file);
                       return false;
                     }}
-                    fileList={resume ? [resume] : []}
+                    fileList={resume ? [{
+                      uid: '-1',
+                      name: resume.name,
+                      status: 'done',
+                      url: URL.createObjectURL(resume)
+                    }] : []}
                     onRemove={() => setResume(null)}
                     maxCount={1}
                 >

@@ -39,7 +39,6 @@ export async function POST(request: Request) {
             await sendEmail(
               'appointments@mentorup.com',
               customerEmail,
-              'Payment Confirmation - MentorUp',
               EmailTemplate.MENTEE_APPOINTMENT_CONFIRMATION,
               {
                 userName: session.customer_details?.name || 'Valued Customer',

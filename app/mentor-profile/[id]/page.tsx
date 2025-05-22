@@ -34,6 +34,7 @@ interface MentorData {
 
 export default function MentorProfilePage() {
   const params = useParams();
+  const mentorId = params?.id as string;
   const [mentorData, setMentorData] = useState<MentorData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>('about');
@@ -158,7 +159,7 @@ export default function MentorProfilePage() {
             </TabPane>
 
             <TabPane tab="Availability" key="availability">
-                <AvailabilityTab userId={params.id as string} />
+                <AvailabilityTab userId={mentorId} />
             </TabPane>
             
             <TabPane tab="Payment & Invoices" key="payments">
