@@ -21,7 +21,6 @@
     "@stripe/stripe-js": "^5.10.0",
     "@supabase/supabase-js": "^2.49.1",
     "@types/express": "^5.0.0",
-    "@types/moment": "^2.13.0",
     "@types/react-datepicker": "^6.2.0",
     "antd": "^5.24.3",
     "bcryptjs": "^3.0.2",
@@ -48,8 +47,10 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.7",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
+    "@types/moment": "^2.11.29",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-big-calendar": "^1.16.1",
