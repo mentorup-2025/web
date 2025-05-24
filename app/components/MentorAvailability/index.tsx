@@ -43,6 +43,7 @@ export default function MentorAvailability({
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
     const [availabilityData, setAvailabilityData] = useState<Map<string, string[]>>(new Map());
     const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs());
+    const [heldSlots, setHeldSlots] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         const fetchAvailability = async () => {
@@ -54,6 +55,24 @@ export default function MentorAvailability({
                     `/api/availability/${mentorId}/view?start_date=${startDate}&end_date=${endDate}`
                 );
                 const data: AvailabilityResponse = await response.json();
+
+                const holdRes = await fetch(`/api/temp-holds/${mentorId}`);
+                const holdData = await holdRes.json();
+
+                const held = new Set<string>();
+                if (holdData.code === 0) {
+                    for (const item of holdData.data) {
+                        const clean = item.time_slot.replace(/[\[\]()"]/g, '').split(',');
+                        const start = dayjs(clean[0]);
+                        const end = dayjs(clean[1]);
+
+                        const dateKey = start.format('YYYY-MM-DD');
+                        const slotLabel = `${start.format('h:mm A')} - ${end.format('h:mm A')}`;
+
+                        held.add(`${dateKey}|${slotLabel}`);
+                    }
+                }
+                setHeldSlots(held);
 
                 if (data.code === 0) {
                     const availabilityMap = new Map<string, string[]>();
@@ -176,7 +195,8 @@ export default function MentorAvailability({
                                 {availabilityData.get(selectedDate.format('YYYY-MM-DD'))!.map((slot, i) => {
                                     const [startStr] = slot.split(' - ');
                                     const slotDateTime = dayjs(`${selectedDate.format('YYYY-MM-DD')} ${startStr}`);
-                                    const isDisabled = slotDateTime.isBefore(dayjs().add(24, 'hour'));
+                                    const slotKey = `${selectedDate.format('YYYY-MM-DD')}|${slot}`;
+                                    const isDisabled = slotDateTime.isBefore(dayjs().add(24, 'hour')) || heldSlots.has(slotKey);
 
                                     return (
                                         <Radio

@@ -24,8 +24,7 @@ import {
 import { LinkedinFilled, UploadOutlined } from '@ant-design/icons';
 import styles from './mentorDetails.module.css';
 import MentorAvailability from '../../components/MentorAvailability';
-import { useState } from 'react';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 
 const { Header, Content } = Layout;
@@ -61,7 +60,6 @@ export default function MentorDetailsPage() {
 
       if (resume) {
         try {
-          // 请求后端获取 AWS S3 上传链接
           const res = await fetch('/api/resume/upload', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -78,7 +76,6 @@ export default function MentorDetailsPage() {
             return;
           }
 
-          // 使用 signed URL 上传文件
           const uploadResponse = await fetch(signedUrl, {
             method: 'PUT',
             headers: {
@@ -92,7 +89,7 @@ export default function MentorDetailsPage() {
             return;
           }
 
-          resumeUrl = fileUrl; // ✅ 将这个 URL 用于预约信息
+          resumeUrl = fileUrl;
         } catch (err) {
           console.error('AWS S3 resume upload failed:', err);
           message.error('Unexpected error uploading resume');
@@ -100,7 +97,43 @@ export default function MentorDetailsPage() {
         }
       }
 
-      // 保存预约数据到 sessionStorage
+      let appointmentId = null;
+
+      try {
+        const response = await fetch('/api/booking/init', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mentorId: mentor.user_id,
+            menteeId: user?.id,
+            date: selectedSlot?.date,
+            time: selectedSlot?.time,
+            serviceType: supportType,
+            description,
+            resumeUrl,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (response.status === 409) {
+          message.error('This time slot has already been booked. Please choose another.');
+          return;
+        }
+
+        if (!response.ok || result.error || !result.appointmentId) {
+          message.error('Failed to create appointment. Please try again.');
+          return;
+        }
+
+
+        appointmentId = result.appointmentId;
+      } catch (err) {
+        console.error('Error creating appointment:', err);
+        message.error('Unexpected error');
+        return;
+      }
+
       sessionStorage.setItem(
           'bookingDetails',
           JSON.stringify({
@@ -111,10 +144,10 @@ export default function MentorDetailsPage() {
             serviceType: supportType,
             description,
             resumeUrl,
+            appointmentId,
           })
       );
 
-      // 打开支付页
       window.open('/booking/payment', '_blank');
     }
 
@@ -130,17 +163,42 @@ export default function MentorDetailsPage() {
   };
 
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
+    const handleMessage = async (event: MessageEvent) => {
       if (event.data?.type === 'paymentSuccess') {
-        setIsSuccessModalVisible(true);  // 显示“Session Confirmed”弹窗
-        setIsBookingModalVisible(false); // 关闭预约步骤弹窗
-        setStep(1);                      // 重置步骤
+        const bookingDetails = JSON.parse(sessionStorage.getItem('bookingDetails') || '{}');
+        const appointmentId = bookingDetails.appointmentId;
+
+        if (!appointmentId) {
+          console.error('❌ Missing appointmentId in sessionStorage');
+          return;
+        }
+
+        try {
+          const res = await fetch('/api/booking/confirm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ appointmentId }),
+          });
+
+          const result = await res.json();
+          if (!res.ok) {
+            console.error('❌ Confirm failed:', result);
+            return;
+          }
+
+          setIsSuccessModalVisible(true);
+          setIsBookingModalVisible(false);
+          setStep(1);
+        } catch (err) {
+          console.error('❌ Error calling confirm API:', err);
+        }
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, []);
+
 
   return (
       <Layout className={styles.layout}>
@@ -287,11 +345,6 @@ export default function MentorDetailsPage() {
             {step < 3 ? (
                 <Button type="primary" onClick={handleNext}>Next</Button>
             ) : (
-                // 暂时不用这个button
-                // <Button type="primary" loading={loading} onClick={handleFinalSubmit}>
-                //   I have finished the payment
-                // </Button>
-
                 <div style={{ textAlign: 'center' }}>
                   <p>Waiting for payment to complete...</p>
                   <p>You will be redirected after success.</p>
