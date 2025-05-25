@@ -144,7 +144,7 @@ export default function MentorProfilePage() {
                 <div className={styles.servicesSection}>
                   <Title level={3}>Services</Title>
                   <div className={styles.serviceTags}>
-                    {mentorData.mentor.services.map(service => (
+                    {Array.isArray(mentorData.mentor.services) && mentorData.mentor.services.map(service => (
                       <Tag key={service.type} className={styles.serviceTag}>
                         {formatServiceType(service.type)} - ${service.price}
                       </Tag>
