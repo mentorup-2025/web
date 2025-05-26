@@ -26,6 +26,7 @@ import styles from './mentorDetails.module.css';
 import MentorAvailability from '../../components/MentorAvailability';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
+import { useRouter } from 'next/navigation';
 
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
@@ -33,6 +34,7 @@ const { TextArea } = Input;
 
 export default function MentorDetailsPage() {
   const { user, isSignedIn } = useUser();
+  const router = useRouter();
 
   const [isBookingModalVisible, setIsBookingModalVisible] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ date: string; time: string } | null>(null);
@@ -162,6 +164,16 @@ export default function MentorDetailsPage() {
     }
   };
 
+  const handleBecomeMentor = () => {
+    if (!isSignedIn) {
+      // If not signed in, Clerk's SignInButton will handle the modal
+      return;
+    }
+    console.log('test', user, user?.id)
+    // If signed in, redirect to mentor signup process
+    router.push(`/signup-process/mentor/${user?.id}`);
+  };
+
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
       if (event.data?.type === 'paymentSuccess') {
@@ -208,9 +220,20 @@ export default function MentorDetailsPage() {
             <Link href="/mentors" className={styles.link}>Our Mentors</Link>
           </div>
           <div className={styles.rightGroup}>
-            <Link href="/become-mentor">
-              <Button type="primary" className={styles.becomeBtn}>Become a Mentor</Button>
-            </Link>
+            <SignedOut>
+              <SignInButton mode="modal">
+                <Button type="primary" className={styles.becomeBtn}>Become a Mentor</Button>
+              </SignInButton>
+            </SignedOut>
+            <SignedIn>
+              <Button 
+                type="primary" 
+                className={styles.becomeBtn}
+                onClick={handleBecomeMentor}
+              >
+                Become a Mentor
+              </Button>
+            </SignedIn>
             <SignedOut>
               <SignInButton mode="modal">
                 <Button type="default" style={{ marginLeft: '10px' }}>Sign In</Button>
