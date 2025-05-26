@@ -1,15 +1,39 @@
 'use client';
 
-import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs';
 import { Button, Layout, Space } from 'antd';
 import { useRouter } from 'next/navigation';
 import styles from './navbar.module.css';
+import { useState, useEffect } from 'react';
 
 const { Header } = Layout;
 
-
 export default function Navbar() {
   const router = useRouter();
+  const { user } = useUser();
+  const [isMentor, setIsMentor] = useState<boolean | null>(true);
+
+  useEffect(() => {
+    const checkMentorStatus = async () => {
+      if (user?.id) {
+        console.log('user?.id', user?.id);
+        try {
+          const response = await fetch(`http://localhost:3000/api/user/${user.id}`);
+          const data = await response.json();
+          console.log('data', data);
+          setIsMentor(data.data.mentor !== null);
+        } catch (error) {
+          console.error('Error checking mentor status:', error);
+        }
+      }
+    };
+
+    checkMentorStatus();
+  }, [user?.id]);
+
+  const handleBecomeMentor = () => {
+    router.push('/signup-process/mentor/' + user?.id);
+  };
 
   return (
     <Header className={styles.header}>
@@ -36,6 +60,14 @@ export default function Navbar() {
               </SignUpButton>
             </SignedOut>
             <SignedIn>
+              {isMentor === false && (
+                <Button 
+                  type="primary" 
+                  onClick={handleBecomeMentor}
+                >
+                  Become a Mentor
+                </Button>
+              )}
               <UserButton afterSignOutUrl="/" />
             </SignedIn>
           </Space>
