@@ -138,6 +138,7 @@ export default function MentorDetailsPage() {
 
         appointmentId = result.data.appointment_id;
 
+        console.log('✅ Inserted appointment ID:', appointmentId);
         // ✅ 使用 URL 参数传递 appointmentId 和 amount（单位是“分”）
         window.open(`/booking/payment?appointmentId=${appointmentId}&amount=${price}`, '_blank');
       } catch (err) {

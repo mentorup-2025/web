@@ -21,6 +21,10 @@ export default function CheckoutForm() {
 
         if (!stripe || !elements) return;
 
+        // ✅ 日志打印：确认传入的参数
+        console.log('🧾 Final appointmentId sent to backend:', appointmentId);
+        console.log('🧾 Final amount sent to backend:', amount);
+
         if (!appointmentId || !amount) {
             message.error('Missing appointment ID or amount.');
             return;
