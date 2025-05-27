@@ -1,6 +1,7 @@
 'use client'
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
-import { Button, Space } from 'antd';
+import { Button, Space, Drawer } from 'antd';
+import { MenuOutlined } from '@ant-design/icons';
 import Head from 'next/head'
 import Link from 'next/link'
 import { Switch } from 'antd'
@@ -78,6 +79,7 @@ const translations = {
 
 export default function Home() {
   const [language, setLanguage] = useState<'en' | 'zh'>('en')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Custom translation function that mimics useTranslation from next-i18next
   const t = (key: string) => {
@@ -111,29 +113,70 @@ export default function Home() {
             <span className="text-2xl font-bold">MentorUp</span>
             <span className="text-xl"> {t('Our Mentors')}</span>
           </div>
-          <nav className="space-x-4 hidden md:flex">
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={i18n.language === 'zh'}
-                onChange={toggleLanguage}
-              />
-              <span>{i18n.language === 'zh' ? '中文' : 'Eng'}</span>
-            </div>
-            <Space>
-              <SignedOut>
-                <SignInButton mode="modal">
-                  <Button type="text">Login</Button>
-                </SignInButton>
-                {' '}
-                <SignUpButton mode="modal">
-                  <Button type="primary">Sign Up</Button>
-                </SignUpButton>
-              </SignedOut>
-              <SignedIn>
-                <UserButton afterSignOutUrl="/" />
-              </SignedIn>
-            </Space>
-          </nav>
+          <div className="flex items-center">
+            {/* Desktop Menu */}
+            <nav className="space-x-4 hidden md:flex">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  checked={i18n.language === 'zh'}
+                  onChange={toggleLanguage}
+                />
+                <span>{i18n.language === 'zh' ? '中文' : 'Eng'}</span>
+              </div>
+              <Space>
+                <SignedOut>
+                  <SignInButton mode="modal">
+                    <Button type="text">Login</Button>
+                  </SignInButton>
+                  {' '}
+                  <SignUpButton mode="modal">
+                    <Button type="primary">Sign Up</Button>
+                  </SignUpButton>
+                </SignedOut>
+                <SignedIn>
+                  <UserButton afterSignOutUrl="/" />
+                </SignedIn>
+              </Space>
+            </nav>
+
+            {/* Mobile Menu Button */}
+            <Button 
+              type="text" 
+              icon={<MenuOutlined />} 
+              className="md:hidden"
+              onClick={() => setMobileMenuOpen(true)}
+            />
+
+            {/* Mobile Menu Drawer */}
+            <Drawer
+              title="Menu"
+              placement="right"
+              onClose={() => setMobileMenuOpen(false)}
+              open={mobileMenuOpen}
+              className="md:hidden"
+            >
+              <div className="flex flex-col space-y-4">
+                <div className="flex items-center justify-center space-x-2">
+                  <Switch
+                    checked={i18n.language === 'zh'}
+                    onChange={toggleLanguage}
+                  />
+                  <span>{i18n.language === 'zh' ? '中文' : 'Eng'}</span>
+                </div>
+                <SignedOut>
+                  <SignInButton mode="modal">
+                    <Button type="text" block>Login</Button>
+                  </SignInButton>
+                  <SignUpButton mode="modal">
+                    <Button type="primary" block>Sign Up</Button>
+                  </SignUpButton>
+                </SignedOut>
+                <SignedIn>
+                  <UserButton afterSignOutUrl="/" />
+                </SignedIn>
+              </div>
+            </Drawer>
+          </div>
         </header>
         <section className="relative flex flex-col justify-between h-screen overflow-hidden bg-white">
           <div className="flex flex-col justify-center items-center flex-1 px-4 md:px-0 text-center z-10">

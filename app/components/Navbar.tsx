@@ -16,11 +16,10 @@ export default function Navbar() {
   useEffect(() => {
     const checkMentorStatus = async () => {
       if (user?.id) {
-        console.log('user?.id', user?.id);
+        // console.log('user?.id', user?.id);
         try {
-          const response = await fetch(`http://localhost:3000/api/user/${user.id}`);
+          const response = await fetch(`/api/user/${user.id}`);
           const data = await response.json();
-          console.log('data', data);
           setIsMentor(data.data.mentor !== null);
         } catch (error) {
           console.error('Error checking mentor status:', error);

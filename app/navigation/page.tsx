@@ -70,18 +70,6 @@ export default function Home() {
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Authentication</h2>
               <div className="space-y-3">
                 <Link 
-                  href="/login"
-                  className="block w-full text-center px-4 py-2 border border-blue-500 text-blue-500 rounded-md hover:bg-blue-50 transition-colors"
-                >
-                  Login
-                </Link>
-                <Link 
-                  href="/register"
-                  className="block w-full text-center px-4 py-2 border border-green-500 text-green-500 rounded-md hover:bg-green-50 transition-colors"
-                >
-                  Register
-                </Link>
-                <Link 
                   href="/search"
                   className="block w-full text-center px-4 py-2 border border-green-500 text-green-500 rounded-md hover:bg-green-50 transition-colors"
                 >
