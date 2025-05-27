@@ -19,6 +19,20 @@ export interface CreateAppointmentInput {
     price: number;
 }
 
+export interface ConfirmAppointmentInput {
+    appointment_id: string;
+}
+
+export interface CancelAppointmentInput {
+    appointment_id: string;
+}
+
+export interface UpdateAppointmentInput {
+    appointment_id: string;
+    time_slot?: [string, string];  // [start_time, end_time]
+    status?: 'confirmed' | 'completed' | 'canceled' | 'noshow';
+}
+
 export interface ReserveAppointmentResponse {
     appointment_id: string;
     status: string;

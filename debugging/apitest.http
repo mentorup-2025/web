@@ -280,3 +280,147 @@ Content-Type: application/json
     "userEmail": "test@example.com"
   }
 }
+
+### Appointment API Tests
+
+### Create Appointment
+POST http://localhost:3000/api/appointment/insert
+Content-Type: application/json
+
+{
+    "mentor_id": "165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61",
+    "mentee_id": "93137255-d7ac-4219-90d9-a886ae987732",
+    "start_time": "2025-03-21T14:00:00Z",
+    "end_time": "2025-03-21T15:00:00Z",
+    "service_type": "Mock Interview",
+    "price": 100
+}
+
+### Update Appointment
+POST http://localhost:3000/api/appointment/update
+Content-Type: application/json
+
+{
+    "appointment_id": "123e4567-e89b-12d3-a456-426614174002",
+    "time_slot": ["2024-03-21T14:00:00Z", "2024-03-21T15:00:00Z"],
+    "status": "completed"
+}
+
+### Confirm Appointment
+POST http://localhost:3000/api/appointment/confirm
+Content-Type: application/json
+
+{
+    "appointment_id": "fae4691f-eb4b-493c-a777-f83ee707c7b8"
+}
+
+### Cancel Appointment Payment
+POST http://localhost:3000/api/appointment/cancel_payment
+Content-Type: application/json
+
+{
+    "appointment_id": "9255fc64-603b-4c54-8d01-f494f549efe6"
+}
+
+### Test Cases for Insert
+
+### Test Case 1: Missing Required Fields
+POST http://localhost:3000/api/appointment/insert
+Content-Type: application/json
+
+{
+    "mentor_id": "123e4567-e89b-12d3-a456-426614174000",
+    "mentee_id": "123e4567-e89b-12d3-a456-426614174001"
+}
+
+### Test Case 2: Invalid Time Range
+POST http://localhost:3000/api/appointment/insert
+Content-Type: application/json
+
+{
+    "mentor_id": "123e4567-e89b-12d3-a456-426614174000",
+    "mentee_id": "123e4567-e89b-12d3-a456-426614174001",
+    "start_time": "2024-03-20T15:00:00Z",
+    "end_time": "2024-03-20T14:00:00Z",
+    "service_type": "Mock Interview",
+    "price": 100
+}
+
+### Test Cases for Update
+
+### Test Case 1: Update Non-existent Appointment
+POST http://localhost:3000/api/appointment/update
+Content-Type: application/json
+
+{
+    "appointment_id": "00000000-0000-0000-0000-000000000000",
+    "status": "completed"
+}
+
+### Test Case 2: Update with Invalid Status
+POST http://localhost:3000/api/appointment/update
+Content-Type: application/json
+
+{
+    "appointment_id": "7404ae0a-9ebb-4ddb-8d69-96879f6a7f50",
+    "status": "invalid_status"
+}
+
+### Test Case 3: Update with Invalid Time Slot Format
+POST http://localhost:3000/api/appointment/update
+Content-Type: application/json
+
+{
+    "appointment_id": "7404ae0a-9ebb-4ddb-8d69-96879f6a7f50",
+    "time_slot": ["2024-03-21T14:00:00Z"]
+}
+
+### Test Case 4: Appointment not confirmed
+POST http://localhost:3000/api/appointment/update
+Content-Type: application/json
+
+{
+    "appointment_id": "9255fc64-603b-4c54-8d01-f494f549efe6",
+     "status": "noshow"
+}
+
+### Test Case 5: Update Successfully
+POST http://localhost:3000/api/appointment/update
+Content-Type: application/json
+
+{
+    "appointment_id": "00b5f5ed-f871-45cb-9a79-848b7a69f77d",
+    "time_slot": ["2024-03-21T14:00:00Z", "2024-03-21T15:00:00Z"]
+}
+
+### Test Case 5: Update status Successfully
+POST http://localhost:3000/api/appointment/update
+Content-Type: application/json
+
+{
+    "appointment_id": "00b5f5ed-f871-45cb-9a79-848b7a69f77d",
+     "status": "noshow"
+}
+
+### Test Cases for Confirm
+
+### Test Case 1: Confirm Non-existent Appointment
+POST http://localhost:3000/api/appointment/confirm
+Content-Type: application/json
+
+{
+    "appointment_id": "00000000-0000-0000-0000-000000000000",
+    "hold_id": "123e4567-e89b-12d3-a456-426614174003"
+}
+
+
+### Test Cases for Cancel Payment
+
+### Test Case 1: Cancel Non-existent Appointment
+POST http://localhost:3000/api/appointment/cancel_payment
+Content-Type: application/json
+
+{
+    "appointment_id": "00000000-0000-0000-0000-000000000000",
+    "hold_id": "123e4567-e89b-12d3-a456-426614174003"
+}

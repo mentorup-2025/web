@@ -1,4 +1,4 @@
-import { CreateAppointmentInput, ReserveAppointmentResponse } from '@/types';
+import { Appointment, CreateAppointmentInput, ReserveAppointmentResponse } from '@/types';
 import { getSupabaseClient } from '../services/supabase';
 import { respOk } from './resp';
 
@@ -43,14 +43,12 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
 }
 
 export async function confirmAppointment(
-  holdId: string,
   appointmentId: string
 ) {
   try {
     const { data, error } = await getSupabaseClient()
       .rpc('confirm_booking', {
-        hold_id: holdId,
-        appointment_id: appointmentId
+         appointment_id: appointmentId
       });
 
     if (error) {
@@ -62,6 +60,94 @@ export async function confirmAppointment(
 
   } catch (error) {
     console.error('Error in confirmBooking:', error);
+    throw error;
+  }
+}
+
+export async function cancelAppointmentPayment(
+  appointmentId: string
+) {
+  try {
+    const { data, error } = await getSupabaseClient()
+      .rpc('cancel_booking', {
+        appointment_id: appointmentId
+      });
+
+    if (error) {
+      console.error('Error canceling booking:', error);
+      throw error;
+    }
+
+    return respOk;
+
+  } catch (error) {
+    console.error('Error in cancelAppointmentPayment:', error);
+    throw error;
+  }
+}
+
+export async function updateAppointment(
+  appointmentId: string,
+  updates: {
+    time_slot?: [string, string];  // [start_time, end_time]
+    status?: 'confirmed' | 'completed' | 'canceled' | 'noshow';
+  }
+) {
+  try {
+    // Prepare update data
+    const updateData: any = {};
+    
+    if (updates.time_slot) {
+      updateData.time_slot = `[${updates.time_slot[0]},${updates.time_slot[1]})`;
+    }
+    
+    if (updates.status) {
+      updateData.status = updates.status;
+    }
+
+    // Add updated_at timestamp
+    updateData.updated_at = new Date().toISOString();
+
+    // Perform the update
+    const { error: updateError } = await getSupabaseClient()
+      .from('appointments')
+      .update(updateData)
+      .eq('id', appointmentId);
+
+    if (updateError) {
+      console.error('Error updating appointment:', updateError);
+      throw updateError;
+    }
+
+    return respOk;
+
+  } catch (error) {
+    console.error('Error in updateAppointment:', error);
+    throw error;
+  }
+}
+
+export async function getAppointment(appointmentId: string):Promise<Appointment | null> {
+  try {
+    const { data, error } = await getSupabaseClient()
+      .from('appointments')
+      .select(`
+        *,
+        mentor:mentor_id (*),
+        mentee:mentee_id (*)
+      `)
+      .eq('id', appointmentId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching appointment:', error);
+      throw error;
+    }
+
+    return data;
+
+  } catch (error) {
+    console.error('Error in getAppointment:', error);
     throw error;
   }
 }
