@@ -21,7 +21,6 @@ export const config = {
 export async function POST(request: Request) {
   const body = await request.text();
   const signature = headers().get('stripe-signature')!;
-
   let event: Stripe.Event;
 
   try {
@@ -35,29 +34,38 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
+  console.log('📥 Stripe Event:', event.type);
+
   if (event.type === 'payment_intent.succeeded') {
     const paymentIntent = event.data.object as Stripe.PaymentIntent;
     const appointmentId = paymentIntent.metadata?.appointmentId;
+
+    console.log('📌 appointmentId:', appointmentId);
 
     if (!appointmentId) {
       console.error('❌ Missing appointmentId in metadata');
       return NextResponse.json({ error: 'Missing appointmentId' }, { status: 400 });
     }
 
-    const { error } = await supabase
+    const { error, data } = await supabase
         .from('appointments')
         .update({
           status: 'confirmed',
           updated_at: new Date().toISOString(),
         })
-        .eq('id', appointmentId);
+        .eq('id', appointmentId)
+        .select();  // 👈 加上 .select() 以查看被更新了哪些行
 
     if (error) {
       console.error('❌ Supabase update error:', error);
       return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
     }
 
-    console.log(`✅ Appointment ${appointmentId} confirmed`);
+    if (!data || data.length === 0) {
+      console.warn('⚠️ Supabase update returned no rows. appointmentId may be wrong.');
+    } else {
+      console.log(`✅ Appointment ${appointmentId} status updated to confirmed`);
+    }
   }
 
   return NextResponse.json({ received: true });

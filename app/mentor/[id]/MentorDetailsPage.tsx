@@ -107,7 +107,7 @@ export default function MentorDetailsPage() {
 
         const start_time = new Date(`${dateStr} ${startTimeStr}`).toISOString();
         const end_time = new Date(`${dateStr} ${endTimeStr}`).toISOString();
-        const price = 15;
+        const price = 1500; // 单位是“分”，对应 $15.00
 
         const response = await fetch('/api/appointment/insert', {
           method: 'POST',
@@ -137,31 +137,19 @@ export default function MentorDetailsPage() {
         }
 
         appointmentId = result.data.appointment_id;
+
+        // ✅ 使用 URL 参数传递 appointmentId 和 amount（单位是“分”）
+        window.open(`/booking/payment?appointmentId=${appointmentId}&amount=${price}`, '_blank');
       } catch (err) {
         console.error('Error creating appointment:', err);
         message.error('Unexpected error');
         return;
       }
-
-      sessionStorage.setItem(
-          'bookingDetails',
-          JSON.stringify({
-            mentorId: mentor.user_id,
-            menteeId: user?.id,
-            date: selectedSlot?.date,
-            time: selectedSlot?.time,
-            serviceType: supportType,
-            description,
-            resumeUrl,
-            appointmentId,
-          })
-      );
-
-      window.open('/booking/payment', '_blank');
     }
 
     setStep(step + 1);
   };
+
 
 
   const handleBack = () => {
