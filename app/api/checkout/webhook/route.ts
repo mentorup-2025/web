@@ -52,6 +52,7 @@ export async function POST(request: Request) {
         .update({
           status: 'confirmed',
           updated_at: new Date().toISOString(),
+          expires_at: null // ✅ 清空，表示已支付，不再取消
         })
         .eq('id', appointmentId)
         .select();  // 👈 加上 .select() 以查看被更新了哪些行

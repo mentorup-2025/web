@@ -107,7 +107,16 @@ export default function MentorDetailsPage() {
 
         const start_time = new Date(`${dateStr} ${startTimeStr}`).toISOString();
         const end_time = new Date(`${dateStr} ${endTimeStr}`).toISOString();
-        const price = 1500; // 单位是“分”，对应 $15.00
+
+
+        const servicePriceMap: Record<string, number> = {
+          'Resume Review': 3000,
+          'Interview Preparation': 4000,
+          'Career Guidance': 5000,
+        };
+
+        const price = servicePriceMap[supportType ?? ''] ?? 1500; // fallback 默认 15
+
 
         const response = await fetch('/api/appointment/insert', {
           method: 'POST',
