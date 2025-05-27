@@ -72,7 +72,6 @@ export default function MentorDetailsPage() {
           });
 
           const { signedUrl, fileUrl, error } = await res.json();
-
           if (!signedUrl || !fileUrl || error) {
             message.error('Failed to get S3 upload URL');
             return;
@@ -102,17 +101,26 @@ export default function MentorDetailsPage() {
       let appointmentId = null;
 
       try {
-        const response = await fetch('/api/booking/init', {
+        const dateStr = selectedSlot?.date!;
+        const timeStr = selectedSlot?.time!;
+        const [startTimeStr, endTimeStr] = timeStr.split(' - ');
+
+        const start_time = new Date(`${dateStr} ${startTimeStr}`).toISOString();
+        const end_time = new Date(`${dateStr} ${endTimeStr}`).toISOString();
+        const price = 15;
+
+        const response = await fetch('/api/appointment/insert', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            mentorId: mentor.user_id,
-            menteeId: user?.id,
-            date: selectedSlot?.date,
-            time: selectedSlot?.time,
-            serviceType: supportType,
+            mentor_id: mentor.user_id,
+            mentee_id: user?.id,
+            start_time,
+            end_time,
+            service_type: supportType,
             description,
-            resumeUrl,
+            resume_url: resumeUrl,
+            price,
           }),
         });
 
@@ -123,13 +131,12 @@ export default function MentorDetailsPage() {
           return;
         }
 
-        if (!response.ok || result.error || !result.appointmentId) {
+        if (!response.ok || result.error || !result.data?.appointment_id) {
           message.error('Failed to create appointment. Please try again.');
           return;
         }
 
-
-        appointmentId = result.appointmentId;
+        appointmentId = result.data.appointment_id;
       } catch (err) {
         console.error('Error creating appointment:', err);
         message.error('Unexpected error');
@@ -155,6 +162,7 @@ export default function MentorDetailsPage() {
 
     setStep(step + 1);
   };
+
 
   const handleBack = () => {
     if (step === 1) {

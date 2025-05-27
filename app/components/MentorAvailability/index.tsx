@@ -14,6 +14,7 @@ import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import styles from './mentorAvailability.module.css';
+import { supabase } from '../../services/supabase'; // 确保路径正确
 
 dayjs.extend(utc);
 const { Text } = Typography;
@@ -56,12 +57,16 @@ export default function MentorAvailability({
                 );
                 const data: AvailabilityResponse = await response.json();
 
-                const holdRes = await fetch(`/api/temp-holds/${mentorId}`);
-                const holdData = await holdRes.json();
+                // ✅ 改成用 Supabase 查询 held slots
+                const { data: holdData, error: holdError } = await supabase
+                    .from('temp_holds')
+                    .select('time_slot')
+                    .eq('mentor_id', mentorId)
+                    .is('expires_at', null);
 
                 const held = new Set<string>();
-                if (holdData.code === 0) {
-                    for (const item of holdData.data) {
+                if (!holdError && holdData) {
+                    for (const item of holdData) {
                         const clean = item.time_slot.replace(/[\[\]()"]/g, '').split(',');
                         const start = dayjs(clean[0]);
                         const end = dayjs(clean[1]);
