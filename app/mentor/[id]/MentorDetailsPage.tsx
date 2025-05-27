@@ -183,35 +183,11 @@ export default function MentorDetailsPage() {
   };
 
   useEffect(() => {
-    const handleMessage = async (event: MessageEvent) => {
+    const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'paymentSuccess') {
-        const bookingDetails = JSON.parse(sessionStorage.getItem('bookingDetails') || '{}');
-        const appointmentId = bookingDetails.appointmentId;
-
-        if (!appointmentId) {
-          console.error('❌ Missing appointmentId in sessionStorage');
-          return;
-        }
-
-        try {
-          const res = await fetch('/api/booking/confirm', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ appointmentId }),
-          });
-
-          const result = await res.json();
-          if (!res.ok) {
-            console.error('❌ Confirm failed:', result);
-            return;
-          }
-
-          setIsSuccessModalVisible(true);
-          setIsBookingModalVisible(false);
-          setStep(1);
-        } catch (err) {
-          console.error('❌ Error calling confirm API:', err);
-        }
+        setIsSuccessModalVisible(true);
+        setIsBookingModalVisible(false);
+        setStep(1);
       }
     };
 

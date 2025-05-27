@@ -1,10 +1,22 @@
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { sendEmail } from '@/lib/email';
-import { EmailTemplate } from '@/types/email';
+import { createClient } from '@supabase/supabase-js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY! || "");
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2025-02-24.acacia',
+});
+
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
 export async function POST(request: Request) {
   const body = await request.text();
@@ -14,66 +26,39 @@ export async function POST(request: Request) {
 
   try {
     event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+        body,
+        signature,
+        process.env.STRIPE_WEBHOOK_SECRET!
     );
-  } catch (error) {
-    console.error('Webhook signature verification failed');
-    return NextResponse.json(
-      { error: 'Invalid signature' },
-      { status: 400 }
-    );
+  } catch (err: any) {
+    console.error('❌ Invalid Stripe signature:', err.message);
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
-  console.log('Webhook received:', event);
+  if (event.type === 'payment_intent.succeeded') {
+    const paymentIntent = event.data.object as Stripe.PaymentIntent;
+    const appointmentId = paymentIntent.metadata?.appointmentId;
 
-  try {
-    switch (event.type) {
-      case 'checkout.session.completed':
-        const session = event.data.object as Stripe.Checkout.Session;
-        const customerEmail = session.customer_email || session.customer_details?.email;
-        
-        if (customerEmail) {
-          try {
-            await sendEmail(
-              'appointments@mentorup.com',
-              customerEmail,
-              EmailTemplate.MENTEE_APPOINTMENT_CONFIRMATION,
-              {
-                userName: session.customer_details?.name || 'Valued Customer',
-                serviceName: "Mentorship Session",
-                price: session.amount_total! / 100,
-                mentorName: "Your Mentor",
-                appointmentDate: "2024-03-20",
-                appointmentTime: "14:00"
-              }
-            );
-            console.log('Confirmation email sent successfully to:', customerEmail);
-          } catch (emailError) {
-            console.error('Failed to send confirmation email:', emailError);
-          }
-        }
-        break;
-      
-      // Add other event types as needed
-      
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
+    if (!appointmentId) {
+      console.error('❌ Missing appointmentId in metadata');
+      return NextResponse.json({ error: 'Missing appointmentId' }, { status: 400 });
     }
 
-    return NextResponse.json({ received: true });
-  } catch (error) {
-    console.error('Webhook handler failed:', error);
-    return NextResponse.json(
-      { error: 'Webhook handler failed' },
-      { status: 500 }
-    );
-  }
-}
+    const { error } = await supabase
+        .from('appointments')
+        .update({
+          status: 'confirmed',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', appointmentId);
 
-// export const config = {
-//   api: {
-//     bodyParser: false, // Disable body parsing, need raw body for webhook signature verification
-//   },
-// }; 
+    if (error) {
+      console.error('❌ Supabase update error:', error);
+      return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
+    }
+
+    console.log(`✅ Appointment ${appointmentId} confirmed`);
+  }
+
+  return NextResponse.json({ received: true });
+}

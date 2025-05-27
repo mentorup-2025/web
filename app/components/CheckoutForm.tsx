@@ -3,43 +3,11 @@
 import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { useState } from 'react';
 import { Button, message } from 'antd';
-import { supabase } from '../services/supabase';
 
 export default function CheckoutForm({ amount }: { amount: number }) {
     const stripe = useStripe();
     const elements = useElements();
     const [loading, setLoading] = useState(false);
-
-    const insertBookingAfterPayment = async () => {
-        const bookingDataRaw = sessionStorage.getItem('bookingDetails');
-        if (!bookingDataRaw) return;
-
-        const bookingData = JSON.parse(bookingDataRaw);
-        const [startTimeStr, endTimeStr] = bookingData.time.split(' - ');
-        const startDateTime = `${bookingData.date} ${startTimeStr}`;
-        const endDateTime = `${bookingData.date} ${endTimeStr}`;
-
-        const { error } = await supabase.from('appointments').insert([
-            {
-                mentor_id: bookingData.mentorId,
-                mentee_id: bookingData.menteeId,
-                time_slot: [startDateTime, endDateTime],
-                status: 'pending',
-                service_type: bookingData.serviceType || 'Mock Interview',
-                price: 0,
-                extra_info: bookingData.description,
-                resume_url: bookingData.resumeUrl || null,
-            },
-        ]);
-
-        if (error) {
-            console.error('Failed to insert appointment:', error);
-            message.error('Appointment creation failed.');
-        } else {
-            message.success('Appointment confirmed!');
-            sessionStorage.removeItem('bookingDetails');
-        }
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -49,14 +17,30 @@ export default function CheckoutForm({ amount }: { amount: number }) {
         setLoading(true);
 
         try {
+            // ✅ 从 sessionStorage 获取 appointmentId
+            const bookingDataRaw = sessionStorage.getItem('bookingDetails');
+            if (!bookingDataRaw) {
+                message.error('Missing booking data.');
+                return;
+            }
+
+            const bookingData = JSON.parse(bookingDataRaw);
+            const appointmentId = bookingData?.appointmentId;
+            if (!appointmentId) {
+                message.error('Missing appointment ID.');
+                return;
+            }
+
+            // ✅ 创建 PaymentIntent
             const res = await fetch('/api/create-payment-intent', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ amount }),
+                body: JSON.stringify({ amount, appointmentId }), // 👈 必须传 appointmentId
             });
 
             const { clientSecret } = await res.json();
 
+            // ✅ 付款确认
             const result = await stripe.confirmCardPayment(clientSecret, {
                 payment_method: {
                     card: elements.getElement(CardElement)!,
@@ -66,13 +50,14 @@ export default function CheckoutForm({ amount }: { amount: number }) {
             if (result.error) {
                 message.error(result.error.message || 'Payment failed');
             } else if (result.paymentIntent?.status === 'succeeded') {
-                message.success('Payment successful');
-                await insertBookingAfterPayment();
+                message.success('Payment successful!');
 
-                // ✅ 通知原窗口付款成功
+                // ✅ 通知主窗口
                 if (window.opener) {
                     window.opener.postMessage({ type: 'paymentSuccess' }, '*');
                 }
+
+                sessionStorage.removeItem('bookingDetails'); // 清除数据
 
                 // ✅ 自动关闭窗口
                 setTimeout(() => {
