@@ -7,10 +7,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(req: NextRequest) {
   try {
-    const { amount, currency = 'usd', appointmentId } = await req.json();
+    const { amount, currency = 'usd', appointmentId, email } = await req.json(); // ✅ 加上 email
 
-    if (!amount || !appointmentId) {
-      return NextResponse.json({ error: 'Missing amount or appointmentId' }, { status: 400 });
+    if (!amount || !appointmentId || !email) {
+      return NextResponse.json({ error: 'Missing amount, appointmentId or email' }, { status: 400 });
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -31,7 +31,8 @@ export async function POST(req: NextRequest) {
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/cancel`,
       metadata: {
-        appointmentId, // 👈 关键
+        appointmentId, // ✅ 保留
+        email,         // ✅ 新增
       },
     });
 

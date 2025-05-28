@@ -1,103 +1,111 @@
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { sendPaymentConfirmationEmail } from '@/app/lib/email';
+import { Buffer } from 'node:buffer'; // 👈 必须引入
+import { createClient } from '@supabase/supabase-js';
+import { sendEmail } from '@/lib/email';
+import { EmailTemplate } from '@/types/email';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY! || "");
+export const runtime = 'nodejs'; // 👈 必须显式指定 nodejs 环境
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2025-02-24.acacia',
+});
+
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+// 关闭默认 body 解析（此处对 App Router 实际无效，但保留无妨）
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
 export async function POST(request: Request) {
-  const body = await request.text();
   const signature = headers().get('stripe-signature')!;
+  const rawBody = await request.text();
+  const bodyBuffer = Buffer.from(rawBody, 'utf-8');
 
   let event: Stripe.Event;
 
   try {
     event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+        bodyBuffer,
+        signature,
+        process.env.STRIPE_WEBHOOK_SECRET!
     );
-  } catch (error) {
-    console.error('Webhook signature verification failed');
-    return NextResponse.json(
-      { error: 'Invalid signature' },
-      { status: 400 }
-    );
+  } catch (err: any) {
+    console.error('❌ Invalid Stripe signature:', err.message);
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
-  console.log('Webhook received:', event);
+  console.log('📥 Stripe Event received:', event.type);
 
   try {
-    switch (event.type) {
-      case 'checkout.session.completed':
-        const session = event.data.object as Stripe.Checkout.Session;
-        console.log('this is the customer details', session.customer_details);
-        
-        const customerEmail = session.customer_email || session.customer_details?.email;
-        const appointmentId = session.metadata?.appointmentId;
+    if (event.type === 'payment_intent.succeeded') {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      const appointmentId = paymentIntent.metadata?.appointmentId;
+      const customerEmail = paymentIntent.metadata?.email;
 
-        if (!appointmentId) {
-          console.error('Missing appointmentId in session metadata');
-          return NextResponse.json({ error: 'Missing appointmentId' }, { status: 400 });
-        }
+      if (!appointmentId) {
+        console.error('❌ Missing appointmentId in metadata');
+        return NextResponse.json({ error: 'Missing appointmentId' }, { status: 400 });
+      }
 
-        // Confirm appointment
+      // ✅ 更新数据库记录
+      const { error, data } = await supabase
+          .from('appointments')
+          .update({
+            status: 'confirmed',
+            updated_at: new Date().toISOString(),
+            expires_at: null,
+          })
+          .eq('id', appointmentId)
+          .select();
+
+      if (error) {
+        console.error('❌ Supabase update error:', error.message);
+        return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
+      }
+
+      if (!data || data.length === 0) {
+        console.warn('⚠️ Appointment not found for ID:', appointmentId);
+      } else {
+        console.log(`✅ Appointment ${appointmentId} confirmed`);
+      }
+
+      // ✅ 发邮件
+      if (customerEmail) {
         try {
-          const confirmResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/appointment/confirm`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              appointment_id: appointmentId,
-            })
-          });
-
-          if (!confirmResponse.ok) {
-            console.error('Failed to confirm appointment:', await confirmResponse.text());
-            return NextResponse.json({ error: 'Failed to confirm appointment' }, { status: 500 });
-          }
-        } catch (confirmError) {
-          console.error('Error confirming appointment:', confirmError);
-          return NextResponse.json({ error: 'Failed to confirm appointment' }, { status: 500 });
-        }
-        
-        // Send confirmation email
-        if (customerEmail) {
-          try {
-            const emailResult = await sendPaymentConfirmationEmail(
+          const emailResult = await sendEmail(
+              'MentorUP <no-reply@mentorup.com>',
               customerEmail,
-              session.amount_total || 0,
-              session.id
-            );
-            console.log('Confirmation email sent successfully:', emailResult);
-          } catch (emailError) {
-            console.error('Failed to send confirmation email:', emailError);
-            // Don't throw here to ensure webhook still returns 200
-          }
-        } else {
-          console.log('No customer email found in session:', session.id);
+              EmailTemplate.MENTEE_APPOINTMENT_CONFIRMATION,
+              {
+                amount: paymentIntent.amount_received,
+                stripeId: paymentIntent.id,
+              }
+          );
+          console.log('📧 Email sent:', emailResult);
+        } catch (emailError) {
+          console.error('⚠️ Email failed:', emailError);
         }
-        break;
-      
-      // Add other event types as needed
-      
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
+      } else {
+        console.log('ℹ️ No email in metadata');
+      }
     }
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error('Webhook handler failed:', error);
-    return NextResponse.json(
-      { error: 'Webhook handler failed' },
-      { status: 500 }
-    );
+    if (error instanceof Error) {
+      console.error('❌ Webhook handler failed:', error.message);
+      console.error(error.stack);
+    } else {
+      console.error('❌ Unknown error:', error);
+    }
+    return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 });
   }
 }
-
-export const config = {
-  api: {
-    bodyParser: false, // Disable body parsing, need raw body for webhook signature verification
-  },
-}; 
