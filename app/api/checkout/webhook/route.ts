@@ -50,7 +50,6 @@ export async function POST(request: Request) {
             },
             body: JSON.stringify({
               appointment_id: appointmentId,
-              hold_id: session.payment_intent
             })
           });
 
