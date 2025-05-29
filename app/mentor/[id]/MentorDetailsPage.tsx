@@ -26,7 +26,7 @@ import styles from './mentorDetails.module.css';
 import MentorAvailability from '../../components/MentorAvailability';
 import { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
@@ -35,6 +35,8 @@ const { TextArea } = Input;
 export default function MentorDetailsPage() {
   const { user, isSignedIn } = useUser();
   const router = useRouter();
+  const params = useParams() as { id: string };
+
 
   const [isBookingModalVisible, setIsBookingModalVisible] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ date: string; time: string } | null>(null);
@@ -46,15 +48,44 @@ export default function MentorDetailsPage() {
   const [description, setDescription] = useState('');
   const [resume, setResume] = useState<File | null>(null);
 
-  const mentor = {
-    name: 'Name Name',
-    title: 'Job Title',
-    company: 'company',
-    linkedin: 'https://linkedin.com',
-    introduction: 'Info comes from: Please introduce yourself to your future mentees.',
-    services: ['Free Coffee Chat (15 mins)', 'Mock Interview', 'Resume Review'],
-    user_id: '93137255-d7ac-4219-90d9-a886ae987732',
-  };
+  const [mentor, setMentor] = useState<any>(null);
+  const [mentorLoading, setMentorLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMentor = async () => {
+      try {
+        const res = await fetch(`/api/user/${params.id}`);
+        const result = await res.json();
+
+        if (!res.ok || !result.data) {
+          message.error('Failed to load mentor data');
+          return;
+        }
+
+        setMentor(result.data);
+      } catch (err) {
+        console.error('Error fetching mentor:', err);
+        message.error('Unexpected error fetching mentor');
+      } finally {
+        setMentorLoading(false);
+      }
+    };
+
+    fetchMentor();
+  }, [params.id]);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'paymentSuccess') {
+        setIsSuccessModalVisible(true);
+        setIsBookingModalVisible(false);
+        setStep(1);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   const handleNext = async () => {
     if (step === 2) {
@@ -108,15 +139,13 @@ export default function MentorDetailsPage() {
         const start_time = new Date(`${dateStr} ${startTimeStr}`).toISOString();
         const end_time = new Date(`${dateStr} ${endTimeStr}`).toISOString();
 
-
         const servicePriceMap: Record<string, number> = {
           'Resume Review': 3000,
           'Interview Preparation': 4000,
           'Career Guidance': 5000,
         };
 
-        const price = servicePriceMap[supportType ?? ''] ?? 1500; // fallback 默认 15
-
+        const price = servicePriceMap[supportType ?? ''] ?? 1500;
 
         const response = await fetch('/api/appointment/insert', {
           method: 'POST',
@@ -147,8 +176,6 @@ export default function MentorDetailsPage() {
 
         appointmentId = result.data.appointment_id;
 
-        console.log('✅ Inserted appointment ID:', appointmentId);
-        // ✅ 使用 URL 参数传递 appointmentId 和 amount（单位是“分”）
         window.open(`/booking/payment?appointmentId=${appointmentId}&amount=${price}`, '_blank');
       } catch (err) {
         console.error('Error creating appointment:', err);
@@ -160,8 +187,6 @@ export default function MentorDetailsPage() {
     setStep(step + 1);
   };
 
-
-
   const handleBack = () => {
     if (step === 1) {
       setIsBookingModalVisible(false);
@@ -171,28 +196,12 @@ export default function MentorDetailsPage() {
   };
 
   const handleBecomeMentor = () => {
-    if (!isSignedIn) {
-      // If not signed in, Clerk's SignInButton will handle the modal
-      return;
-    }
-    console.log('test', user, user?.id)
-    // If signed in, redirect to mentor signup process
+    if (!isSignedIn) return;
     router.push(`/signup-process/mentor/${user?.id}`);
   };
 
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'paymentSuccess') {
-        setIsSuccessModalVisible(true);
-        setIsBookingModalVisible(false);
-        setStep(1);
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
-
+  if (mentorLoading) return <div style={{ padding: 24 }}>Loading mentor info...</div>;
+  if (!mentor) return <div style={{ padding: 24 }}>Mentor not found.</div>;
 
   return (
       <Layout className={styles.layout}>
@@ -208,11 +217,7 @@ export default function MentorDetailsPage() {
               </SignInButton>
             </SignedOut>
             <SignedIn>
-              <Button 
-                type="primary" 
-                className={styles.becomeBtn}
-                onClick={handleBecomeMentor}
-              >
+              <Button type="primary" className={styles.becomeBtn} onClick={handleBecomeMentor}>
                 Become a Mentor
               </Button>
             </SignedIn>
@@ -234,21 +239,25 @@ export default function MentorDetailsPage() {
                 <div className={styles.profileHeader}>
                   <Avatar size={120} style={{ background: '#9b9b9b' }} />
                   <div className={styles.profileText}>
-                    <Title level={2} className={styles.name}>{mentor.name}</Title>
-                    <Text className={styles.jobTitle}>{mentor.title} @{mentor.company}</Text>
+                    <Title level={2} className={styles.name}>{mentor.username}</Title>
+                    <Text className={styles.jobTitle}>
+                      {mentor.job_target?.title} @{mentor.job_target?.company}
+                    </Text>
                   </div>
-                  <div className={styles.socialIconWrapper}>
-                    <a href={mentor.linkedin} target="_blank" rel="noopener noreferrer">
-                      <LinkedinFilled className={styles.socialIcon} />
-                    </a>
-                  </div>
+                  {mentor.linkedin && (
+                      <div className={styles.socialIconWrapper}>
+                        <a href={mentor.linkedin} target="_blank" rel="noopener noreferrer">
+                          <LinkedinFilled className={styles.socialIcon} />
+                        </a>
+                      </div>
+                  )}
                 </div>
                 <Card className={styles.infoCard} title="Introduction" bordered>
-                  {mentor.introduction}
+                  Please introduce yourself to your future mentees.
                 </Card>
                 <Card className={styles.infoCard} title="Services" bordered>
                   <div className={styles.serviceTags}>
-                    {mentor.services.map((service) => (
+                    {['Resume Review', 'Interview Preparation', 'Career Guidance'].map((service) => (
                         <Tag key={service} className={styles.serviceTag}>{service}</Tag>
                     ))}
                   </div>
@@ -288,7 +297,7 @@ export default function MentorDetailsPage() {
         >
           {step === 1 && selectedSlot && (
               <div>
-                <p>You are booking a session with {mentor.name} on:</p>
+                <p>You are booking a session with {mentor.username} on:</p>
                 <p><strong>Date:</strong> {selectedSlot.date}</p>
                 <p><strong>Time:</strong> {selectedSlot.time}</p>
                 <p><strong>Service:</strong> Mock Interview</p>
@@ -328,7 +337,7 @@ export default function MentorDetailsPage() {
                       uid: '-1',
                       name: resume.name,
                       status: 'done',
-                      url: URL.createObjectURL(resume)
+                      url: URL.createObjectURL(resume),
                     }] : []}
                     onRemove={() => setResume(null)}
                     maxCount={1}
