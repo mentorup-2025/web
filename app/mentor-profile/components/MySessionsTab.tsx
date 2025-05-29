@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, Typography, Avatar, Tag, Space } from 'antd';
+import { Card, Typography, Avatar, Tag, Space, message, Spin, Empty } from 'antd';
 import {
     CalendarOutlined,
     ClockCircleOutlined,
@@ -11,6 +11,8 @@ import {
     FrownOutlined,
     BellOutlined,
 } from '@ant-design/icons';
+import { useUser } from '@clerk/nextjs';
+import { supabase } from '../../services/supabase';
 
 const { Title, Text } = Typography;
 
@@ -27,82 +29,129 @@ interface Appointment {
     };
 }
 
-const mockAppointments: Appointment[] = [
-    {
-        id: '1',
-        date: '06/01/2025',
-        time: '06:00PM EST',
-        status: 'Upcoming',
-        description: 'dcdfhdkfhkjdhfkhjhfdkjhjdfhkhdkfhkdhfkhdkfjhkjhdxsdhckjsdhllldjlksjdlajlfkfhkjdhfkhjhfdkjhjdfhkhdkh',
-        resume_url: 'https://example.com/xxx.png',
-        mentee: {
-            name: 'User Name Placeholder',
-            avatar_url: '',
-        },
-    },
-];
-
 export default function MySessionsTab() {
+    const { user } = useUser();
     const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setAppointments(mockAppointments);
-    }, []);
+        const fetchAppointments = async () => {
+            if (!user?.id) return;
+
+            console.log('👤 Logged-in mentor_id:', user.id);
+
+            const { data, error } = await supabase
+                .from('appointments')
+                .select(`
+          id,
+          time_slot,
+          status,
+          description,
+          resume_url,
+          mentee:mentee_id (
+            username
+          )
+        `)
+                .eq('mentor_id', user.id)
+                .order('time_slot', { ascending: false });
+
+            if (error) {
+                console.error('❌ Error fetching appointments:', error);
+                message.error('Failed to load appointments.');
+                setLoading(false);
+                return;
+            }
+
+            console.log('✅ Appointments data:', data);
+
+            const transformed = data.map((appt: any) => {
+                const start = new Date(appt.time_slot?.lower);
+                const end = new Date(appt.time_slot?.upper);
+
+                const date = start.toLocaleDateString();
+                const time = `${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+                return {
+                    id: appt.id,
+                    date,
+                    time,
+                    status: appt.status,
+                    description: appt.description,
+                    resume_url: appt.resume_url,
+                    mentee: {
+                        name: appt.mentee?.username || 'Anonymous',
+                        avatar_url: '', // no avatar_url column in your users table
+                    },
+                };
+            });
+
+            setAppointments(transformed);
+            setLoading(false);
+        };
+
+        fetchAppointments();
+    }, [user?.id]);
 
     return (
         <div style={{ padding: '16px' }}>
             <Title level={3}>My Sessions</Title>
 
-            {appointments.map((appt) => (
-                <Card
-                    key={appt.id}
-                    style={{ marginBottom: 16 }}
-                    title={
+            {loading ? (
+                <Spin size="large" />
+            ) : appointments.length === 0 ? (
+                <Empty description="No sessions found." />
+            ) : (
+                appointments.map((appt) => (
+                    <Card
+                        key={appt.id}
+                        style={{ marginBottom: 16 }}
+                        title={
+                            <Space>
+                                <CalendarOutlined /> {appt.date}
+                                <ClockCircleOutlined style={{ marginLeft: 16 }} /> {appt.time}
+                                <Tag color="blue">{appt.status}</Tag>
+                            </Space>
+                        }
+                        actions={[
+                            <div key="reschedule">
+                                <CalendarTwoTone style={{ fontSize: 18 }} />
+                                <div>Reschedule</div>
+                            </div>,
+                            <div key="cancel">
+                                <CloseCircleOutlined style={{ fontSize: 18 }} />
+                                <div>Cancel</div>
+                            </div>,
+                            <div key="noshow">
+                                <FrownOutlined style={{ fontSize: 18 }} />
+                                <div>Report No Show</div>
+                            </div>,
+                            <div key="join">
+                                <BellOutlined style={{ fontSize: 18 }} />
+                                <div>Join the Meeting</div>
+                            </div>,
+                        ]}
+                    >
                         <Space>
-                            <CalendarOutlined /> {appt.date}
-                            <ClockCircleOutlined style={{ marginLeft: 16 }} /> {appt.time}
-                            <Tag color="blue">{appt.status}</Tag>
+                            <Avatar>{appt.mentee.name[0]}</Avatar>
+                            <Text strong>{appt.mentee.name}</Text>
                         </Space>
-                    }
-                    actions={[
-                        <div key="reschedule">
-                            <CalendarTwoTone style={{ fontSize: 18 }} />
-                            <div>Reschedule</div>
-                        </div>,
-                        <div key="cancel">
-                            <CloseCircleOutlined style={{ fontSize: 18 }} />
-                            <div>Cancel</div>
-                        </div>,
-                        <div key="noshow">
-                            <FrownOutlined style={{ fontSize: 18 }} />
-                            <div>Report No Show</div>
-                        </div>,
-                        <div key="join">
-                            <BellOutlined style={{ fontSize: 18 }} />
-                            <div>Join the Meeting</div>
-                        </div>,
-                    ]}
-                >
-                    <Space>
-                        <Avatar src={appt.mentee.avatar_url || undefined} />
-                        <Text strong>{appt.mentee.name}</Text>
-                    </Space>
 
-                    <div style={{ marginTop: 8 }}>
-                        <Text type="secondary">Mentee Notes:</Text>
-                        <p>{appt.description}</p>
-                    </div>
-
-                    {appt.resume_url && (
-                        <div style={{ marginTop: 4 }}>
-                            <FileOutlined />
-                            <a href={appt.resume_url} target="_blank" rel="noreferrer" style={{ marginLeft: 8 }}>
-                                Resume
-                            </a>
+                        <div style={{ marginTop: 8 }}>
+                            <Text type="secondary">Mentee Notes:</Text>
+                            <p>{appt.description}</p>
                         </div>
-                    )}
-                </Card>
-            ))}
+
+                        {appt.resume_url && (
+                            <div style={{ marginTop: 4 }}>
+                                <FileOutlined />
+                                <a href={appt.resume_url} target="_blank" rel="noreferrer" style={{ marginLeft: 8 }}>
+                                    Resume
+                                </a>
+                            </div>
+                        )}
+                    </Card>
+                ))
+            )}
         </div>
     );
 }
