@@ -196,7 +196,7 @@ export default function Home() {
             </p>
             <Link
               className="px-6 py-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition"
-              href="/search"
+              href="/mentor-list"
             >
               {t('Meet Our Mentors')}
             </Link>
@@ -264,7 +264,7 @@ export default function Home() {
 
               <Link
                 className="px-6 py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition w-max"
-                href="/search"
+                href="/mentor-list"
               >
                 {t('Meet Our Mentors')}
               </Link>
@@ -323,7 +323,7 @@ export default function Home() {
             </h2>
 
             <Link
-              href="/search"
+              href="/mentor-list"
               className="w-fit px-6 py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
             >
               {t('Meet Our Mentors')}
