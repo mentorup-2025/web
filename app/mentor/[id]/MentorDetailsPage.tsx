@@ -25,7 +25,6 @@ import { LinkedinFilled, UploadOutlined } from '@ant-design/icons';
 import styles from './mentorDetails.module.css';
 import MentorAvailability from '../../components/MentorAvailability';
 import { useState, useEffect } from 'react';
-import { supabase } from '../../services/supabase';
 import { useRouter, useParams } from 'next/navigation';
 
 const { Header, Content } = Layout;
@@ -36,7 +35,6 @@ export default function MentorDetailsPage() {
   const { user, isSignedIn } = useUser();
   const router = useRouter();
   const params = useParams() as { id: string };
-
 
   const [isBookingModalVisible, setIsBookingModalVisible] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ date: string; time: string } | null>(null);
@@ -129,7 +127,7 @@ export default function MentorDetailsPage() {
         }
       }
 
-      let appointmentId = null;
+      let appointmentId: null = null;
 
       try {
         const dateStr = selectedSlot?.date!;
@@ -176,6 +174,20 @@ export default function MentorDetailsPage() {
 
         appointmentId = result.data.appointment_id;
 
+        // ⏱ Set up auto-cancel in 15 minutes if not paid
+        setTimeout(async () => {
+          try {
+            await fetch('/api/appointment/cancel_payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ appointment_id: appointmentId }),
+            });
+            console.log(`🛑 Appointment ${appointmentId} auto-cancelled due to no payment`);
+          } catch (err) {
+            console.error('❌ Auto-cancel failed:', err);
+          }
+        }, 15 * 60 * 1000); // 15 minutes
+
         window.open(`/booking/payment?appointmentId=${appointmentId}&amount=${price}`, '_blank');
       } catch (err) {
         console.error('Error creating appointment:', err);
@@ -204,7 +216,7 @@ export default function MentorDetailsPage() {
   if (!mentor) return <div style={{ padding: 24 }}>Mentor not found.</div>;
 
   return (
-      <Layout className={styles.layout}>
+  <Layout className={styles.layout}>
         <Header className={styles.header}>
           <div className={styles.leftGroup}>
             <Link href="/" className={styles.logo}>MentorUp</Link>
