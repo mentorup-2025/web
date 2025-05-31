@@ -12,7 +12,6 @@ import {
     BellOutlined,
 } from '@ant-design/icons';
 import { useUser } from '@clerk/nextjs';
-import { supabase } from '../../services/supabase';
 
 const { Title, Text } = Typography;
 
@@ -36,57 +35,52 @@ export default function MySessionsTab() {
         const fetchAppointments = async () => {
             if (!user?.id) return;
 
-            console.log('📍 Logged-in mentee_id:', user.id);
-
-            const { data, error } = await supabase
-                .from('appointments')
-                .select(`
-          id,
-          time_slot,
-          status,
-          description,
-          resume_url,
-          mentor:mentor_id (
-            title
-          )
-        `)
-                .eq('mentee_id', user.id)
-                .order('time_slot', { ascending: false });
-
-            if (error) {
-                console.error('❌ Error fetching mentee appointments:', error);
-                message.error('Failed to load your sessions.');
-                return;
-            }
-
-            const transformed = data.map((appt: any) => {
-                const start = new Date(appt.time_slot?.lower);
-                const end = new Date(appt.time_slot?.upper);
-
-                const date = start.toLocaleDateString();
-                const time = `${start.toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                })} - ${end.toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                })}`;
-
-                return {
-                    id: appt.id,
-                    date,
-                    time,
-                    status: appt.status,
-                    description: appt.description,
-                    resume_url: appt.resume_url,
-                    mentor: {
-                        name: appt.mentor?.title || 'Unknown Mentor',
+            try {
+                const res = await fetch('/api/appointment/get', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
                     },
-                };
-            });
+                    body: JSON.stringify({ user_id: user.id }),
+                });
 
-            console.log('✅ Appointments for mentee:', transformed);
-            setAppointments(transformed);
+                const result = await res.json();
+
+                if (!res.ok || result.code !== 0) {
+                    throw new Error(result.msg || 'Failed to fetch appointments');
+                }
+
+                const transformed = result.data.appointments.map((appt: any) => {
+                    const start = new Date(appt.time_slot?.lower);
+                    const end = new Date(appt.time_slot?.upper);
+
+                    const date = start.toLocaleDateString();
+                    const time = `${start.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                    })} - ${end.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                    })}`;
+
+                    return {
+                        id: appt.id,
+                        date,
+                        time,
+                        status: appt.status,
+                        description: appt.description,
+                        resume_url: appt.resume_url,
+                        mentor: {
+                            name: appt.mentor?.title || 'Unknown Mentor',
+                        },
+                    };
+                });
+
+                setAppointments(transformed);
+            } catch (error) {
+                console.error('❌ Error fetching appointments:', error);
+                message.error('Failed to load your sessions.');
+            }
         };
 
         fetchAppointments();

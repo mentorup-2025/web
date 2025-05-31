@@ -12,7 +12,6 @@ import {
     BellOutlined,
 } from '@ant-design/icons';
 import { useUser } from '@clerk/nextjs';
-import { supabase } from '../../services/supabase';
 
 const { Title, Text } = Typography;
 
@@ -38,55 +37,53 @@ export default function MySessionsTab() {
         const fetchAppointments = async () => {
             if (!user?.id) return;
 
-            console.log('👤 Logged-in mentor_id:', user.id);
+            try {
+                const res = await fetch('/api/appointment/get', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: user.id }),
+                });
 
-            const { data, error } = await supabase
-                .from('appointments')
-                .select(`
-          id,
-          time_slot,
-          status,
-          description,
-          resume_url,
-          mentee:mentee_id (
-            username
-          )
-        `)
-                .eq('mentor_id', user.id)
-                .order('time_slot', { ascending: false });
+                const result = await res.json();
 
-            if (error) {
-                console.error('❌ Error fetching appointments:', error);
+                if (!res.ok || result.code !== 0) {
+                    throw new Error(result.msg || 'Failed to fetch appointments');
+                }
+
+                const transformed = result.data.appointments.map((appt: any) => {
+                    const start = new Date(appt.time_slot?.lower);
+                    const end = new Date(appt.time_slot?.upper);
+
+                    const date = start.toLocaleDateString();
+                    const time = `${start.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                    })} - ${end.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                    })}`;
+
+                    return {
+                        id: appt.id,
+                        date,
+                        time,
+                        status: appt.status,
+                        description: appt.description,
+                        resume_url: appt.resume_url,
+                        mentee: {
+                            name: appt.mentee?.username || 'Anonymous',
+                            avatar_url: '', // 预留字段
+                        },
+                    };
+                });
+
+                setAppointments(transformed);
+            } catch (error) {
+                console.error('❌ Error fetching mentor appointments:', error);
                 message.error('Failed to load appointments.');
+            } finally {
                 setLoading(false);
-                return;
             }
-
-            console.log('✅ Appointments data:', data);
-
-            const transformed = data.map((appt: any) => {
-                const start = new Date(appt.time_slot?.lower);
-                const end = new Date(appt.time_slot?.upper);
-
-                const date = start.toLocaleDateString();
-                const time = `${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-
-                return {
-                    id: appt.id,
-                    date,
-                    time,
-                    status: appt.status,
-                    description: appt.description,
-                    resume_url: appt.resume_url,
-                    mentee: {
-                        name: appt.mentee?.username || 'Anonymous',
-                        avatar_url: '', // no avatar_url column in your users table
-                    },
-                };
-            });
-
-            setAppointments(transformed);
-            setLoading(false);
         };
 
         fetchAppointments();
