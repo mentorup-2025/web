@@ -424,3 +424,36 @@ Content-Type: application/json
     "appointment_id": "00000000-0000-0000-0000-000000000000",
     "hold_id": "123e4567-e89b-12d3-a456-426614174003"
 }
+
+### Test Get User Appointments - Success mentor Case
+POST {{baseUri}}/api/appointment/get
+Content-Type: application/json
+
+{
+    "user_id": "93137255-d7ac-4219-90d9-a886ae987732"
+}
+
+### Test Get User Appointments - Missing User ID
+POST {{baseUri}}/api/appointment/get
+Content-Type: application/json
+
+{
+}
+
+### Test Get User Appointments - Non-existent User
+POST {{baseUri}}/api/appointment/get
+Content-Type: application/json
+
+{
+    "user_id": "non-existent-user-id"
+}
+
+### Test Get User Appointments - Success mentee Case
+POST {{baseUri}}/api/appointment/get
+Content-Type: application/json
+
+{
+    "user_id": "93137255-d7ac-4219-90d9-a886ae987732"
+}
+
+

@@ -4,42 +4,42 @@ import { respOk } from './resp';
 
 
 export async function createAppointment(input: CreateAppointmentInput): Promise<ReserveAppointmentResponse> {
-    try {
-        const { data, error } = await getSupabaseClient()
-            .rpc('reserve_slot', {
-                appointment_data: {
-                    mentor_id: input.mentor_id,
-                    mentee_id: input.mentee_id,
-                    start_time: input.start_time,
-                    end_time: input.end_time,
-                    service_type: input.service_type,
-                    price: input.price
-                }
-            });
-
-        if (error) {
-            console.error('Error creating appointment:', error);
-            
-            // Handle specific error cases from the RPC function
-            if (error.message.includes('CONFLICT_EXISTING_APPOINTMENT')) {
-                throw new Error('Time slot is already booked');
-            }
-            if (error.message.includes('CONFLICT_ACTIVE_HOLD')) {
-                throw new Error('Time slot is currently on hold');
-            }
-            if (error.message.includes('INVALID_TIME_RANGE')) {
-                throw new Error('Invalid time range provided');
-            }
-            
-            throw error;
+  try {
+    const { data, error } = await getSupabaseClient()
+      .rpc('reserve_slot', {
+        appointment_data: {
+          mentor_id: input.mentor_id,
+          mentee_id: input.mentee_id,
+          start_time: input.start_time,
+          end_time: input.end_time,
+          service_type: input.service_type,
+          price: input.price
         }
+      });
 
-        return data as ReserveAppointmentResponse;
+    if (error) {
+      console.error('Error creating appointment:', error);
 
-    } catch (error) {
-        console.error('Error in createAppointment:', error);
-        throw error;
+      // Handle specific error cases from the RPC function
+      if (error.message.includes('CONFLICT_EXISTING_APPOINTMENT')) {
+        throw new Error('Time slot is already booked');
+      }
+      if (error.message.includes('CONFLICT_ACTIVE_HOLD')) {
+        throw new Error('Time slot is currently on hold');
+      }
+      if (error.message.includes('INVALID_TIME_RANGE')) {
+        throw new Error('Invalid time range provided');
+      }
+
+      throw error;
     }
+
+    return data as ReserveAppointmentResponse;
+
+  } catch (error) {
+    console.error('Error in createAppointment:', error);
+    throw error;
+  }
 }
 
 export async function confirmAppointment(
@@ -48,7 +48,7 @@ export async function confirmAppointment(
   try {
     const { data, error } = await getSupabaseClient()
       .rpc('confirm_booking', {
-         appointment_id: appointmentId
+        appointment_id: appointmentId
       });
 
     if (error) {
@@ -56,7 +56,7 @@ export async function confirmAppointment(
       throw error;
     }
 
-     return respOk;
+    return respOk;
 
   } catch (error) {
     console.error('Error in confirmBooking:', error);
@@ -96,11 +96,11 @@ export async function updateAppointment(
   try {
     // Prepare update data
     const updateData: any = {};
-    
+
     if (updates.time_slot) {
       updateData.time_slot = `[${updates.time_slot[0]},${updates.time_slot[1]})`;
     }
-    
+
     if (updates.status) {
       updateData.status = updates.status;
     }
@@ -127,14 +127,12 @@ export async function updateAppointment(
   }
 }
 
-export async function getAppointment(appointmentId: string):Promise<Appointment | null> {
+export async function getAppointment(appointmentId: string): Promise<Appointment | null> {
   try {
     const { data, error } = await getSupabaseClient()
       .from('appointments')
       .select(`
-        *,
-        mentor:mentor_id (*),
-        mentee:mentee_id (*)
+        *
       `)
       .eq('id', appointmentId)
       .single();
@@ -148,6 +146,29 @@ export async function getAppointment(appointmentId: string):Promise<Appointment 
 
   } catch (error) {
     console.error('Error in getAppointment:', error);
+    throw error;
+  }
+}
+
+export async function getUserAppointment(userId: string): Promise<Appointment[]> {
+  try {
+    const { data, error } = await getSupabaseClient()
+      .from('appointments')
+      .select(`
+        *
+      `)
+      .or(`mentor_id.eq.${userId},mentee_id.eq.${userId}`)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching user appointments:', error);
+      throw error;
+    }
+
+    return data || [];
+
+  } catch (error) {
+    console.error('Error in getUserAppointment:', error);
     throw error;
   }
 }
