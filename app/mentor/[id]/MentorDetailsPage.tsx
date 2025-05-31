@@ -163,8 +163,12 @@ export default function MentorDetailsPage() {
 
         const result = await response.json();
 
-        if (response.status === 409) {
-          message.error('This time slot has already been booked. Please choose another.');
+        if (result.code === -1) {
+          if (result.message?.includes('Time slot is already booked')) {
+            message.error('This time slot has already been booked. Please choose another.');
+          } else {
+            message.error(result.message || 'Failed to create appointment. Please try again.');
+          }
           return;
         }
 
