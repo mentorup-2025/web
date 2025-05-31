@@ -70,10 +70,10 @@ export default function Home() {
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Authentication</h2>
               <div className="space-y-3">
                 <Link 
-                  href="/search"
+                  href="/mentor-list"
                   className="block w-full text-center px-4 py-2 border border-green-500 text-green-500 rounded-md hover:bg-green-50 transition-colors"
                 >
-                  Search Page
+                  Mentor List Page
                 </Link>
                 <Link 
                   href="/signup-process/mentor/165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61"

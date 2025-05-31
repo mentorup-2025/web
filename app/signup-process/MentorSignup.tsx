@@ -373,7 +373,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
           <Button 
             type="default" 
             size="large"
-            onClick={() => router.push('/search')}
+            onClick={() => router.push('/mentor-list')}
             style={{ marginRight: '16px' }}
           >
             Start Exploration
