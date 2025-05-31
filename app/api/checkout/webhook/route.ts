@@ -55,26 +55,28 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Missing appointmentId' }, { status: 400 });
       }
 
-      // ✅ 更新数据库记录
-      const { error, data } = await supabase
-          .from('appointments')
-          .update({
-            status: 'confirmed',
-            updated_at: new Date().toISOString(),
-            expires_at: null,
-          })
-          .eq('id', appointmentId)
-          .select();
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/appointment/confirm`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            appointment_id: appointmentId,
+          }),
+        });
 
-      if (error) {
-        console.error('❌ Supabase update error:', error.message);
-        return NextResponse.json({ error: 'Database update failed' }, { status: 500 });
-      }
+        const result = await response.json();
+        
+        if (!response.ok || result.code == -1) {
+          console.error('❌ Appointment confirmation failed:', result);
+          return NextResponse.json({ error: 'Appointment confirmation failed' }, { status: 500 });
+        }
 
-      if (!data || data.length === 0) {
-        console.warn('⚠️ Appointment not found for ID:', appointmentId);
-      } else {
-        console.log(`✅ Appointment ${appointmentId} confirmed`);
+        console.log(`✅ Appointment ${appointmentId} confirmed via API`);
+      } catch (error) {
+        console.error('❌ Failed to call appointment confirmation API:', error);
+        return NextResponse.json({ error: 'Failed to confirm appointment' }, { status: 500 });
       }
 
       // ✅ 发邮件
