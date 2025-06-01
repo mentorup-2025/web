@@ -110,3 +110,36 @@ Windows 系统下载地址 https://ngrok.com/downloads/windows?tab=download
 ```
 
 把生成的代理地址，如https://82e9-2600-1700-6f0e-0-dd58-4ced-b17c-906a.ngrok-free.app，然后去stripe dashboard-developers-webhooks，把Webhook endpoints中原先的地址换成新生成的，保存
+
+
+
+## 🧩 Pull Request Process
+Please follow this standard workflow when submitting a pull request:
+
+1. Create a new branch for your changes:
+
+```
+git checkout -b feature/your-feature-name
+
+```
+
+2. Make your changes and commit them with clear messages:
+```
+git add .
+git commit -m "Add: short description of your change"
+```
+
+3. Push the branch to your GitHub fork:
+
+```
+git push origin feature/your-feature-name
+```
+
+4. Open a Pull Request on the main repository:
+
+ - Go to the [original repo](https://github.com/mentorup-2025/web) on GitHub. 
+ - Click "Compare & pull request".
+ - Fill out the PR template.
+ - Ensure to fill the PR template
+
+Wait for review, respond to feedback, and make any necessary changes.
