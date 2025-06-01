@@ -14,6 +14,7 @@ export interface User {
   job_target?: JobTarget | null; // Optional job target
   mentor?: Mentor | null; // Optional mentor ID, defaults to null
   profile_url?: string | null; // Optional image URL
+  introduction?: string | null; // Optional introduction
 }
 
 export interface CreateUserInput {
@@ -27,6 +28,7 @@ export interface CreateUserInput {
   resume?: string;      // Optional resume URL
   status?: UserStatus;  // Optional status
   profile_url?: string | null; // Optional image URL
+  introduction?: string | null; // Optional introduction
 }
 
 export interface UpdateUserInput {
@@ -40,6 +42,7 @@ export interface UpdateUserInput {
   status?: UserStatus | null;   // Optional status update
   job_target?: JobTarget | null; // Optional job target update
   profile_url?: string | null; // Optional image URL
+  introduction?: string | null; // Optional introduction
 }
 
 export interface UserCredentials {
