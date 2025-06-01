@@ -2,27 +2,17 @@ import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { Buffer } from 'node:buffer'; // 👈 必须引入
-import { createClient } from '@supabase/supabase-js';
 import { sendEmail } from '@/lib/email';
 import { EmailTemplate } from '@/types/email';
 
 export const runtime = 'nodejs'; // 👈 必须显式指定 nodejs 环境
 
+// Configure route segment config
+export const dynamic = 'force-dynamic';
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-02-24.acacia',
 });
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-// 关闭默认 body 解析（此处对 App Router 实际无效，但保留无妨）
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
 
 export async function POST(request: Request) {
   const signature = headers().get('stripe-signature')!;
