@@ -13,6 +13,8 @@ export interface User {
   status?: UserStatus;  // Optional status
   job_target?: JobTarget | null; // Optional job target
   mentor?: Mentor | null; // Optional mentor ID, defaults to null
+  profile_url?: string | null; // Optional image URL
+  introduction?: string | null; // Optional introduction
 }
 
 export interface CreateUserInput {
@@ -25,6 +27,8 @@ export interface CreateUserInput {
   wechat?: string;      // Optional WeChat ID
   resume?: string;      // Optional resume URL
   status?: UserStatus;  // Optional status
+  profile_url?: string | null; // Optional image URL
+  introduction?: string | null; // Optional introduction
 }
 
 export interface UpdateUserInput {
@@ -37,6 +41,8 @@ export interface UpdateUserInput {
   wechat?: string | null;       // Optional WeChat ID update
   status?: UserStatus | null;   // Optional status update
   job_target?: JobTarget | null; // Optional job target update
+  profile_url?: string | null; // Optional image URL
+  introduction?: string | null; // Optional introduction
 }
 
 export interface UserCredentials {

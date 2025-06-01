@@ -3,12 +3,13 @@ import { CreateUserInput } from '@/types/user'
 import { respData, respErr, respOk } from '@/lib/resp'
 import { EmailTemplate } from '@/types/email'
 
-async function saveNewUser(userId: string, email: string, username: string) {
+async function saveNewUser(userId: string, email: string, username: string, image_url: string) {
   try {
     const userData: CreateUserInput = {
       user_id: userId,
       email: email,
-      username: username
+      username: username,
+      profile_url: image_url
     }
 
     const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/user/insert`, {
@@ -67,12 +68,15 @@ export async function POST(req: Request) {
     if (evt.type === 'user.created') {
       const { id: userId, email_addresses, first_name, last_name } = evt.data
       const primaryEmail = email_addresses?.[0]?.email_address
+      const image_url = evt.data.image_url
+
+      console.log('image_url', image_url)
       
       if (!primaryEmail) {
         throw new Error('No primary email found for user')
       }
 
-      await saveNewUser(userId, primaryEmail, first_name + ' ' + last_name)
+      await saveNewUser(userId, primaryEmail, first_name + ' ' + last_name, image_url)
     }
 
     return respOk()

@@ -4,7 +4,6 @@ export interface Mentor {
     company: string;                 // Current company
     years_of_experience: number;
     years_of_experience_recorded_date: string;  // ISO date when experience was recorded
-    introduction: string;            // Mentor's bio/introduction
     services: Record<string, number>; // Map of service name to price
     created_at: string;
 }
