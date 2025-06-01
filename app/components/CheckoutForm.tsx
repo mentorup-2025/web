@@ -5,16 +5,18 @@ import { useEffect, useState } from 'react';
 import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { Button, message } from 'antd';
 
-export default function CheckoutForm() {
+interface CheckoutFormProps {
+    amount: number;
+}
+
+export default function CheckoutForm({ amount }: CheckoutFormProps) {
     const stripe = useStripe();
     const elements = useElements();
     const searchParams = useSearchParams();
 
     const [loading, setLoading] = useState(false);
 
-    const appointmentId = searchParams.get('appointmentId');
-    const amountStr = searchParams.get('amount');
-    const amount = amountStr ? parseInt(amountStr) : 0;
+    const appointmentId = searchParams?.get('appointmentId');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

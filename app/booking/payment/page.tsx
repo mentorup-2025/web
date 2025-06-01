@@ -6,8 +6,6 @@ import CheckoutForm from '../../components/CheckoutForm';
 import { useState, useEffect } from 'react';
 import { Button, Modal, message } from 'antd';
 
-import { supabase } from '../../services/supabase';
-
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 const LESSON_PRICE = 2000; // 20.00 USD
