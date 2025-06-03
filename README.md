@@ -114,7 +114,7 @@ Windows 系统下载地址 https://ngrok.com/downloads/windows?tab=download
 
 
 ## 🧩 Pull Request Process
-Please follow this standard workflow when submitting a pull request:
+Please follow this standard workflow when submitting a new pull request:
 
 1. Create a new branch for your changes:
 
