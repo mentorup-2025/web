@@ -12,7 +12,6 @@ export const createMentorData = (
     company: input.company,
     years_of_experience: input.years_of_experience,
     years_of_experience_recorded_date: input.years_of_experience_recorded_date,
-    introduction: input.introduction,
     services: input.services || '',
     created_at: existing ? new Date().toISOString() : new Date().toISOString()
 });
