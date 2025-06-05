@@ -50,24 +50,20 @@ export default function MentorProfilePage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>('about');
 
-  // "正式" 存放当前导师的 introduction
+  // —— 新增：用于编辑用户名、头衔、公司 的草稿 state  ——
+  const [editProfileVisible, setEditProfileVisible] = useState(false);
+  const [draftUsername, setDraftUsername] = useState('');
+  const [draftTitle, setDraftTitle] = useState('');
+  const [draftCompany, setDraftCompany] = useState('');
+
+  // 原有 state（Introduction、Services 等）保持不变……
   const [introduction, setIntroduction] = useState('');
-  // 用一个对象来标记：某个 key（如 "consultation"）是否被选中
   const [services, setServices] = useState<Record<string, boolean>>({});
-  // 用一个对象来存放各个 service key 对应的价格，例如 { consultation: 123, mock_interview: 123, … }
   const [servicePrices, setServicePrices] = useState<Record<string, number>>({});
-
-  // —— 编辑 Services 弹窗用到的草稿 state ——
-  // draftServices 的 shape 和 services 一样，暂存用户在弹窗里勾选了哪些 checkbox
   const [draftServices, setDraftServices] = useState<Record<string, boolean>>({});
-  // draftPrice 暂存弹窗里输入的那个数字（新版需求里统一所有被勾选服务的价格都用这一个值）
   const [draftPrice, setDraftPrice] = useState<number>(0);
-
-  // “编辑 Introduction” 弹窗
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [draftIntro, setDraftIntro] = useState('');
-
-  // “编辑 Services” 弹窗
   const [servicesModalVisible, setServicesModalVisible] = useState(false);
 
   // 用于处理 URL hash 切换选项卡
@@ -85,32 +81,28 @@ export default function MentorProfilePage() {
         return;
       }
       try {
-        // 注意：这里调用 /api/mentor/list，而不是 /api/user/…
         const res = await fetch(`/api/mentor/list`);
         const json = await res.json();
-        console.log('【后端 /api/mentor/list 返回整体结果】：', json);
 
         if (res.ok && Array.isArray(json.data)) {
-          // 找到 user_id === mentorId 的那条记录
           const found = (json.data as any[]).find(item => item.user_id === mentorId);
-          console.log('【找到的当前导师数据】：', found);
-
           if (found) {
             setMentorData(found);
 
-            // 1) 先把 Introduction 存起来
+            // —— 初始化“编辑资料”的草稿  ——
+            setDraftUsername(found.username || '');
+            setDraftTitle(found.mentor?.title || '');
+            setDraftCompany(found.mentor?.company || '');
+
+            // 1) 把 Introduction 存起来
             setIntroduction(found.mentor?.introduction || '');
 
-            // 2) 处理 services 字段——后端可能返回两种格式：
-            //    A) 数组格式：services: [ { type: 'consultation', price: 123 }, … ]
-            //    B) 对象格式：services: { consultation: 100, resume_review: 50, … }
+            // 2) 处理 services（原有逻辑）……
             const rawServices = found.mentor?.services ?? {};
             const boolMap: Record<string, boolean> = {};
             const priceMap: Record<string, number> = {};
 
             if (Array.isArray(rawServices)) {
-              // 情况 A：数组格式
-              //    e.g. [ { type: 'consultation', price: 123 }, … ]
               rawServices.forEach((one: any) => {
                 const k = one.type as string;
                 const p = Number(one.price);
@@ -118,25 +110,18 @@ export default function MentorProfilePage() {
                 priceMap[k] = isNaN(p) ? 0 : p;
               });
             } else {
-              // 情况 B：对象格式
-              //    e.g. { consultation: 100, resume_review: 50, … }
               Object.entries(rawServices).forEach(([k, v]) => {
                 boolMap[k] = true;
                 priceMap[k] = Number(v);
               });
             }
 
-            console.log('【boolMap (服务勾选状态)】：', boolMap);
-            console.log('【priceMap (服务对应价格)】：', priceMap);
-
             setServices(boolMap);
             setServicePrices(priceMap);
           } else {
             setMentorData(null);
-            console.warn(`导师 ID=${mentorId} 未在 /api/mentor/list 返回的 data 里找到`);
           }
         } else {
-          console.error('Failed to fetch mentor list or invalid format');
           setMentorData(null);
         }
       } catch (err) {
@@ -150,6 +135,76 @@ export default function MentorProfilePage() {
     fetchMentorData();
   }, [mentorId]);
 
+  // —— “打开编辑资料 Modal” 时，用导师现有数据填充草稿：
+  const openEditProfileModal = () => {
+    if (!mentorData) return;
+    setDraftUsername(mentorData.username || '');
+    setDraftTitle(mentorData.mentor?.title || '');
+    setDraftCompany(mentorData.mentor?.company || '');
+    setEditProfileVisible(true);
+  };
+
+  // —— “保存资料” 按钮被点击 ——
+  const handleSaveProfile = async () => {
+    // 1. 本地先把 mentorData.username／mentor.title／mentor.company 更新
+    setMentorData((prev: any) => ({
+      ...prev,
+      username: draftUsername,
+      mentor: {
+        ...prev.mentor,
+        title: draftTitle,
+        company: draftCompany,
+      },
+    }));
+    setEditProfileVisible(false);
+
+    // 2. 调用 /api/user/update 更新 displayName
+    try {
+      const userUpdateResp = await fetch(`/api/user/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: mentorId,               // 这里把 mentorId 当作 userId 传给后端
+          username: draftUsername,     // 新的用户名
+        }),
+      });
+
+      if (userUpdateResp.ok) {
+        message.success('Username updated successfully');
+      } else {
+        message.error('Failed to update username');
+      }
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      message.error('Unexpected error while updating username');
+    }
+
+    // 3. 调用 /api/mentor/upsert/${mentorId} 更新 title 和 company
+    try {
+      const mentorUpsertResp = await fetch(`/api/mentor/upsert/${mentorId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: draftTitle,
+          company: draftCompany,
+          // 如果后端 upsert 接口同时需要 introduction 或 services，可一并传：
+          introduction,
+          services: Object.entries(services)
+              .filter(([key, checked]) => checked)
+              .map(([key]) => ({ type: key, price: servicePrices[key] || 0 })),
+        }),
+      });
+
+      if (mentorUpsertResp.ok) {
+        message.success('Title & Company updated successfully');
+      } else {
+        message.error('Failed to update title/company');
+      }
+    } catch (error) {
+      console.error('Error updating mentor data:', error);
+      message.error('Unexpected error while updating title/company');
+    }
+  };
   // —— 2. 打开“编辑 Services”弹窗，把当前 state 复制到草稿里 ——
   const openServicesModal = () => {
     // 先把现有 services copy 到 draftServices
@@ -255,8 +310,17 @@ export default function MentorProfilePage() {
               <div className={styles.profileInfo}>
                 <Avatar size={120} src="/placeholder-avatar.png" className={styles.avatar} />
                 <div className={styles.profileText}>
-                  <Title level={2}>{mentorData.username}</Title>
-                  <Text className={styles.title}>
+                  {/* —— 在这里展示 username、title、company，并加上编辑按钮 —— */}
+                  <Space align="center">
+                    <Title level={2} style={{ margin: 0 }}>
+                      {mentorData.username}
+                    </Title>
+                    <EditOutlined
+                        style={{ cursor: 'pointer' }}
+                        onClick={openEditProfileModal}
+                    />
+                  </Space>
+                  <Text className={styles.title} style={{ display: 'block', marginTop: 4 }}>
                     {mentorData.mentor.title} @ {mentorData.mentor.company}
                   </Text>
                   <Space className={styles.socialLinks}>
@@ -274,6 +338,49 @@ export default function MentorProfilePage() {
                 </div>
               </div>
             </div>
+
+            {/* —— 编辑用户名/头衔/公司的 Modal —— */}
+            <Modal
+                title="Edit Profile"
+                open={editProfileVisible}
+                onCancel={() => setEditProfileVisible(false)}
+                footer={[
+                  <Button key="cancel" onClick={() => setEditProfileVisible(false)}>
+                    Cancel
+                  </Button>,
+                  <Button key="save" type="primary" onClick={handleSaveProfile}>
+                    Save
+                  </Button>,
+                ]}
+            >
+              <div style={{ marginBottom: 12 }}>
+                <Text strong>Username</Text>
+                <Input
+                    value={draftUsername}
+                    onChange={e => setDraftUsername(e.target.value)}
+                    placeholder="Enter your username"
+                    style={{ marginTop: 4 }}
+                />
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <Text strong>Title</Text>
+                <Input
+                    value={draftTitle}
+                    onChange={e => setDraftTitle(e.target.value)}
+                    placeholder="Enter your title"
+                    style={{ marginTop: 4 }}
+                />
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <Text strong>Company</Text>
+                <Input
+                    value={draftCompany}
+                    onChange={e => setDraftCompany(e.target.value)}
+                    placeholder="Enter your company"
+                    style={{ marginTop: 4 }}
+                />
+              </div>
+            </Modal>
 
             <Tabs activeKey={activeTab} onChange={key => setActiveTab(key)}>
               <TabPane tab="About Me" key="about">
@@ -428,9 +535,9 @@ export default function MentorProfilePage() {
               <TabPane tab="Availability" key="availability">
                 <AvailabilityTab userId={mentorId} />
               </TabPane>
-              <TabPane tab="Payment & Invoices" key="payments">
-                <PaymentTab />
-              </TabPane>
+              {/*<TabPane tab="Payment & Invoices" key="payments">*/}
+              {/*  <PaymentTab />*/}
+              {/*</TabPane>*/}
             </Tabs>
           </div>
         </Content>
