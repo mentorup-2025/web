@@ -418,7 +418,6 @@ export default function MentorProfilePage() {
                             {svc.label}
                           </Checkbox>
                         </div>
->>>>>>> db17096 (about me and availibility updated)
                     ))}
                   </Modal>
                 </div>
