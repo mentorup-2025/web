@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { ClerkProvider } from '@clerk/nextjs'; // ✅ 添加 ClerkProvider
+import { ClerkProvider } from '@clerk/nextjs';
+import { GoogleAnalytics } from '@next/third-parties/google'
 import "../styles/index.css";
 import '../styles/globals.css';
 
@@ -37,6 +38,7 @@ export default function RootLayout({
                     </noscript>
                     {children}
                 </body>
+                <GoogleAnalytics gaId="G-1H558DKVKE" />
             </html>
         </ClerkProvider>
     );
