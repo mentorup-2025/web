@@ -141,7 +141,7 @@ export default function MenteeSignu({ userId }: MenteeSignupProps) {
           <p>Thanks for submitting your info!</p>
           <p>Let's explore the mentor community now!</p>
           <p className={styles.smallText}>
-            Please contact <a href="mailto:email@google.com">email@google.com</a> for any questions!
+            Please contact <a href="mailto:contactus@mentorup.info">contactus@mentorup.info</a> for any questions!
           </p>
           <Button 
             type="primary" 
