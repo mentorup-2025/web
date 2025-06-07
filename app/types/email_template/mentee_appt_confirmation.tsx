@@ -16,8 +16,8 @@ interface PaymentConfirmationProps {
   serviceName: string;
   price: number;
   mentorName: string;
-  appointmentDate: string;
-  appointmentTime: string;
+  appointmentStartTime: string;
+  appointmentEndTime: string;
 }
 
 const MenteeApptConfirmationEmail: React.FC<PaymentConfirmationProps> = ({
@@ -25,9 +25,23 @@ const MenteeApptConfirmationEmail: React.FC<PaymentConfirmationProps> = ({
   serviceName,
   price,
   mentorName,
-  appointmentDate,
-  appointmentTime
+  appointmentStartTime,
+  appointmentEndTime
 }) => {
+  // Format the date and time
+  const formatDateTime = (dateTimeStr: string) => {
+    const date = new Date(dateTimeStr);
+    return date.toLocaleString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      timeZoneName: 'short'
+    });
+  };
+
   return (
     <Html>
       <Head />
@@ -43,8 +57,8 @@ const MenteeApptConfirmationEmail: React.FC<PaymentConfirmationProps> = ({
             <Text style={h2}>Booking Details:</Text>
             <Text style={detailLine}><strong>Service:</strong> {serviceName}</Text>
             <Text style={detailLine}><strong>Mentor:</strong> {mentorName}</Text>
-            <Text style={detailLine}><strong>Date:</strong> {appointmentDate}</Text>
-            <Text style={detailLine}><strong>Time:</strong> {appointmentTime}</Text>
+            <Text style={detailLine}><strong>Start Time:</strong> {formatDateTime(appointmentStartTime)}</Text>
+            <Text style={detailLine}><strong>End Time:</strong> {formatDateTime(appointmentEndTime)}</Text>
             <Text style={detailLine}><strong>Amount Paid:</strong> ${price.toFixed(2)}</Text>
           </Section>
 

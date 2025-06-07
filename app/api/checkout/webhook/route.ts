@@ -4,6 +4,8 @@ import Stripe from 'stripe';
 import { Buffer } from 'node:buffer'; // 👈 必须引入
 import { sendEmail } from '@/lib/email';
 import { EmailTemplate } from '@/types/email';
+import { getAppointment } from '@/lib/appointment';
+import { getUser } from '@/lib/user';
 
 export const runtime = 'nodejs'; // 👈 必须显式指定 nodejs 环境
 
@@ -23,9 +25,9 @@ export async function POST(request: Request) {
 
   try {
     event = stripe.webhooks.constructEvent(
-        bodyBuffer,
-        signature,
-        process.env.STRIPE_WEBHOOK_SECRET!
+      bodyBuffer,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET!
     );
   } catch (err: any) {
     console.error('❌ Invalid Stripe signature:', err.message);
@@ -34,16 +36,18 @@ export async function POST(request: Request) {
 
   console.log('📥 Stripe Event received:', event.type);
 
+
   try {
-    if (event.type === 'payment_intent.succeeded') {
-      const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      const appointmentId = paymentIntent.metadata?.appointmentId;
-      const customerEmail = paymentIntent.metadata?.email;
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const appointmentId = session.metadata?.appointmentId;
+      const customerEmail = session.customer_email;
 
       if (!appointmentId) {
         console.error('❌ Missing appointmentId in metadata');
         return NextResponse.json({ error: 'Missing appointmentId' }, { status: 400 });
       }
+
 
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/appointment/confirm`, {
@@ -57,7 +61,7 @@ export async function POST(request: Request) {
         });
 
         const result = await response.json();
-        
+
         if (!response.ok || result.code == -1) {
           console.error('❌ Appointment confirmation failed:', result);
           return NextResponse.json({ error: 'Appointment confirmation failed' }, { status: 500 });
@@ -69,17 +73,26 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Failed to confirm appointment' }, { status: 500 });
       }
 
+      const appointment = await getAppointment(appointmentId);
+
+
       // ✅ 发邮件
-      if (customerEmail) {
+      if (customerEmail && appointment) {
+        const user = await getUser(appointment.mentee_id);
+        const mentor = await getUser(appointment.mentor_id);
         try {
           const emailResult = await sendEmail(
-              'MentorUP <no-reply@mentorup.com>',
-              customerEmail,
-              EmailTemplate.MENTEE_APPOINTMENT_CONFIRMATION,
-              {
-                amount: paymentIntent.amount_received,
-                stripeId: paymentIntent.id,
-              }
+            'MentorUP <no-reply@mentorup.com>',
+            customerEmail,
+            EmailTemplate.MENTEE_APPOINTMENT_CONFIRMATION,
+            {
+              userName: user?.username,
+              serviceName: appointment.service_type,
+              price: appointment.price,
+              mentorName: mentor?.username,
+              appointmentStartTime: appointment.start_time,
+              appointmentEndTime: appointment.end_time
+            }
           );
           console.log('📧 Email sent:', emailResult);
         } catch (emailError) {
