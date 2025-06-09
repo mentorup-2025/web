@@ -26,6 +26,7 @@ import styles from './mentorDetails.module.css';
 import MentorAvailability from '../../components/MentorAvailability';
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { UserOutlined } from '@ant-design/icons';
 
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
@@ -246,7 +247,12 @@ export default function MentorDetailsPage() {
             <div className={styles.mainContent}>
               <div className={styles.leftSection}>
                 <div className={styles.profileHeader}>
-                  <Avatar size={120} style={{ background: '#9b9b9b' }} />
+                  <Avatar
+                      size={120}
+                      src={mentor.profile_url || undefined}
+                      icon={!mentor.profile_url ? <UserOutlined /> : undefined}
+                      style={{ background: '#f0f0f0' }}
+                  />
                   <div className={styles.profileText}>
                     <Title level={2} className={styles.name}>{mentor.username}</Title>
                     <Text className={styles.jobTitle}>
