@@ -35,20 +35,23 @@ export default function MentorDetailsPage() {
   const { user, isSignedIn } = useUser();
   const router = useRouter();
   const params = useParams() as { id: string };
-
-
   const [isBookingModalVisible, setIsBookingModalVisible] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ date: string; time: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
-
   const [supportType, setSupportType] = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [resume, setResume] = useState<File | null>(null);
-
   const [mentor, setMentor] = useState<any>(null);
   const [mentorLoading, setMentorLoading] = useState(true);
+  // stripe和微信支付
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'stripe' | 'wechat'>('stripe');
+  const [price, setPrice] = useState<number | null>(null);
+  const [appointmentId, setAppointmentId] = useState<string | null>(null);
+  const [isWeChatModalVisible, setIsWeChatModalVisible] = useState(false);
+  const [qrScanned, setQrScanned] = useState(false);
+  const [isPaymentFailedModalVisible, setIsPaymentFailedModalVisible] = useState(false);
 
   useEffect(() => {
     const fetchMentor = async () => {
@@ -79,6 +82,11 @@ export default function MentorDetailsPage() {
         setIsSuccessModalVisible(true);
         setIsBookingModalVisible(false);
         setStep(1);
+      }
+
+      if (event.data?.type === 'paymentFailed') {
+        console.log('🟠 Received paymentFailed from child window');
+        setIsPaymentFailedModalVisible(true);
       }
     };
 
@@ -128,8 +136,6 @@ export default function MentorDetailsPage() {
         }
       }
 
-      let appointmentId = null;
-
       try {
         const dateStr = selectedSlot?.date!;
         const timeStr = selectedSlot?.time!;
@@ -144,7 +150,7 @@ export default function MentorDetailsPage() {
           'Career Guidance': 5000,
         };
 
-        const price = servicePriceMap[supportType ?? ''] ?? 1500;
+        const calculatedPrice = servicePriceMap[supportType ?? ''] ?? 1500;
 
         const response = await fetch('/api/appointment/insert', {
           method: 'POST',
@@ -157,7 +163,7 @@ export default function MentorDetailsPage() {
             service_type: supportType,
             description,
             resume_url: resumeUrl,
-            price,
+            price: calculatedPrice,
           }),
         });
 
@@ -177,9 +183,8 @@ export default function MentorDetailsPage() {
           return;
         }
 
-        appointmentId = result.data.appointment_id;
-
-        window.open(`/booking/payment?appointmentId=${appointmentId}&amount=${price}`, '_blank');
+        setAppointmentId(result.data.appointment_id);
+        setPrice(calculatedPrice);
       } catch (err) {
         console.error('Error creating appointment:', err);
         message.error('Unexpected error');
@@ -189,6 +194,7 @@ export default function MentorDetailsPage() {
 
     setStep(step + 1);
   };
+
 
   const handleBack = () => {
     if (step === 1) {
@@ -352,6 +358,96 @@ export default function MentorDetailsPage() {
 
           {step === 3 && (
               <div>
+                <Title level={4}>Payment</Title>
+                <p>Select your payment method.</p>
+                <p><strong>Total:</strong> ${price / 100}</p>
+
+                <div
+                    style={{
+                      border: selectedPaymentMethod === 'wechat' ? '2px solid #1890ff' : '1px solid #ccc',
+                      borderRadius: 8,
+                      padding: 12,
+                      marginBottom: 12,
+                      cursor: 'pointer',
+                      position: 'relative',
+                    }}
+                    onClick={() => setSelectedPaymentMethod('wechat')}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <input
+                        type="radio"
+                        checked={selectedPaymentMethod === 'wechat'}
+                        readOnly
+                        style={{ marginRight: 8 }}
+                    />
+                    <span>Pay in CNY (Chinese Yuan)</span>
+                    <img src="/wechat-pay.png" alt="WeChat Pay" style={{ height: 24, marginLeft: 8 }} />
+                  </div>
+                  <div style={{
+                    position: 'absolute',
+                    top: 4,
+                    right: 4,
+                    backgroundColor: '#ffc107',
+                    color: '#000',
+                    fontWeight: 600,
+                    padding: '2px 6px',
+                    fontSize: 12,
+                    borderRadius: 4
+                  }}>
+                    Price 2% off
+                  </div>
+                </div>
+
+                <div
+                    style={{
+                      border: selectedPaymentMethod === 'stripe' ? '2px solid #1890ff' : '1px solid #ccc',
+                      borderRadius: 8,
+                      padding: 12,
+                      cursor: 'pointer',
+                      marginBottom: 24,
+                    }}
+                    onClick={() => setSelectedPaymentMethod('stripe')}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <input
+                        type="radio"
+                        checked={selectedPaymentMethod === 'stripe'}
+                        readOnly
+                        style={{ marginRight: 8 }}
+                    />
+                    <span>Pay in USD (U.S. Dollar)</span>
+                    <img src="/stripe-icon.png" alt="Stripe" style={{ height: 24, marginLeft: 8 }} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Button onClick={handleBack}>Back</Button>
+                  <Button
+                      type="primary"
+                      onClick={() => {
+                        if (selectedPaymentMethod === 'stripe') {
+                          if (!appointmentId || !price) {
+                            message.error('Missing appointment ID or price');
+                            return;
+                          }
+                          setStep(4);
+                          window.open(`/booking/payment?appointmentId=${appointmentId}&amount=${price}`, '_blank');
+                        } else if (selectedPaymentMethod === 'wechat') {
+                          // WeChat 支付逻辑稍后补充
+                          setIsWeChatModalVisible(true);
+                        }
+
+                      }}
+                  >
+                    Pay for the Session
+                  </Button>
+                </div>
+              </div>
+          )}
+
+
+          {step === 4 && (
+              <div>
                 <p>Jumping to the payment page...</p>
                 <p>After finishing the payment it will lead you to the next step.</p>
               </div>
@@ -384,6 +480,80 @@ export default function MentorDetailsPage() {
             </Button>
           </div>
         </Modal>
+
+        <Modal
+            open={isWeChatModalVisible}
+            footer={null}
+            onCancel={() => {
+              setIsWeChatModalVisible(false);
+              setQrScanned(false);
+            }}
+            width={800}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            {/* 左侧：二维码 */}
+            <div style={{ textAlign: 'center' }}>
+              <Title level={3}>Payment</Title>
+              <p style={{ fontSize: 16 }}>打开 <img src="/wechat-pay.png" alt="WeChat" style={{ height: 20, verticalAlign: 'middle' }} /> 微信扫一扫</p>
+              <p style={{ fontSize: 28, fontWeight: 'bold' }}>¥{price ? (price / 100).toFixed(2) : '0.00'}</p>
+
+              <div
+                  style={{
+                    width: 200,
+                    height: 200,
+                    margin: '0 auto',
+                    border: '1px solid #ccc',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+              >
+                {qrScanned ? (
+                    <div style={{ textAlign: 'center' }}>
+                      <img src="/check-circle.png" alt="Scanned" style={{ width: 48, marginBottom: 8 }} />
+                      <p style={{ color: '#1890ff' }}>Scanned</p>
+                    </div>
+                ) : (
+                    <img src="/wechat-qr-placeholder.png" alt="QR Code" style={{ width: 180 }} />
+                )}
+              </div>
+
+              {!qrScanned && (
+                  <Button type="primary" style={{ marginTop: 16 }} onClick={() => setQrScanned(true)}>
+                    模拟扫码成功
+                  </Button>
+              )}
+            </div>
+
+            {/* 右侧：微信扫码截图 */}
+            <div style={{ transform: 'translateX(-150px)' }}>
+              <img src="/wechat-scan-demo.png" alt="WeChat Scan" style={{ height: 400 }} />
+            </div>
+          </div>
+        </Modal>
+
+        <Modal
+            open={isPaymentFailedModalVisible}
+            footer={null}
+            onCancel={() => setIsPaymentFailedModalVisible(false)}
+        >
+          <Title level={4}>Payment Failed</Title>
+          <p>Please finish your payment to continue.</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
+            <Button onClick={() => setIsPaymentFailedModalVisible(false)}>Cancel</Button>
+            <Button
+                type="primary"
+                onClick={() => {
+                  setIsPaymentFailedModalVisible(false);
+                  setStep(3); // 回到支付方式选择页面
+                  setIsBookingModalVisible(true);
+                }}
+            >
+              Pay for the Session
+            </Button>
+          </div>
+        </Modal>
+
       </Layout>
   );
 }

@@ -53,6 +53,16 @@ export default function CheckoutForm({ amount }: CheckoutFormProps) {
 
             if (result.error) {
                 message.error(result.error.message || 'Payment failed');
+                console.log('🔴 Payment failed, sending postMessage');
+                // ✅ 通知主窗口失败
+                if (window.opener) {
+                    window.opener.postMessage({ type: 'paymentFailed' }, '*');
+                }
+
+                // ✅ 自动关闭 Stripe 支付页面
+                setTimeout(() => {
+                    window.close();
+                }, 1000);
             } else if (result.paymentIntent?.status === 'succeeded') {
                 message.success('Payment successful!');
 
