@@ -22,6 +22,7 @@ import MySessionsTab from '../components/MySessionsTab';
 import AvailabilityTab from '../components/AvailabilityTab';
 import PaymentTab from '../components/PaymentTab';
 import styles from '../mentorProfile.module.css';
+import { useUser } from '@clerk/nextjs';
 
 const { Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -65,6 +66,9 @@ export default function MentorProfilePage() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [draftIntro, setDraftIntro] = useState('');
   const [servicesModalVisible, setServicesModalVisible] = useState(false);
+
+  const { user, isSignedIn } = useUser();
+  const isOwnProfile = isSignedIn && user?.id === mentorId;
 
   // 用于处理 URL hash 切换选项卡
   useEffect(() => {
@@ -134,6 +138,13 @@ export default function MentorProfilePage() {
 
     fetchMentorData();
   }, [mentorId]);
+
+  useEffect(() => {
+    console.log('🧠 Clerk user.id:', user?.id);
+    console.log('📄 Page mentorId:', mentorId);
+    console.log('🔍 isOwnProfile:', isOwnProfile);
+    console.log('🖼️ Clerk user.imageUrl:', user?.imageUrl);
+  }, [user, mentorId, isOwnProfile]);
 
   // —— “打开编辑资料 Modal” 时，用导师现有数据填充草稿：
   const openEditProfileModal = () => {
@@ -308,7 +319,15 @@ export default function MentorProfilePage() {
           <div className={styles.container}>
             <div className={styles.profileHeader}>
               <div className={styles.profileInfo}>
-                <Avatar size={120} src="/placeholder-avatar.png" className={styles.avatar} />
+                <Avatar
+                    size={120}
+                    src={
+                      isOwnProfile
+                          ? user?.imageUrl
+                          : mentorData?.profile_url || '/placeholder-avatar.png'
+                    }
+                    className={styles.avatar}
+                />
                 <div className={styles.profileText}>
                   {/* —— 在这里展示 username、title、company，并加上编辑按钮 —— */}
                   <Space align="center">

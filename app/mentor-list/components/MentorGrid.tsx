@@ -15,6 +15,7 @@ interface Mentor {
   user_id: string;
   username: string;
   email: string;
+  profile_url?: string; // avatar
   industries: string[];
   mentor: {
     title: string;
@@ -125,10 +126,11 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
       {filteredMentors.map(user => (
         <Card key={user.user_id} className={styles.mentorCard}>
           <div className={styles.avatarContainer}>
-            <Avatar 
-              size={80} 
-              icon={<UserOutlined />} 
-              className={styles.avatar}
+            <Avatar
+                size={80}
+                src={user.profile_url || undefined}
+                icon={!user.profile_url ? <UserOutlined /> : undefined}
+                className={styles.avatar}
             />
           </div>
           

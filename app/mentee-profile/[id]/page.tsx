@@ -27,6 +27,7 @@ import Navbar from '../../components/Navbar';
 import MySessionsTab from '../components/MySessionsTab';
 import PaymentTab from '../components/PaymentTab';
 import styles from '../menteeProfile.module.css';
+import { useUser } from '@clerk/nextjs';
 
 
 const { Content } = Layout;
@@ -64,6 +65,10 @@ interface ApiResponse {
 export default function MenteeProfilePage() {
   const params = useParams();
   const menteeId = params?.id as string;
+
+  const { user, isSignedIn } = useUser();
+  const isOwnProfile = isSignedIn && user?.id === menteeId;
+
 
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -277,9 +282,14 @@ export default function MenteeProfilePage() {
               <div className={styles.profileInfo}>
                 <Avatar
                     size={120}
-                    src="/placeholder-avatar.png"
+                    src={
+                      isOwnProfile
+                          ? user?.imageUrl || '/placeholder-avatar.png'
+                          : userData.resume || '/placeholder-avatar.png'
+                    }
                     className={styles.avatar}
                 />
+
                 <div className={styles.profileText}>
                   <Title level={2}>{userData.username}</Title>
                   <Text className={styles.title}>
