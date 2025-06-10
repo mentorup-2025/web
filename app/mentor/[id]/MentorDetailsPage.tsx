@@ -53,6 +53,24 @@ export default function MentorDetailsPage() {
   const [isWeChatModalVisible, setIsWeChatModalVisible] = useState(false);
   const [qrScanned, setQrScanned] = useState(false);
   const [isPaymentFailedModalVisible, setIsPaymentFailedModalVisible] = useState(false);
+  const [userResume, setUserResume] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchMenteeResume = async () => {
+      if (!user?.id) return;
+      try {
+        const res = await fetch(`/api/user/${user.id}`);
+        const result = await res.json();
+        if (res.ok && result.data) {
+          setUserResume(result.data.resume || null);
+        }
+      } catch (err) {
+        console.error('Failed to fetch user resume:', err);
+      }
+    };
+    fetchMenteeResume();
+  }, [user?.id]);
+
 
   useEffect(() => {
     const fetchMentor = async () => {
@@ -97,9 +115,9 @@ export default function MentorDetailsPage() {
 
   const handleNext = async () => {
     if (step === 2) {
-      let resumeUrl = null;
+      let resumeUrl = userResume;
 
-      if (resume) {
+      if (!resumeUrl && resume) {
         try {
           const res = await fetch('/api/resume/upload', {
             method: 'POST',
@@ -343,22 +361,33 @@ export default function MentorDetailsPage() {
                 />
 
                 <p style={{ marginTop: 16 }}>Upload your resume (Optional)</p>
-                <Upload
-                    beforeUpload={(file) => {
-                      setResume(file);
-                      return false;
-                    }}
-                    fileList={resume ? [{
-                      uid: '-1',
-                      name: resume.name,
-                      status: 'done',
-                      url: URL.createObjectURL(resume),
-                    }] : []}
-                    onRemove={() => setResume(null)}
-                    maxCount={1}
-                >
-                  <Button icon={<UploadOutlined />}>Click or drag file to upload</Button>
-                </Upload>
+                {userResume ? (
+                    <div>
+                      <Text strong>
+                        <a href={userResume} target="_blank" rel="noopener noreferrer">
+                          {userResume.split('/').pop()}
+                        </a>
+                      </Text>
+                      <p style={{ color: '#888' }}>This resume will be used for this booking.</p>
+                    </div>
+                ) : (
+                    <Upload
+                        beforeUpload={(file) => {
+                          setResume(file);
+                          return false;
+                        }}
+                        fileList={resume ? [{
+                          uid: '-1',
+                          name: resume.name,
+                          status: 'done',
+                          url: URL.createObjectURL(resume),
+                        }] : []}
+                        onRemove={() => setResume(null)}
+                        maxCount={1}
+                    >
+                      <Button icon={<UploadOutlined />}>Click or drag file to upload</Button>
+                    </Upload>
+                )}
               </div>
           )}
 
