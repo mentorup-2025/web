@@ -29,7 +29,7 @@
   color: #1890FF;
 }
 
-.headerRight {
+.headerRight > div{
   display: flex;
   align-items: center;
   gap: 16px;
