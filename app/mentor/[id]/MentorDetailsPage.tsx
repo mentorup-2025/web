@@ -395,7 +395,7 @@ export default function MentorDetailsPage() {
               <div>
                 <Title level={4}>Payment</Title>
                 <p>Select your payment method.</p>
-                <p><strong>Total:</strong> ${price / 100}</p>
+                <p><strong>Total:</strong> {price ? `$${price / 100}` : 'N/A'}</p>
 
                 <div
                     style={{
