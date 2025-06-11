@@ -47,30 +47,28 @@ export default function Navbar() {
           </h1>
         </div>
 
-        <div className={styles.headerRight}>
-          <Space>
-            <SignedOut>
-              <SignInButton mode="modal">
-                <Button type="text">Login</Button>
-              </SignInButton>
-              {' '}
-              <SignUpButton mode="modal">
-                <Button type="primary">Sign Up</Button>
-              </SignUpButton>
-            </SignedOut>
-            <SignedIn>
-              {isMentor === false && (
-                <Button 
-                  type="primary" 
-                  onClick={handleBecomeMentor}
-                >
-                  Become a Mentor
-                </Button>
-              )}
-              <UserButton afterSignOutUrl="/" />
-            </SignedIn>
-          </Space>
-        </div>
+        <Space className={styles.headerRight}> 
+          <SignedOut>
+            <SignInButton mode="modal">
+              <Button type="text">Login</Button>
+            </SignInButton>
+            {' '}
+            <SignUpButton mode="modal">
+              <Button type="primary">Sign Up</Button>
+            </SignUpButton>
+          </SignedOut>
+          <SignedIn>
+            {isMentor === false && (
+              <Button 
+                type="primary" 
+                onClick={handleBecomeMentor}
+              >
+                Become a Mentor
+              </Button>
+            )}
+            <UserButton afterSignOutUrl="/" />
+          </SignedIn>
+        </Space>
       </div>
     </Header>
   );
