@@ -50,7 +50,7 @@ export default function SearchPage() {
   useEffect(() => {
     const fetchMentors = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/mentor/list');
+        const response = await fetch('/api/mentor/list');
         const data = await response.json();
         if (data.code === 200) {
           setMentors(data.data);
