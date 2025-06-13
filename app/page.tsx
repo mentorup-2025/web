@@ -223,8 +223,8 @@ export default function Home() {
             </Drawer>
           </div>
         </header>
-        <section className="relative flex flex-col justify-between h-screen overflow-hidden bg-white">
-          <div className="flex flex-col justify-center items-center flex-1 px-4 md:px-0 text-center z-10">
+        <section className={`relative flex flex-col justify-between h-screen overflow-hidden bg-white ${styles.heroContainer}`}>
+          <div className={`flex flex-col justify-center items-center flex-1 px-4 md:px-0 text-center z-10`}>
             <h1 className="text-blue-600 text-4xl md:text-6xl font-bold mb-4">
               {t('Learn from the Best.')}
             </h1>
@@ -253,7 +253,7 @@ export default function Home() {
 
         <MarqueeSection />
 
-        <section className="w-full max-w-6xl mt-20 px-4">
+        <section className={styles.featuresWhyChooseUs}>
           <h2 className="text-3xl md:text-4xl font-bold text-black text-center mb-12">
             {t('Why Choose Us')}
           </h2>

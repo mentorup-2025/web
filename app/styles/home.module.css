@@ -1,0 +1,6 @@
+.heroContainer {
+  /* Add your custom styles here */
+  /* For example: */
+  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5));
+  backdrop-filter: blur(5px);
+} 
