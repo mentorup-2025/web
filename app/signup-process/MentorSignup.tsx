@@ -505,7 +505,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
           {current === 1 && <h2>Tell us about <span className={styles.blue}>your work experience</span></h2>}
           {current === 2 && <h2>Join our <span className={styles.blue}>hourly rate</span></h2>}
           {current === 3 && <h2>Join our <span className={styles.blue}>Mentor Community</span></h2>}
-          {current === 4 && <h2>Welcome to the <span className={styles.blue}>MentorUp Community!</span>We're excited to have you here.</h2>}
+          {current === 4 && <h2>Welcome to the <span className={styles.blue}>MentorUp Community! </span>We're excited to have you here.</h2>}
           
           <Form
             form={form}

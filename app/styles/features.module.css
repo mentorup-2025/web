@@ -26,14 +26,16 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 90vw;
+  height: 50vw;
   background-color: #dbeafe;
   border-radius: 100% 100% 0 0;
   top: 25vh;
   z-index: 0;
 }
 
-
+.heroContainer {
+  height: 600px;
+}
 .landingBg {
   background-image: url('/images/landing_pic.png');
   background-size: contain;
@@ -43,6 +45,16 @@
 }
 
 /* Mobile (default) */
+.featuresWhyChooseUs {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 5rem;
+  padding: 0 1rem;
+}
+
 .featuresGrid {
   display: grid;
   grid-template-columns: 1fr;
@@ -53,12 +65,15 @@
   padding: 0 1rem;
 }
 
+.featuresGrid div {
+  padding: 40px;
+}
+
 /* Tablet (768px and up) */
 @media (min-width: 768px) {
   .featuresGrid {
     grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem;
-    max-width: 768px;
   }
 
   .featureTitle {
@@ -66,7 +81,7 @@
   }
 
   .backgroundCircle {
-    height: 70vw;
+    height: 40vw;
   }
 }
 
@@ -75,18 +90,16 @@
   .featuresGrid {
     grid-template-columns: repeat(3, 1fr);
     gap: 2rem;
-    max-width: 1024px;
   }
 
   .backgroundCircle {
-    height: 55vw;
+    height: 20vw;
   }
 }
 
 /* Ultrawide Monitor (1440px and up) */
 @media (min-width: 1440px) {
   .featuresGrid {
-    max-width: 1440px;
     gap: 2.5rem;
   }
 
@@ -103,6 +116,6 @@
   }
 
   .backgroundCircle {
-    height: 30vw;
+    height: 25vw;
   }
 } 

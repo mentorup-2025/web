@@ -35,8 +35,8 @@ const MarqueeSection = () => {
   };
 
   return (
-    <section className="relative overflow-hidden bg-white py-8">
-      <div className="absolute top-0 left-0 right-0 text-center py-4 bg-white z-10">
+    <section className="relative overflow-hidden py-8">
+      <div className="absolute top-0 left-0 right-0 text-center py-4 z-10">
         <p className="text-lg font-semibold text-gray-900">
           Trusted by 100+ mentors from top organizations.
         </p>
@@ -72,8 +72,8 @@ const MarqueeSection = () => {
       </div>
 
       {/* Gradient overlays for smooth edges */}
-      <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white to-transparent pointer-events-none" />
-      <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white to-transparent pointer-events-none" />
+      <div className="absolute left-0 top-0 bottom-0 w-16 from-white to-transparent pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-16 from-white to-transparent pointer-events-none" />
     </section>
   );
 };

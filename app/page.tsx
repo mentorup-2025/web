@@ -1,5 +1,6 @@
 'use client'
-import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 import { Button, Space, Drawer } from 'antd';
 import { MenuOutlined } from '@ant-design/icons';
 import Head from 'next/head'
@@ -7,7 +8,7 @@ import Link from 'next/link'
 import { Switch } from 'antd'
 import MarqueeSection from './MarqueeSection'
 import styles from './styles/features.module.css'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 // Translation object with all your content
 const translations = {
@@ -80,6 +81,30 @@ const translations = {
 export default function Home() {
   const [language, setLanguage] = useState<'en' | 'zh'>('en')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const router = useRouter();
+  const { user } = useUser();
+  const [isMentor, setIsMentor] = useState<boolean | null>(false);
+
+  useEffect(() => {
+    const checkMentorStatus = async () => {
+      if (user?.id) {
+        try {
+          const response = await fetch(`/api/user/${user.id}`);
+          const data = await response.json();
+          setIsMentor(data.data.mentor !== null);
+        } catch (error) {
+          console.error('Error checking mentor status:', error);
+        }
+      }
+    };
+
+    checkMentorStatus();
+  }, [user?.id]);
+
+
+  const handleBecomeMentor = () => {
+    router.push('/signup-process/mentor/' + user?.id);
+  };
 
   // Custom translation function that mimics useTranslation from next-i18next
   const t = (key: string) => {
@@ -134,7 +159,17 @@ export default function Home() {
                   </SignUpButton>
                 </SignedOut>
                 <SignedIn>
-                  <UserButton afterSignOutUrl="/" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {isMentor === false && (
+                      <Button 
+                        type="primary" 
+                        onClick={handleBecomeMentor}
+                      >
+                        Become a Mentor
+                      </Button>
+                    )}
+                    <UserButton afterSignOutUrl="/" />
+                  </div>
                 </SignedIn>
               </Space>
             </nav>
@@ -172,14 +207,24 @@ export default function Home() {
                   </SignUpButton>
                 </SignedOut>
                 <SignedIn>
-                  <UserButton afterSignOutUrl="/" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexDirection: 'column' }}>
+                    {isMentor === false && (
+                      <Button 
+                        type="primary" 
+                        onClick={handleBecomeMentor}
+                      >
+                        Become a Mentor
+                      </Button>
+                    )}
+                    <UserButton afterSignOutUrl="/" />
+                  </div>
                 </SignedIn>
               </div>
             </Drawer>
           </div>
         </header>
-        <section className="relative flex flex-col justify-between h-screen overflow-hidden bg-white">
-          <div className="flex flex-col justify-center items-center flex-1 px-4 md:px-0 text-center z-10">
+        <section className={`relative flex flex-col justify-between h-screen overflow-hidden bg-white ${styles.heroContainer}`}>
+          <div className={`flex flex-col justify-center items-center flex-1 px-4 md:px-0 text-center z-10`}>
             <h1 className="text-blue-600 text-4xl md:text-6xl font-bold mb-4">
               {t('Learn from the Best.')}
             </h1>
@@ -208,7 +253,7 @@ export default function Home() {
 
         <MarqueeSection />
 
-        <section className="w-full max-w-6xl mt-20 px-4">
+        <section className={styles.featuresWhyChooseUs}>
           <h2 className="text-3xl md:text-4xl font-bold text-black text-center mb-12">
             {t('Why Choose Us')}
           </h2>
