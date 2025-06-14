@@ -12,6 +12,13 @@ import {
     BellOutlined,
 } from '@ant-design/icons';
 import { useUser } from '@clerk/nextjs';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+// ⏱️ 插件注册：支持 UTC 和时区
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const { Title, Text } = Typography;
 
@@ -51,17 +58,24 @@ export default function MySessionsTab() {
                 }
 
                 const transformed = result.data.appointments.map((appt: any) => {
-                    const start = new Date(appt.time_slot?.lower);
-                    const end = new Date(appt.time_slot?.upper);
+                    const rangeStr: string = appt.time_slot;
+                    const match = rangeStr.match(/\[(.*?),(.*?)\)/);
 
-                    const date = start.toLocaleDateString();
-                    const time = `${start.toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                    })} - ${end.toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                    })}`;
+                    // ✅ 创建无效时间（替代 dayjs.invalid()）
+                    let start = dayjs('invalid-date');
+                    let end = dayjs('invalid-date');
+
+                    if (match) {
+                        // 🔁 自动适配用户时区
+                        start = dayjs.utc(match[1]).local();
+                        end = dayjs.utc(match[2]).local();
+                    }
+
+                    const date = start.isValid() ? start.format('YYYY-MM-DD') : 'Invalid Date';
+                    const time =
+                        start.isValid() && end.isValid()
+                            ? `${start.format('HH:mm')} - ${end.format('HH:mm')}`
+                            : 'Invalid Time';
 
                     return {
                         id: appt.id,
@@ -72,10 +86,12 @@ export default function MySessionsTab() {
                         resume_url: appt.resume_url,
                         mentee: {
                             name: appt.mentee?.username || 'Anonymous',
-                            avatar_url: '', // 预留字段
+                            avatar_url: '',
                         },
                     };
                 });
+
+
 
                 setAppointments(transformed);
             } catch (error) {
@@ -141,7 +157,12 @@ export default function MySessionsTab() {
                         {appt.resume_url && (
                             <div style={{ marginTop: 4 }}>
                                 <FileOutlined />
-                                <a href={appt.resume_url} target="_blank" rel="noreferrer" style={{ marginLeft: 8 }}>
+                                <a
+                                    href={appt.resume_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{ marginLeft: 8 }}
+                                >
                                     Resume
                                 </a>
                             </div>
