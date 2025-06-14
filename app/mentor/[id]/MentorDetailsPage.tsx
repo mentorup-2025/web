@@ -350,7 +350,7 @@ export default function MentorDetailsPage() {
         </Content>
 
         <Modal
-            title={step === 1 ? 'Confirm Appointment' : step === 2 ? 'Share Info with Mentor' : 'Payment'}
+            title={null}
             open={isBookingModalVisible}
             footer={null}
             onCancel={() => {
@@ -463,90 +463,104 @@ export default function MentorDetailsPage() {
               </div>
           )}
 
-
-
-
           {step === 3 && (
               <div>
-                <Title level={4}>Payment</Title>
-                <p>Select your payment method.</p>
-                <p><strong>Total:</strong> {price ? `$${price / 100}` : 'N/A'}</p>
+                <Title level={4} style={{ marginBottom: 28 }}>Payment Method</Title>
+                <p style={{ marginBottom: 12 }}>Which way would you like to pay?</p>
 
+                {/* WeChat Pay Option */}
                 <div
                     style={{
-                      border: selectedPaymentMethod === 'wechat' ? '2px solid #1890ff' : '1px solid #ccc',
+                      border: selectedPaymentMethod === 'wechat' ? '2px solid #1890ff' : '1px solid #d9d9d9',
                       borderRadius: 8,
-                      padding: 12,
-                      marginBottom: 12,
+                      padding: '24px 20px',
+                      marginBottom: 20,
+                      minHeight: 80,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
                       cursor: 'pointer',
                       position: 'relative',
+                      whiteSpace: 'nowrap',
                     }}
                     onClick={() => setSelectedPaymentMethod('wechat')}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <input
                         type="radio"
                         checked={selectedPaymentMethod === 'wechat'}
                         readOnly
-                        style={{ marginRight: 8 }}
                     />
-                    <span>Pay in CNY (Chinese Yuan)</span>
-                    <img src="/wechat-pay.png" alt="WeChat Pay" style={{ height: 24, marginLeft: 8 }} />
+                    <img src="/wechat-pay.png" alt="WeChat Pay" style={{ height: 24 }} />
+                    <span style={{ fontSize: 16, color: '#1890ff', fontWeight: 500 }}>微信支付</span>
                   </div>
-                  <div style={{
-                    position: 'absolute',
-                    top: 4,
-                    right: 4,
-                    backgroundColor: '#ffc107',
-                    color: '#000',
-                    fontWeight: 600,
-                    padding: '2px 6px',
-                    fontSize: 12,
-                    borderRadius: 4
-                  }}>
+                  <div style={{ fontSize: 18, fontWeight: 600 }}>
+                    ${price ? ((price / 100) * 0.98).toFixed(2) : '0.00'}
+                  </div>
+                  <div
+                      style={{
+                        position: 'absolute',
+                        top: -10,
+                        right: -10,
+                        backgroundColor: '#ffc107',
+                        color: '#000',
+                        fontWeight: 600,
+                        padding: '2px 6px',
+                        fontSize: 12,
+                        borderRadius: 4,
+                      }}
+                  >
                     Price 2% off
                   </div>
                 </div>
 
+                {/* Stripe Option */}
                 <div
                     style={{
-                      border: selectedPaymentMethod === 'stripe' ? '2px solid #1890ff' : '1px solid #ccc',
+                      border: selectedPaymentMethod === 'stripe' ? '2px solid #1890ff' : '1px solid #d9d9d9',
                       borderRadius: 8,
-                      padding: 12,
+                      padding: '24px 20px',
+                      marginBottom: 20,
+                      minHeight: 80,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
                       cursor: 'pointer',
-                      marginBottom: 24,
+                      position: 'relative',
+                      whiteSpace: 'nowrap',
                     }}
                     onClick={() => setSelectedPaymentMethod('stripe')}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <input
                         type="radio"
                         checked={selectedPaymentMethod === 'stripe'}
                         readOnly
-                        style={{ marginRight: 8 }}
                     />
-                    <span>Pay in USD (U.S. Dollar)</span>
-                    <img src="/stripe-icon.png" alt="Stripe" style={{ height: 24, marginLeft: 8 }} />
+                    <img src="/stripe-icon.png" alt="Stripe" style={{ height: 24 }} />
+                    <span style={{ fontSize: 16, fontWeight: 500 }}>Pay in USD (U.S. Dollar)</span>
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 600 }}>
+                    ${price ? (price / 100).toFixed(2) : '0.00'}
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                {/* Buttons */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
                   <Button onClick={handleBack}>Back</Button>
                   <Button
                       type="primary"
                       onClick={() => {
+                        if (!appointmentId || !price) {
+                          message.error('Missing appointment ID or price');
+                          return;
+                        }
                         if (selectedPaymentMethod === 'stripe') {
-                          if (!appointmentId || !price) {
-                            message.error('Missing appointment ID or price');
-                            return;
-                          }
                           setStep(4);
                           window.open(`/booking/payment?appointmentId=${appointmentId}&amount=${price}`, '_blank');
                         } else if (selectedPaymentMethod === 'wechat') {
-                          // WeChat 支付逻辑稍后补充
                           setIsWeChatModalVisible(true);
                         }
-
                       }}
                   >
                     Pay for the Session
@@ -556,6 +570,8 @@ export default function MentorDetailsPage() {
           )}
 
 
+
+
           {step === 4 && (
               <div>
                 <p>Jumping to the payment page...</p>
@@ -563,17 +579,13 @@ export default function MentorDetailsPage() {
               </div>
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
-            <Button onClick={handleBack}>Back</Button>
-            {step < 3 ? (
+          {(step === 1 || step === 2) && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
+                <Button onClick={handleBack}>Back</Button>
                 <Button type="primary" onClick={handleNext}>Next</Button>
-            ) : (
-                <div style={{ textAlign: 'center' }}>
-                  <p>Waiting for payment to complete...</p>
-                  <p>You will be redirected after success.</p>
-                </div>
-            )}
-          </div>
+              </div>
+          )}
+
         </Modal>
 
         <Modal
