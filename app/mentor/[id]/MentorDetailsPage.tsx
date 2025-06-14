@@ -369,9 +369,9 @@ export default function MentorDetailsPage() {
 
           {step === 2 && (
               <div>
-                <p><strong>What kind of support are you looking for?</strong></p>
+                <p style={{ marginBottom: 8 }}><strong>What kind of support are you looking for?</strong></p>
                 <Select
-                    style={{ width: '100%' }}
+                    style={{ width: '100%', marginBottom: 16 }}
                     placeholder="Pick the topic you want to focus on."
                     options={[
                       { value: 'Resume Review', label: 'Resume Review' },
@@ -382,7 +382,7 @@ export default function MentorDetailsPage() {
                     onChange={setSupportType}
                 />
 
-                <p style={{ marginTop: 24 }}><strong>Help your mentor understand you better</strong></p>
+                <p style={{ marginBottom: 8, marginTop: 24 }}><strong>Help your mentor understand you better</strong></p>
                 <TextArea
                     rows={4}
                     placeholder="Share your goals, background, resume link, portfolio, or anything else that will help your mentor understand you better."
@@ -390,23 +390,31 @@ export default function MentorDetailsPage() {
                     onChange={(e) => setDescription(e.target.value)}
                 />
 
-                <p style={{ marginTop: 24 }}><strong>Upload your resume (Optional)</strong></p>
+                <p style={{ marginBottom: 8, marginTop: 24 }}><strong>Upload your resume (Optional)</strong></p>
 
                 <div style={{
-                  border: '1px solid #d9d9d9',
-                  borderRadius: 8,
-                  padding: 12,
-                  marginBottom: 8,
-                  backgroundColor: '#fafafa'
+                  backgroundColor: '#fff',
+                  border: 'none',
+                  boxShadow: 'none',
+                  borderRadius: 0,
+                  padding: 0,
                 }}>
                   {/* 顶部展示文件信息 */}
                   {resumeFileList.length > 0 && (
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: 12,
-                      }}>
+                      <div
+                          style={{
+                            border: '1px solid #d9d9d9',
+                            borderBottom: 'none', // ⛳️ 关键！去掉底部边框以无缝连接下方上传框
+                            borderTopLeftRadius: 8,
+                            borderTopRightRadius: 8,
+                            padding: '12px 16px',
+                            marginBottom: 0, // ✅ 紧贴上传框
+                            backgroundColor: '#fff',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                          }}
+                      >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <FileOutlined style={{ fontSize: 16 }} />
                           <a
@@ -418,8 +426,8 @@ export default function MentorDetailsPage() {
                             {resumeFileList[0].name}
                           </a>
                           <span style={{ color: '#999', fontSize: 13 }}>
-              {dayjs().format('MM/DD/YYYY')} Uploaded
-            </span>
+        {dayjs().format('MM/DD/YYYY')} Uploaded
+      </span>
                         </div>
                         <DeleteOutlined
                             style={{ color: '#999', cursor: 'pointer' }}
@@ -430,6 +438,7 @@ export default function MentorDetailsPage() {
                         />
                       </div>
                   )}
+
 
                   {/* 拖拽上传框 */}
                   <Upload.Dragger
