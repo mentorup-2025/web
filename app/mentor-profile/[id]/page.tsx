@@ -56,6 +56,7 @@ export default function MentorProfilePage() {
   const [draftUsername, setDraftUsername] = useState('');
   const [draftTitle, setDraftTitle] = useState('');
   const [draftCompany, setDraftCompany] = useState('');
+  const [draftLinkedin, setDraftLinkedin] = useState('');
 
   // 原有 state（Introduction、Services 等）保持不变……
   const [introduction, setIntroduction] = useState('');
@@ -66,6 +67,7 @@ export default function MentorProfilePage() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [draftIntro, setDraftIntro] = useState('');
   const [servicesModalVisible, setServicesModalVisible] = useState(false);
+  const [userLinkedin, setUserLinkedin] = useState<string>('');
 
   const { user, isSignedIn } = useUser();
   const isOwnProfile = isSignedIn && user?.id === mentorId;
@@ -97,6 +99,7 @@ export default function MentorProfilePage() {
             setDraftUsername(found.username || '');
             setDraftTitle(found.mentor?.title || '');
             setDraftCompany(found.mentor?.company || '');
+            setDraftLinkedin(found.linkedin || '');
 
             // 1) 把 Introduction 存起来
             setIntroduction(found.mentor?.introduction || '');
@@ -128,6 +131,14 @@ export default function MentorProfilePage() {
         } else {
           setMentorData(null);
         }
+        // 2. 新增：从 /api/user/[id] 拉取 introduction
+          const userRes = await fetch(`/api/user/${mentorId}`);
+          if (userRes.ok) {
+              const userJson = await userRes.json();
+              setIntroduction(userJson.data.introduction || '');
+
+          }
+
       } catch (err) {
         console.error(err);
         setMentorData(null);
@@ -152,6 +163,7 @@ export default function MentorProfilePage() {
     setDraftUsername(mentorData.username || '');
     setDraftTitle(mentorData.mentor?.title || '');
     setDraftCompany(mentorData.mentor?.company || '');
+    setDraftLinkedin(mentorData.linkedin || '');
     setEditProfileVisible(true);
   };
 
@@ -165,6 +177,7 @@ export default function MentorProfilePage() {
         ...prev.mentor,
         title: draftTitle,
         company: draftCompany,
+        linkedin: draftLinkedin,
       },
     }));
     setEditProfileVisible(false);
@@ -177,6 +190,7 @@ export default function MentorProfilePage() {
         body: JSON.stringify({
           userId: mentorId,               // 这里把 mentorId 当作 userId 传给后端
           username: draftUsername,     // 新的用户名
+          linkedin: draftLinkedin,
         }),
       });
 
@@ -276,31 +290,52 @@ export default function MentorProfilePage() {
     setEditModalVisible(true);
   };
   const handleModalOk = async () => {
-    setIntroduction(draftIntro);
+    // 先关闭 Modal
     setEditModalVisible(false);
 
-    // 重新把当前 services state 转成后端需要的数组格式
-    const selectedArray = Object.entries(services)
-        .filter(([key, checked]) => checked)
-        .map(([key]) => ({ type: key, price: servicePrices[key] || 0 }));
-
+    // 1. Update introduction via api/user/update
     try {
-      const resp = await fetch(`/api/mentor/upsert/${mentorId}`, {
+      const introResp = await fetch('/api/user/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          userId: mentorId,
           introduction: draftIntro,
-          services: selectedArray,
         }),
       });
-      if (resp.ok) {
+      if (introResp.ok) {
+        setIntroduction(draftIntro);
         message.success('Introduction updated successfully');
       } else {
         message.error('Failed to update introduction');
       }
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error('Error updating introduction:', err);
       message.error('Unexpected error while updating introduction');
+    }
+
+    // 2. Prepare services payload
+    const selectedArray = Object.entries(services)
+        .filter(([key, checked]) => checked)
+        .map(([key]) => ({ type: key, price: servicePrices[key] || 0 }));
+
+    // 3. Update services via /api/mentor/upsert
+    try {
+      const svcResp = await fetch(`/api/mentor/upsert/${mentorId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          services: selectedArray,
+        }),
+      });
+      if (svcResp.ok) {
+        message.success('Services updated successfully');
+      } else {
+        message.error('Failed to update services');
+      }
+    } catch (err) {
+      console.error('Error updating services:', err);
+      message.error('Unexpected error while updating services');
     }
   };
 
@@ -364,14 +399,11 @@ export default function MentorProfilePage() {
                 open={editProfileVisible}
                 onCancel={() => setEditProfileVisible(false)}
                 footer={[
-                  <Button key="cancel" onClick={() => setEditProfileVisible(false)}>
-                    Cancel
-                  </Button>,
-                  <Button key="save" type="primary" onClick={handleSaveProfile}>
-                    Save
-                  </Button>,
+                  <Button key="cancel" onClick={() => setEditProfileVisible(false)}>Cancel</Button>,
+                  <Button key="save" type="primary" onClick={handleSaveProfile}>Save</Button>,
                 ]}
             >
+              {/* Username */}
               <div style={{ marginBottom: 12 }}>
                 <Text strong>Username</Text>
                 <Input
@@ -381,6 +413,8 @@ export default function MentorProfilePage() {
                     style={{ marginTop: 4 }}
                 />
               </div>
+
+              {/* Title */}
               <div style={{ marginBottom: 12 }}>
                 <Text strong>Title</Text>
                 <Input
@@ -390,12 +424,25 @@ export default function MentorProfilePage() {
                     style={{ marginTop: 4 }}
                 />
               </div>
+
+              {/* Company */}
               <div style={{ marginBottom: 12 }}>
                 <Text strong>Company</Text>
                 <Input
                     value={draftCompany}
                     onChange={e => setDraftCompany(e.target.value)}
                     placeholder="Enter your company"
+                    style={{ marginTop: 4 }}
+                />
+              </div>
+
+              {/* LinkedIn */}
+              <div style={{ marginBottom: 12 }}>
+                <Text strong>LinkedIn URL</Text>
+                <Input
+                    value={draftLinkedin}
+                    onChange={e => setDraftLinkedin(e.target.value)}
+                    placeholder="https://www.linkedin.com/in/your-profile"
                     style={{ marginTop: 4 }}
                 />
               </div>
@@ -416,16 +463,7 @@ export default function MentorProfilePage() {
                     <Paragraph>{introduction}</Paragraph>
                   </Card>
 
-{/*<<<<<<< HEAD*/}
-{/*                /!* Services Section *!/*/}
-{/*                <div className={styles.servicesSection}>*/}
-{/*                  <Title level={3}>Services</Title>*/}
-{/*                  <div className={styles.serviceTags}>*/}
-{/*                    {Array.isArray(mentorData.mentor.services) && mentorData.mentor.services.map(service => (*/}
-{/*                      <Tag key={service.type} className={styles.serviceTag}>*/}
-{/*                        {formatServiceType(service.type)} - ${service.price}*/}
-{/*                      </Tag>*/}
-{/*=======*/}
+
                   {/* —— Services 卡片 —— */}
                   <Card
                       title="Services"

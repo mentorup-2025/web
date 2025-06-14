@@ -97,10 +97,9 @@ export async function listMentorUsers(): Promise<User[]> {
 
 export async function updateUser(userId: string, input: UpdateUserInput): Promise<User> {
     try {
-        // Filter out null values and create update object
+        // Filter out null values and create update object（shuxin)
         const updateData = Object.entries(input).reduce((acc, [key, value]) => {
-            // Only include fields where value is not null
-            if (value !== null) {
+            if (value !== undefined) {
                 acc[key] = value;
             }
             return acc;

@@ -12,14 +12,16 @@ import {
   Input,
   Button,
   message,
-  Upload
+  Upload,
+  Tag
 } from 'antd';
 import {
   EditOutlined,
   LinkedinFilled,
   GithubOutlined,
   InboxOutlined,
-  LinkOutlined
+  LinkOutlined,
+  FileOutlined, DeleteOutlined
 } from '@ant-design/icons';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -28,289 +30,286 @@ import MySessionsTab from '../components/MySessionsTab';
 import PaymentTab from '../components/PaymentTab';
 import styles from '../menteeProfile.module.css';
 import { useUser } from '@clerk/nextjs';
-
+import dayjs from 'dayjs';
 
 const { Content } = Layout;
-const { Title, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
 const { TextArea } = Input;
 const { Dragger } = Upload;
 
-interface UserData {
-  user_id: string;
-  username: string;
-  email: string;
-  created_at: string;
-  github: string | null;
-  linkedin: string | null;
-  resume: string | null;  // 简历 URL
-  industries: string[];
-  wechat: string | null;
-  status: string | null;
-  job_target: string | null;
-  mentee?: {
-    interests?: string[];
-    career_goals?: string;
-    introduction?: string;
-    education?: string;
-  };
-}
-
-interface ApiResponse {
-  code: number;
-  message: string;
-  data: UserData;
+interface JobTarget {
+  level: string;
+  title: string;
 }
 
 export default function MenteeProfilePage() {
   const params = useParams();
   const menteeId = params?.id as string;
-
   const { user, isSignedIn } = useUser();
   const isOwnProfile = isSignedIn && user?.id === menteeId;
 
-
-  const [userData, setUserData] = useState<UserData | null>(null);
+  const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('about');
 
-  /** ———— 编辑“简介” 相关状态 ———— **/
-  const [introModalVisible, setIntroModalVisible] = useState(false);
-  const [introDraft, setIntroDraft] = useState<string>('');
-  const [introSaving, setIntroSaving] = useState(false);
-
-  /** ———— 上传简历 相关状态 ———— **/
+  const [editProfileVisible, setEditProfileVisible] = useState(false);
+  const [draftUsername, setDraftUsername] = useState('');
+  const [draftJobTarget, setDraftJobTarget] = useState<JobTarget>({ level: '', title: '' });
+  const [draftLinkedin, setDraftLinkedin] = useState('');
+  const [introduction, setIntroduction] = useState('');
+  const [draftIntro, setDraftIntro] = useState('');
+  const [editModalVisible, setEditModalVisible] = useState(false);
   const [uploadingResume, setUploadingResume] = useState(false);
+  const [deletingResume, setDeletingResume] = useState(false);
 
-  // 读取 URL hash 初始化标签页
+  const [resumeKey, setResumeKey] = useState(0);
+  const [draggerKey, setDraggerKey] = useState(0);
+
   useEffect(() => {
     const hash = window.location.hash?.replace('#', '');
-    if (hash) {
-      setActiveTab(hash);
-    }
+    if (hash) setActiveTab(hash);
   }, []);
 
-  // 拉取用户数据（包含 resume 字段）
+  const fetchUserData = async () => {
+    try {
+      const response = await fetch(`/api/user/${menteeId}`);
+      const result = await response.json();
+
+      if (result.code === 200) {
+        const data = result.data;
+
+        setUserData(data);
+        setDraftUsername(result.data.username || '');
+        setDraftJobTarget({
+          level: data.job_target?.level || '',
+          title: data.job_target?.title || '',
+        });
+        setDraftLinkedin(result.data.linkedin || '');
+        setIntroduction(result.data.introduction || '');
+        return result.data;
+      } else {
+        throw new Error(result.message || 'Failed to fetch user data');
+      }
+    } catch (err: any) {
+      console.error('Error fetching user data:', err);
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (!menteeId) {
-        setError('User ID not provided');
-        setLoading(false);
-        return;
-      }
-      try {
-        const response = await fetch(`/api/user/${menteeId}`);
-        const result: ApiResponse = await response.json();
-        if (result.code === 200) {
-          setUserData(result.data);
-        } else {
-          setError(result.message || 'Failed to fetch user data');
-        }
-      } catch (err) {
-        console.error('Error fetching user data:', err);
-        setError('An error occurred while fetching user data');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchUserData();
   }, [menteeId]);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-  if (error) {
-    return <Alert message="Error" description={error} type="error" showIcon />;
-  }
-  if (!userData) {
-    return (
-        <Alert
-            message="User not found"
-            description="The requested user profile could not be found"
-            type="warning"
-            showIcon
-        />
-    );
-  }
-
-  /** 切换标签页时同步 URL hash **/
-  const handleTabChange = (key: string) => {
-    setActiveTab(key);
-    window.history.replaceState(null, '', `#${key}`);
-  };
-
-  /** 打开“编辑简介”模态框 **/
-  const openIntroModal = () => {
-    setIntroDraft(userData.mentee?.introduction || '');
-    setIntroModalVisible(true);
-  };
-
-  /** 保存简介到后端 **/
-  const handleIntroSave = async () => {
+  const openEditProfileModal = () => {
     if (!userData) return;
-    setIntroSaving(true);
+    setDraftUsername(userData.username || '');
+    setDraftJobTarget({
+      level: userData.job_target?.level || '',
+      title: userData.job_target?.title || '',
+    });
+    setDraftLinkedin(userData.linkedin || '');
+    setEditProfileVisible(true);
+  };
+
+  const handleSaveProfile = async () => {
+    setUserData((prev: any) => ({
+      ...prev,
+      username: draftUsername,
+      job_target: draftJobTarget,
+      linkedin: draftLinkedin,
+    }));
+    setEditProfileVisible(false);
+
     try {
-      const payload = {
-        user_id: userData.user_id,
-        introduction: introDraft.trim(),
-      };
-      const res = await fetch('/api/user/update', {
+      const userUpdateResp = await fetch(`/api/user/update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          userId: menteeId,
+          username: draftUsername,
+          job_target: draftJobTarget,
+          linkedin: draftLinkedin,
+        }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const result = await res.json();
-      if (result.code === 200) {
-        // 本地更新 state
-        setUserData(prev =>
-            prev
-                ? {
-                  ...prev,
-                  mentee: {
-                    ...prev.mentee,
-                    introduction: introDraft.trim(),
-                  },
-                }
-                : prev
-        );
-        message.success('Introduction updated successfully');
-        setIntroModalVisible(false);
+
+      if (userUpdateResp.ok) {
+        message.success('Profile updated successfully');
       } else {
-        message.error(result.message || 'Failed to update introduction');
+        message.error('Failed to update profile');
       }
-    } catch (err) {
-      console.error('Failed to update introduction:', err);
-      message.error('Error while updating introduction');
-    } finally {
-      setIntroSaving(false);
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      message.error('Unexpected error while updating profile');
     }
   };
 
-  /** 自定义上传简历并更新用户 resume 字段 **/
+  const openIntroModal = () => {
+    setDraftIntro(introduction);
+    setEditModalVisible(true);
+  };
+
+  const handleModalOk = async () => {
+    setEditModalVisible(false);
+    try {
+      const introResp = await fetch('/api/user/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: menteeId,
+          introduction: draftIntro,
+        }),
+      });
+      if (introResp.ok) {
+        setIntroduction(draftIntro);
+        message.success('Introduction updated successfully');
+      } else {
+        message.error('Failed to update introduction');
+      }
+    } catch (err) {
+      console.error('Error updating introduction:', err);
+      message.error('Unexpected error while updating introduction');
+    }
+  };
+
+
+
   const customResumeUpload = async (options: any) => {
     const { file, onSuccess, onError } = options;
     if (!userData) return;
 
-    // 仅接受 PDF / Word 文档
-    const isValidType =
-        file.type === 'application/pdf' ||
-        file.type === 'application/msword' ||
-        file.type ===
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-    if (!isValidType) {
-      message.error('只允许上传 PDF、DOC、DOCX');
-      onError(new Error('Invalid file type'));
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      const errorMsg = '只允许上传 PDF、DOC、DOCX';
+      message.error(errorMsg);
+      onError(new Error(errorMsg));
       return;
     }
 
-    // 1) 先向后端申请签名 URL
     setUploadingResume(true);
+
     try {
-      const response = await fetch('/api/resume/upload', {
+      // Request signed URL
+      const uploadInit = await fetch('/api/resume/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: userData.user_id,
-          fileName: file.name,
-        }),
+        body: JSON.stringify({ userId: userData.user_id, fileName: file.name }),
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const {
-        signedUrl,
-        fileUrl
-      }: { signedUrl: string; fileUrl: string } = await response.json();
 
-      // 2) 使用签名 URL 将二进制文件 PUT 到存储
+      if (!uploadInit.ok) {
+        throw new Error(`Failed to get upload URL: HTTP ${uploadInit.status}`);
+      }
+
+      const { signedUrl, fileUrl } = await uploadInit.json();
+
+      // Upload file to S3
       const uploadRes = await fetch(signedUrl, {
         method: 'PUT',
         body: file,
-        headers: {
-          'Content-Type': file.type || 'application/octet-stream'
-        },
+        headers: { 'Content-Type': file.type }
       });
+
       if (!uploadRes.ok) {
-        const errorText = await uploadRes.text();
-        console.error('上传失败：', errorText);
         throw new Error('Upload to S3 failed');
       }
 
-      // 3) PUT 成功后，再调用 /api/user/update，更新用户记录里的 resume 字段为 fileUrl
-      const updatePayload = {
-        user_id: userData.user_id,
-        resume: fileUrl,
-      };
+      // Update user record with new resume URL
       const updateRes = await fetch('/api/user/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatePayload),
+        body: JSON.stringify({ userId: userData.user_id, resume: fileUrl }),
       });
-      if (!updateRes.ok) throw new Error(`HTTP ${updateRes.status}`);
-      const updateResult = await updateRes.json();
-      if (updateResult.code !== 200) {
-        throw new Error(updateResult.message || 'Failed to update resume URL');
+
+      if (!updateRes.ok) {
+        throw new Error('Failed to update resume URL');
       }
 
-      // 4) 本地 state 更新，并通知 Upload 组件成功
-      setUserData(prev =>
-          prev
-              ? {
-                ...prev,
-                resume: fileUrl,
-              }
-              : prev
-      );
+      // Refetch user data to refresh UI
+      await fetchUserData();
+      setResumeKey(prev => prev + 1);
+      setDraggerKey(prev => prev + 1);
+
+      // 正确调用 onSuccess
+      onSuccess({ status: 'done', name: file.name, url: fileUrl }, file);
       message.success('Resume uploaded successfully');
-      onSuccess(null, file);
     } catch (err: any) {
       console.error('Resume upload failed:', err);
       message.error(err.message || 'Upload error');
+      // 正确调用 onError
       onError(err);
     } finally {
       setUploadingResume(false);
     }
   };
+  const handleDeleteResume = async () => {
+    setDeletingResume(true);
+
+    try {
+      const resp = await fetch('/api/user/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: userData.user_id, resume: null }),
+      });
+
+      if (!resp.ok) {
+        throw new Error('Failed to delete resume');
+      }
+
+      await fetchUserData();
+      setResumeKey(prev => prev + 1);
+      setDraggerKey(prev => prev + 1);
+
+      message.success('Resume deleted successfully');
+    } catch (err: any) {
+      console.error('Error deleting resume:', err);
+      message.error(err.message || 'Failed to delete resume');
+    } finally {
+      setDeletingResume(false);
+    }
+  };
+  if (loading) return <div>Loading...</div>;
+  if (error) return <Alert message="Error" description={error} type="error" showIcon />;
+  if (!userData) return <Alert message="User not found" type="warning" showIcon />;
+
 
   return (
       <Layout>
         <Navbar />
         <Content className={styles.content}>
           <div className={styles.container}>
-            {/* ========== 个人信息头部 ========== */}
             <div className={styles.profileHeader}>
               <div className={styles.profileInfo}>
                 <Avatar
                     size={120}
-                    src={
-                      isOwnProfile
-                          ? user?.imageUrl || '/placeholder-avatar.png'
-                          : userData.resume || '/placeholder-avatar.png'
-                    }
+                    src={isOwnProfile ? user?.imageUrl : (userData.avatar_url || '/placeholder-avatar.png')}
                     className={styles.avatar}
                 />
-
                 <div className={styles.profileText}>
-                  <Title level={2}>{userData.username}</Title>
-                  <Text className={styles.title}>
-                    {userData.job_target || 'No job target specified'}
+                  <Space align="center">
+                    <Title level={2} style={{ margin: 0 }}>{userData.username}</Title>
+                    <EditOutlined style={{ cursor: 'pointer' }} onClick={openEditProfileModal} />
+                  </Space>
+                  <Text className={styles.title} style={{ display: 'block', marginTop: 4 }}>
+                    Target Job:&nbsp;
+                    {userData.job_target?.title}
+                    {` (${userData.job_target?.level} level)`}
                   </Text>
                   <Space className={styles.socialLinks}>
                     {userData.linkedin && (
-                        <a
-                            href={userData.linkedin}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
+                        <a href={userData.linkedin} target="_blank" rel="noopener noreferrer">
                           <LinkedinFilled className={styles.socialIcon} />
                         </a>
                     )}
                     {userData.github && (
-                        <a
-                            href={userData.github}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
+                        <a href={userData.github} target="_blank" rel="noopener noreferrer">
                           <GithubOutlined className={styles.socialIcon} />
                         </a>
                     )}
@@ -319,165 +318,149 @@ export default function MenteeProfilePage() {
               </div>
             </div>
 
-            {/* ========== Tabs 区域 ========== */}
-            <Tabs activeKey={activeTab} onChange={handleTabChange}>
+            <Tabs activeKey={activeTab} onChange={key => setActiveTab(key)}>
               <TabPane tab="About Me" key="about">
-                <div className={styles.tabContent} style={{ gap: '24px' }}>
-                  {/* =============================
-                   第一张卡片：Introduction
-                   ============================= */}
-                  <Card
-                      bordered={false}
-                      className={styles.userInfoCard}
-                      title={
-                        <div style={{ padding: '0 24px', fontWeight: 500 }}>
-                          Introduction
-                        </div>
-                      }
-                  >
-                    <div style={{ width: '100%' }}>
-                      <p style={{ margin: '8px 0' }}>
-                        {userData.mentee?.introduction ? (
-                            userData.mentee.introduction
-                        ) : (
-                            <Text type="secondary">No introduction yet.</Text>
-                        )}
-                        <EditOutlined
-                            style={{
-                              float: 'right',
-                              cursor: 'pointer',
-                              marginRight: '24px',
-                            }}
-                            onClick={openIntroModal}
-                        />
-                      </p>
-                    </div>
-                  </Card>
+                <Card
+                    title="Introduction"
+                    extra={<EditOutlined style={{ cursor: 'pointer' }} onClick={openIntroModal} />}
+                >
+                  <Paragraph>{introduction}</Paragraph>
+                </Card>
 
-                  {/* =============================
-                   第二张卡片：拖拽上传简历
-                   ============================= */}
-                  <Card
-                      bordered={false}
-                      className={styles.resumeCard}
-                      title={
-                        <div style={{ padding: '0 24px', fontWeight: 500 }}>
-                          Upload your resume
-                        </div>
-                      }
-                  >
-
-
-
-                    {/* 24px 左右留白后放 Dragger */}
-                    <div style={{ padding: '0 24px' }}>
-                      <Dragger
-                          name="file"
-                          multiple={false}
-                          showUploadList={false}
-                          accept=".pdf,.doc,.docx"
-                          customRequest={customResumeUpload}
-                          disabled={uploadingResume}
-                          style={{ padding: '24px 0' }}
-                      >
-                        <InboxOutlined style={{ fontSize: 48, color: '#1890ff' }} />
-                        <p className="ant-upload-text" style={{ marginTop: 16 }}>
-                          Click or drag file to this area to upload
-                        </p>
-                        <p
-                            className="ant-upload-hint"
-                            style={{ marginTop: 8, color: '#888' }}
-                        >
-                          Support for a single or bulk upload.
-                          <br />
-                          Strictly prohibit from uploading company data or other band
-                          files.
-                        </p>
-                      </Dragger>
-                    </div>
-                    {/* 如果已有 resume，就用 🔗 + 文件名 */}
-                    {userData.resume && (
+                <Card key={resumeKey} title="Resume" style={{ marginTop: 24 }}>
+                  {userData.resume ? (
+                      <>
                         <div
                             style={{
                               padding: '0 24px',
-                              marginBottom: '12px',
+                              marginTop: '12px',
                               display: 'flex',
                               alignItems: 'center',
+                              justifyContent: 'space-between',
+                              border: '1px solid #f0f0f0',
+                              borderRadius: 4,
+                              paddingLeft: 12,
+                              paddingRight: 12,
+                              height: 56,
                             }}
                         >
-                          {/** 提取文件名 **/}
-                          {(() => {
-                            try {
-                              const parts = userData.resume.split('/');
-                              const fileName = parts[parts.length - 1] || userData.resume;
-                              return (
-                                  <>
-                                    <LinkOutlined
-                                        style={{
-                                          fontSize: 24,
-                                          marginRight: 8,
-                                          cursor: 'pointer',
-                                          color: '#1890ff',
-                                        }}
-                                        onClick={() => {
-                                          // 使用局部变量确保类型安全
-                                          const resumeUrl = userData.resume;
-                                          if (resumeUrl) {
-                                            window.open(resumeUrl, '_blank');
-                                          } else {
-                                            message.warning('简历不可用');
-                                          }
-                                        }}
-                                    />
-                                    <Text strong>
-                                      <a
-                                          href={userData.resume}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          style={{ color: '#1890ff' }}
-                                      >
-                                        {fileName}
-                                      </a>
-                                    </Text>
-                                  </>
-                              );
-                            } catch {
-                              // 万一 URL 格式意外，则 fallback 显示整个 URL
-                              return (
-                                  <>
-                                    <LinkOutlined
-                                        style={{
-                                          fontSize: 24,
-                                          marginRight: 8,
-                                          cursor: 'pointer',
-                                          color: '#1890ff',
-                                        }}
-                                        onClick={() => {
-                                          // 先判断 resume 不为 null 时才打开
-                                          if (userData.resume) {
-                                            window.open(userData.resume, '_blank');
-                                          }
-                                        }}
-                                    />
-                                    <Text strong>
-                                      <a
-                                          href={userData.resume}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          style={{ color: '#1890ff' }}
-                                      >
-                                        {userData.resume}
-                                      </a>
-                                    </Text>
-                                  </>
-                              );
-                            }
-                          })()}
-                        </div>
-                    )}
+                          {/* 文件图标 + 文件名 */}
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <FileOutlined style={{ fontSize: 20, marginRight: 8, color: '#1890ff' }} />
+                            <a
+                                href={userData.resume}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: '#1890ff', textDecoration: 'underline' }}
+                            >
+                              {userData.resume.split('/').pop()}
+                            </a>
+                          </div>
 
-                  </Card>
-                </div>
+                          {/* 上传时间 + 删除按钮 */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <Text type="secondary" style={{ fontSize: 12 }}>
+                              {dayjs(Number(userData.resume.match(/\/(\d+)-/)?.[1])).format('MM/DD/YYYY')} Uploaded
+                            </Text>
+
+                            <DeleteOutlined
+                                style={{ cursor: 'pointer', color: '#999' }}
+                                onClick={() => {
+                                  Modal.confirm({
+                                    title: 'Are you sure you want to delete your resume?',
+                                    content: 'This action cannot be undone.',
+                                    okText: 'Delete',
+                                    okType: 'danger',
+                                    cancelText: 'Cancel',
+                                    onOk: handleDeleteResume,
+                                  });
+                                }}
+                            />
+
+                          </div>
+                        </div>
+                        <div style={{ padding: '12px 24px 0' }}>
+                          <Text type="secondary">
+                            Please delete the current resume before uploading a new one.
+                          </Text>
+                        </div>
+                      </>
+                  ) : (
+                      <>
+                        {/*<div style={{ padding: '0 24px 12px' }}>*/}
+                        {/*  <Text type="secondary">请拖拽简历文件至下方区域（仅支持 PDF、Word）</Text>*/}
+                        {/*</div>*/}
+                        <Dragger
+                            key={draggerKey}
+                            name="file"
+                            multiple={false}
+                            showUploadList={false}
+                            accept=".pdf,.doc,.docx"
+                            customRequest={customResumeUpload}
+                            style={{ padding: '24px 0' }}
+                        >
+                          <InboxOutlined style={{ fontSize: 48, color: '#1890ff' }} />
+                          <p className="ant-upload-text" style={{ marginTop: 16 }}>
+                            Click or drag file to this area to upload
+                          </p>
+                          <p className="ant-upload-hint" style={{ marginTop: 8, color: '#888' }}>
+                            Only PDF, DOC, and DOCX files are supported.
+                          </p>
+                        </Dragger>
+                      </>
+                  )}
+                </Card>
+
+                <Modal
+                    title="Edit Profile"
+                    open={editProfileVisible}
+                    onCancel={() => setEditProfileVisible(false)}
+                    footer={[
+                      <Button key="cancel" onClick={() => setEditProfileVisible(false)}>Cancel</Button>,
+                      <Button key="save" type="primary" onClick={handleSaveProfile}>Save</Button>,
+                    ]}
+                >
+                  <Text strong>Username</Text>
+                  <Input
+                      value={draftUsername}
+                      onChange={e => setDraftUsername(e.target.value)}
+                      placeholder="Enter your username"
+                      style={{ marginBottom: 12 }}
+                  />
+                  <Text strong>Job Target Level</Text>
+                  <Input
+                      value={draftJobTarget.level}                // MODIFIED: bind level
+                      onChange={e => setDraftJobTarget(prev => ({ ...prev, level: e.target.value }))} // MODIFIED: update level
+                  />
+                  <Text strong>Job Target Title</Text>
+                  <Input
+                      value={draftJobTarget.title}                // MODIFIED: bind title
+                      onChange={e => setDraftJobTarget(prev => ({ ...prev, title: e.target.value }))} // MODIFIED: update title
+                  />
+                  <Text strong>LinkedIn URL</Text>
+                  <Input
+                      value={draftLinkedin}
+                      onChange={e => setDraftLinkedin(e.target.value)}
+                      placeholder="https://www.linkedin.com/in/your-profile"
+                  />
+                </Modal>
+
+                <Modal
+                    title="Introduction"
+                    open={editModalVisible}
+                    onCancel={() => setEditModalVisible(false)}
+                    footer={[
+                      <Button key="cancel" onClick={() => setEditModalVisible(false)}>Cancel</Button>,
+                      <Button key="save" type="primary" onClick={handleModalOk}>Save</Button>,
+                    ]}
+                >
+                  <TextArea
+                      rows={4}
+                      value={draftIntro}
+                      onChange={e => setDraftIntro(e.target.value)}
+                      placeholder="Edit your introduction"
+                  />
+                </Modal>
               </TabPane>
 
               <TabPane tab="My Sessions" key="sessions">
@@ -490,37 +473,6 @@ export default function MenteeProfilePage() {
             </Tabs>
           </div>
         </Content>
-
-        {/* ========== 编辑“简介” 的模态框 ========== */}
-        <Modal
-            title="Edit Introduction"
-            open={introModalVisible}
-            onCancel={() => setIntroModalVisible(false)}
-            footer={[
-              <Button
-                  key="cancel"
-                  onClick={() => setIntroModalVisible(false)}
-                  disabled={introSaving}
-              >
-                Cancel
-              </Button>,
-              <Button
-                  key="save"
-                  type="primary"
-                  loading={introSaving}
-                  onClick={handleIntroSave}
-              >
-                Save
-              </Button>,
-            ]}
-        >
-          <TextArea
-              rows={4}
-              value={introDraft}
-              onChange={e => setIntroDraft(e.target.value)}
-              placeholder="Enter your introduction"
-          />
-        </Modal>
       </Layout>
   );
 }
