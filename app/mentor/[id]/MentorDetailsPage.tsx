@@ -14,6 +14,16 @@ import {
   Upload,
   Input,
 } from 'antd';
+
+import {
+  LinkedinFilled,
+  UploadOutlined,
+  UserOutlined,
+  InboxOutlined,
+  DeleteOutlined,
+  FileOutlined,
+} from '@ant-design/icons';
+
 import {
   SignedIn,
   SignedOut,
@@ -21,12 +31,14 @@ import {
   UserButton,
   useUser,
 } from '@clerk/nextjs';
-import { LinkedinFilled, UploadOutlined } from '@ant-design/icons';
+
 import styles from './mentorDetails.module.css';
 import MentorAvailability from '../../components/MentorAvailability';
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { UserOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
+import type { UploadFile } from 'antd/es/upload/interface';
+
 
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
@@ -54,6 +66,24 @@ export default function MentorDetailsPage() {
   const [qrScanned, setQrScanned] = useState(false);
   const [isPaymentFailedModalVisible, setIsPaymentFailedModalVisible] = useState(false);
   const [userResume, setUserResume] = useState<string | null>(null);
+
+  // 👇 resume file list 渲染逻辑统一处理
+  const resumeFileList: UploadFile[] = resume
+      ? [{
+        uid: '-1',
+        name: resume.name,
+        status: 'done' as const,
+        url: URL.createObjectURL(resume),
+      }]
+      : userResume
+          ? [{
+            uid: '-2',
+            name: userResume.split('/').pop()!,
+            status: 'done' as const,
+            url: userResume,
+          }]
+          : [];
+
 
   useEffect(() => {
     const fetchMenteeResume = async () => {
@@ -339,7 +369,7 @@ export default function MentorDetailsPage() {
 
           {step === 2 && (
               <div>
-                <p>What kind of support are you looking for?</p>
+                <p><strong>What kind of support are you looking for?</strong></p>
                 <Select
                     style={{ width: '100%' }}
                     placeholder="Pick the topic you want to focus on."
@@ -352,44 +382,89 @@ export default function MentorDetailsPage() {
                     onChange={setSupportType}
                 />
 
-                <p style={{ marginTop: 16 }}>Help your mentor understand you better</p>
+                <p style={{ marginTop: 24 }}><strong>Help your mentor understand you better</strong></p>
                 <TextArea
                     rows={4}
-                    placeholder="Share your goals, background, resume link, or anything else"
+                    placeholder="Share your goals, background, resume link, portfolio, or anything else that will help your mentor understand you better."
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                 />
 
-                <p style={{ marginTop: 16 }}>Upload your resume (Optional)</p>
-                {userResume ? (
-                    <div>
-                      <Text strong>
-                        <a href={userResume} target="_blank" rel="noopener noreferrer">
-                          {userResume.split('/').pop()}
-                        </a>
-                      </Text>
-                      <p style={{ color: '#888' }}>This resume will be used for this booking.</p>
+                <p style={{ marginTop: 24 }}><strong>Upload your resume (Optional)</strong></p>
+
+                <div style={{
+                  border: '1px solid #d9d9d9',
+                  borderRadius: 8,
+                  padding: 12,
+                  marginBottom: 8,
+                  backgroundColor: '#fafafa'
+                }}>
+                  {/* 顶部展示文件信息 */}
+                  {resumeFileList.length > 0 && (
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: 12,
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <FileOutlined style={{ fontSize: 16 }} />
+                          <a
+                              href={resumeFileList[0].url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ fontWeight: 500 }}
+                          >
+                            {resumeFileList[0].name}
+                          </a>
+                          <span style={{ color: '#999', fontSize: 13 }}>
+              {dayjs().format('MM/DD/YYYY')} Uploaded
+            </span>
+                        </div>
+                        <DeleteOutlined
+                            style={{ color: '#999', cursor: 'pointer' }}
+                            onClick={() => {
+                              setResume(null);
+                              setUserResume(null);
+                            }}
+                        />
+                      </div>
+                  )}
+
+                  {/* 拖拽上传框 */}
+                  <Upload.Dragger
+                      beforeUpload={(file) => {
+                        setResume(file);
+                        setUserResume(null);
+                        return false;
+                      }}
+                      onRemove={() => {
+                        setResume(null);
+                        setUserResume(null);
+                      }}
+                      fileList={resumeFileList}
+                      maxCount={1}
+                      showUploadList={false}
+                      accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                      style={{ backgroundColor: '#fff', border: '1px solid #eee', borderRadius: 8 }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 8 }}>
+                      <img src="/upload-icon.png" alt="upload" style={{ height: 32 }} />
                     </div>
-                ) : (
-                    <Upload
-                        beforeUpload={(file) => {
-                          setResume(file);
-                          return false;
-                        }}
-                        fileList={resume ? [{
-                          uid: '-1',
-                          name: resume.name,
-                          status: 'done',
-                          url: URL.createObjectURL(resume),
-                        }] : []}
-                        onRemove={() => setResume(null)}
-                        maxCount={1}
-                    >
-                      <Button icon={<UploadOutlined />}>Click or drag file to upload</Button>
-                    </Upload>
-                )}
+                    <p className="ant-upload-text" style={{ fontWeight: 500, textAlign: 'center' }}>
+                      Click or drag file to this area {resume || userResume ? 'to replace' : 'to upload'}
+                    </p>
+                    <p className="ant-upload-hint" style={{ textAlign: 'center' }}>
+                      Support for a single file. Strictly prohibit uploading company data or other banned files.
+                    </p>
+                  </Upload.Dragger>
+
+                </div>
               </div>
           )}
+
+
+
 
           {step === 3 && (
               <div>
