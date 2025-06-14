@@ -28,8 +28,9 @@ interface Appointment {
     status: string;
     description: string;
     resume_url?: string;
-    mentor: {
-        name: string;
+    otherUser: {
+        username: string;
+        avatar_url?: string;
     };
 }
 
@@ -43,11 +44,10 @@ export default function MySessionsTab() {
             if (!user?.id) return;
 
             try {
+                // 1. Get all appointments
                 const res = await fetch('/api/appointment/get', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ user_id: user.id }),
                 });
 
@@ -57,7 +57,33 @@ export default function MySessionsTab() {
                     throw new Error(result.msg || 'Failed to fetch appointments');
                 }
 
-                const transformed = result.data.appointments.map((appt: any) => {
+                const rawAppointments = result.data.appointments;
+
+                // 2. Collect all unique "other user" IDs
+                const userIdSet = new Set<string>();
+                rawAppointments.forEach((appt: any) => {
+                    const otherId =
+                        appt.mentor_id === user.id ? appt.mentee_id : appt.mentor_id;
+                    if (otherId) userIdSet.add(otherId);
+                });
+
+                const userInfoMap: Record<string, { username: string; avatar_url?: string }> = {};
+
+                await Promise.all(
+                    Array.from(userIdSet).map(async (id) => {
+                        const res = await fetch(`/api/user/${id}`);
+                        const userResp = await res.json();
+                        if (userResp?.data) {
+                            userInfoMap[id] = {
+                                username: userResp.data.username,
+                                avatar_url: userResp.data.avatar_url,
+                            };
+                        }
+                    })
+                );
+
+                // 3. Enrich appointments with display data
+                const enriched = rawAppointments.map((appt: any) => {
                     const rangeStr: string = appt.time_slot;
                     const match = rangeStr.match(/\[(.*?),(.*?)\)/);
 
@@ -75,6 +101,11 @@ export default function MySessionsTab() {
                             ? `${start.format('HH:mm')} - ${end.format('HH:mm')}`
                             : 'Invalid Time';
 
+                    const otherId =
+                        appt.mentor_id === user.id ? appt.mentee_id : appt.mentor_id;
+
+                    const other = userInfoMap[otherId] || { username: 'Anonymous' };
+
                     return {
                         id: appt.id,
                         date,
@@ -82,16 +113,14 @@ export default function MySessionsTab() {
                         status: appt.status,
                         description: appt.description,
                         resume_url: appt.resume_url,
-                        mentor: {
-                            name: appt.mentor?.title || 'Unknown Mentor',
-                        },
+                        otherUser: other,
                     };
                 });
 
-                setAppointments(transformed);
+                setAppointments(enriched);
             } catch (error) {
                 console.error('❌ Error fetching appointments:', error);
-                message.error('Failed to load your sessions.');
+                message.error('Failed to load sessions.');
             } finally {
                 setLoading(false);
             }
@@ -140,12 +169,12 @@ export default function MySessionsTab() {
                         ]}
                     >
                         <Space>
-                            <Avatar>{appt.mentor.name?.charAt(0)}</Avatar>
-                            <Text strong>{appt.mentor.name}</Text>
+                            <Avatar>{appt.otherUser.username?.charAt(0)}</Avatar>
+                            <Text strong>{appt.otherUser.username}</Text>
                         </Space>
 
                         <div style={{ marginTop: 8 }}>
-                            <Text type="secondary">Your Notes:</Text>
+                            <Text type="secondary">Notes:</Text>
                             <p>{appt.description}</p>
                         </div>
 

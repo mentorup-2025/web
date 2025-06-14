@@ -16,7 +16,6 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 
-// ⏱️ 插件注册：支持 UTC 和时区
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -29,8 +28,8 @@ interface Appointment {
     status: string;
     description: string;
     resume_url?: string;
-    mentee: {
-        name: string;
+    otherUser: {
+        username: string;
         avatar_url?: string;
     };
 }
@@ -45,6 +44,7 @@ export default function MySessionsTab() {
             if (!user?.id) return;
 
             try {
+                // 1. Get all appointments
                 const res = await fetch('/api/appointment/get', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -57,16 +57,40 @@ export default function MySessionsTab() {
                     throw new Error(result.msg || 'Failed to fetch appointments');
                 }
 
-                const transformed = result.data.appointments.map((appt: any) => {
+                const rawAppointments = result.data.appointments;
+
+                // 2. Collect all unique "other user" IDs
+                const userIdSet = new Set<string>();
+                rawAppointments.forEach((appt: any) => {
+                    const otherId =
+                        appt.mentor_id === user.id ? appt.mentee_id : appt.mentor_id;
+                    if (otherId) userIdSet.add(otherId);
+                });
+
+                const userInfoMap: Record<string, { username: string; avatar_url?: string }> = {};
+
+                await Promise.all(
+                    Array.from(userIdSet).map(async (id) => {
+                        const res = await fetch(`/api/user/${id}`);
+                        const userResp = await res.json();
+                        if (userResp?.data) {
+                            userInfoMap[id] = {
+                                username: userResp.data.username,
+                                avatar_url: userResp.data.avatar_url,
+                            };
+                        }
+                    })
+                );
+
+                // 3. Enrich appointments with display data
+                const enriched = rawAppointments.map((appt: any) => {
                     const rangeStr: string = appt.time_slot;
                     const match = rangeStr.match(/\[(.*?),(.*?)\)/);
 
-                    // ✅ 创建无效时间（替代 dayjs.invalid()）
                     let start = dayjs('invalid-date');
                     let end = dayjs('invalid-date');
 
                     if (match) {
-                        // 🔁 自动适配用户时区
                         start = dayjs.utc(match[1]).local();
                         end = dayjs.utc(match[2]).local();
                     }
@@ -77,6 +101,11 @@ export default function MySessionsTab() {
                             ? `${start.format('HH:mm')} - ${end.format('HH:mm')}`
                             : 'Invalid Time';
 
+                    const otherId =
+                        appt.mentor_id === user.id ? appt.mentee_id : appt.mentor_id;
+
+                    const other = userInfoMap[otherId] || { username: 'Anonymous' };
+
                     return {
                         id: appt.id,
                         date,
@@ -84,19 +113,14 @@ export default function MySessionsTab() {
                         status: appt.status,
                         description: appt.description,
                         resume_url: appt.resume_url,
-                        mentee: {
-                            name: appt.mentee?.username || 'Anonymous',
-                            avatar_url: '',
-                        },
+                        otherUser: other,
                     };
                 });
 
-
-
-                setAppointments(transformed);
+                setAppointments(enriched);
             } catch (error) {
-                console.error('❌ Error fetching mentor appointments:', error);
-                message.error('Failed to load appointments.');
+                console.error('❌ Error fetching appointments:', error);
+                message.error('Failed to load sessions.');
             } finally {
                 setLoading(false);
             }
@@ -136,21 +160,21 @@ export default function MySessionsTab() {
                             </div>,
                             <div key="noshow">
                                 <FrownOutlined style={{ fontSize: 18 }} />
-                                <div>Report No Show</div>
+                                <div>No Show</div>
                             </div>,
                             <div key="join">
                                 <BellOutlined style={{ fontSize: 18 }} />
-                                <div>Join the Meeting</div>
+                                <div>Join</div>
                             </div>,
                         ]}
                     >
                         <Space>
-                            <Avatar>{appt.mentee.name[0]}</Avatar>
-                            <Text strong>{appt.mentee.name}</Text>
+                            <Avatar>{appt.otherUser.username?.charAt(0)}</Avatar>
+                            <Text strong>{appt.otherUser.username}</Text>
                         </Space>
 
                         <div style={{ marginTop: 8 }}>
-                            <Text type="secondary">Mentee Notes:</Text>
+                            <Text type="secondary">Notes:</Text>
                             <p>{appt.description}</p>
                         </div>
 
