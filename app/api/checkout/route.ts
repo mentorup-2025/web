@@ -1,44 +1,42 @@
-import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { NextResponse } from 'next/server';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-02-24.acacia',
+    apiVersion: '2025-02-24.acacia',
 });
 
-export async function POST(req: NextRequest) {
-  try {
-    const { amount, currency = 'usd', appointmentId } = await req.json();
+export async function POST(req: Request) {
+    const { amount, appointmentId } = await req.json();
+
+    console.log('📥 Creating PaymentIntent with:', { amount, appointmentId });
 
     if (!amount || !appointmentId) {
-      return NextResponse.json({ error: 'Missing amount or appointmentId' }, { status: 400 });
+        console.error('❌ Missing required fields:', { amount, appointmentId });
+        return NextResponse.json({ error: 'Missing amount or appointmentId' }, { status: 400 });
     }
 
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      mode: 'payment',
-      line_items: [
-        {
-          price_data: {
-            currency,
-            unit_amount: amount,
-            product_data: {
-              name: 'Mentorship Session',
+    try {
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount,
+            currency: 'usd',
+            automatic_payment_methods: { enabled: true },
+            metadata: {
+                appointmentId,
             },
-          },
-          quantity: 1,
-        },
-      ],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/cancel`,
-      metadata: {
-        appointmentId, // 👈 关键
-      },
-      customer_email: undefined, // This will prompt for email collection
-    });
+        });
 
-    return NextResponse.json({ url: session.url });
-  } catch (error) {
-    console.error('❌ Stripe session creation failed:', error);
-    return NextResponse.json({ error: 'Failed to create Stripe session' }, { status: 500 });
-  }
+        console.log('✅ PaymentIntent created:', {
+            id: paymentIntent.id,
+            status: paymentIntent.status,
+            clientSecret: paymentIntent.client_secret?.slice(0, 10) + '...',
+        });
+
+        return NextResponse.json({
+            clientSecret: paymentIntent.client_secret,
+            paymentIntentId: paymentIntent.id,
+        });
+    } catch (err) {
+        console.error('❌ PaymentIntent creation failed:', err);
+        return NextResponse.json({ error: 'Failed to create payment intent' }, { status: 500 });
+    }
 }
