@@ -42,8 +42,7 @@ export default function CheckoutForm({ amount }: CheckoutFormProps) {
         setLoading(true);
 
         try {
-            // ✅ 创建 PaymentIntent
-            const res = await fetch('/api/create-payment-intent', {
+            const res = await fetch('/api/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ amount, appointmentId }),
