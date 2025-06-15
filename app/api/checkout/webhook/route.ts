@@ -1,13 +1,13 @@
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { Buffer } from 'node:buffer'; // 👈 必须引入
+import { Buffer } from 'node:buffer';
 import { sendEmail } from '@/lib/email';
 import { EmailTemplate } from '@/types/email';
 import { getAppointment } from '@/lib/appointment';
 import { getUser } from '@/lib/user';
 
-export const runtime = 'nodejs'; // 👈 必须显式指定 nodejs 环境
+export const runtime = 'nodejs';
 
 // Configure route segment config
 export const dynamic = 'force-dynamic';
@@ -17,37 +17,37 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 export async function POST(request: Request) {
-  const signature = headers().get('stripe-signature')!;
-  const rawBody = await request.text();
-  const bodyBuffer = Buffer.from(rawBody, 'utf-8');
+  const signature = headers().get('stripe-signature');
 
-  let event: Stripe.Event;
+  if (!signature) {
+    console.error('❌ No Stripe signature found in headers');
+    return NextResponse.json({ error: 'No signature found' }, { status: 400 });
+  }
 
   try {
-    event = stripe.webhooks.constructEvent(
+    // Get the raw body as a buffer
+    const rawBody = await request.arrayBuffer();
+    const bodyBuffer = Buffer.from(rawBody);
+
+    console.log('📝 Raw body length:', bodyBuffer.length);
+    console.log('🔑 Signature:', signature);
+
+    const event = stripe.webhooks.constructEvent(
       bodyBuffer,
       signature,
       process.env.STRIPE_WEBHOOK_SECRET!
     );
-  } catch (err: any) {
-    console.error('❌ Invalid Stripe signature:', err.message);
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
-  }
 
-  console.log('📥 Stripe Event received:', event.type);
+    console.log('📥 Stripe Event received:', event.type);
 
-
-  try {
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const appointmentId = session.metadata?.appointmentId;
-      const customerEmail = session.customer_email;
+    if (event.type === 'payment_intent.succeeded') {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      const appointmentId = paymentIntent.metadata?.appointmentId;
 
       if (!appointmentId) {
         console.error('❌ Missing appointmentId in metadata');
         return NextResponse.json({ error: 'Missing appointmentId' }, { status: 400 });
       }
-
 
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/appointment/confirm`, {
@@ -75,41 +75,40 @@ export async function POST(request: Request) {
 
       const appointment = await getAppointment(appointmentId);
 
-
-      // ✅ 发邮件
-      if (customerEmail && appointment) {
+      // Send confirmation email
+      if (appointment) {
         const user = await getUser(appointment.mentee_id);
         const mentor = await getUser(appointment.mentor_id);
-        try {
-          const emailResult = await sendEmail(
-            'MentorUP <no-reply@mentorup.com>',
-            customerEmail,
-            EmailTemplate.MENTEE_APPOINTMENT_CONFIRMATION,
-            {
-              userName: user?.username,
-              serviceName: appointment.service_type,
-              price: appointment.price,
-              mentorName: mentor?.username,
-              appointmentStartTime: appointment.start_time,
-              appointmentEndTime: appointment.end_time
-            }
-          );
-          console.log('📧 Email sent:', emailResult);
-        } catch (emailError) {
-          console.error('⚠️ Email failed:', emailError);
+        if (user && mentor) {
+          try {
+            const emailResult = await sendEmail(
+              'MentorUP <no-reply@mentorup.com>',
+              user.email,
+              EmailTemplate.MENTEE_APPOINTMENT_CONFIRMATION,
+              {
+                userName: user.username,
+                serviceName: appointment.service_type,
+                price: appointment.price,
+                mentorName: mentor.username,
+                appointmentStartTime: appointment.start_time,
+                appointmentEndTime: appointment.end_time
+              }
+            );
+            console.log('📧 Email sent:', emailResult);
+          } catch (emailError) {
+            console.error('⚠️ Email failed:', emailError);
+          }
         }
       } else {
-        console.log('ℹ️ No email in metadata');
+        console.log('ℹ️ No appointment found for ID:', appointmentId);
       }
     }
 
     return NextResponse.json({ received: true });
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error('❌ Webhook handler failed:', error.message);
-      console.error(error.stack);
-    } else {
-      console.error('❌ Unknown error:', error);
+  } catch (err: any) {
+    console.error('❌ Webhook error:', err.message);
+    if (err.type === 'StripeSignatureVerificationError') {
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
     return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 });
   }
