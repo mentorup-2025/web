@@ -28,7 +28,7 @@ export async function POST(request: Request) {
         if (user && mentor) {
           try {
             const emailResult = await sendEmail(
-              'MentorUP <no-reply@mentorup.com>',
+              'MentorUP <no-reply@mentorup.info>',
               user.email,
               EmailTemplate.MENTEE_APPOINTMENT_CONFIRMATION,
               {
