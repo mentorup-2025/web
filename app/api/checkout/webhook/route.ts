@@ -72,36 +72,6 @@ export async function POST(request: Request) {
         console.error('❌ Failed to call appointment confirmation API:', error);
         return NextResponse.json({ error: 'Failed to confirm appointment' }, { status: 500 });
       }
-
-      const appointment = await getAppointment(appointmentId);
-
-      // Send confirmation email
-      if (appointment) {
-        const user = await getUser(appointment.mentee_id);
-        const mentor = await getUser(appointment.mentor_id);
-        if (user && mentor) {
-          try {
-            const emailResult = await sendEmail(
-              'MentorUP <no-reply@mentorup.com>',
-              user.email,
-              EmailTemplate.MENTEE_APPOINTMENT_CONFIRMATION,
-              {
-                userName: user.username,
-                serviceName: appointment.service_type,
-                price: appointment.price,
-                mentorName: mentor.username,
-                appointmentStartTime: appointment.start_time,
-                appointmentEndTime: appointment.end_time
-              }
-            );
-            console.log('📧 Email sent:', emailResult);
-          } catch (emailError) {
-            console.error('⚠️ Email failed:', emailError);
-          }
-        }
-      } else {
-        console.log('ℹ️ No appointment found for ID:', appointmentId);
-      }
     }
 
     return NextResponse.json({ received: true });
