@@ -89,13 +89,13 @@ export default function Home() {
                   Mentee Signup
                 </Link>
                 <Link 
-                  href="/mentor-profile/165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61"
+                  href="/mentor-profile/"
                   className="block w-full text-center px-4 py-2 border border-blue-500 text-blue-500 rounded-md hover:bg-blue-50 transition-colors mt-4"
                 >
                   Mentor Profile Page
                 </Link>
                 <Link 
-                  href="/mentee-profile/165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61"
+                  href="/mentee-profile/"
                   className="block w-full text-center px-4 py-2 border border-purple-500 text-purple-500 rounded-md hover:bg-purple-50 transition-colors mt-4"
                 >
                   Mentee Profile Page
