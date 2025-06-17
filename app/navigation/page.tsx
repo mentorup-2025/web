@@ -76,14 +76,14 @@ export default function Home() {
                   Mentor List Page
                 </Link>
                 <Link 
-                  href="/signup-process/mentor/165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61"
+                  href="/signup-process/mentor"
                   className="block w-full text-center px-4 py-2 border border-blue-500 text-blue-500 rounded-md hover:bg-blue-50 transition-colors mt-4"
                 >
                   Mentor Signup
                 </Link>
                 
                 <Link 
-                  href="/signup-process/mentee/165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61"
+                  href="/signup-process/mentee"
                   className="block w-full text-center px-4 py-2 border border-purple-500 text-purple-500 rounded-md hover:bg-purple-50 transition-colors mt-4"
                 >
                   Mentee Signup
@@ -101,7 +101,7 @@ export default function Home() {
                   Mentee Profile Page
                 </Link>
                 <Link 
-                  href="/signup-process/roleselect/165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61"
+                  href="/signup-process/roleselect"
                   className="block w-full text-center px-4 py-2 border border-purple-500 text-purple-500 rounded-md hover:bg-purple-50 transition-colors mt-4"
                 >
                   Role Select Page
