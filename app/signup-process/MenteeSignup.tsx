@@ -227,7 +227,7 @@ export default function MenteeSignu({ userId }: MenteeSignupProps) {
     <div className={styles.mentorSignup}>
       <Steps 
         current={current} 
-        className={styles.steps}
+        className={`stepsClassName ${styles.steps}`}
         onChange={handleStepClick}
       >
         {steps.map(item => (

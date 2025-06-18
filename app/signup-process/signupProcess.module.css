@@ -46,6 +46,50 @@
   margin-bottom: 32px;
 }
 
+
+
+
+/* Override Ant Design Steps styles */
+.steps :global(.ant-steps-item-active .ant-steps-item-icon) {
+  background-color: #9254DE !important;
+  border-color: #9254DE !important;
+}
+
+.steps :global(.ant-steps-item-finish .ant-steps-item-icon) {
+  border-color: #9254DE !important;
+}
+
+.steps :global(.ant-steps-item-finish .ant-steps-item-icon .ant-steps-icon) {
+  color: #9254DE !important;
+}
+
+.steps :global(.ant-steps-item-finish .ant-steps-item-tail::after) {
+  background-color: #9254DE !important;
+}
+
+.steps :global(.ant-steps-item-process .ant-steps-item-icon) {
+  background-color: #9254DE !important;
+  border-color: #9254DE !important;
+}
+
+/* Change step layout to vertical */
+.steps :global(.ant-steps-item) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.steps :global(.ant-steps-item-title) {
+  margin-top: 8px !important;
+  margin-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.steps :global(.ant-steps-item-tail) {
+  display: none !important;
+}
+
 .stepsContent {
   margin-top: 16px;
 }

@@ -152,7 +152,13 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
           <Form.Item
             name="wechat"
             label="WeChat ID"
-            rules={[{ required: true, message: 'Please input your WeChat ID!' }]}
+            rules={[
+              { required: true, message: 'Please input your WeChat ID!' },
+              { 
+                pattern: /^[a-zA-Z0-9_-]{6,20}$/,
+                message: 'WeChat ID must be 6-20 characters long and can only contain letters, numbers, underscores, and hyphens'
+              }
+            ]}
           >
             <Input placeholder="Enter your WeChat ID" />
           </Form.Item>
@@ -492,7 +498,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
     <div className={styles.mentorSignup}>
       <Steps 
         current={current} 
-        className={styles.steps}
+        className={`stepsClassName ${styles.steps}`}
         onChange={handleStepClick}
       >
         {steps.map(item => (
