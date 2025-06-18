@@ -152,7 +152,13 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
           <Form.Item
             name="wechat"
             label="WeChat ID"
-            rules={[{ required: true, message: 'Please input your WeChat ID!' }]}
+            rules={[
+              { required: true, message: 'Please input your WeChat ID!' },
+              { 
+                pattern: /^[a-zA-Z0-9_-]{6,20}$/,
+                message: 'WeChat ID must be 6-20 characters long and can only contain letters, numbers, underscores, and hyphens'
+              }
+            ]}
           >
             <Input placeholder="Enter your WeChat ID" />
           </Form.Item>
@@ -285,11 +291,25 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
             rules={[{ required: true, message: 'Please select your years of experience!' }]}
           >
             <Select placeholder="Select years of experience">
-              {Array.from({ length: 20 }, (_, i) => (
-                <Select.Option key={i + 1} value={i + 1}>
-                  {i + 1} {i === 0 ? 'year' : 'years'}
-                </Select.Option>
-              ))}
+              <Select.Option value={1}>1 year</Select.Option>
+              <Select.Option value={2}>2 years</Select.Option>
+              <Select.Option value={3}>3 years</Select.Option>
+              <Select.Option value={4}>4 years</Select.Option>
+              <Select.Option value={5}>5 years</Select.Option>
+              <Select.Option value={6}>6 years</Select.Option>
+              <Select.Option value={7}>7 years</Select.Option>
+              <Select.Option value={8}>8 years</Select.Option>
+              <Select.Option value={9}>9 years</Select.Option>
+              <Select.Option value={10}>10 years</Select.Option>
+              <Select.Option value={11}>11 years</Select.Option>
+              <Select.Option value={12}>12 years</Select.Option>
+              <Select.Option value={13}>13 years</Select.Option>
+              <Select.Option value={14}>14 years</Select.Option>
+              <Select.Option value={15}>15 years</Select.Option>
+              <Select.Option value={16}>16 years</Select.Option>
+              <Select.Option value={17}>17 years</Select.Option>
+              <Select.Option value={18}>18 years</Select.Option>
+              <Select.Option value={19}>19 years</Select.Option>
               <Select.Option value={20}>20+ years</Select.Option>
             </Select>
           </Form.Item>
@@ -492,7 +512,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
     <div className={styles.mentorSignup}>
       <Steps 
         current={current} 
-        className={styles.steps}
+        className={`stepsClassName ${styles.steps}`}
         onChange={handleStepClick}
       >
         {steps.map(item => (

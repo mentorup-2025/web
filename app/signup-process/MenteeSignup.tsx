@@ -53,7 +53,13 @@ export default function MenteeSignu({ userId }: MenteeSignupProps) {
           <Form.Item
             name="wechat"
             label="WeChat ID"
-            rules={[{ required: false }]}
+            rules={[
+              { required: true, message: 'Please input your WeChat ID!' },
+              { 
+                pattern: /^[a-zA-Z0-9_-]{6,20}$/,
+                message: 'WeChat ID must be 6-20 characters long and can only contain letters, numbers, underscores, and hyphens'
+              }
+            ]}
           >
             <Input placeholder="Enter your WeChat ID" />
           </Form.Item>
@@ -80,14 +86,36 @@ export default function MenteeSignu({ userId }: MenteeSignupProps) {
             rules={[{ required: true, message: 'Please select your target role!' }]}
           >
             <Select placeholder="Select your target role">
-              <Option value="software_engineer">Software Engineer</Option>
-              <Option value="product_manager">Product Manager</Option>
-              <Option value="data_scientist">Data Scientist</Option>
-              <Option value="ux_designer">UX Designer</Option>
-              <Option value="project_manager">Project Manager</Option>
+              <Option value="ai_researcher">AI Researcher</Option>
+              <Option value="backend_engineer">Backend Engineer</Option>
+              <Option value="blockchain_developer">Blockchain Developer</Option>
               <Option value="business_analyst">Business Analyst</Option>
+              <Option value="business_intelligence">Business Intelligence</Option>
+              <Option value="cloud_architect">Cloud Architect</Option>
+              <Option value="data_analyst">Data Analyst</Option>
+              <Option value="data_engineer">Data Engineer</Option>
+              <Option value="data_scientist">Data Scientist</Option>
+              <Option value="database_administrator">Database Administrator</Option>
               <Option value="devops_engineer">DevOps Engineer</Option>
+              <Option value="engineering_manager">Engineering Manager</Option>
+              <Option value="frontend_engineer">Frontend Engineer</Option>
+              <Option value="fullstack_engineer">Full Stack Engineer</Option>
+              <Option value="game_developer">Game Developer</Option>
+              <Option value="machine_learning_engineer">Machine Learning Engineer</Option>
+              <Option value="mobile_developer">Mobile Developer</Option>
+              <Option value="network_engineer">Network Engineer</Option>
+              <Option value="product_designer">Product Designer</Option>
+              <Option value="product_manager">Product Manager</Option>
+              <Option value="project_manager">Project Manager</Option>
               <Option value="qa_engineer">QA Engineer</Option>
+              <Option value="security_engineer">Security Engineer</Option>
+              <Option value="software_engineer">Software Engineer</Option>
+              <Option value="solution_architect">Solution Architect</Option>
+              <Option value="system_administrator">System Administrator</Option>
+              <Option value="technical_lead">Technical Lead</Option>
+              <Option value="technical_product_manager">Technical Product Manager</Option>
+              <Option value="ui_designer">UI Designer</Option>
+              <Option value="ux_designer">UX Designer</Option>
             </Select>
           </Form.Item>
           <Form.Item
@@ -185,7 +213,11 @@ export default function MenteeSignu({ userId }: MenteeSignupProps) {
         username: allValues.displayName,
         wechat: allValues.wechat,
         linkedin: allValues.linkedin,
-        industries: selectedIndustries
+        industries: selectedIndustries,
+        job_target: {
+          title: allValues.targetRole,
+          level: allValues.targetLevel
+        }
       };
 
       const userUpdateResponse = await fetch('/api/user/update', {
@@ -227,7 +259,7 @@ export default function MenteeSignu({ userId }: MenteeSignupProps) {
     <div className={styles.mentorSignup}>
       <Steps 
         current={current} 
-        className={styles.steps}
+        className={`stepsClassName ${styles.steps}`}
         onChange={handleStepClick}
       >
         {steps.map(item => (
