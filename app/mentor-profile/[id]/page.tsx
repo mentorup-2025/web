@@ -70,6 +70,7 @@ export default function MentorProfilePage() {
   const [userLinkedin, setUserLinkedin] = useState<string>('');
 
   const { user, isSignedIn } = useUser();
+  console.log('user', user, isSignedIn);
   const isOwnProfile = isSignedIn && user?.id === mentorId;
 
   // 用于处理 URL hash 切换选项卡
