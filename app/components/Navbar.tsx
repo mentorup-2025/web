@@ -1,17 +1,22 @@
 'use client';
 
-import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs';
+import { SignedIn, SignedOut, SignInButton, SignUpButton, useUser, useClerk } from '@clerk/nextjs';
 import { Button, Layout, Space } from 'antd';
 import { useRouter } from 'next/navigation';
 import styles from './navbar.module.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const { Header } = Layout;
 
 export default function Navbar() {
   const router = useRouter();
   const { user } = useUser();
+  const { signOut } = useClerk();
   const [isMentor, setIsMentor] = useState<boolean | null>(true);
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  console.log('user', user);
 
   useEffect(() => {
     const checkMentorStatus = async () => {
@@ -33,6 +38,8 @@ export default function Navbar() {
   const handleBecomeMentor = () => {
     router.push('/signup/mentor/' + user?.id);
   };
+
+  if (!user) return null;
 
   return (
     <Header className={styles.header}>
@@ -66,7 +73,35 @@ export default function Navbar() {
                 Become a Mentor
               </Button>
             )}
-            <UserButton afterSignOutUrl="/" />
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setOpen((o) => !o)}
+                className="flex items-center space-x-2 focus:outline-none"
+              >
+                <img
+                  src={user.imageUrl}
+                  alt="User"
+                  className="w-8 h-8 rounded-full"
+                />
+                <span>{user.firstName}</span>
+              </button>
+              {open && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg z-50">
+                  <a href={`/mentee-profile/${user.id}`} className="block px-4 py-2 hover:bg-gray-100">Mentee Profile</a>
+                  {isMentor && <a href={`/mentor-profile/${user.id}`} className="block px-4 py-2 hover:bg-gray-100">Mentor Profile</a>}
+                 
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      signOut();
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
           </SignedIn>
         </Space>
       </div>

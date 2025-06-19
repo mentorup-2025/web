@@ -1,5 +1,5 @@
 'use client'
-import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs';
+import { SignedIn, SignedOut, SignInButton, SignUpButton, useUser, useClerk } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { Button, Space, Drawer } from 'antd';
 import { MenuOutlined } from '@ant-design/icons';
@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { Switch } from 'antd'
 import MarqueeSection from './MarqueeSection'
 import styles from './styles/features.module.css'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 // Translation object with all your content
 const translations = {
@@ -82,8 +82,11 @@ export default function Home() {
   const [language, setLanguage] = useState<'en' | 'zh'>('en')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
-  const { user } = useUser();
-  const [isMentor, setIsMentor] = useState<boolean | null>(false);
+  const { user, isSignedIn } = useUser();
+  const { signOut } = useClerk();
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const isMentor = user?.publicMetadata?.role === 'mentor';
 
   useEffect(() => {
     const checkMentorStatus = async () => {
@@ -168,7 +171,36 @@ export default function Home() {
                         Become a Mentor
                       </Button>
                     )}
-                    <UserButton afterSignOutUrl="/" />
+                    {isSignedIn && (
+                      <div className="relative" ref={dropdownRef}>
+                        <button
+                          onClick={() => setOpen((o) => !o)}
+                          className="flex items-center space-x-2 focus:outline-none"
+                        >
+                          <img
+                            src={user.imageUrl}
+                            alt="User"
+                            className="w-8 h-8 rounded-full"
+                          />
+                          <span>{user.firstName}</span>
+                        </button>
+                        {open && (
+                          <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg z-50">
+                            <a href={`/mentee-profile/${user.id}`} className="block px-4 py-2 hover:bg-gray-100">Mentee Profile</a>
+                            {isMentor && <a href={`/mentor-profile/${user.id}`} className="block px-4 py-2 hover:bg-gray-100">Mentor Profile</a>}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                signOut();
+                              }}
+                              className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
+                            >
+                              Sign out
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </SignedIn>
               </Space>
@@ -216,7 +248,36 @@ export default function Home() {
                         Become a Mentor
                       </Button>
                     )}
-                    <UserButton afterSignOutUrl="/" />
+                    {isSignedIn && (
+                      <div className="relative" ref={dropdownRef}>
+                        <button
+                          onClick={() => setOpen((o) => !o)}
+                          className="flex items-center space-x-2 focus:outline-none"
+                        >
+                          <img
+                            src={user.imageUrl}
+                            alt="User"
+                            className="w-8 h-8 rounded-full"
+                          />
+                          <span>{user.firstName}</span>
+                        </button>
+                        {open && (
+                          <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg z-50">
+                            <a href={`/mentee-profile/${user.id}`} className="block px-4 py-2 hover:bg-gray-100">Mentee Profile</a>
+                            {isMentor && <a href={`/mentor-profile/${user.id}`} className="block px-4 py-2 hover:bg-gray-100">Mentor Profile</a>}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                signOut();
+                              }}
+                              className="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
+                            >
+                              Sign out
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </SignedIn>
               </div>
