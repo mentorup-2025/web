@@ -4,14 +4,14 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 
-export default function MenteeSignupPage() {
+export default function MentorSignupPage() {
   const router = useRouter();
   const { isSignedIn, user } = useUser();
 
   useEffect(() => {
     if (isSignedIn && user) {
       // Redirect to the user's signup process page
-      router.replace(`/signup-process/mentee/${user.id}`);
+      router.replace(`/signup/mentor/${user.id}`);
     }
   }, [isSignedIn, user, router]);
 
@@ -20,7 +20,7 @@ export default function MenteeSignupPage() {
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center p-8 bg-white rounded-lg shadow-md">
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Sign In Required</h1>
-          <p className="text-gray-600 mb-6">Please sign in to continue with your mentee signup process.</p>
+          <p className="text-gray-600 mb-6">Please sign in to continue with your mentor signup process.</p>
           <button
             onClick={() => router.push('/sign-in')}
             className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"

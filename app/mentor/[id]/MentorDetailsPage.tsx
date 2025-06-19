@@ -255,7 +255,7 @@ export default function MentorDetailsPage() {
 
   const handleBecomeMentor = () => {
     if (!isSignedIn) return;
-    router.push(`/signup-process/mentor/${user?.id}`);
+    router.push(`/signup/mentor/${user?.id}`);
   };
 
   if (mentorLoading) return <div style={{ padding: 24 }}>Loading mentor info...</div>;

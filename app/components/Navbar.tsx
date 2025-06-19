@@ -31,7 +31,7 @@ export default function Navbar() {
   }, [user?.id]);
 
   const handleBecomeMentor = () => {
-    router.push('/signup-process/mentor/' + user?.id);
+    router.push('/signup/mentor/' + user?.id);
   };
 
   return (

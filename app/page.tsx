@@ -103,7 +103,7 @@ export default function Home() {
 
 
   const handleBecomeMentor = () => {
-    router.push('/signup-process/mentor/' + user?.id);
+    router.push('/signup/mentor/' + user?.id);
   };
 
   // Custom translation function that mimics useTranslation from next-i18next

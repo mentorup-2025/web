@@ -54,7 +54,7 @@ export default function PaymentPage() {
                         <Button
                             type="primary"
                             className={styles.becomeBtn}
-                            onClick={() => user && window.location.assign(`/signup-process/mentor/${user.id}`)}
+                            onClick={() => user && window.location.assign(`/signup/mentor/${user.id}`)}
                         >
                             Become a Mentor
                         </Button>
