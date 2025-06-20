@@ -11,7 +11,7 @@ export default function RoleSelect({ userId }: RoleSelectProps) {
   const router = useRouter();
 
   const handleRoleSelect = (role: 'mentor' | 'mentee') => {
-    router.push(`/signup-process/${role}/${userId}`);
+    router.push(`/signup/${role}/${userId}`);
   };
 
   return (

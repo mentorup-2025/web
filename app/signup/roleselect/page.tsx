@@ -11,7 +11,7 @@ export default function RoleSelectPage() {
   useEffect(() => {
     if (isSignedIn && user) {
       // Redirect to the user's role selection page
-      router.replace(`/signup-process/roleselect/${user.id}`);
+      router.replace(`/signup/roleselect/${user.id}`);
     }
   }, [isSignedIn, user, router]);
 
