@@ -71,7 +71,7 @@ export default function AvailabilityTab({ userId }: Props) {
             const json = await res.json();
             setBlocks(json.data || []);
         } catch (err) {
-            message.error('无法加载屏蔽日期');
+            message.error('Failed to load blocked dates.');
         }
     }, [userId]);
 
@@ -122,7 +122,7 @@ export default function AvailabilityTab({ userId }: Props) {
                 setSlots(Object.values(byDay));
             })
             .catch(() => {
-                message.error('加载可用时间失败');
+                message.error('Failed to load availability.');
             })
             .finally(() => {
                 setLoading(false);
@@ -169,7 +169,7 @@ export default function AvailabilityTab({ userId }: Props) {
             }
 
             // 后端只返回 200 OK，无 body，无需再做 res.json()
-            message.success('Weekly availability 已更新');
+            message.success('Weekly availability updated successfully.');
             // （可选）如果你想再重新拉一次最新数据：
             // const refreshed = await fetch(`/api/availability/${userId}/get`).then(r => r.json());
             // // 同步刷新 UI
@@ -188,7 +188,7 @@ export default function AvailabilityTab({ userId }: Props) {
             // });
             // setSlots(Object.values(byDay));
         } catch (err: any) {
-            message.error('更新可用时间失败：' + err.message);
+            message.error('Failed to update availability:' + err.message);
         } finally {
             setLoading(false);
         }
@@ -238,7 +238,7 @@ export default function AvailabilityTab({ userId }: Props) {
         const next = slots.filter((_, idx) => idx !== i);
         setSlots(next);
         if (next.length === 0) {
-            message.info('请至少保留一条可用时间');
+            message.info('Please keep at least one available time slot.');
         }
     };
 
@@ -273,7 +273,7 @@ export default function AvailabilityTab({ userId }: Props) {
             );
             await fetchBlocks();
         } catch (err: any) {
-            message.error('添加屏蔽日期失败：' + err.message);
+            message.error('Failed to add blocked date:' + err.message);
         } finally {
             setLoading(false);
         }
@@ -292,7 +292,7 @@ export default function AvailabilityTab({ userId }: Props) {
             message.success('Blocked date removed');
             await fetchBlocks();
         } catch (err: any) {
-            message.error('删除屏蔽日期失败：' + err.message);
+            message.error('Failed to delete blocked date:' + err.message);
         } finally {
             setLoading(false);
         }

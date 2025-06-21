@@ -509,10 +509,14 @@ export default function MentorProfilePage() {
                       }
                       style={{ borderRadius: 4 }}
                   >
+                    <Text style={{ display: 'block', marginBottom: 4, textAlign: 'right', color: '#999' }}>
+                      {draftIntro.length} / 200
+                    </Text>
                     <TextArea
                         rows={4}
                         value={draftIntro}
                         onChange={e => setDraftIntro(e.target.value)}
+                        maxLength={200}
                         placeholder="Edit your introduction"
                         style={{ borderRadius: 2 }}
                     />
