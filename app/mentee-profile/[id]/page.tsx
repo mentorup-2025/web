@@ -467,9 +467,9 @@ export default function MenteeProfilePage() {
                 <MySessionsTab />
               </TabPane>
 
-              <TabPane tab="Payment & Invoices" key="payments">
-                <PaymentTab />
-              </TabPane>
+              {/*<TabPane tab="Payment & Invoices" key="payments">*/}
+              {/*  <PaymentTab />*/}
+              {/*</TabPane>*/}
             </Tabs>
           </div>
         </Content>

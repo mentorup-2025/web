@@ -210,7 +210,6 @@ export default function AvailabilityTab({ userId }: Props) {
         }
 
         setSlots(next);
-        handleSaveSlots(next);
     };
 
     // 给某一天添加默认时间段
@@ -240,8 +239,6 @@ export default function AvailabilityTab({ userId }: Props) {
         setSlots(next);
         if (next.length === 0) {
             message.info('请至少保留一条可用时间');
-        } else {
-            handleSaveSlots(next);
         }
     };
 

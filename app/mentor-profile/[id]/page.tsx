@@ -594,7 +594,7 @@ export default function MentorProfilePage() {
                 <AvailabilityTab userId={mentorId} />
               </TabPane>
               <TabPane tab="Payment & Invoices" key="payments">
-                <PaymentTab />
+                <PaymentTab userId={mentorId} />
               </TabPane>
             </Tabs>
           </div>
