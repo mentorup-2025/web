@@ -94,7 +94,6 @@ export default function Home() {
         try {
           const response = await fetch(`/api/user/${user.id}`);
           const data = await response.json();
-          setIsMentor(data.data.mentor !== null);
         } catch (error) {
           console.error('Error checking mentor status:', error);
         }
