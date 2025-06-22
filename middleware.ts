@@ -1,12 +1,15 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
 const isPublicRoute = createRouteMatcher([
+  '/',
   '/login(.*)', 
   '/signup(.*)', 
   '/signup(.*)',
   '/api/availability/get(.*)',
   '/mentor-list(.*)',
+  '/api/mentor/list',
   '/api/clerk_webhooks/(.*)',
+  '/api/checkout/webhook/(.*)',
 ])
 
 // Export a dummy middleware when auth is disabled
