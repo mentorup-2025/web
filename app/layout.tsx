@@ -4,6 +4,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 import { GoogleAnalytics } from '@next/third-parties/google'
 import "../styles/index.css";
 import '../styles/globals.css';
+import ChatWidget from "@/components/ChatWidget";
 
 
 // todo: complete google analytics
@@ -37,6 +38,7 @@ export default function RootLayout({
                         />
                     </noscript>
                     {children}
+                    <ChatWidget />
                 </body>
                 <GoogleAnalytics gaId="G-1H558DKVKE" />
             </html>
