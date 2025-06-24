@@ -9,35 +9,49 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     // Validate required fields
-    const { appointment_id, proposed_start_time, proposed_end_time, receiver, proposer } = body;
+    const { appointment_id, proposed_time_ranges, receiver, proposer } = body;
     
-    if (!appointment_id || !proposed_start_time || !proposed_end_time || !receiver || !proposer) {
-      return respErr('Missing required fields: appointment_id, proposed_start_time, proposed_end_time, receiver, proposer');
+    if (!appointment_id || !proposed_time_ranges || !receiver || !proposer) {
+      return respErr('Missing required fields: appointment_id, proposed_time_ranges, receiver, proposer');
     }
 
-    // Validate time format (ISO strings)
-    const startTime = new Date(proposed_start_time);
-    const endTime = new Date(proposed_end_time);
-    
-    if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
-      return respErr('Invalid time format. Please provide ISO string format for proposed_start_time and proposed_end_time');
+    // Validate proposed_time_ranges is an array
+    if (!Array.isArray(proposed_time_ranges)) {
+      return respErr('proposed_time_ranges must be an array');
     }
 
-    // Validate that end time is after start time
-    if (endTime <= startTime) {
-      return respErr('End time must be after start time');
+    // Validate each time range
+    for (let i = 0; i < proposed_time_ranges.length; i++) {
+      const range = proposed_time_ranges[i];
+      
+      if (!Array.isArray(range) || range.length !== 2) {
+        return respErr(`Time range at index ${i} must be an array with exactly 2 elements [start_time, end_time]`);
+      }
+
+      const [startTime, endTime] = range;
+      
+      // Validate time format (ISO strings)
+      const startDate = new Date(startTime);
+      const endDate = new Date(endTime);
+      
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        return respErr(`Invalid time format at index ${i}. Please provide ISO string format for start_time and end_time`);
+      }
+
+      // Validate that end time is after start time
+      if (endDate <= startDate) {
+        return respErr(`End time must be after start time at index ${i}`);
+      }
     }
 
     const input: CreateRescheduleProposalInput = {
       appointment_id,
-      proposed_start_time,
-      proposed_end_time,
+      proposed_time_ranges,
       receiver,
       proposer
     };
 
     const proposal = await createRescheduleProposal(input);
-
 
     console.log(`Reschedule proposal created for appointment ${appointment_id}`);
 

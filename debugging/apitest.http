@@ -462,22 +462,26 @@ Content-Type: application/json
 
 {
     "appointment_id": "13ac634b-ccf9-4fa5-b35f-4fcf511d591c",
-    "proposed_start_time": "2025-03-18T15:00:00Z",
-    "proposed_end_time": "2025-03-18T16:00:00Z",
+    "proposed_time_ranges": [
+        ["2025-03-18T15:00:00Z", "2025-03-18T16:00:00Z"]
+    ],
     "receiver": "user_2yCeD7kCrxHLy1rDq2NlCHy8WO1",
     "proposer": "165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61"
 }
 
-### Test Create Reschedule Proposal (Reverse roles)
+### Test Create Reschedule Proposal with Multiple Time Ranges
 POST {{baseUri}}/api/appointment/reschedule
 Content-Type: application/json
 
 {
     "appointment_id": "13ac634b-ccf9-4fa5-b35f-4fcf511d591c",
-    "proposed_start_time": "2025-03-19T10:00:00Z",
-    "proposed_end_time": "2025-03-19T11:00:00Z",
-    "receiver": "165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61",
-    "proposer": "user_2yCeD7kCrxHLy1rDq2NlCHy8WO1"
+    "proposed_time_ranges": [
+        ["2025-03-18T15:00:00Z", "2025-03-18T16:00:00Z"],
+        ["2025-03-19T10:00:00Z", "2025-03-19T11:00:00Z"],
+        ["2025-03-20T14:00:00Z", "2025-03-20T15:00:00Z"]
+    ],
+    "receiver": "user_2yCeD7kCrxHLy1rDq2NlCHy8WO1",
+    "proposer": "165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61"
 }
 
 ### Test Create Reschedule Proposal - Error Cases
@@ -486,8 +490,9 @@ POST {{baseUri}}/api/appointment/reschedule
 Content-Type: application/json
 
 {
-    "proposed_start_time": "2025-03-18T15:00:00Z",
-    "proposed_end_time": "2025-03-18T16:00:00Z",
+    "proposed_time_ranges": [
+        ["2025-03-18T15:00:00Z", "2025-03-18T16:00:00Z"]
+    ],
     "receiver": "user_2yCeD7kCrxHLy1rDq2NlCHy8WO1",
     "proposer": "165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61"
 }
@@ -499,8 +504,9 @@ Content-Type: application/json
 
 {
     "appointment_id": "13ac634b-ccf9-4fa5-b35f-4fcf511d591c",
-    "proposed_start_time": "invalid-time",
-    "proposed_end_time": "2025-03-18T16:00:00Z",
+    "proposed_time_ranges": [
+        ["invalid-time", "2025-03-18T16:00:00Z"]
+    ],
     "receiver": "user_2yCeD7kCrxHLy1rDq2NlCHy8WO1",
     "proposer": "165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61"
 }
@@ -512,8 +518,37 @@ Content-Type: application/json
 
 {
     "appointment_id": "13ac634b-ccf9-4fa5-b35f-4fcf511d591c",
-    "proposed_start_time": "2025-03-18T16:00:00Z",
-    "proposed_end_time": "2025-03-18T15:00:00Z",
+    "proposed_time_ranges": [
+        ["2025-03-18T16:00:00Z", "2025-03-18T15:00:00Z"]
+    ],
+    "receiver": "user_2yCeD7kCrxHLy1rDq2NlCHy8WO1",
+    "proposer": "165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61"
+}
+
+### Test Create Reschedule Proposal - Error Cases
+# Invalid time range format (not an array)
+POST {{baseUri}}/api/appointment/reschedule
+Content-Type: application/json
+
+{
+    "appointment_id": "13ac634b-ccf9-4fa5-b35f-4fcf511d591c",
+    "proposed_time_ranges": [
+        "2025-03-18T15:00:00Z"
+    ],
+    "receiver": "user_2yCeD7kCrxHLy1rDq2NlCHy8WO1",
+    "proposer": "165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61"
+}
+
+### Test Create Reschedule Proposal - Error Cases
+# Invalid time range format (wrong number of elements)
+POST {{baseUri}}/api/appointment/reschedule
+Content-Type: application/json
+
+{
+    "appointment_id": "13ac634b-ccf9-4fa5-b35f-4fcf511d591c",
+    "proposed_time_ranges": [
+        ["2025-03-18T15:00:00Z", "2025-03-18T16:00:00Z", "extra-element"]
+    ],
     "receiver": "user_2yCeD7kCrxHLy1rDq2NlCHy8WO1",
     "proposer": "165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61"
 }
@@ -539,7 +574,9 @@ POST {{baseUri}}/api/appointment/confirm
 Content-Type: application/json
 
 {
-    "appointment_id": "13ac634b-ccf9-4fa5-b35f-4fcf511d591c"
+    "appointment_id": "13ac634b-ccf9-4fa5-b35f-4fcf511d591c",
+    "start_time": "2025-03-18T15:00:00Z",
+    "end_time": "2025-03-18T16:00:00Z"
 }
 
 ### Test Confirm Appointment - Error Cases
@@ -548,6 +585,28 @@ POST {{baseUri}}/api/appointment/confirm
 Content-Type: application/json
 
 {
+    "start_time": "2025-03-18T15:00:00Z",
+    "end_time": "2025-03-18T16:00:00Z"
+}
+
+### Test Confirm Appointment - Error Cases
+# Missing start_time
+POST {{baseUri}}/api/appointment/confirm
+Content-Type: application/json
+
+{
+    "appointment_id": "13ac634b-ccf9-4fa5-b35f-4fcf511d591c",
+    "end_time": "2025-03-18T16:00:00Z"
+}
+
+### Test Confirm Appointment - Error Cases
+# Missing end_time
+POST {{baseUri}}/api/appointment/confirm
+Content-Type: application/json
+
+{
+    "appointment_id": "13ac634b-ccf9-4fa5-b35f-4fcf511d591c",
+    "start_time": "2025-03-18T15:00:00Z"
 }
 
 ### Test Confirm Appointment - Error Cases
@@ -556,11 +615,31 @@ POST {{baseUri}}/api/appointment/confirm
 Content-Type: application/json
 
 {
-    "appointment_id": "non-existent-uuid"
+    "appointment_id": "non-existent-uuid",
+    "start_time": "2025-03-18T15:00:00Z",
+    "end_time": "2025-03-18T16:00:00Z"
 }
 
-### Test Get Reschedule Proposals After Confirmation
-# Should return error since proposal was deleted
-GET {{baseUri}}/api/reschedule_proposal?user_id=user_2yCeD7kCrxHLy1rDq2NlCHy8WO1
+### Test Confirm Appointment - Error Cases
+# End time before start time
+POST {{baseUri}}/api/appointment/confirm
+Content-Type: application/json
+
+{
+    "appointment_id": "13ac634b-ccf9-4fa5-b35f-4fcf511d591c",
+    "start_time": "2025-03-18T16:00:00Z",
+    "end_time": "2025-03-18T15:00:00Z"
+}
+
+### Test Confirm Appointment - Error Cases
+# Invalid time format
+POST {{baseUri}}/api/appointment/confirm
+Content-Type: application/json
+
+{
+    "appointment_id": "13ac634b-ccf9-4fa5-b35f-4fcf511d591c",
+    "start_time": "invalid-time",
+    "end_time": "2025-03-18T16:00:00Z"
+}
 
 

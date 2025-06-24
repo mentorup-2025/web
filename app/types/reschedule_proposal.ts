@@ -1,6 +1,6 @@
 export interface RescheduleProposal {
     id: string;
-    proposed_time: [string, string]; // [start_time, end_time] as tstzrange
+    proposed_time: [string, string][]; // Array of [start_time, end_time] pairs
     receiver: string;
     proposer: string;
     proposed_at: string;
@@ -8,8 +8,7 @@ export interface RescheduleProposal {
 
 export interface CreateRescheduleProposalInput {
     appointment_id: string;
-    proposed_start_time: string;  // ISO string format
-    proposed_end_time: string;    // ISO string format
+    proposed_time_ranges: [string, string][];  // Array of [start_time, end_time] pairs
     receiver: string;
     proposer: string;
 }

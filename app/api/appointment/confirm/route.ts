@@ -7,17 +7,21 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     // Validate required fields
-    const { appointment_id } = body;
+    const { appointment_id, start_time, end_time } = body;
     
     if (!appointment_id) {
       return respErr('Missing required field: appointment_id');
     }
 
-    await confirmAppointment(appointment_id);
+    if (!start_time || !end_time) {
+      return respErr('Missing required fields: start_time and end_time');
+    }
 
-    console.log(`Appointment ${appointment_id} confirmed successfully`);
+    await confirmAppointment(appointment_id, start_time, end_time);
 
-    return respData({ appointment_id, status: 'confirmed' });
+    console.log(`Appointment ${appointment_id} confirmed successfully with new time slot: ${start_time} to ${end_time}`);
+
+    return respData({ appointment_id, status: 'confirmed', start_time, end_time });
 
   } catch (error: any) {
     console.error('Error confirming appointment:', error);

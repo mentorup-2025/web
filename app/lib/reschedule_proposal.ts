@@ -4,11 +4,15 @@ import { respOk } from './resp';
 
 export async function createRescheduleProposal(input: CreateRescheduleProposalInput): Promise<RescheduleProposal> {
   try {
+    // Extract start and end times from the pairs
+    const proposed_start_times = input.proposed_time_ranges.map(range => range[0]);
+    const proposed_end_times = input.proposed_time_ranges.map(range => range[1]);
+
     const { data, error } = await getSupabaseClient()
       .rpc('reschedule', {
         appointment_id: input.appointment_id,
-        proposed_start_time: input.proposed_start_time,
-        proposed_end_time: input.proposed_end_time,
+        proposed_start_times: proposed_start_times,
+        proposed_end_times: proposed_end_times,
         receiver: input.receiver,
         proposer: input.proposer
       });
@@ -70,10 +74,10 @@ export async function getRescheduleProposal(appointmentId: string): Promise<Resc
       throw error;
     }
 
-    // Transform the tstzrange back to our interface format
+    // Transform the tstzrange array back to our interface format
     const proposal: RescheduleProposal = {
       id: data.id,
-      proposed_time: [data.proposed_time.lower, data.proposed_time.upper],
+      proposed_time: data.proposed_time.map((range: any) => [range.lower, range.upper]),
       receiver: data.receiver,
       proposer: data.proposer,
       proposed_at: data.proposed_at
@@ -100,14 +104,51 @@ export async function listRescheduleProposalsByReceiver(receiverId: string): Pro
       throw error;
     }
 
+    console.log('Raw data from database:', JSON.stringify(data, null, 2));
+
     // Transform the data to match our interface
-    const proposals: RescheduleProposal[] = (data || []).map(item => ({
-      id: item.id,
-      proposed_time: [item.proposed_time.lower, item.proposed_time.upper],
-      receiver: item.receiver,
-      proposer: item.proposer,
-      proposed_at: item.proposed_at
-    }));
+    const proposals: RescheduleProposal[] = (data || []).map(item => {
+      console.log('Processing item:', item.id, 'proposed_time:', item.proposed_time);
+      
+      // Handle the proposed_time array properly
+      let proposedTime: [string, string][];
+      
+        console.log('proposed_time is array with length:', item.proposed_time.length);
+        
+        proposedTime = item.proposed_time.map((range: any, index: number) => {
+          console.log(`Range ${index}:`, range, 'type:', typeof range);
+          
+          if (typeof range === 'string') {
+            // Parse PostgreSQL range format: ["start","end")
+            const match = range.match(/\["([^"]+)","([^"]+)"\)/);
+            if (match) {
+              const startTime = match[1];
+              const endTime = match[2];
+              console.log(`Range ${index} parsed:`, startTime, endTime);
+              return [startTime, endTime];
+            } else {
+              console.warn(`Could not parse range string at index ${index}:`, range);
+              return ['', ''];
+            }
+          }  else {
+            console.warn(`Unexpected time range format at index ${index}:`, range);
+            return ['', '']; // Fallback
+          }
+        });
+      
+
+      const result = {
+        id: item.id,
+        proposed_time: proposedTime,
+        receiver: item.receiver,
+        proposer: item.proposer,
+        proposed_at: item.proposed_at
+      };
+      
+      console.log('Transformed result:', result);
+      return result;
+    });
+
 
     return proposals;
 

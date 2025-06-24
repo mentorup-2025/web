@@ -174,10 +174,16 @@ export async function getUserAppointment(userId: string): Promise<Appointment[]>
 }
 
 // this should set status to confirmed and remove any reschedule proposal
-export async function confirmAppointment(appointmentId: string) {
+export async function confirmAppointment(
+  appointmentId: string,
+  startTime: string,
+  endTime: string
+) {
   const { error } = await getSupabaseClient()
     .rpc('confirm_appointment', {
-      appointment_id: appointmentId
+      appointment_id: appointmentId,
+      start_time: startTime,
+      end_time: endTime
     });
 
   if (error) { throw error }
