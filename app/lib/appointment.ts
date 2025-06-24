@@ -42,7 +42,7 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
   }
 }
 
-export async function confirmAppointment(
+export async function confirmAppointmentPaid(
   appointmentId: string
 ) {
   try {
@@ -90,7 +90,7 @@ export async function updateAppointment(
   appointmentId: string,
   updates: {
     time_slot?: [string, string];  // [start_time, end_time]
-    status?: 'confirmed' | 'completed' | 'canceled' | 'noshow';
+    status?: 'confirmed' | 'completed' | 'canceled' | 'noshow' | 'reschedule_in_progress' | 'paid';
   }
 ) {
   try {
@@ -171,4 +171,16 @@ export async function getUserAppointment(userId: string): Promise<Appointment[]>
     console.error('Error in getUserAppointment:', error);
     throw error;
   }
+}
+
+// this should set status to confirmed and remove any reschedule proposal
+export async function confirmAppointment(appointmentId: string) {
+  const { error } = await getSupabaseClient()
+    .rpc('confirm_appointment', {
+      appointment_id: appointmentId
+    });
+
+  if (error) { throw error }
+
+  return respOk;
 }

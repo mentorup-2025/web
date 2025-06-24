@@ -19,7 +19,7 @@ export interface CreateAppointmentInput {
     price: number;
 }
 
-export interface ConfirmAppointmentInput {
+export interface ConfirmAppointmentPaidInput {
     appointment_id: string;
 }
 

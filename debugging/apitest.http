@@ -307,7 +307,7 @@ Content-Type: application/json
 }
 
 ### Confirm Appointment
-POST http://localhost:3000/api/appointment/confirm
+POST http://localhost:3000/api/appointment/paid
 Content-Type: application/json
 
 {
@@ -405,7 +405,7 @@ Content-Type: application/json
 ### Test Cases for Confirm
 
 ### Test Case 1: Confirm Non-existent Appointment
-POST http://localhost:3000/api/appointment/confirm
+POST http://localhost:3000/api/appointment/paid
 Content-Type: application/json
 
 {
@@ -455,5 +455,112 @@ Content-Type: application/json
 {
     "user_id": "93137255-d7ac-4219-90d9-a886ae987732"
 }
+
+### Test Create Reschedule Proposal
+POST {{baseUri}}/api/appointment/reschedule
+Content-Type: application/json
+
+{
+    "appointment_id": "13ac634b-ccf9-4fa5-b35f-4fcf511d591c",
+    "proposed_start_time": "2025-03-18T15:00:00Z",
+    "proposed_end_time": "2025-03-18T16:00:00Z",
+    "receiver": "user_2yCeD7kCrxHLy1rDq2NlCHy8WO1",
+    "proposer": "165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61"
+}
+
+### Test Create Reschedule Proposal (Reverse roles)
+POST {{baseUri}}/api/appointment/reschedule
+Content-Type: application/json
+
+{
+    "appointment_id": "13ac634b-ccf9-4fa5-b35f-4fcf511d591c",
+    "proposed_start_time": "2025-03-19T10:00:00Z",
+    "proposed_end_time": "2025-03-19T11:00:00Z",
+    "receiver": "165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61",
+    "proposer": "user_2yCeD7kCrxHLy1rDq2NlCHy8WO1"
+}
+
+### Test Create Reschedule Proposal - Error Cases
+# Missing appointment_id
+POST {{baseUri}}/api/appointment/reschedule
+Content-Type: application/json
+
+{
+    "proposed_start_time": "2025-03-18T15:00:00Z",
+    "proposed_end_time": "2025-03-18T16:00:00Z",
+    "receiver": "user_2yCeD7kCrxHLy1rDq2NlCHy8WO1",
+    "proposer": "165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61"
+}
+
+### Test Create Reschedule Proposal - Error Cases
+# Invalid time format
+POST {{baseUri}}/api/appointment/reschedule
+Content-Type: application/json
+
+{
+    "appointment_id": "13ac634b-ccf9-4fa5-b35f-4fcf511d591c",
+    "proposed_start_time": "invalid-time",
+    "proposed_end_time": "2025-03-18T16:00:00Z",
+    "receiver": "user_2yCeD7kCrxHLy1rDq2NlCHy8WO1",
+    "proposer": "165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61"
+}
+
+### Test Create Reschedule Proposal - Error Cases
+# End time before start time
+POST {{baseUri}}/api/appointment/reschedule
+Content-Type: application/json
+
+{
+    "appointment_id": "13ac634b-ccf9-4fa5-b35f-4fcf511d591c",
+    "proposed_start_time": "2025-03-18T16:00:00Z",
+    "proposed_end_time": "2025-03-18T15:00:00Z",
+    "receiver": "user_2yCeD7kCrxHLy1rDq2NlCHy8WO1",
+    "proposer": "165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61"
+}
+
+### Test Get Reschedule Proposals for Receiver
+GET {{baseUri}}/api/reschedule_proposal?user_id=user_2yCeD7kCrxHLy1rDq2NlCHy8WO1
+
+### Test Get Reschedule Proposals for Another Receiver
+GET {{baseUri}}/api/reschedule_proposal?user_id=165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61
+
+### Test Get Reschedule Proposals - Missing user_id parameter
+GET {{baseUri}}/api/reschedule_proposal
+
+### Test Get Reschedule Proposals - Non-existent user
+GET {{baseUri}}/api/reschedule_proposal?user_id=non-existent-user-id
+
+### Test Get Reschedule Proposals After Confirmation
+# Should return error since proposal was deleted
+GET {{baseUri}}/api/reschedule_proposal?user_id=user_2yCeD7kCrxHLy1rDq2NlCHy8WO1
+
+### Test Confirm Appointment
+POST {{baseUri}}/api/appointment/confirm
+Content-Type: application/json
+
+{
+    "appointment_id": "13ac634b-ccf9-4fa5-b35f-4fcf511d591c"
+}
+
+### Test Confirm Appointment - Error Cases
+# Missing appointment_id
+POST {{baseUri}}/api/appointment/confirm
+Content-Type: application/json
+
+{
+}
+
+### Test Confirm Appointment - Error Cases
+# Non-existent appointment
+POST {{baseUri}}/api/appointment/confirm
+Content-Type: application/json
+
+{
+    "appointment_id": "non-existent-uuid"
+}
+
+### Test Get Reschedule Proposals After Confirmation
+# Should return error since proposal was deleted
+GET {{baseUri}}/api/reschedule_proposal?user_id=user_2yCeD7kCrxHLy1rDq2NlCHy8WO1
 
 
