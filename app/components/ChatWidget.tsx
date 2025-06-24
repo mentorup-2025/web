@@ -20,27 +20,60 @@ const REPLIES: Record<string, string> = {
     "Update account details":
         "Navigate to your profile settings to update personal information.",
     "Orders or appointments contact":
-        "Please check your order history or contact us via support.",
+        "Please enter your email below and click Email so we can follow up.",
     "Refund requests":
-        "Submit a refund request within 7 days of your order from the order page.",
+        "Please enter your email below and click Email to receive refund confirmation.",
 };
 
 export default function ChatWidget() {
     const pathname = usePathname();
     const { isSignedIn } = useAuth();
 
-    // ✅ 所有 hooks 须写在组件顶层
     const [open, setOpen] = useState(false);
     const [messages, setMessages] = useState([
         { role: "system", content: "What could we help you with?" },
     ]);
     const [input, setInput] = useState("");
+    const [expectingEmailType, setExpectingEmailType] = useState<null | "refund" | "order">(null);
 
-    // ✅ 条件判断放在 hooks 初始化之后
     if (pathname === "/" || !isSignedIn) return null;
+
+    async function sendEmailTemplate(email: string, type: "refund" | "order") {
+        await fetch("/api/email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                type,
+                email,
+            }),
+        });
+        setMessages((prev) => [
+            ...prev,
+            { role: "user", content: email },
+            {
+                role: "assistant",
+                content:
+                    type === "refund"
+                        ? "Your refund email has been sent. Please check your inbox."
+                        : "We've sent a confirmation email regarding your order/appointment.",
+            },
+        ]);
+        setExpectingEmailType(null); // 重置状态
+        setInput("");
+    }
 
     function handleUserInput(content: string) {
         const userMsg = { role: "user", content };
+
+        // 设置邮箱输入状态
+        if (content === "Refund requests") {
+            setExpectingEmailType("refund");
+        } else if (content === "Orders or appointments contact") {
+            setExpectingEmailType("order");
+        } else {
+            setExpectingEmailType(null);
+        }
+
         const botReply = {
             role: "assistant",
             content: REPLIES[content] || "（这是一个默认回复）",
@@ -50,13 +83,31 @@ export default function ChatWidget() {
 
     function sendMessage() {
         if (!input.trim()) return;
-        handleUserInput(input);
-        setInput("");
+
+        // 如果此时期待用户输入邮箱
+        if (expectingEmailType) {
+            const email = input.trim();
+            if (!email.includes("@")) {
+                setMessages((prev) => [
+                    ...prev,
+                    { role: "user", content: email },
+                    {
+                        role: "assistant",
+                        content: "Please enter a valid email address.",
+                    },
+                ]);
+                setInput("");
+                return;
+            }
+            sendEmailTemplate(email, expectingEmailType);
+        } else {
+            handleUserInput(input);
+            setInput("");
+        }
     }
 
     return (
         <>
-            {/* 悬浮按钮 */}
             <button
                 onClick={() => setOpen(!open)}
                 className="fixed bottom-6 right-6 w-16 h-16 bg-blue-500 text-white rounded-full shadow-lg flex items-center justify-center z-50"
@@ -64,7 +115,6 @@ export default function ChatWidget() {
                 <img src="/chat-icon.png" alt="Chat" className="w-8 h-8" />
             </button>
 
-            {/* 聊天窗口 */}
             {open && (
                 <div className="fixed bottom-20 right-6 w-80 h-[500px] bg-white shadow-2xl rounded-xl z-50 flex flex-col">
                     <div className="flex-1 p-4 overflow-y-auto space-y-2">
@@ -85,7 +135,6 @@ export default function ChatWidget() {
                   {msg.content}
                 </span>
 
-                                {/* 如果是系统第一条消息，展示建议按钮 */}
                                 {i === 0 && (
                                     <div className="mt-4 flex flex-col items-end space-y-2">
                                         {SUGGESTIONS.map((suggestion) => (
@@ -103,13 +152,15 @@ export default function ChatWidget() {
                         ))}
                     </div>
 
-                    {/* 输入区域 */}
+                    {/* 输入 + Email 按钮 */}
                     <div className="p-2 border-t flex gap-2">
                         <input
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             className="flex-1 p-2 border rounded text-sm"
-                            placeholder="Still have questions?"
+                            placeholder={
+                                expectingEmailType ? "Please enter your email..." : "Still have questions?"
+                            }
                             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                         />
                         <button
