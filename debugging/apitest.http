@@ -554,20 +554,26 @@ Content-Type: application/json
 }
 
 ### Test Get Reschedule Proposals for Receiver
-GET {{baseUri}}/api/reschedule_proposal?user_id=user_2yCeD7kCrxHLy1rDq2NlCHy8WO1
+GET {{baseUri}}/api/reschedule_proposal/user_2yCeD7kCrxHLy1rDq2NlCHy8WO1
 
 ### Test Get Reschedule Proposals for Another Receiver
-GET {{baseUri}}/api/reschedule_proposal?user_id=165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61
-
-### Test Get Reschedule Proposals - Missing user_id parameter
-GET {{baseUri}}/api/reschedule_proposal
+GET {{baseUri}}/api/reschedule_proposal/165eb4b0-cb9f-4465-bd60-bd3dfc2e5f61
 
 ### Test Get Reschedule Proposals - Non-existent user
-GET {{baseUri}}/api/reschedule_proposal?user_id=non-existent-user-id
+GET {{baseUri}}/api/reschedule_proposal/non-existent-user-id
+
+### Test Get Reschedule Proposals - Empty user_id
+GET {{baseUri}}/api/reschedule_proposal/
+
+### Test Get Reschedule Proposals - Invalid UUID format
+GET {{baseUri}}/api/reschedule_proposal/invalid-uuid-format
+
+### Test Get Reschedule Proposals - Special characters in user_id
+GET {{baseUri}}/api/reschedule_proposal/user%20with%20spaces
 
 ### Test Get Reschedule Proposals After Confirmation
 # Should return error since proposal was deleted
-GET {{baseUri}}/api/reschedule_proposal?user_id=user_2yCeD7kCrxHLy1rDq2NlCHy8WO1
+GET {{baseUri}}/api/reschedule_proposal/user_2yCeD7kCrxHLy1rDq2NlCHy8WO1
 
 ### Test Confirm Appointment
 POST {{baseUri}}/api/appointment/confirm
