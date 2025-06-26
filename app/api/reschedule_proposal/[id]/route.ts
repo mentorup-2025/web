@@ -2,10 +2,12 @@ import { NextRequest } from 'next/server';
 import { listRescheduleProposalsByReceiver } from '@/lib/reschedule_proposal';
 import { respData, respErr } from '@/lib/resp';
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { searchParams } = new URL(request.url);
-    const user_id = searchParams.get('user_id');
+    const user_id = params.id;
     
     // Validate required parameter
     if (!user_id) {
