@@ -3,6 +3,8 @@ import { getResendClient } from '@/services/resend';
 import { EMAIL_TEMPLATE_TITLES, EmailTemplate } from '@/types/email';
 import MenteeApptConfirmationEmail, { PaymentConfirmationProps } from '@/types/email_template/mentee_appt_confirmation';
 import NewUserWelcomeEmail, { NewUserWelcomeProps } from '@/types/email_template/new_user_welcome';
+import RefundProcessedEmail, { RefundProcessedProps } from '@/types/email_template/refund_processed';
+import OrderContactEmail, { OrderContactEmailProps } from '@/types/email_template/order_contact';
 
 const resend = getResendClient();
 
@@ -12,16 +14,20 @@ const getEmailComponent = (type: EmailTemplate, data: Record<string, any>) => {
       return createElement(MenteeApptConfirmationEmail, data as PaymentConfirmationProps);
     case EmailTemplate.USER_SIGN_UP_CONFIRMATION.toString():
       return createElement(NewUserWelcomeEmail, data as NewUserWelcomeProps);
+    case EmailTemplate.REFUND_PROCESSED.toString():
+      return createElement(RefundProcessedEmail, data as RefundProcessedProps);
+    case EmailTemplate.ORDER_CONTACT.toString():
+      return createElement(OrderContactEmail, data as OrderContactEmailProps);
     default:
       throw new Error(`Unknown email template: ${type}`);
   }
 };
 
 export async function sendEmail(
-  from: string,
-  to: string,
-  type: EmailTemplate,
-  message: Record<string, any>
+    from: string,
+    to: string,
+    type: EmailTemplate,
+    message: Record<string, any>
 ) {
   try {
     const emailComponent = getEmailComponent(type, message);
