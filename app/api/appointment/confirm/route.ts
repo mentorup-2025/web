@@ -1,65 +1,31 @@
+import { NextRequest } from 'next/server';
+import { confirmAppointment } from '@/lib/appointment';
 import { respData, respErr } from '@/lib/resp';
-import { confirmAppointment, getAppointment } from '@/lib/appointment';
-import { ConfirmAppointmentInput } from '@/types';
-import { getUser } from '@/lib/user';
-import { sendEmail } from '@/lib/email';
-import { EmailTemplate } from '@/types/email';
 
-export async function POST(request: Request) {
-    try {
-        const input: ConfirmAppointmentInput = await request.json();
-
-        // Validate required fields
-        if (!input.appointment_id) {
-            return respErr('Missing required fields');
-        }
-
-        // Confirm appointment
-        await confirmAppointment( input.appointment_id);
-
-       
-
-        const appointment = await getAppointment(input.appointment_id);
-
-      // Send confirmation email
-      if (appointment) {
-        const user = await getUser(appointment.mentee_id);
-        const mentor = await getUser(appointment.mentor_id);
-        if (user && mentor) {
-          try {
-            const emailResult = await sendEmail(
-              'MentorUP <no-reply@mentorup.info>',
-              user.email,
-              EmailTemplate.MENTEE_APPOINTMENT_CONFIRMATION,
-              {
-                userName: user.username,
-                serviceName: appointment.service_type,
-                price: appointment.price,
-                mentorName: mentor.username,
-                appointmentStartTime: appointment.start_time,
-                appointmentEndTime: appointment.end_time
-              }
-            );
-            console.log(' Email sent:', emailResult);
-          } catch (emailError) {
-            console.error(' Email failed:', emailError);
-          }
-        }
-        return respData({ message: 'Appointment confirmed successfully' });
-      } else {
-        console.log('ℹNo appointment found for ID:', input.appointment_id);
-      }
-
-    } catch (error) {
-        console.error('Error confirming appointment:', error);
-
-        if (error instanceof Error) {
-            if (error.message.includes('CONFIRMATION_FAILED')) {
-                return respErr('Failed to confirm appointment: Invalid appointment state');
-            }
-            return respErr(error.message);
-        }
-
-        return respErr('Failed to confirm appointment');
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    
+    // Validate required fields
+    const { appointment_id, start_time, end_time } = body;
+    
+    if (!appointment_id) {
+      return respErr('Missing required field: appointment_id');
     }
-}
+
+    if (!start_time || !end_time) {
+      return respErr('Missing required fields: start_time and end_time');
+    }
+
+    await confirmAppointment(appointment_id, start_time, end_time);
+
+    console.log(`Appointment ${appointment_id} confirmed successfully with new time slot: ${start_time} to ${end_time}`);
+
+    return respData({ appointment_id, status: 'confirmed', start_time, end_time });
+
+  } catch (error: any) {
+    console.error('Error confirming appointment:', error);
+
+    return respErr('Failed to confirm appointment: ' + error.message);
+  }
+} 

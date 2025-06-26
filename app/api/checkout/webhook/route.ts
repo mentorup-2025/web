@@ -50,7 +50,7 @@ export async function POST(request: Request) {
       }
 
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/appointment/confirm`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/appointment/paid`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
