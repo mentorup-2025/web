@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 
 const SUGGESTIONS = [
     "Apply to become a mentor",
@@ -68,7 +69,7 @@ function GuestChatContent({ messages, onSelect }: { messages: { role: string; co
 
 export default function ChatWidget() {
     const pathname = usePathname();
-    const { isLoaded, isSignedIn, user } = useAuth();
+    const { isLoaded, isSignedIn, user } = useUser();
 
     const [open, setOpen] = useState(false);
     const [messages, setMessages] = useState([
