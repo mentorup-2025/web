@@ -26,7 +26,7 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 50vw;
+  height: 300px;
   background-color: #dbeafe;
   border-radius: 100% 100% 0 0;
   top: 25vh;
@@ -69,6 +69,34 @@
   padding: 40px;
 }
 
+.videoContentWrapper {
+  display: flex;
+  gap: 10px;
+  height: 300px;
+}
+
+.videoContent {
+  display: flex;
+}
+
+.mentorTitle {
+  min-height: 3.5rem;
+  text-align: center;
+}
+
+.mentorDescription {
+  min-height: 5.5rem;
+}
+
+.MentorshipDescription {
+  min-height: 4.5rem;
+}
+.footerCopyright {
+  border-top: solid 1px black;
+  display: flex;
+  justify-content: space-between;
+}
+
 /* Tablet (768px and up) */
 @media (min-width: 768px) {
   .featuresGrid {
@@ -81,7 +109,7 @@
   }
 
   .backgroundCircle {
-    height: 40vw;
+    height: 300px;
   }
 }
 
@@ -93,7 +121,7 @@
   }
 
   .backgroundCircle {
-    height: 35vw;
+    height: 270px;
   }
 }
 
@@ -116,6 +144,6 @@
   }
 
   .backgroundCircle {
-    height: 25vw;
+    height: 270px;
   }
 } 
