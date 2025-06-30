@@ -12,7 +12,7 @@ export async function POST(request: Request) {
         }
 
         // Validate that at least one update field is provided
-        if (!input.time_slot && !input.status) {
+        if (!input.time_slot && !input.status && !input.link) {
             return respErr('No update fields provided');
         }
 
@@ -31,6 +31,11 @@ export async function POST(request: Request) {
             return respErr('Invalid status value');
         }
 
+        // Validate link if provided
+        if (input.link && typeof input.link !== 'string') {
+            return respErr('Link must be a string');
+        }
+
         // Check if appointment exists and is confirmed
         const appointment = await getAppointment(input.appointment_id);
 
@@ -45,7 +50,8 @@ export async function POST(request: Request) {
         // Update appointment
         await updateAppointment(input.appointment_id, {
             time_slot: input.time_slot,
-            status: input.status
+            status: input.status,
+            link: input.link
         });
 
         return respData({ message: 'Appointment updated successfully' });

@@ -8,6 +8,7 @@ export interface Appointment {
     updated_at: string;
     service_type: string;
     price: number;
+    link?: string;  // Google Meet link
 }
 
 export interface CreateAppointmentInput {
@@ -31,6 +32,7 @@ export interface UpdateAppointmentInput {
     appointment_id: string;
     time_slot?: [string, string];  // [start_time, end_time]
     status?: 'confirmed' | 'completed' | 'canceled' | 'noshow';
+    link?: string;  // Google Meet link
 }
 
 export interface ReserveAppointmentResponse {

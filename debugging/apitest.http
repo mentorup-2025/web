@@ -383,15 +383,6 @@ Content-Type: application/json
      "status": "noshow"
 }
 
-### Test Case 5: Update Successfully
-POST http://localhost:3000/api/appointment/update
-Content-Type: application/json
-
-{
-    "appointment_id": "00b5f5ed-f871-45cb-9a79-848b7a69f77d",
-    "time_slot": ["2024-03-21T14:00:00Z", "2024-03-21T15:00:00Z"]
-}
-
 ### Test Case 5: Update status Successfully
 POST http://localhost:3000/api/appointment/update
 Content-Type: application/json
@@ -399,6 +390,43 @@ Content-Type: application/json
 {
     "appointment_id": "00b5f5ed-f871-45cb-9a79-848b7a69f77d",
      "status": "noshow"
+}
+
+### Test Case 6: Update Meet Link Successfully
+POST {{baseUri}}/api/appointment/update
+Content-Type: application/json
+
+{
+    "appointment_id": "13ac634b-ccf9-4fa5-b35f-4fcf511d591c",
+    "link": "https://meet.google.com/abc-defg-hij"
+}
+
+### Test Case 7: Update Meet Link and Status Together
+POST {{baseUri}}/api/appointment/update
+Content-Type: application/json
+
+{
+    "appointment_id": "00b5f5ed-f871-45cb-9a79-848b7a69f77d",
+    "status": "completed",
+    "link": "https://meet.google.com/xyz-uvw-rst"
+}
+
+### Test Case 8: Update Meet Link - Invalid Link Format
+POST {{baseUri}}/api/appointment/update
+Content-Type: application/json
+
+{
+    "appointment_id": "00b5f5ed-f871-45cb-9a79-848b7a69f77d",
+    "link": 123
+}
+
+### Test Case 9: Update Meet Link - Empty Link
+POST {{baseUri}}/api/appointment/update
+Content-Type: application/json
+
+{
+    "appointment_id": "00b5f5ed-f871-45cb-9a79-848b7a69f77d",
+    "link": ""
 }
 
 ### Test Cases for Confirm
