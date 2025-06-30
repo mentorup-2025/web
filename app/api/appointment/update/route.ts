@@ -38,8 +38,8 @@ export async function POST(request: Request) {
             return respErr('Appointment not found');
         }
 
-        if (appointment.status !== 'confirmed') {
-            return respErr('Only confirmed appointments can be updated');
+        if (appointment.status == 'pending') {
+            return respErr('pending appointment cannot be updated');
         }
 
         // Update appointment

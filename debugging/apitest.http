@@ -301,9 +301,8 @@ POST http://localhost:3000/api/appointment/update
 Content-Type: application/json
 
 {
-    "appointment_id": "123e4567-e89b-12d3-a456-426614174002",
-    "time_slot": ["2024-03-21T14:00:00Z", "2024-03-21T15:00:00Z"],
-    "status": "completed"
+    "appointment_id": "7775eeed-672f-4496-b4d4-d946e9e8971d",
+    "status": "canceled"
 }
 
 ### Confirm Appointment
