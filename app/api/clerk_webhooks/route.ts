@@ -56,32 +56,33 @@ async function saveNewUser(userId: string, email: string, username: string, imag
 
 export async function POST(req: Request) {
   try {
+    console.log(' Clerk webhook request received')
+    
     const evt = await verifyWebhook(req)
-
-    // Do something with payload
-    // For this guide, log payload to console
-    // const { id } = evt.data
-    // const eventType = evt.type
-    // console.log(`Received webhook with ID ${id} and event type of ${eventType}`)
-    // console.log('Webhook payload:', evt.data)
+    console.log(` Webhook verified successfully: ${evt.type}`)
 
     if (evt.type === 'user.created') {
       const { id: userId, email_addresses, first_name, last_name } = evt.data
       const primaryEmail = email_addresses?.[0]?.email_address
       const image_url = evt.data.image_url
 
-      console.log('image_url', image_url)
+      console.log('Processing user.created event:', { userId, primaryEmail, image_url })
       
       if (!primaryEmail) {
         throw new Error('No primary email found for user')
       }
 
-      await saveNewUser(userId, primaryEmail, first_name + ' ' + last_name, image_url)
+      const username = first_name && last_name ? `${first_name} ${last_name}` : first_name || last_name || 'User'
+      await saveNewUser(userId, primaryEmail, username, image_url)
+      
+      console.log('User created successfully via webhook')
     }
 
-    return respOk()
+    // Return standard HTTP response that Clerk expects
+    return new Response('OK', { status: 200 })
   } catch (err) {
-    console.error('Error verifying webhook:', err)
-    return respErr('Error verifying webhook')
+    console.error('❌ Error processing Clerk webhook:', err)
+    // Return proper error response
+    return new Response('Webhook verification failed', { status: 400 })
   }
 }
