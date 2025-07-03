@@ -8,8 +8,8 @@ const isPublicRoute = createRouteMatcher([
   '/api/availability/get(.*)',
   '/mentor-list(.*)',
   '/api/mentor/list',
-  '/api/clerk_webhooks/(.*)',
-  '/api/checkout/webhook/(.*)',
+  '/api/clerk_webhooks(.*)',
+  '/api/checkout/webhook(.*)',
 ])
 
 // Export a dummy middleware when auth is disabled
