@@ -91,6 +91,7 @@ export async function updateAppointment(
   updates: {
     time_slot?: [string, string];  // [start_time, end_time]
     status?: 'confirmed' | 'completed' | 'canceled' | 'noshow' | 'reschedule_in_progress' | 'paid';
+    link?: string;  // Google Meet link
   }
 ) {
   try {
@@ -103,6 +104,10 @@ export async function updateAppointment(
 
     if (updates.status) {
       updateData.status = updates.status;
+    }
+
+    if (updates.link) {
+      updateData.link = updates.link;
     }
 
     // Add updated_at timestamp
