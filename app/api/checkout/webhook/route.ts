@@ -6,6 +6,7 @@ import { sendEmail } from '@/lib/email';
 import { EmailTemplate } from '@/types/email';
 import { getAppointment } from '@/lib/appointment';
 import { getUser } from '@/lib/user';
+import { ConfirmAppointmentPaidHelper } from '@/lib/confirm_appointment_paid';
 
 export const runtime = 'nodejs';
 
@@ -45,38 +46,21 @@ export async function POST(request: Request) {
       const appointmentId = paymentIntent.metadata?.appointmentId;
 
       if (!appointmentId) {
-        console.error('❌ Missing appointmentId in metadata');
+        console.error('Missing appointmentId in metadata');
         return NextResponse.json({ error: 'Missing appointmentId' }, { status: 400 });
       }
 
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/appointment/paid`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            appointment_id: appointmentId,
-          }),
-        });
-
-        const result = await response.json();
-
-        if (!response.ok || result.code == -1) {
-          console.error('❌ Appointment confirmation failed:', result);
-          return NextResponse.json({ error: 'Appointment confirmation failed' }, { status: 500 });
-        }
-
-        console.log(`✅ Appointment ${appointmentId} confirmed via API`);
+        await ConfirmAppointmentPaidHelper.confirmAppointmentPaid(appointmentId);
       } catch (error) {
-        console.error('❌ Failed to call appointment confirmation API:', error);
+        console.error(' Failed to  confirm appointment:', error);
         return NextResponse.json({ error: 'Failed to confirm appointment' }, { status: 500 });
       }
     }
 
     return NextResponse.json({ received: true });
   } catch (err: any) {
-    console.error('❌ Webhook error:', err.message);
+    console.error('Webhook error:', err.message);
     if (err.type === 'StripeSignatureVerificationError') {
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }

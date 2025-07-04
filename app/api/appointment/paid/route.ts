@@ -1,9 +1,6 @@
 import { respData, respErr } from '@/lib/resp';
-import { confirmAppointmentPaid, getAppointment } from '@/lib/appointment';
 import { ConfirmAppointmentPaidInput } from '@/types';
-import { getUser } from '@/lib/user';
-import { sendEmail } from '@/lib/email';
-import { EmailTemplate } from '@/types/email';
+import { ConfirmAppointmentPaidHelper } from '@/lib/confirm_appointment_paid';
 
 export async function POST(request: Request) {
     try {
@@ -11,48 +8,19 @@ export async function POST(request: Request) {
 
         // Validate required fields
         if (!input.appointment_id) {
-            return respErr('Missing required fields');
+            return respErr('Missing appointment ID');
         }
 
-        // Confirm appointment
-        await confirmAppointmentPaid( input.appointment_id);
+        // Use the helper class to handle the confirmation process
+        await ConfirmAppointmentPaidHelper.confirmAppointmentPaid(input.appointment_id);
 
-       
-
-        const appointment = await getAppointment(input.appointment_id);
-
-      // Send confirmation email
-      if (appointment) {
-        const user = await getUser(appointment.mentee_id);
-        const mentor = await getUser(appointment.mentor_id);
-        if (user && mentor) {
-          try {
-            const emailResult = await sendEmail(
-              'MentorUP <no-reply@mentorup.info>',
-              user.email,
-              EmailTemplate.MENTEE_APPOINTMENT_CONFIRMATION,
-              {
-                userName: user.username,
-                serviceName: appointment.service_type,
-                price: appointment.price,
-                mentorName: mentor.username,
-                appointmentStartTime: appointment.start_time,
-                appointmentEndTime: appointment.end_time
-              }
-            );
-            console.log(' Email sent:', emailResult);
-          } catch (emailError) {
-            console.error(' Email failed:', emailError);
-          }
-        }
-        return respData({ message: 'Appointment confirmed successfully' });
-      } else {
-        console.log('ℹNo appointment found for ID:', input.appointment_id);
-      }
+        return respData({ 
+            message: 'Appointment confirmed successfully'
+        });
 
     } catch (error) {
-        console.error('Error confirming appointment:', error);
-
+        console.error('Error in appointment paid route:', error);
+        
         if (error instanceof Error) {
             if (error.message.includes('CONFIRMATION_FAILED')) {
                 return respErr('Failed to confirm appointment: Invalid appointment state');
