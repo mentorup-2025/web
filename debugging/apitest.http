@@ -15,32 +15,9 @@ GET {{baseUri}}/checkout/success?session_id=cs_test_123
 ### Test Cancel Page
 GET {{baseUri}}/checkout/cancel
 
-### Test User Signup
-POST {{baseUri}}/api/user/insert
-Content-Type: application/json
-
-{
-    "username": "testuser2",
-    "email": "test2@example.com",
-    "password": "Test123!@#"
-}
-
 ### Test Get User by ID
 GET {{baseUri}}/api/user/93137255-d7ac-4219-90d9-a886ae987733
 Content-Type: application/json
-
-### Test Create User
-POST {{baseUri}}/api/user/insert
-Content-Type: application/json
-
-{
-    "user_id" : "absdsdfsdfsdf",
-    "username": "testmentor2222",
-    "email": "mentor333@example.com",
-    "github": "https://github.com/testmentor",
-    "linkedin": "https://linkedin.com/in/testmentor",
-    "resume": "https://resume.com/testmentor"
-}
 
 ### Test Upsert Mentor
 POST {{baseUri}}/api/mentor/upsert/93137255-d7ac-4219-90d9-a886ae987732
@@ -305,14 +282,6 @@ Content-Type: application/json
     "status": "canceled"
 }
 
-### Confirm Appointment
-POST http://localhost:3000/api/appointment/paid
-Content-Type: application/json
-
-{
-    "appointment_id": "fae4691f-eb4b-493c-a777-f83ee707c7b8"
-}
-
 ### Cancel Appointment Payment
 POST http://localhost:3000/api/appointment/cancel_payment
 Content-Type: application/json
@@ -428,18 +397,6 @@ Content-Type: application/json
     "appointment_id": "00b5f5ed-f871-45cb-9a79-848b7a69f77d",
     "link": ""
 }
-
-### Test Cases for Confirm
-
-### Test Case 1: Confirm Non-existent Appointment
-POST http://localhost:3000/api/appointment/paid
-Content-Type: application/json
-
-{
-    "appointment_id": "00000000-0000-0000-0000-000000000000",
-    "hold_id": "123e4567-e89b-12d3-a456-426614174003"
-}
-
 
 ### Test Cases for Cancel Payment
 

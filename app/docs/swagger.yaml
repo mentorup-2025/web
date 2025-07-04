@@ -101,38 +101,6 @@ components:
 
 paths:
   # User APIs
-  /api/user/insert:
-    post:
-      summary: Create a new user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - username
-                - email
-                - password
-              properties:
-                username:
-                  type: string
-                email:
-                  type: string
-                  format: email
-                password:
-                  type: string
-                  minLength: 8
-              example:
-                username: "testuser2"
-                email: "test2@example.com"
-                password: "Test123!@#"
-      responses:
-        200:
-          description: User created successfully
-        400:
-          description: Bad request
-
   /api/user/{id}:
     get:
       summary: Get user by ID
