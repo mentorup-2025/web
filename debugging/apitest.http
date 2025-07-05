@@ -38,7 +38,7 @@ Content-Type: application/json
 }
 
 ### Test List All Mentors
-GET {{baseUri}}/api/mentor/list
+GET https://www.mentorup.info/api/mentor/list
 Content-Type: application/json
 
 ### Test Get Single Mentor
