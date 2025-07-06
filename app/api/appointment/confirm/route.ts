@@ -3,6 +3,7 @@ import { confirmAppointment, getAppointment } from '@/lib/appointment';
 import { getUser } from '@/lib/user';
 import { sendEmail } from '@/lib/email';
 import { EmailTemplate } from '@/types/email';
+import { convertUTCToPDT } from '@/lib/utc_to_pdt';
 import { respData, respErr } from '@/lib/resp';
 
 export async function POST(request: NextRequest) {
@@ -46,6 +47,10 @@ export async function POST(request: NextRequest) {
       return respData({ appointment_id, status: 'confirmed', start_time, end_time });
     }
 
+    // Convert UTC times to PDT
+    const pdtStartTime = convertUTCToPDT(appointment.start_time);
+    const pdtEndTime = convertUTCToPDT(appointment.end_time);
+
     // Send confirmation emails to both mentee and mentor in parallel
     try {
       await Promise.all([
@@ -59,8 +64,8 @@ export async function POST(request: NextRequest) {
             mentorName: mentor.username,
             menteeName: mentee.username,
             serviceName: appointment.service_type,
-            appointmentStartTime: appointment.start_time,
-            appointmentEndTime: appointment.end_time
+            appointmentStartTime: pdtStartTime,
+            appointmentEndTime: pdtEndTime
           }
         ),
         // Send email to mentor
@@ -73,8 +78,8 @@ export async function POST(request: NextRequest) {
             mentorName: mentor.username,
             menteeName: mentee.username,
             serviceName: appointment.service_type,
-            appointmentStartTime: appointment.start_time,
-            appointmentEndTime: appointment.end_time
+            appointmentStartTime: pdtStartTime,
+            appointmentEndTime: pdtEndTime
           }
         )
       ]);

@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server';
 import { createRescheduleProposal, deleteRescheduleProposal, getRescheduleProposal } from '@/lib/reschedule_proposal';
-import { updateAppointment, getAppointment } from '@/lib/appointment';
+import { getAppointment } from '@/lib/appointment';
 import { getUser } from '@/lib/user';
 import { sendEmail } from '@/lib/email';
 import { EmailTemplate } from '@/types/email';
+import { convertUTCToPDT } from '@/lib/utc_to_pdt';
 import { CreateRescheduleProposalInput } from '@/types';
 import { respData, respErr } from '@/lib/resp';
 
@@ -78,6 +79,16 @@ export async function POST(request: NextRequest) {
         return respData(proposal); // Return success even if email fails
       }
 
+      // Convert UTC times to PDT
+      const pdtOriginalStartTime = convertUTCToPDT(appointment.start_time);
+      const pdtOriginalEndTime = convertUTCToPDT(appointment.end_time);
+      
+      // Convert proposed time ranges to PDT
+      const pdtProposedTimeRanges = proposed_time_ranges.map((range: [string, string]) => [
+        convertUTCToPDT(range[0]),
+        convertUTCToPDT(range[1])
+      ]);
+
       // Send emails in parallel
       await Promise.all([
         // Send email to proposer (confirmation that proposal was sent)
@@ -89,9 +100,9 @@ export async function POST(request: NextRequest) {
             proposerName: proposerUser.username,
             receiverName: receiverUser.username,
             appointmentId: appointment_id,
-            originalStartTime: appointment.start_time,
-            originalEndTime: appointment.end_time,
-            proposedTimeRanges: proposed_time_ranges
+            originalStartTime: pdtOriginalStartTime,
+            originalEndTime: pdtOriginalEndTime,
+            proposedTimeRanges: pdtProposedTimeRanges
           }
         ),
         // Send email to receiver (notification about reschedule request)
@@ -103,9 +114,9 @@ export async function POST(request: NextRequest) {
             receiverName: receiverUser.username,
             proposerName: proposerUser.username,
             appointmentId: appointment_id,
-            originalStartTime: appointment.start_time,
-            originalEndTime: appointment.end_time,
-            proposedTimeRanges: proposed_time_ranges
+            originalStartTime: pdtOriginalStartTime,
+            originalEndTime: pdtOriginalEndTime,
+            proposedTimeRanges: pdtProposedTimeRanges
           }
         )
       ]);
