@@ -38,7 +38,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import dayjs from 'dayjs';
 import type { UploadFile } from 'antd/es/upload/interface';
-
+import NavBar from '../../components/Navbar';
 
 const { Header, Content } = Layout;
 const { Title, Text } = Typography;
@@ -263,34 +263,10 @@ export default function MentorDetailsPage() {
 
   return (
       <Layout className={styles.layout}>
-        <Header className={styles.header}>
-          <div className={styles.leftGroup}>
-            <Link href="/" className={styles.logo}>MentorUp</Link>
-            <Link href="/mentors" className={styles.link}>Our Mentors</Link>
-          </div>
-          <div className={styles.rightGroup}>
-            <SignedOut>
-              <SignInButton mode="modal">
-                <Button type="primary" className={styles.becomeBtn}>Become a Mentor</Button>
-              </SignInButton>
-            </SignedOut>
-            <SignedIn>
-              <Button type="primary" className={styles.becomeBtn} onClick={handleBecomeMentor}>
-                Become a Mentor
-              </Button>
-            </SignedIn>
-            <SignedOut>
-              <SignInButton mode="modal">
-                <Button type="default" style={{ marginLeft: '10px' }}>Sign In</Button>
-              </SignInButton>
-            </SignedOut>
-            <SignedIn>
-              <UserButton afterSignOutUrl="/" />
-            </SignedIn>
-          </div>
-        </Header>
+        <NavBar />
 
-        <Content className={styles.content}>
+        <Content style={{ paddingTop: 88 }} className={styles.content}>
+          {/* NavBar is fixed, so we add paddingTop to avoid overlap */}
           <div className={styles.container}>
             <div className={styles.mainContent}>
               <div className={styles.leftSection}>
