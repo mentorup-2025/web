@@ -132,7 +132,7 @@ export async function updateAppointment(
   }
 }
 
-export async function getAppointment(appointmentId: string): Promise<Appointment | null> {
+export async function getAppointment(appointmentId: string): Promise<Appointment> {
   try {
     const { data, error } = await getSupabaseClient()
       .from('appointments')
@@ -147,7 +147,36 @@ export async function getAppointment(appointmentId: string): Promise<Appointment
       throw error;
     }
 
-    return data;
+    if (!data) {
+      throw new Error(`Appointment with ID ${appointmentId} not found`);
+    }
+
+    // Convert tstzrange time_slot to start_time and end_time
+    const appointment: Appointment = {
+      ...data,
+      start_time: '',
+      end_time: ''
+    };
+
+    // Parse the tstzrange format "[start,end)" or "[start,end]"
+    if (data.time_slot) {
+      const timeSlotStr = data.time_slot as string;
+      console.log('📅 Raw time_slot from DB:', timeSlotStr);
+      
+      // Remove brackets and split by comma
+      const cleanTimeSlot = timeSlotStr.replace(/[\[\]()]/g, '');
+      const [startStr, endStr] = cleanTimeSlot.split(',');
+      
+      if (startStr && endStr) {
+        appointment.start_time = startStr.trim();
+        appointment.end_time = endStr.trim();
+        console.log('📅 Parsed times:', { start: appointment.start_time, end: appointment.end_time });
+      } else {
+        console.error('❌ Failed to parse time_slot:', timeSlotStr);
+      }
+    }
+
+    return appointment;
 
   } catch (error) {
     console.error('Error in getAppointment:', error);
@@ -170,7 +199,36 @@ export async function getUserAppointment(userId: string): Promise<Appointment[]>
       throw error;
     }
 
-    return data || [];
+    if (!data) {
+      return [];
+    }
+
+    // Convert tstzrange time_slot to start_time and end_time for each appointment
+    const appointments: Appointment[] = data.map((appointment: any) => {
+      const convertedAppointment: Appointment = {
+        ...appointment,
+        start_time: '',
+        end_time: ''
+      };
+
+      // Parse the tstzrange format "[start,end)" or "[start,end]"
+      if (appointment.time_slot) {
+        const timeSlotStr = appointment.time_slot as string;
+        
+        // Remove brackets and split by comma
+        const cleanTimeSlot = timeSlotStr.replace(/[\[\]()]/g, '');
+        const [startStr, endStr] = cleanTimeSlot.split(',');
+        
+        if (startStr && endStr) {
+          convertedAppointment.start_time = startStr.trim();
+          convertedAppointment.end_time = endStr.trim();
+        }
+      }
+
+      return convertedAppointment;
+    });
+
+    return appointments;
 
   } catch (error) {
     console.error('Error in getUserAppointment:', error);
