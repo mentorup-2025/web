@@ -36,24 +36,45 @@ export class ConfirmAppointmentPaidHelper {
       throw new Error('Failed to get user details');
     }
 
-    // Step 4: Send confirmation email
+    // Step 4: Send confirmation emails to both mentee and mentor in parallel
     try {
-      await sendEmail(
-        'MentorUP <contactus@mentorup.info>',
-        mentee.email,
-        EmailTemplate.MENTEE_APPOINTMENT_CONFIRMATION,
-        {
-          userName: mentee.username,
-          serviceName: appointment.service_type,
-          price: appointment.price,
-          mentorName: mentor.username,
-          appointmentStartTime: appointment.start_time,
-          appointmentEndTime: appointment.end_time
-        }
-      );
-      console.log('📧 Confirmation email sent successfully to:', mentee.email);
+      await Promise.all([
+        // Send email to mentee
+        sendEmail(
+          'MentorUP <contactus@mentorup.info>',
+          mentee.email,
+          EmailTemplate.MENTEE_APPOINTMENT_CONFIRMATION,
+          {
+            userName: mentee.username,
+            serviceName: appointment.service_type,
+            price: appointment.price,
+            mentorName: mentor.username,
+            appointmentStartTime: appointment.start_time,
+            appointmentEndTime: appointment.end_time
+          }
+        ),
+        // Send email to mentor
+        sendEmail(
+          'MentorUP <contactus@mentorup.info>',
+          mentor.email,
+          EmailTemplate.MENTOR_APPOINTMENT_CONFIRMATION,
+          {
+            mentorName: mentor.username,
+            menteeName: mentee.username,
+            serviceName: appointment.service_type,
+            appointmentStartTime: appointment.start_time,
+            appointmentEndTime: appointment.end_time,
+            appointmentId: appointmentId
+          }
+        )
+      ]);
+      
+      console.log('📧 Confirmation emails sent successfully to:', {
+        mentee: mentee.email,
+        mentor: mentor.email
+      });
     } catch (emailError) {
-      console.error('❌ Failed to send confirmation email:', emailError);
+      console.error('❌ Failed to send confirmation emails:', emailError);
       // Don't fail the entire process if email fails
     }
   }

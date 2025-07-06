@@ -2,6 +2,7 @@ import { createElement } from 'react';
 import { getResendClient } from '@/services/resend';
 import { EMAIL_TEMPLATE_TITLES, EmailTemplate } from '@/types/email';
 import MenteeApptConfirmationEmail, { PaymentConfirmationProps } from '@/types/email_template/mentee_appt_confirmation';
+import MentorApptConfirmationEmail, { MentorApptConfirmationProps } from '@/types/email_template/mentor_appt_confirmation';
 import NewUserWelcomeEmail, { NewUserWelcomeProps } from '@/types/email_template/new_user_welcome';
 import RefundProcessedEmail, { RefundProcessedProps } from '@/types/email_template/refund_processed';
 import OrderContactEmail, { OrderContactEmailProps } from '@/types/email_template/order_contact';
@@ -12,6 +13,8 @@ const getEmailComponent = (type: EmailTemplate, data: Record<string, any>) => {
   switch (type) {
     case EmailTemplate.MENTEE_APPOINTMENT_CONFIRMATION.toString():
       return createElement(MenteeApptConfirmationEmail, data as PaymentConfirmationProps);
+    case EmailTemplate.MENTOR_APPOINTMENT_CONFIRMATION.toString():
+      return createElement(MentorApptConfirmationEmail, data as MentorApptConfirmationProps);
     case EmailTemplate.USER_SIGN_UP_CONFIRMATION.toString():
       return createElement(NewUserWelcomeEmail, data as NewUserWelcomeProps);
     case EmailTemplate.REFUND_PROCESSED.toString():
