@@ -3,6 +3,8 @@ import { getResendClient } from '@/services/resend';
 import { EMAIL_TEMPLATE_TITLES, EmailTemplate } from '@/types/email';
 import MenteeApptConfirmationEmail, { PaymentConfirmationProps } from '@/types/email_template/mentee_appt_confirmation';
 import MentorApptConfirmationEmail, { MentorApptConfirmationProps } from '@/types/email_template/mentor_appt_confirmation';
+import RescheduleProposalSentEmail, { RescheduleProposalSentProps } from '@/types/email_template/reschedule_proposal_sent';
+import RescheduleProposalReceivedEmail, { RescheduleProposalReceivedProps } from '@/types/email_template/reschedule_proposal_received';
 import NewUserWelcomeEmail, { NewUserWelcomeProps } from '@/types/email_template/new_user_welcome';
 import RefundProcessedEmail, { RefundProcessedProps } from '@/types/email_template/refund_processed';
 import OrderContactEmail, { OrderContactEmailProps } from '@/types/email_template/order_contact';
@@ -15,6 +17,10 @@ const getEmailComponent = (type: EmailTemplate, data: Record<string, any>) => {
       return createElement(MenteeApptConfirmationEmail, data as PaymentConfirmationProps);
     case EmailTemplate.MENTOR_APPOINTMENT_CONFIRMATION.toString():
       return createElement(MentorApptConfirmationEmail, data as MentorApptConfirmationProps);
+    case EmailTemplate.RESCHEDULE_PROPOSAL_SENT.toString():
+      return createElement(RescheduleProposalSentEmail, data as RescheduleProposalSentProps);
+    case EmailTemplate.RESCHEDULE_PROPOSAL_RECEIVED.toString():
+      return createElement(RescheduleProposalReceivedEmail, data as RescheduleProposalReceivedProps);
     case EmailTemplate.USER_SIGN_UP_CONFIRMATION.toString():
       return createElement(NewUserWelcomeEmail, data as NewUserWelcomeProps);
     case EmailTemplate.REFUND_PROCESSED.toString():

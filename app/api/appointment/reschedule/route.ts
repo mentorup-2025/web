@@ -1,6 +1,9 @@
 import { NextRequest } from 'next/server';
 import { createRescheduleProposal, deleteRescheduleProposal, getRescheduleProposal } from '@/lib/reschedule_proposal';
-import { updateAppointment } from '@/lib/appointment';
+import { updateAppointment, getAppointment } from '@/lib/appointment';
+import { getUser } from '@/lib/user';
+import { sendEmail } from '@/lib/email';
+import { EmailTemplate } from '@/types/email';
 import { CreateRescheduleProposalInput } from '@/types';
 import { respData, respErr } from '@/lib/resp';
 
@@ -54,6 +57,68 @@ export async function POST(request: NextRequest) {
     const proposal = await createRescheduleProposal(input);
 
     console.log(`Reschedule proposal created for appointment ${appointment_id}`);
+
+    // Send emails to both proposer and receiver
+    try {
+      // Get appointment details
+      const appointment = await getAppointment(appointment_id);
+      if (!appointment) {
+        console.error('Appointment not found for email sending:', appointment_id);
+        return respData(proposal); // Return success even if email fails
+      }
+
+      // Get user details
+      const [proposerUser, receiverUser] = await Promise.all([
+        getUser(proposer),
+        getUser(receiver)
+      ]);
+
+      if (!proposerUser || !receiverUser) {
+        console.error('Failed to get user details for email sending:', { proposer, receiver });
+        return respData(proposal); // Return success even if email fails
+      }
+
+      // Send emails in parallel
+      await Promise.all([
+        // Send email to proposer (confirmation that proposal was sent)
+        sendEmail(
+          'MentorUP <contactus@mentorup.info>',
+          proposerUser.email,
+          EmailTemplate.RESCHEDULE_PROPOSAL_SENT,
+          {
+            proposerName: proposerUser.username,
+            receiverName: receiverUser.username,
+            appointmentId: appointment_id,
+            originalStartTime: appointment.start_time,
+            originalEndTime: appointment.end_time,
+            proposedTimeRanges: proposed_time_ranges
+          }
+        ),
+        // Send email to receiver (notification about reschedule request)
+        sendEmail(
+          'MentorUP <contactus@mentorup.info>',
+          receiverUser.email,
+          EmailTemplate.RESCHEDULE_PROPOSAL_RECEIVED,
+          {
+            receiverName: receiverUser.username,
+            proposerName: proposerUser.username,
+            appointmentId: appointment_id,
+            originalStartTime: appointment.start_time,
+            originalEndTime: appointment.end_time,
+            proposedTimeRanges: proposed_time_ranges
+          }
+        )
+      ]);
+
+      console.log('📧 Reschedule proposal emails sent successfully to:', {
+        proposer: proposerUser.email,
+        receiver: receiverUser.email
+      });
+
+    } catch (emailError) {
+      console.error('❌ Failed to send reschedule proposal emails:', emailError);
+      // Don't fail the entire process if email fails
+    }
 
     return respData(proposal);
 
