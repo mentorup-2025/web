@@ -14,6 +14,7 @@ import {
 } from '@clerk/nextjs';
 import CheckoutForm from '../../components/CheckoutForm';
 import styles from '../../mentor/[id]/mentorDetails.module.css'; // 使用 MentorDetails 的样式
+import NavBar from '../../components/Navbar';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -39,36 +40,7 @@ export default function PaymentPage() {
         <Layout className={styles.layout} style={{ minHeight: '100vh', background: 'white' }}>
 
         {/* 顶栏 Header */}
-            <Layout.Header className={styles.header}>
-                <div className={styles.leftGroup}>
-                    <Link href="/" className={styles.logo}>MentorUp</Link>
-                    <Link href="/mentors" className={styles.link}>Our Mentors</Link>
-                </div>
-                <div className={styles.rightGroup}>
-                    <SignedOut>
-                        <SignInButton mode="modal">
-                            <Button type="primary" className={styles.becomeBtn}>Become a Mentor</Button>
-                        </SignInButton>
-                    </SignedOut>
-                    <SignedIn>
-                        <Button
-                            type="primary"
-                            className={styles.becomeBtn}
-                            onClick={() => user && window.location.assign(`/signup/mentor/${user.id}`)}
-                        >
-                            Become a Mentor
-                        </Button>
-                    </SignedIn>
-                    <SignedOut>
-                        <SignInButton mode="modal">
-                            <Button type="default" style={{ marginLeft: '10px' }}>Sign In</Button>
-                        </SignInButton>
-                    </SignedOut>
-                    <SignedIn>
-                        <UserButton afterSignOutUrl="/" />
-                    </SignedIn>
-                </div>
-            </Layout.Header>
+            <NavBar />
 
             {/* 内容区 */}
             <Layout.Content className="p-4">
