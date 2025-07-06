@@ -11,22 +11,20 @@ import {
   Hr
 } from '@react-email/components';
 
-interface PaymentConfirmationProps {
-  userName: string;
-  serviceName: string;
-  price: number;
+interface MentorApptRequestProps {
   mentorName: string;
+  serviceName: string;
   appointmentStartTime: string;
   appointmentEndTime: string;
+  appointmentId: string;
 }
 
-const MenteeApptConfirmationEmail: React.FC<PaymentConfirmationProps> = ({
-  userName,
-  serviceName,
-  price,
+const MentorApptRequestEmail: React.FC<MentorApptRequestProps> = ({
   mentorName,
+  serviceName,
   appointmentStartTime,
-  appointmentEndTime
+  appointmentEndTime,
+  appointmentId
 }) => {
   // Format the date and time
   const formatDateTime = (dateTimeStr: string) => {
@@ -45,31 +43,41 @@ const MenteeApptConfirmationEmail: React.FC<PaymentConfirmationProps> = ({
   return (
     <Html>
       <Head />
-      <Preview>Payment Confirmation - {serviceName} with {mentorName}</Preview>
+      <Preview>[Action Required] Appointment Request - A mentee has scheduled a session with you</Preview>
       <Body style={main}>
         <Container style={container}>
-          <Text style={h1}>Payment Confirmation</Text>
-          <Text style={text}>Dear {userName},</Text>
+          <Text style={h1}>[Action Required] Appointment Request</Text>
+          <Text style={text}>Dear {mentorName},</Text>
           
-          <Text style={text}>Thank you for your payment. Your booking has been confirmed.</Text>
+          <Text style={text}>
+            A mentee has scheduled an appointment with you and is awaiting your confirmation. Please review the details below and confirm as soon as possible.
+          </Text>
           
           <Section style={boxContainer}>
-            <Text style={h2}>Booking Details:</Text>
+            <Text style={h2}>Appointment Details:</Text>
             <Text style={detailLine}><strong>Service:</strong> {serviceName}</Text>
-            <Text style={detailLine}><strong>Mentor:</strong> {mentorName}</Text>
             <Text style={detailLine}><strong>Start Time:</strong> {formatDateTime(appointmentStartTime)}</Text>
             <Text style={detailLine}><strong>End Time:</strong> {formatDateTime(appointmentEndTime)}</Text>
-            <Text style={detailLine}><strong>Amount Paid:</strong> ${price.toFixed(2)}</Text>
+            <Text style={detailLine}><strong>Appointment ID:</strong> {appointmentId}</Text>
           </Section>
 
           <Text style={text}>
-            Your session will be conducted online. You'll receive a separate email with 
-            the meeting link and any preparation instructions from your mentor.
+            <strong>Action Required:</strong> Please confirm this appointment as soon as possible. 
+            If the proposed time does not work for you, please propose alternative times in the "My Sessions" section on our website.
           </Text>
 
           <Text style={text}>
-            If you need to reschedule or have any questions, please contact us at{' '}
-            <Link href="mailto:support@mentorup.com">support@mentorup.com</Link>
+            You can manage your appointments and propose alternative times by visiting the "My Sessions" section at{' '}
+            <Link href="https://www.mentorup.info">www.mentorup.info</Link>
+          </Text>
+
+          <Text style={text}>
+            If you have any questions or need assistance, please contact us at{' '}
+            <Link href="mailto:contactus@mentorup.com">contactus@mentorup.com</Link>
+          </Text>
+
+          <Text style={text}>
+            Thank you for being part of our mentorship community!
           </Text>
 
           <Hr style={hr} />
@@ -136,5 +144,5 @@ const footer = {
   marginTop: '16px',
 };
 
-export default MenteeApptConfirmationEmail; 
-export type { PaymentConfirmationProps };
+export default MentorApptRequestEmail;
+export type { MentorApptRequestProps }; 

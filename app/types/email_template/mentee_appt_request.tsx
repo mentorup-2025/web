@@ -11,22 +11,20 @@ import {
   Hr
 } from '@react-email/components';
 
-interface MentorApptConfirmationProps {
-  mentorName: string;
-  menteeName: string;
+interface MenteeApptRequestProps {
+  userName: string;
   serviceName: string;
+  mentorName: string;
   appointmentStartTime: string;
   appointmentEndTime: string;
-  appointmentId: string;
 }
 
-const MentorApptConfirmationEmail: React.FC<MentorApptConfirmationProps> = ({
-  mentorName,
-  menteeName,
+const MenteeApptRequestEmail: React.FC<MenteeApptRequestProps> = ({
+  userName,
   serviceName,
+  mentorName,
   appointmentStartTime,
-  appointmentEndTime,
-  appointmentId
+  appointmentEndTime
 }) => {
   // Format the date and time
   const formatDateTime = (dateTimeStr: string) => {
@@ -45,38 +43,31 @@ const MentorApptConfirmationEmail: React.FC<MentorApptConfirmationProps> = ({
   return (
     <Html>
       <Head />
-      <Preview>Appointment Confirmation - {menteeName} has scheduled a session with you</Preview>
+      <Preview>Appointment Request - {serviceName} with {mentorName}</Preview>
       <Body style={main}>
         <Container style={container}>
-          <Text style={h1}>Appointment Confirmation</Text>
-          <Text style={text}>Dear {mentorName},</Text>
+          <Text style={h1}>Appointment Request</Text>
+          <Text style={text}>Dear {userName},</Text>
           
           <Text style={text}>
-            Great news! A mentee has scheduled an appointment with you. Please review the details below.
+            You have successfully made a request to schedule an appointment with {mentorName}.
           </Text>
           
           <Section style={boxContainer}>
-            <Text style={h2}>Appointment Details:</Text>
-            <Text style={detailLine}><strong>Mentee:</strong> {menteeName}</Text>
+            <Text style={h2}>Request Details:</Text>
             <Text style={detailLine}><strong>Service:</strong> {serviceName}</Text>
-            <Text style={detailLine}><strong>Start Time:</strong> {formatDateTime(appointmentStartTime)}</Text>
-            <Text style={detailLine}><strong>End Time:</strong> {formatDateTime(appointmentEndTime)}</Text>
-            <Text style={detailLine}><strong>Appointment ID:</strong> {appointmentId}</Text>
+            <Text style={detailLine}><strong>Mentor:</strong> {mentorName}</Text>
+            <Text style={detailLine}><strong>Requested Time:</strong> {formatDateTime(appointmentStartTime)} - {formatDateTime(appointmentEndTime)}</Text>
           </Section>
 
           <Text style={text}>
-            Please prepare for this session and ensure you have all necessary materials ready. 
-            You'll receive a meeting link shortly before the session begins.
+            We will send you an email once the mentor has confirmed your appointment. 
+            Please check your inbox for updates.
           </Text>
 
           <Text style={text}>
-            If you need to reschedule or have any questions about this appointment, 
-            please contact us at{' '}
-            <Link href="mailto:support@mentorup.com">support@mentorup.com</Link>
-          </Text>
-
-          <Text style={text}>
-            Thank you for being part of our mentorship community!
+            If you have any questions, please contact us at{' '}
+            <Link href="mailto:contactus@mentorup.com">contactus@mentorup.com</Link>
           </Text>
 
           <Hr style={hr} />
@@ -143,5 +134,5 @@ const footer = {
   marginTop: '16px',
 };
 
-export default MentorApptConfirmationEmail;
-export type { MentorApptConfirmationProps }; 
+export default MenteeApptRequestEmail;
+export type { MenteeApptRequestProps }; 

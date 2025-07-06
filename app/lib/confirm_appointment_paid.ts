@@ -43,11 +43,10 @@ export class ConfirmAppointmentPaidHelper {
         sendEmail(
           'MentorUP <contactus@mentorup.info>',
           mentee.email,
-          EmailTemplate.MENTEE_APPOINTMENT_CONFIRMATION,
+          EmailTemplate.MENTEE_APPOINTMENT_REQUEST,
           {
             userName: mentee.username,
             serviceName: appointment.service_type,
-            price: appointment.price,
             mentorName: mentor.username,
             appointmentStartTime: appointment.start_time,
             appointmentEndTime: appointment.end_time
@@ -57,10 +56,9 @@ export class ConfirmAppointmentPaidHelper {
         sendEmail(
           'MentorUP <contactus@mentorup.info>',
           mentor.email,
-          EmailTemplate.MENTOR_APPOINTMENT_CONFIRMATION,
+          EmailTemplate.MENTOR_APPOINTMENT_REQUEST,
           {
             mentorName: mentor.username,
-            menteeName: mentee.username,
             serviceName: appointment.service_type,
             appointmentStartTime: appointment.start_time,
             appointmentEndTime: appointment.end_time,
