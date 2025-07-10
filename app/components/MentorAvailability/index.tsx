@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import {useState, useEffect} from 'react';
 import {
     Card,
     Calendar,
@@ -10,14 +10,16 @@ import {
     message,
     Radio,
 } from 'antd';
-import type { Dayjs } from 'dayjs';
+import type {Dayjs} from 'dayjs';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import styles from './mentorAvailability.module.css';
-import { supabase } from '../../services/supabase'; // 确保路径正确
+import {supabase} from '../../services/supabase'; // 确保路径正确
+import {ClockCircleOutlined} from '@ant-design/icons';
+
 
 dayjs.extend(utc);
-const { Text } = Typography;
+const {Text} = Typography;
 
 interface TimeSlot {
     slot_time: string;
@@ -46,6 +48,13 @@ export default function MentorAvailability({
     const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs());
     const [heldSlots, setHeldSlots] = useState<Set<string>>(new Set());
 
+    const [userTimezone, setUserTimezone] = useState('');
+
+    useEffect(() => {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        setUserTimezone(tz);
+    }, []);
+
     useEffect(() => {
         const fetchAvailability = async () => {
             const startDate = currentMonth.startOf('month').format('YYYY-MM-DD');
@@ -58,7 +67,7 @@ export default function MentorAvailability({
                 const data: AvailabilityResponse = await response.json();
 
                 // ✅ 改成用 Supabase 查询 held slots
-                const { data: holdData, error: holdError } = await supabase
+                const {data: holdData, error: holdError} = await supabase
                     .from('temp_holds')
                     .select('time_slot')
                     .eq('mentor_id', mentorId)
@@ -83,7 +92,7 @@ export default function MentorAvailability({
                     const availabilityMap = new Map<string, string[]>();
                     const nowPlus24h = dayjs().add(24, 'hour');
 
-                    data.data.forEach(({ slot_time }) => {
+                    data.data.forEach(({slot_time}) => {
                         try {
                             let start: string, end: string;
 
@@ -129,7 +138,7 @@ export default function MentorAvailability({
     const dateCellRender = (date: Dayjs) => {
         const dateStr = date.format('YYYY-MM-DD');
         const hasSlots = availabilityData.has(dateStr);
-        return hasSlots ? <div className={styles.availabilityDot} /> : null;
+        return hasSlots ? <div className={styles.availabilityDot}/> : null;
     };
 
     const handleDateSelect = (date: Dayjs) => {
@@ -147,7 +156,7 @@ export default function MentorAvailability({
         setSelectedSlot(null);
     };
 
-    const headerRender = ({ value }: { value: Dayjs }) => {
+    const headerRender = ({value}: { value: Dayjs }) => {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         return (
             <div className={styles.calendarHeader}>
@@ -161,7 +170,7 @@ export default function MentorAvailability({
                 <Select
                     size="small"
                     value={value.year()}
-                    options={Array.from({ length: 10 }, (_, i) => ({
+                    options={Array.from({length: 10}, (_, i) => ({
                         label: value.year() - 5 + i,
                         value: value.year() - 5 + i,
                     }))}
@@ -189,6 +198,12 @@ export default function MentorAvailability({
                     <Text strong className={styles.timeSlotsTitle}>
                         Available Time Slots on {selectedDate.format('MMMM D, YYYY')}
                     </Text>
+                    <div style={{display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 12px'}}>
+                        <ClockCircleOutlined style={{color: '#999'}}/>
+                        <span style={{color: '#555', fontSize: 13}}>
+                            Times are shown in your local timezone: <strong>{userTimezone}</strong>
+                        </span>
+                    </div>
 
                     {availabilityData.has(selectedDate.format('YYYY-MM-DD')) ? (
                         <>
@@ -224,7 +239,7 @@ export default function MentorAvailability({
                                 block
                                 disabled={!selectedSlot}
                                 className={styles.scheduleButton}
-                                style={{ marginTop: 20 }}
+                                style={{marginTop: 20}}
                                 onClick={() => {
                                     if (selectedDate && selectedSlot) {
                                         const [startStr] = selectedSlot.split(' - ');
