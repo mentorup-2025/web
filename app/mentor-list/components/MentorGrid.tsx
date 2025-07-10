@@ -5,51 +5,17 @@ import Link from 'next/link';
 import { UserOutlined } from '@ant-design/icons';
 import styles from '../search.module.css';
 import { useEffect, useState } from 'react';
+import { Mentor, SearchFiltersType } from '../../../types';
 
-interface Service {
-  type: string;
-  price: number;
-}
-
-interface Mentor {
-  user_id: string;
-  username: string;
-  email: string;
-  profile_url?: string; // avatar
-  industries: string[];
-  mentor: {
-    title: string;
-    introduction: string;
-    company: string;
-    years_of_experience: number;
-    services: {
-      [key: string]: Service;
-    };
-    user_id: string;
-    created_at: string;
-  };
-}
-
-interface SearchFilters {
-  jobTitle?: string;
-  industries?: string[];
-  minExperience?: number;
-  maxExperience?: number;
-  minPrice?: number;
-  maxPrice?: number;
-  serviceTypes?: string[];
-}
 
 interface MentorGridProps {
-  filters: SearchFilters;
+  filters: SearchFiltersType;
   mentors: Mentor[];
   loading: boolean;
 }
 
 export default function MentorGrid({ filters, mentors, loading }: MentorGridProps) {
   const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
-
-  console.log('mentors', mentors);
 
   useEffect(() => {
     const filtered = mentors.filter(mentor => {

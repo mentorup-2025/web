@@ -6,44 +6,14 @@ import Navbar from '../components/Navbar';
 import SearchFilters from './components/SearchFilters';
 import MentorGrid from './components/MentorGrid';
 import { useState, useEffect } from 'react';
+import { Mentor, SearchFiltersType } from '../../types';
 
 const { Content } = Layout;
 
-interface Service {
-  type: string;
-  price: number;
-}
 
-interface Mentor {
-  user_id: string;
-  username: string;
-  email: string;
-  industries: string[];
-  mentor: {
-    title: string;
-    introduction: string;
-    company: string;
-    years_of_experience: number;
-    services: {
-      [key: string]: Service | number;
-    };
-    user_id: string;
-    created_at: string;
-  };
-}
-
-interface SearchFilters {
-  jobTitle?: string;
-  industries?: string[];
-  minExperience?: number;
-  maxExperience?: number;
-  minPrice?: number;
-  maxPrice?: number;
-  serviceTypes?: string[];
-}
 
 export default function SearchPage() {
-  const [filters, setFilters] = useState<SearchFilters>({});
+  const [filters, setFilters] = useState<SearchFiltersType>({});
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -65,7 +35,7 @@ export default function SearchPage() {
     fetchMentors();
   }, []);
 
-  const handleFiltersChange = (newFilters: SearchFilters) => {
+  const handleFiltersChange = (newFilters: SearchFiltersType) => {
     setFilters(newFilters);
   };
 

@@ -124,7 +124,9 @@ const RescheduleModal = ({
                                         ]}
                                     >
                                         <DatePicker.RangePicker
-                                            showTime={{ format: 'HH:mm', minuteStep: 60 }}
+                                            // note: build error
+                                            // showTime={{ format: 'HH:mm', minuteStep: 60 }}
+                                            showTime={{ format: 'HH:mm' }}
                                             format="YYYY-MM-DD HH:mm"
                                         />
                                     </Form.Item>
