@@ -67,10 +67,8 @@ export default function MentorProfilePage() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [draftIntro, setDraftIntro] = useState('');
   const [servicesModalVisible, setServicesModalVisible] = useState(false);
-  const [userLinkedin, setUserLinkedin] = useState<string>('');
 
   const { user, isSignedIn } = useUser();
-  console.log('user', user, isSignedIn);
   const isOwnProfile = isSignedIn && user?.id === mentorId;
 
   // 用于处理 URL hash 切换选项卡
@@ -461,7 +459,10 @@ export default function MentorProfilePage() {
                       className={styles.infoCard}
                       style={{ borderRadius: '2px' }}
                   >
-                    <Paragraph>{introduction}</Paragraph>
+                    <Paragraph>{introduction && introduction.trim()
+                      ? introduction
+                      : "This mentor hasn't added a self introduction yet."}
+                    </Paragraph>
                   </Card>
 
 

@@ -60,12 +60,12 @@ export default function Navbar() {
 
           <Space className={styles.headerRight}>
             <SignedOut>
-              <SignInButton mode="modal">
-                <Button type="text">Login</Button>
-              </SignInButton>
               <SignUpButton mode="modal">
-                <Button type="primary">Sign Up</Button>
+                <Button type="primary">Become a Mentor/Mentee</Button>
               </SignUpButton>
+              <SignInButton mode="modal">
+                <Button type="default">Login</Button>
+              </SignInButton>
             </SignedOut>
 
             <SignedIn>

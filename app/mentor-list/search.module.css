@@ -132,7 +132,28 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+
+  min-height: 4cqb; /* Clamp to 3 rows */
+  overflow: hidden;
+  position: relative;
+  
 }
+
+.mentorTag {
+  height: fit-content;
+}
+/* 
+Optional: Add a fade-out effect at the bottom for better UX
+.mentorTags::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1.2em;
+  background: linear-gradient(to bottom, transparent, white 80%);
+  pointer-events: none;
+} */
 
 .cardFooter {
   display: flex;
@@ -233,4 +254,15 @@
     opacity: 1;
     transform: translateY(0);
   }
+} 
+
+.mentor-intro-ellipsis {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 1.15rem; /* or your preferred size */
+  min-height: 3.6em;  /* ensures space for 3 lines, adjust as needed */
+  line-height: 1.2;   /* adjust to match your design */
 } 

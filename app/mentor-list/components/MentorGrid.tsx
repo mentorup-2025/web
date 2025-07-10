@@ -23,7 +23,7 @@ interface Mentor {
     company: string;
     years_of_experience: number;
     services: {
-      [key: string]: Service | number;
+      [key: string]: Service;
     };
     user_id: string;
     created_at: string;
@@ -48,6 +48,8 @@ interface MentorGridProps {
 
 export default function MentorGrid({ filters, mentors, loading }: MentorGridProps) {
   const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
+
+  console.log('mentors', mentors);
 
   useEffect(() => {
     const filtered = mentors.filter(mentor => {
@@ -142,11 +144,15 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
           
           <div className={styles.mentorTags}>
             {user.industries.map(industry => (
-              <Tag key={industry}>{industry}</Tag>
+              <Tag className={styles.mentorTag} key={industry}>{industry}</Tag>
             ))}
           </div>
           
           <div className={styles.cardFooter}>
+            <div className="text-blue-600 text-lg">
+              {user.mentor.services[0].price}/hour
+            </div>
+            
             <Link href={`/mentor/${user.user_id}`}>
               <Button type="primary" className={styles.scheduleButton}>
                 Schedule

@@ -22,7 +22,7 @@ export default function MentorProfilePage() {
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Sign In Required</h1>
           <p className="text-gray-600 mb-6">Please sign in to view your mentor profile.</p>
           <button
-            onClick={() => router.push('/sign-in')}
+            onClick={() => router.push('/login')}
             className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
             Sign In

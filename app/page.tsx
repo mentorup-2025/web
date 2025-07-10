@@ -1,5 +1,5 @@
 'use client'
-import { SignedIn, SignedOut, SignInButton, SignUpButton, useUser,useClerk } from '@clerk/nextjs';
+import { SignedIn, SignedOut, SignInButton, SignUpButton, useUser, useClerk } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { Button, Space, Drawer, Collapse } from 'antd';
 import { MenuOutlined } from '@ant-design/icons';
@@ -9,6 +9,7 @@ import { Switch } from 'antd'
 import MarqueeSection from './MarqueeSection'
 import styles from './styles/features.module.css'
 import { useState, useEffect, useRef } from 'react'
+import { Role } from '../types'
 
 // Translation object with all your content
 const translations = {
@@ -160,12 +161,10 @@ export default function Home() {
   const router = useRouter();
   const { user, isSignedIn } = useUser();
 
-
-
   const { signOut } = useClerk();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const isMentor = user?.publicMetadata?.role === 'mentor';
+  const isMentor = user?.publicMetadata?.role === Role.MENTOR;
 
   useEffect(() => {
     const checkMentorStatus = async () => {
@@ -339,13 +338,13 @@ export default function Home() {
               </div>
               <Space>
                 <SignedOut>
-                  <SignInButton mode="modal">
-                    <Button type="text">Login</Button>
-                  </SignInButton>
-                  {' '}
-                  <SignUpButton mode="modal">
-                    <Button type="primary">Sign Up</Button>
+                <SignUpButton mode="modal">
+                    <Button type="primary">Become a Mentor/Mentee</Button>
                   </SignUpButton>
+                  {' '}
+                  <SignInButton mode="modal">
+                    <Button type="default">Login</Button>
+                  </SignInButton>
                 </SignedOut>
                 <SignedIn>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
