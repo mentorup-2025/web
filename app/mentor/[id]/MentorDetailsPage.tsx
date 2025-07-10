@@ -309,7 +309,10 @@ export default function MentorDetailsPage() {
                   <MentorAvailability
                       mentorId={mentor.user_id}
                       onSlotSelect={(date, time) => setSelectedSlot({ date, time })}
-                      onBook={() => setIsBookingModalVisible(true)}
+                      onBook={() => {
+                        setStep(2); // ⬅️ 直接从第二步开始
+                        setIsBookingModalVisible(true);
+                      }}
                   />
                 </SignedIn>
                 <SignedOut>

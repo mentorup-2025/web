@@ -15,11 +15,11 @@ const SUGGESTIONS = [
 
 const REPLIES: Record<string, string> = {
     "Apply to become a mentor":
-        "You can apply through your dashboard under the 'Mentor Program' tab.",
+        "Click the “Become a Mentor” button at the top-right corner and submit your application. We’ll review it internally and let you know within 1 business day.",
     "Payment methods":
-        "We currently support credit/debit cards, PayPal, and bank transfers.",
+        "We accept USD payments via credit/debit card or RMB payment with WeChat Pay.",
     "Update account details":
-        "Navigate to your profile settings to update personal information.",
+        "Email us at contactus@mentorup.info and we’ll get back to you within 24 hours.",
 };
 
 function SuggestionButtons({ onSelect }: { onSelect: (msg: string) => void }) {
