@@ -125,7 +125,9 @@ const RescheduleModal = ({
                                         ]}
                                     >
                                         <DatePicker.RangePicker
-                                            showTime={{ format: 'HH:mm', minuteStep: 60 }}
+                                            // note: build error
+                                            // showTime={{ format: 'HH:mm', minuteStep: 60 }}
+                                            showTime={{ format: 'HH:mm' }}
                                             format="YYYY-MM-DD HH:mm"
                                         />
                                     </Form.Item>
@@ -196,8 +198,13 @@ export default function MySessionsTab() {
                 const enriched = await Promise.all(rawAppts.map(async a => {
                     // parse timeslot…
                     const m = a.time_slot.match(/\[(.*?),(.*?)\)/) || [];
-                    const start = m[1] ? dayjs.utc(m[1]).local() : dayjs.invalid;
-                    const end   = m[2] ? dayjs.utc(m[2]).local() : dayjs.invalid;
+
+                    // note: build error with `dayjs.invalid`
+                    // const start = m[1] ? dayjs.utc(m[1]).local() : dayjs.invalid;
+                    // const end   = m[2] ? dayjs.utc(m[2]).local() : dayjs.invalid;
+                    // note: not ideal, but use today's date as fallback
+                    const start = m[1] ? dayjs.utc(m[1]).local() : dayjs.utc(new Date());
+                    const end   = m[2] ? dayjs.utc(m[2]).local() : dayjs.utc(new Date());
 
                     const otherId = a.mentor_id === user.id ? a.mentee_id : a.mentor_id;
 
