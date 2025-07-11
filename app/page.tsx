@@ -1,4 +1,6 @@
 'use client'
+import { useState, useEffect, useRef } from 'react'
+
 import { SignedIn, SignedOut, SignInButton, SignUpButton, useUser, useClerk } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { Button, Space, Drawer, Collapse } from 'antd';
@@ -8,8 +10,8 @@ import Link from 'next/link'
 import { Switch } from 'antd'
 import MarqueeSection from './MarqueeSection'
 import styles from './styles/features.module.css'
-import { useState, useEffect, useRef } from 'react'
 import { Role } from '../types'
+import { useMentorStatus } from './hooks/useMentorStatus';
 
 // Translation object with all your content
 const translations = {
@@ -164,6 +166,7 @@ export default function Home() {
   const { signOut } = useClerk();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
+
   const isMentor = user?.publicMetadata?.role === Role.MENTOR;
 
   useEffect(() => {
