@@ -1,4 +1,5 @@
 'use client';
+import { useState, useRef } from 'react';
 
 import {
   SignedIn,
@@ -11,7 +12,7 @@ import {
 import { Button, Layout, Space } from 'antd';
 import { useRouter } from 'next/navigation';
 import styles from './navbar.module.css';
-import { useState, useEffect, useRef } from 'react';
+import { useMentorStatus } from '../hooks/useMentorStatus';
 
 const { Header } = Layout;
 
@@ -19,25 +20,10 @@ export default function Navbar() {
   const router = useRouter();
   const { user } = useUser();
   const { signOut } = useClerk();
-  const [isMentor, setIsMentor] = useState<boolean | null>(true);
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const checkMentorStatus = async () => {
-      if (user?.id) {
-        try {
-          const response = await fetch(`/api/user/${user.id}`);
-          const data = await response.json();
-          setIsMentor(data.data.mentor !== null);
-        } catch (error) {
-          console.error('Error checking mentor status:', error);
-        }
-      }
-    };
-
-    checkMentorStatus();
-  }, [user?.id]);
+  const { isMentor } = useMentorStatus();
 
   const handleBecomeMentor = () => {
     if (user?.id) {

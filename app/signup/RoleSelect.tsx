@@ -1,8 +1,7 @@
 'use client';
-import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
-import { Role } from '../../types'
 import styles from './signupProcess.module.css';
+import { useMentorStatus } from '../hooks/useMentorStatus';
 
 interface RoleSelectProps {
   userId: string;
@@ -10,9 +9,7 @@ interface RoleSelectProps {
 
 export default function RoleSelect({ userId }: RoleSelectProps) {
   const router = useRouter();
-  const { user } = useUser();
-
-  const isMentor = user?.publicMetadata?.role === Role.MENTOR;
+  const { isMentor } = useMentorStatus();
 
   const handleRoleSelect = (role: 'mentor' | 'mentee') => {
     router.push(`/signup/${role}/${userId}`);
