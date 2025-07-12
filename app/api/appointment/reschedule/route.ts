@@ -7,9 +7,17 @@ import { EmailTemplate } from '@/types/email';
 import { convertUTCToPDT } from '@/lib/utc_to_pdt';
 import { CreateRescheduleProposalInput } from '@/types';
 import { respData, respErr } from '@/lib/resp';
+import { auth } from '@clerk/nextjs/server';
 
 export async function POST(request: NextRequest) {
   try {
+    // Get user from Clerk session
+    const { userId } = await auth();
+    
+    if (!userId) {
+      return respErr('Unauthorized: User not authenticated');
+    }
+
     const body = await request.json();
     
     // Validate required fields
@@ -17,6 +25,11 @@ export async function POST(request: NextRequest) {
     
     if (!appointment_id || !proposed_time_ranges || !receiver || !proposer) {
       return respErr('Missing required fields: appointment_id, proposed_time_ranges, receiver, proposer');
+    }
+
+    // Validate that the authenticated user is either the receiver or proposer
+    if (userId !== receiver && userId !== proposer) {
+      return respErr('Unauthorized: User can only reschedule appointments they are involved in');
     }
 
     // Validate proposed_time_ranges is an array
@@ -57,7 +70,7 @@ export async function POST(request: NextRequest) {
 
     const proposal = await createRescheduleProposal(input);
 
-    console.log(`Reschedule proposal created for appointment ${appointment_id}`);
+    console.log(`Reschedule proposal created for appointment ${appointment_id} by user ${userId}`);
 
     // Send emails to both proposer and receiver
     try {

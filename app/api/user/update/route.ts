@@ -1,9 +1,17 @@
 import { respData, respErr } from '@/lib/resp';
 import { updateUser } from '@/lib/user';
 import { UpdateUserInput } from '@/types';
+import { auth } from '@clerk/nextjs/server';
 
 export async function POST(request: Request) {
     try {
+        // Get user from Clerk session
+        const { userId: sessionUserId } = await auth();
+        
+        if (!sessionUserId) {
+            return respErr('Unauthorized: User not authenticated');
+        }
+
         // Get update data from request
         const updateData = await request.json() as UpdateUserInput & { userId: string };
         console.log('Received update data:', updateData);
@@ -11,6 +19,11 @@ export async function POST(request: Request) {
         // Validate required fields
         if (!updateData.userId) {
             return respErr('Missing required field: userId');
+        }
+
+        // Validate that the authenticated user ID matches the user ID in the request
+        if (sessionUserId !== updateData.userId) {
+            return respErr('Unauthorized: User ID from session does not match userId in request');
         }
 
         // Extract userId and create update input
@@ -26,6 +39,9 @@ export async function POST(request: Request) {
         try {
             const updatedUser = await updateUser(userId, updateInput);
             console.log('User updated successfully:', updatedUser);
+            
+            console.log(`User profile updated for user ${sessionUserId}`);
+            
             return respData(updatedUser);
         } catch (updateError) {
             console.error('Error in updateUser function:', updateError);
