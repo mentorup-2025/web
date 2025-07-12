@@ -68,15 +68,18 @@ export async function cancelAppointmentPayment(
   appointmentId: string
 ) {
   try {
-    const { data, error } = await getSupabaseClient()
-      .rpc('cancel_booking', {
-        appointment_id: appointmentId
-      });
+    // Delete the appointment row directly from the database
+    const { error } = await getSupabaseClient()
+      .from('appointments')
+      .delete()
+      .eq('id', appointmentId);
 
     if (error) {
-      console.error('Error canceling booking:', error);
+      console.error('Error canceling appointment:', error);
       throw error;
     }
+
+    console.log(`Appointment ${appointmentId} canceled and deleted from database`);
 
     return respOk;
 

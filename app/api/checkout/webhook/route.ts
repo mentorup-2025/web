@@ -7,6 +7,7 @@ import { EmailTemplate } from '@/types/email';
 import { getAppointment } from '@/lib/appointment';
 import { getUser } from '@/lib/user';
 import { ConfirmAppointmentPaidHelper } from '@/lib/confirm_appointment_paid';
+import { cancelAppointmentPayment } from '@/lib/appointment';
 
 export const runtime = 'nodejs';
 
@@ -55,6 +56,29 @@ export async function POST(request: Request) {
       } catch (error) {
         console.error(' Failed to  confirm appointment:', error);
         return NextResponse.json({ error: 'Failed to confirm appointment' }, { status: 500 });
+      }
+    }
+
+    // Handle payment failures, cancellations, and requires_action
+    if (event.type === 'payment_intent.payment_failed' || 
+        event.type === 'payment_intent.canceled' || 
+        event.type === 'payment_intent.requires_action') {
+      
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      const appointmentId = paymentIntent.metadata?.appointmentId;
+
+      if (!appointmentId) {
+        console.error('Missing appointmentId in metadata for failed/canceled payment');
+        return NextResponse.json({ error: 'Missing appointmentId' }, { status: 400 });
+      }
+
+      try {
+        console.log(`🗑️ Canceling appointment ${appointmentId} due to payment event: ${event.type}`);
+        await cancelAppointmentPayment(appointmentId);
+        console.log(`✅ Appointment ${appointmentId} successfully canceled and deleted`);
+      } catch (error) {
+        console.error(`❌ Failed to cancel appointment ${appointmentId}:`, error);
+        return NextResponse.json({ error: 'Failed to cancel appointment' }, { status: 500 });
       }
     }
 
