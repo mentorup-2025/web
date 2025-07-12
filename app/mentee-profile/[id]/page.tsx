@@ -76,29 +76,30 @@ export default function MenteeProfilePage() {
   }, []);
 
   const fetchUserData = async () => {
+    setLoading(true);
     try {
       const response = await fetch(`/api/user/${menteeId}`);
       const result = await response.json();
 
       if (result.code === 200) {
+        // 成功时清空任何旧的 error
+        setError(null);
         const data = result.data;
-
         setUserData(data);
-        setDraftUsername(result.data.username || '');
+        setDraftUsername(data.username || '');
         setDraftJobTarget({
           level: data.job_target?.level || '',
           title: data.job_target?.title || '',
         });
-        setDraftLinkedin(result.data.linkedin || '');
-        setIntroduction(result.data.introduction || '');
-        return result.data;
+        setDraftLinkedin(data.linkedin || '');
+        setIntroduction(data.introduction || '');
       } else {
         throw new Error(result.message || 'Failed to fetch user data');
       }
     } catch (err: any) {
       console.error('Error fetching user data:', err);
+      // 只 setError，不再 throw
       setError(err.message);
-      throw err;
     } finally {
       setLoading(false);
     }
