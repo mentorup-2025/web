@@ -450,7 +450,7 @@ export default function MySessionsTab() {
                                 }}
                             >
                                 <Text strong style={{ display: 'block', marginBottom: 12 }}>
-                                    Your mentee requested to reschedule. Please choose a slot or click “Decline”.
+                                    Your mentee requested to reschedule. Please choose a slot or click “Propose New Time”.
                                 </Text>
 
                                 <Radio.Group
@@ -479,7 +479,7 @@ export default function MySessionsTab() {
                                         Confirm
                                     </Button>
                                     <Button onClick={() => handleDecline(appt.id, appt.proposal!.id)}>
-                                        Decline
+                                        Propose New Time
                                     </Button>
                                 </div>
                             </div>

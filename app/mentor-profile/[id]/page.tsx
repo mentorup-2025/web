@@ -8,6 +8,7 @@ import {
   Space,
   Card,
   Input,
+  Select,
   message,
   Modal,
   Button,
@@ -29,8 +30,6 @@ const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
 const { TextArea } = Input;
 
-// 前端展示时使用的所有服务类型：
-// key 要和后端返回的 service.type 对应，label 是给用户看的文字
 const allServiceTypes = [
   { key: 'consultation', label: 'Free Coffee Chat (15 mins)' },
   { key: 'mock_interview', label: 'Mock Interview' },
@@ -44,6 +43,81 @@ const allServiceTypes = [
   { key: 'grad_school', label: 'Grad School Application Advice' },
 ];
 
+const jobTitleOptions = [
+  {
+    label: 'Software & IT',
+    options: [
+      { value: 'Software Engineer', label: 'Software Engineer' },
+      { value: 'Software Developer', label: 'Software Developer' },
+      { value: 'Data Analyst', label: 'Data Analyst' },
+      { value: 'Data Scientist', label: 'Data Scientist' },
+      { value: 'Business Analyst', label: 'Business Analyst' },
+      { value: 'Systems Analyst', label: 'Systems Analyst' },
+      { value: 'Web Developer', label: 'Web Developer' },
+      { value: 'Full Stack Developer', label: 'Full Stack Developer' },
+      { value: 'Java Developer', label: 'Java Developer' },
+      { value: 'Python Developer', label: 'Python Developer' },
+      { value: 'DevOps Engineer', label: 'DevOps Engineer' },
+      { value: 'Cloud Engineer', label: 'Cloud Engineer' },
+      { value: 'Machine Learning Engineer', label: 'Machine Learning Engineer' },
+      { value: 'Network Engineer', label: 'Network Engineer' },
+      { value: 'Database Administrator', label: 'Database Administrator' },
+      { value: 'IT Project Manager', label: 'IT Project Manager' },
+      { value: 'Information Security Analyst', label: 'Information Security Analyst' },
+    ],
+  },
+  {
+    label: 'Engineering',
+    options: [
+      { value: 'Mechanical Engineer', label: 'Mechanical Engineer' },
+      { value: 'Electrical Engineer', label: 'Electrical Engineer' },
+      { value: 'Civil Engineer', label: 'Civil Engineer' },
+      { value: 'Manufacturing Engineer', label: 'Manufacturing Engineer' },
+      { value: 'Industrial Engineer', label: 'Industrial Engineer' },
+      { value: 'Quality Engineer', label: 'Quality Engineer' },
+    ],
+  },
+  {
+    label: 'Finance & Business',
+    options: [
+      { value: 'Financial Analyst', label: 'Financial Analyst' },
+      { value: 'Accountant', label: 'Accountant' },
+      { value: 'Auditor', label: 'Auditor' },
+      { value: 'Management Analyst', label: 'Management Analyst' },
+      { value: 'Market Research Analyst', label: 'Market Research Analyst' },
+      { value: 'Economist', label: 'Economist' },
+      { value: 'Operations Research Analyst', label: 'Operations Research Analyst' },
+    ],
+  },
+  {
+    label: 'Healthcare & Science',
+    options: [
+      { value: 'Medical Scientist', label: 'Medical Scientist' },
+      { value: 'Biochemist', label: 'Biochemist' },
+      { value: 'Research Associate', label: 'Research Associate' },
+      { value: 'Pharmacist', label: 'Pharmacist' },
+      { value: 'Physical Therapist', label: 'Physical Therapist' },
+    ],
+  },
+  {
+    label: 'Education',
+    options: [
+      { value: 'Postsecondary Teacher', label: 'Postsecondary Teacher' },
+      { value: 'Research Assistant', label: 'Research Assistant' },
+      { value: 'Instructional Coordinator', label: 'Instructional Coordinator' },
+    ],
+  },
+  {
+    label: 'Other Tech & Support Roles',
+    options: [
+      { value: 'UI/UX Designer', label: 'UI/UX Designer' },
+      { value: 'Product Manager', label: 'Product Manager' },
+      { value: 'QA Analyst', label: 'QA Analyst' },
+      { value: 'Technical Support Specialist', label: 'Technical Support Specialist' },
+      { value: 'ERP Consultant', label: 'ERP Consultant (e.g., SAP, Oracle)' },
+    ],
+  },
+];
 export default function MentorProfilePage() {
   const params = useParams();
   const mentorId = params?.id as string;
@@ -77,75 +151,68 @@ export default function MentorProfilePage() {
     if (hash) setActiveTab(hash);
   }, []);
 
-  // —— 1. 组件挂载／mentorId 变化时，从 /api/mentor/list 抓数据 ——
-  useEffect(() => {
-    const fetchMentorData = async () => {
-      setLoading(true);
-      if (!mentorId) {
-        setLoading(false);
-        return;
+  const fetchMentorData = async () => {
+    setLoading(true);
+    let found = null;
+
+    try {
+      // 拉 mentor 列表
+      const res = await fetch('/api/mentor/list');
+      const json = await res.json();
+      if (!res.ok || json.code !== 200 || !Array.isArray(json.data)) {
+        throw new Error(json.message || 'Failed to fetch mentors');
       }
+      found = json.data.find((m: any) => m.user_id === mentorId);
+
+      // 如果列表里没找到，或者抛错了就兜底 user 接口
+    } catch {
       try {
-        const res = await fetch(`/api/mentor/list`);
-        const json = await res.json();
-
-        if (res.ok && Array.isArray(json.data)) {
-          const found = (json.data as any[]).find(item => item.user_id === mentorId);
-          if (found) {
-            setMentorData(found);
-
-            // —— 初始化“编辑资料”的草稿  ——
-            setDraftUsername(found.username || '');
-            setDraftTitle(found.mentor?.title || '');
-            setDraftCompany(found.mentor?.company || '');
-            setDraftLinkedin(found.linkedin || '');
-
-            // 1) 把 Introduction 存起来
-            setIntroduction(found.mentor?.introduction || '');
-
-            // 2) 处理 services（原有逻辑）……
-            const rawServices = found.mentor?.services ?? {};
-            const boolMap: Record<string, boolean> = {};
-            const priceMap: Record<string, number> = {};
-
-            if (Array.isArray(rawServices)) {
-              rawServices.forEach((one: any) => {
-                const k = one.type as string;
-                const p = Number(one.price);
-                boolMap[k] = true;
-                priceMap[k] = isNaN(p) ? 0 : p;
-              });
-            } else {
-              Object.entries(rawServices).forEach(([k, v]) => {
-                boolMap[k] = true;
-                priceMap[k] = Number(v);
-              });
-            }
-
-            setServices(boolMap);
-            setServicePrices(priceMap);
-          } else {
-            setMentorData(null);
-          }
-        } else {
-          setMentorData(null);
-        }
-        // 2. 新增：从 /api/user/[id] 拉取 introduction
-          const userRes = await fetch(`/api/user/${mentorId}`);
-          if (userRes.ok) {
-              const userJson = await userRes.json();
-              setIntroduction(userJson.data.introduction || '');
-
-          }
-
-      } catch (err) {
-        console.error(err);
-        setMentorData(null);
-      } finally {
-        setLoading(false);
+        const userRes = await fetch(`/api/user/${mentorId}`);
+        const userJson = await userRes.json();
+        found = {
+          user_id: userJson.data.user_id,
+          username: userJson.data.username,
+          linkedin: userJson.data.linkedin,
+          profile_url: userJson.data.profile_url,
+          mentor: userJson.data.mentor || {},
+        };
+      } catch {
+        found = null;
       }
-    };
+    }
 
+    // 最终设置所有 state
+    if (found) {
+      setMentorData(found);
+      setDraftUsername(found.username || '');
+      setDraftTitle(found.mentor?.title || '');
+      setDraftCompany(found.mentor?.company || '');
+      setDraftLinkedin(found.linkedin || '');
+      setIntroduction(found.mentor?.introduction || '');
+
+      // 初始化 services/statePrices…
+      const boolMap: Record<string, boolean> = {};
+      const priceMap: Record<string, number> = {};
+      (found.mentor?.services ?? []).forEach((svc: any) => {
+        boolMap[svc.type] = true;
+        priceMap[svc.type] = Number(svc.price) || 0;
+      });
+      setServices(boolMap);
+      setServicePrices(priceMap);
+    } else {
+      setMentorData(null);
+    }
+
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    fetchMentorData();
+    return () => { mounted = false; };
+  }, [mentorId]);
+
+  useEffect(() => {
     fetchMentorData();
   }, [mentorId]);
 
@@ -168,65 +235,46 @@ export default function MentorProfilePage() {
 
   // —— “保存资料” 按钮被点击 ——
   const handleSaveProfile = async () => {
-    // 1. 本地先把 mentorData.username／mentor.title／mentor.company 更新
-    setMentorData((prev: any) => ({
-      ...prev,
-      username: draftUsername,
-      mentor: {
-        ...prev.mentor,
-        title: draftTitle,
-        company: draftCompany,
-        linkedin: draftLinkedin,
-      },
-    }));
     setEditProfileVisible(false);
-
-    // 2. 调用 /api/user/update 更新 displayName
     try {
+      // 1) 更新 displayName
       const userUpdateResp = await fetch(`/api/user/update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: mentorId,               // 这里把 mentorId 当作 userId 传给后端
-          username: draftUsername,     // 新的用户名
+          userId: mentorId,
+          username: draftUsername,
           linkedin: draftLinkedin,
         }),
       });
-
-      if (userUpdateResp.ok) {
-        message.success('Username updated successfully');
-      } else {
-        message.error('Failed to update username');
+      if (!userUpdateResp.ok) {
+        throw new Error('Failed to update username');
       }
-    } catch (error) {
-      console.error('Error updating user profile:', error);
-      message.error('Unexpected error while updating username');
-    }
 
-    // 3. 调用 /api/mentor/upsert/${mentorId} 更新 title 和 company
-    try {
+      // 2) 更新 title & company（并可选带上 introduction/services）
       const mentorUpsertResp = await fetch(`/api/mentor/upsert/${mentorId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: draftTitle,
           company: draftCompany,
-          // 如果后端 upsert 接口同时需要 introduction 或 services，可一并传：
           introduction,
           services: Object.entries(services)
-              .filter(([key, checked]) => checked)
-              .map(([key]) => ({ type: key, price: servicePrices[key] || 0 })),
+              .filter(([_, v]) => v)
+              .map(([type]) => ({ type, price: servicePrices[type] || 0 })),
         }),
       });
-
-      if (mentorUpsertResp.ok) {
-        message.success('Title & Company updated successfully');
-      } else {
-        message.error('Failed to update title/company');
+      if (!mentorUpsertResp.ok) {
+        throw new Error('Failed to update title/company');
       }
-    } catch (error) {
-      console.error('Error updating mentor data:', error);
-      message.error('Unexpected error while updating title/company');
+
+      message.success('Profile updated successfully');
+
+      // 👇 关键：更新完后再拉一下最新数据
+      await fetchMentorData();
+    } catch (err: any) {
+      console.error(err);
+      message.error(err.message || 'Unexpected error');
     }
   };
   // —— 2. 打开“编辑 Services”弹窗，把当前 state 复制到草稿里 ——
@@ -416,11 +464,17 @@ export default function MentorProfilePage() {
               {/* Title */}
               <div style={{ marginBottom: 12 }}>
                 <Text strong>Title</Text>
-                <Input
+                <Select
+                    showSearch
+                    placeholder="Select your professional title, type to search"
+                    optionFilterProp="label"
+                    filterOption={(input, option) =>
+                        option?.label.toLowerCase().includes(input.toLowerCase())
+                    }
                     value={draftTitle}
-                    onChange={e => setDraftTitle(e.target.value)}
-                    placeholder="Enter your title"
-                    style={{ marginTop: 4 }}
+                    onChange={value => setDraftTitle(value)}
+                    options={jobTitleOptions}
+                    style={{ width: '100%', marginTop: 4 }}
                 />
               </div>
 
@@ -566,11 +620,59 @@ export default function MentorProfilePage() {
                           placeholder="Enter your hourly rate"
                           style={{ width: '100%', marginTop: 4 }}
                       />
-                      <div style={{ marginTop: 4 }}>
+                      <div style={{ marginTop: 8, marginBottom: 8 }}>
                         <Text type="secondary" style={{ fontSize: 12 }}>
-                          We suggest you start with $20-40/hour.
+                          We suggest you start with one of the following ranges based on your current status:
                         </Text>
                       </div>
+
+                      {/* 建议价格表 */}
+                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                        <thead>
+                        <tr>
+                          <th style={{ borderBottom: '1px solid #f0f0f0', padding: '4px' }}>Status</th>
+                          <th style={{ borderBottom: '1px solid #f0f0f0', padding: '4px' }}>Suggested Price</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                          <td style={{ padding: '4px' }}>Student</td>
+                          <td style={{ padding: '4px' }}>$20–60</td>
+                        </tr>
+                        <tr>
+                          <td style={{ padding: '4px' }}>New Graduate</td>
+                          <td style={{ padding: '4px' }}>$30–75</td>
+                        </tr>
+                        <tr>
+                          <td style={{ padding: '4px' }}>Entry Level</td>
+                          <td style={{ padding: '4px' }}>$30–90</td>
+                        </tr>
+                        <tr>
+                          <td style={{ padding: '4px' }}>Intermediate</td>
+                          <td style={{ padding: '4px' }}>$50–110</td>
+                        </tr>
+                        <tr>
+                          <td style={{ padding: '4px' }}>Senior</td>
+                          <td style={{ padding: '4px' }}>$60–130</td>
+                        </tr>
+                        <tr>
+                          <td style={{ padding: '4px' }}>Manager</td>
+                          <td style={{ padding: '4px' }}>$90–170</td>
+                        </tr>
+                        <tr>
+                          <td style={{ padding: '4px' }}>Director</td>
+                          <td style={{ padding: '4px' }}>$120–220</td>
+                        </tr>
+                        <tr>
+                          <td style={{ padding: '4px' }}>Executive</td>
+                          <td style={{ padding: '4px' }}>$180–300</td>
+                        </tr>
+                        <tr>
+                          <td style={{ padding: '4px' }}>Startup Founder</td>
+                          <td style={{ padding: '4px' }}>$250–300</td>
+                        </tr>
+                        </tbody>
+                      </table>
                     </div>
 
                     {/* —— 2. 所有服务复选框 —— */}

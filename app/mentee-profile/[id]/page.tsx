@@ -13,8 +13,10 @@ import {
   Button,
   message,
   Upload,
+  Select,
   Tag
 } from 'antd';
+
 import {
   EditOutlined,
   LinkedinFilled,
@@ -37,6 +39,7 @@ const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
 const { TextArea } = Input;
 const { Dragger } = Upload;
+const { Option } = Select;
 
 interface JobTarget {
   level: string;
@@ -427,16 +430,67 @@ export default function MenteeProfilePage() {
                       placeholder="Enter your username"
                       style={{ marginBottom: 12 }}
                   />
+
                   <Text strong>Job Target Level</Text>
-                  <Input
-                      value={draftJobTarget.level}                // MODIFIED: bind level
-                      onChange={e => setDraftJobTarget(prev => ({ ...prev, level: e.target.value }))} // MODIFIED: update level
-                  />
+                  <Select
+                      value={draftJobTarget.level}
+                      onChange={level => setDraftJobTarget(prev => ({ ...prev, level }))}
+                      placeholder="Select your desired job level"
+                      style={{ width: '100%', marginBottom: 12, marginTop: 4 }}
+                  >
+                    <Option value="entry">Entry Level</Option>
+                    <Option value="intermediate">Intermediate</Option>
+                    <Option value="senior">Senior</Option>
+                    <Option value="lead">Lead</Option>
+                    <Option value="manager">Manager</Option>
+                    <Option value="director">Director</Option>
+                    <Option value="executive">Executive</Option>
+                  </Select>
+
                   <Text strong>Job Target Title</Text>
-                  <Input
-                      value={draftJobTarget.title}                // MODIFIED: bind title
-                      onChange={e => setDraftJobTarget(prev => ({ ...prev, title: e.target.value }))} // MODIFIED: update title
-                  />
+                  <Select
+                      showSearch
+                      value={draftJobTarget.title}
+                      onChange={title => setDraftJobTarget(prev => ({ ...prev, title }))}
+                      placeholder="Select your target job role"
+                      optionFilterProp="children"
+                      filterOption={(input, option) =>
+                          (option?.children as string).toLowerCase().includes(input.toLowerCase())
+                      }
+                      style={{ width: '100%', marginBottom: 12, marginTop: 4 }}
+                  >
+                    <Option value="ai_researcher">AI Researcher</Option>
+                    <Option value="backend_engineer">Backend Engineer</Option>
+                    <Option value="blockchain_developer">Blockchain Developer</Option>
+                    <Option value="business_analyst">Business Analyst</Option>
+                    <Option value="business_intelligence">Business Intelligence</Option>
+                    <Option value="cloud_architect">Cloud Architect</Option>
+                    <Option value="data_analyst">Data Analyst</Option>
+                    <Option value="data_engineer">Data Engineer</Option>
+                    <Option value="data_scientist">Data Scientist</Option>
+                    <Option value="database_administrator">Database Administrator</Option>
+                    <Option value="devops_engineer">DevOps Engineer</Option>
+                    <Option value="engineering_manager">Engineering Manager</Option>
+                    <Option value="frontend_engineer">Frontend Engineer</Option>
+                    <Option value="fullstack_engineer">Full Stack Engineer</Option>
+                    <Option value="game_developer">Game Developer</Option>
+                    <Option value="machine_learning_engineer">Machine Learning Engineer</Option>
+                    <Option value="mobile_developer">Mobile Developer</Option>
+                    <Option value="network_engineer">Network Engineer</Option>
+                    <Option value="product_designer">Product Designer</Option>
+                    <Option value="product_manager">Product Manager</Option>
+                    <Option value="project_manager">Project Manager</Option>
+                    <Option value="qa_engineer">QA Engineer</Option>
+                    <Option value="security_engineer">Security Engineer</Option>
+                    <Option value="software_engineer">Software Engineer</Option>
+                    <Option value="solution_architect">Solution Architect</Option>
+                    <Option value="system_administrator">System Administrator</Option>
+                    <Option value="technical_lead">Technical Lead</Option>
+                    <Option value="technical_product_manager">Technical Product Manager</Option>
+                    <Option value="ui_designer">UI Designer</Option>
+                    <Option value="ux_designer">UX Designer</Option>
+                  </Select>
+
                   <Text strong>LinkedIn URL</Text>
                   <Input
                       value={draftLinkedin}
