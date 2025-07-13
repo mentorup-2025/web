@@ -585,11 +585,15 @@ export default function MentorDetailsPage() {
           <p>Check your email for session details.</p>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
             <Button onClick={() => setIsSuccessModalVisible(false)}>Stay On This Page</Button>
-            <Button type="primary" onClick={() => window.location.href = '/my-sessions'}>
+            <Button
+                type="primary"
+                onClick={() => window.location.href = `/mentee-profile/${user?.id}#sessions`}
+            >
               View All My Booked Sessions
             </Button>
           </div>
         </Modal>
+
 
         <Modal
             open={isWeChatModalVisible}
