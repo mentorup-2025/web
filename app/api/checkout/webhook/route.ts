@@ -56,13 +56,12 @@ export async function POST(request: Request) {
       } catch (error) {
         console.error(' Failed to  confirm appointment:', error);
         return NextResponse.json({ error: 'Failed to confirm appointment' }, { status: 500 });
-      }
+      } 
     }
 
     // Handle payment failures, cancellations, and requires_action
     if (event.type === 'payment_intent.payment_failed' || 
-        event.type === 'payment_intent.canceled' || 
-        event.type === 'payment_intent.requires_action') {
+        event.type === 'payment_intent.canceled') {
       
       const paymentIntent = event.data.object as Stripe.PaymentIntent;
       const appointmentId = paymentIntent.metadata?.appointmentId;
