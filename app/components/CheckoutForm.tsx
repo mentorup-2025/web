@@ -8,18 +8,20 @@ import { loadStripe } from '@stripe/stripe-js';
 
 interface CheckoutFormProps {
     amount: number;
+    appointmentId?: string;
 }
 
 // Initialize Stripe outside of component
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
-export default function CheckoutForm({ amount }: CheckoutFormProps) {
+export default function CheckoutForm({ amount, appointmentId }: CheckoutFormProps) {
     const elements = useElements();
     const stripe = useStripe();
     const searchParams = useSearchParams();
     const [loading, setLoading] = useState(false);
+    const localAppointmentId = appointmentId ?? searchParams?.get('appointmentId');
 
-    const appointmentId = searchParams?.get('appointmentId');
+    //const appointmentId = searchParams?.get('appointmentId');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
