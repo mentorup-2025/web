@@ -468,9 +468,10 @@ export default function MentorProfilePage() {
                     showSearch
                     placeholder="Select your professional title, type to search"
                     optionFilterProp="label"
-                    filterOption={(input, option) =>
-                        option?.label.toLowerCase().includes(input.toLowerCase())
-                    }
+                    filterOption={(input, option) => {
+                      if (!option || typeof option.label !== 'string') return false;
+                      return option.label.toLowerCase().includes(input.toLowerCase());
+                    }}
                     value={draftTitle}
                     onChange={value => setDraftTitle(value)}
                     options={jobTitleOptions}
