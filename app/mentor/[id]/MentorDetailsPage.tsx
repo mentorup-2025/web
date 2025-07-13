@@ -348,7 +348,11 @@ export default function MentorDetailsPage() {
 
           {step === 2 && (
               <div>
-                <p style={{ marginBottom: 8 }}><strong>What kind of support are you looking for?</strong></p>
+                <p style={{ marginBottom: 8 }}>
+                  <strong>
+                    What kind of support are you looking for? <span style={{ color: 'red' }}>*</span>
+                  </strong>
+                </p>
                 <Select
                     style={{ width: '100%', marginBottom: 16 }}
                     placeholder="Pick the topic you want to focus on."
