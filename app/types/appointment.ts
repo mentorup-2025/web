@@ -18,6 +18,7 @@ export interface CreateAppointmentInput {
     end_time: string;    // ISO string format
     service_type: string;
     price: number;
+    resume_url?: string; // 加上resume的url
 }
 
 export interface ConfirmAppointmentPaidInput {

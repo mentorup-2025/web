@@ -13,7 +13,8 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
           start_time: input.start_time,
           end_time: input.end_time,
           service_type: input.service_type,
-          price: input.price
+          price: input.price,
+          resume_url: input.resume_url || null // 加上resume的url
         }
       });
 

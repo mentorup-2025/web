@@ -414,11 +414,24 @@ export default function MentorDetailsPage() {
                         </div>
                         <DeleteOutlined
                             style={{ color: '#999', cursor: 'pointer' }}
-                            onClick={() => {
+                            onClick={async () => {
                               setResume(null);
                               setUserResume(null);
+
+                              if (user?.id) {
+                                await fetch('/api/user/update', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    userId: user.id,
+                                    resume: null,
+                                  }),
+                                });
+                              }
                             }}
                         />
+
+
                       </div>
                   )}
 
