@@ -45,7 +45,7 @@ const RefundProcessedEmail: React.FC<RefundProcessedProps> = ({
 
                     <Text style={text}>
                         If you have any concerns or questions, feel free to contact us at{' '}
-                        <Link href="mailto:support@mentorup.com">support@mentorup.com</Link>.
+                        <Link href="mailto:contactus@mentorup.info">contactus@mentorup.info</Link>.
                         We're here to help!
                     </Text>
 

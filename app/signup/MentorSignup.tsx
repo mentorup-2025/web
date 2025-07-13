@@ -180,8 +180,6 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
           >
             <Input.TextArea rows={4} placeholder="Share your experience and why you want to be a mentor." />
           </Form.Item>
-
-          
         </>
       ),
     },
@@ -340,7 +338,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
           {/* suggestion text */}
           {suggestion && (
             <div style={{ marginTop: '-8px', marginBottom: '16px' }}>
-              <Text style={{ color: '#1990ff', fontSize: '14px', fontWeight: 'normal' }}>
+              <Text style={{ color: '#9254DE', fontSize: '14px', fontWeight: 'normal' }}>
                 Based on your experience, we suggest you start with {suggestion}/hour
               </Text>
             </div>
@@ -402,6 +400,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
           <Button 
             type="primary" 
             size="large"
+            className={styles.button}
             onClick={() => router.push(`/mentor-profile/${userId}`)}
           >
             Setup your availability
@@ -436,8 +435,8 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
 
   const onFinish = async (allValues: any) => {
     try {
-      // construct services array from selected services and base price
-      const services = (allValues.servicesList || []).map((type: string) => ({ type, price: allValues.basePrice }));
+      // construct services array from selected services and base price - Price logic: $5 + 45% markup
+      const services = (allValues.servicesList || []).map((type: string) => ({ type, price: 5 + 1.45 * allValues.basePrice }));
 
       const mentorData = {
         company: allValues.company,
@@ -541,7 +540,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                     Previous
                   </Button>
                 )}
-                <Button type="primary" onClick={next}>
+                <Button type="primary" onClick={next} className={styles.button}>
                   Next
                 </Button>
               </div>

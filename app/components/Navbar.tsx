@@ -37,7 +37,7 @@ export default function Navbar() {
           <div className={styles.headerLeft}>
             <h1
                 className={styles.logo}
-                onClick={() => router.push('/')}
+                onClick={() => router.push('/mentor-list')}
                 style={{ cursor: 'pointer' }}
             >
               MentorUp
