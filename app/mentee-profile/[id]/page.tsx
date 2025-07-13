@@ -455,9 +455,10 @@ export default function MenteeProfilePage() {
                       onChange={title => setDraftJobTarget(prev => ({ ...prev, title }))}
                       placeholder="Select your target job role"
                       optionFilterProp="children"
-                      filterOption={(input, option) =>
-                          (option?.children as string).toLowerCase().includes(input.toLowerCase())
-                      }
+                      filterOption={(input, option) => {
+                          if (!option || typeof option.label !== 'string') return false;
+                          return option.label.toLowerCase().includes(input.toLowerCase());
+                      }}
                       style={{ width: '100%', marginBottom: 12, marginTop: 4 }}
                   >
                     <Option value="ai_researcher">AI Researcher</Option>
