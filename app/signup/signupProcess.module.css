@@ -90,6 +90,11 @@
   display: none !important;
 }
 
+.steps :global(.ant-steps-item-title)::after {
+  background-color: #9254DE;
+  top: -28px;
+} 
+
 .stepsContent {
   margin-top: 16px;
 }
@@ -103,7 +108,14 @@
 }
 
 .stepsContent h2 .blue {
-  color: #1677ff;
+  color: #9254DE;
+}
+.button {
+  background-color: #9254DE;
+}
+.button:hover,
+.button:where(.css-dev-only-do-not-override-1d4w9r2).ant-btn-variant-solid:not(:disabled):not(.ant-btn-disabled):hover  {
+  background-color: #7729d6!important;
 }
 
 .form {
@@ -163,19 +175,19 @@
 .industryBubble:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border-color: #1890ff;
-  color: #1890ff;
+  border-color: #9254DE;
+  color: #9254DE;
 }
 
 .industryBubble.selected {
-  background-color: #1890ff;
+  background-color: #9254DE;
   color: white;
-  border-color: #1890ff;
+  border-color: #9254DE;
   box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
 }
 
 .industryBubble.selected:hover {
-  background-color: #40a9ff;
+  background-color: #7729d6;
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(24, 144, 255, 0.4);
 }

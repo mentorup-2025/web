@@ -49,7 +49,7 @@ const OrderContactEmail: React.FC<OrderContactEmailProps> = ({
                     <Text style={text}>
                         If you have additional details to share or need urgent assistance, feel free to reply
                         to this email or contact us directly at{' '}
-                        <Link href="mailto:support@mentorup.com">support@mentorup.com</Link>.
+                        <Link href="mailto:contactus@mentorup.info">contactus@mentorup.info</Link>.
                     </Text>
 
                     <Hr style={hr} />

@@ -62,9 +62,9 @@ const translations = {
     'Who can I contact about orders or appointments?': 'Who can I contact about orders or appointments?',
     'How do I request a refund?': 'How do I request a refund?',
     'faq1': 'To apply as a mentor, please visit the Become a Mentor page and fill out the application form. Our team will review your application and get back to you within 3-5 business days.',
-    'faq2': 'We accept all major credit cards, PayPal, and WeChat Pay.',
+    'faq2': 'Currently, we accept all major credit cards and PayPal. Support for WeChat Pay is coming soon',
     'faq3': 'You can update your account details from your profile page after logging in.',
-    'faq4': 'For any order or appointment inquiries, please contact our support team at support@mentorup.com.',
+    'faq4': 'For any order or appointment inquiries, please contact our support team at contactus@mentorup.info.',
     'faq5': 'To request a refund, please visit your order history and click on "Request Refund" next to the relevant order.',
     'Kevin Zhang': 'Kevin Zhang',
     'Senior Software Engineer at Google': 'Senior Software Engineer at Google',
@@ -132,9 +132,9 @@ const translations = {
     'Who can I contact about orders or appointments?': '订单或预约相关问题如何联系？',
     'How do I request a refund?': '如何申请退款？',
     'faq1': '如需申请成为导师，请访问"成为导师"页面并填写申请表。我们的团队将在3-5个工作日内审核并回复您。',
-    'faq2': '我们支持主流信用卡、PayPal和微信支付。',
+    'faq2': '我们支持主流信用卡和 PayPal，微信支付暂未开放，敬请期待。',
     'faq3': '登录后可在个人主页更新账户信息。',
-    'faq4': '如有订单或预约相关问题，请联系support@mentorup.com。',
+    'faq4': '如有订单或预约相关问题，请联系contactus@mentorup.info。',
     'faq5': '如需申请退款，请在订单历史中点击相关订单旁的"申请退款"按钮。',
     'Kevin Zhang': 'Kevin Zhang',
     'Senior Software Engineer at Google': '谷歌高级软件工程师',
@@ -659,9 +659,8 @@ export default function Home() {
               <p className="text-gray-500 text-sm mt-8">
                 ©2025 MentorUp contactemail@mentorup.com.
               </p>
-            <p className="text-gray-500 text-sm mt-8 flex justify-center gap-6">
-             <a href="">Privacy Policy</a>
-             <a href="">Term of use</a>
+                        <p className="text-gray-500 text-sm mt-8 flex justify-center gap-6">
+              <a href="/privacy">Privacy Policy & Term of use</a>
             </p>
             </div>
             

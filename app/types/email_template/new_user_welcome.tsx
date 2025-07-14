@@ -46,7 +46,7 @@ const NewUserWelcomeEmail: React.FC<NewUserWelcomeProps> = ({
           <Text style={text}>
             If you have any questions or need assistance, our support team is here to help. 
             Contact us at{' '}
-            <Link href="mailto:support@mentorup.com">support@mentorup.com</Link>
+            <Link href="mailto:contactus@mentorup.info">contactus@mentorup.info</Link>
           </Text>
 
           <Hr style={hr} />

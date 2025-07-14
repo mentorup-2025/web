@@ -288,7 +288,7 @@ export default function MenteeSignu({ userId }: MenteeSignupProps) {
                     Previous
                   </Button>
                 )}
-                <Button type="primary" onClick={next}>
+                <Button type="primary" onClick={next} className={styles.button}>
                   Next
                 </Button>
               </div>
