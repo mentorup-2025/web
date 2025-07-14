@@ -31,7 +31,6 @@ export interface CancelAppointmentInput {
 
 export interface UpdateAppointmentInput {
     appointment_id: string;
-    time_slot?: [string, string];  // [start_time, end_time]
     status?: 'confirmed' | 'completed' | 'canceled' | 'noshow';
     link?: string;  // Google Meet link
     resume_url?: string; // Resume URL

@@ -93,7 +93,6 @@ export async function cancelAppointmentPayment(
 export async function updateAppointment(
   appointmentId: string,
   updates: {
-    time_slot?: [string, string];  // [start_time, end_time]
     status?: 'confirmed' | 'completed' | 'canceled' | 'noshow' | 'reschedule_in_progress' | 'paid';
     link?: string;  // Google Meet link
     resume_url?: string; // Resume URL
@@ -104,10 +103,6 @@ export async function updateAppointment(
   try {
     // Prepare update data
     const updateData: any = {};
-
-    if (updates.time_slot) {
-      updateData.time_slot = `[${updates.time_slot[0]},${updates.time_slot[1]})`;
-    }
 
     if (updates.status) {
       updateData.status = updates.status;
