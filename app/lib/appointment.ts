@@ -96,6 +96,9 @@ export async function updateAppointment(
     time_slot?: [string, string];  // [start_time, end_time]
     status?: 'confirmed' | 'completed' | 'canceled' | 'noshow' | 'reschedule_in_progress' | 'paid';
     link?: string;  // Google Meet link
+    resume_url?: string; // Resume URL
+    extra_info?: string; // Extra information
+    description?: string; // Description
   }
 ) {
   try {
@@ -112,6 +115,18 @@ export async function updateAppointment(
 
     if (updates.link) {
       updateData.link = updates.link;
+    }
+
+    if (updates.resume_url) {
+      updateData.resume_url = updates.resume_url;
+    }
+
+    if (updates.extra_info) {
+      updateData.extra_info = updates.extra_info;
+    }
+
+    if (updates.description) {
+      updateData.description = updates.description;
     }
 
     // Add updated_at timestamp
