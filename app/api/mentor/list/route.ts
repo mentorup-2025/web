@@ -15,3 +15,6 @@ export async function GET() {
         return respJson(500, 'Failed to fetch mentors');
     }
 }
+
+export const revalidate = 0;
+
