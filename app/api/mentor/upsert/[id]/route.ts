@@ -1,7 +1,7 @@
 import { upsertMentor } from '@/lib/mentor';
 import { respErr, respJson } from '@/lib/resp';
 import { auth } from '@clerk/nextjs/server';
-import { revalidateTag } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 export async function POST(
     request: Request,
@@ -26,6 +26,7 @@ export async function POST(
         const mentor = await upsertMentor(params.id, body);
 
         revalidateTag('mentorlist');
+        revalidatePath('/mentor-list');
         console.log(`Mentor profile updated for user ${userId}`);
         
         return respJson(200, 'Mentor updated successfully', mentor);
