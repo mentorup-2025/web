@@ -1,5 +1,4 @@
 'use client';
-
 import Link from 'next/link';
 import {
   Layout,
@@ -113,7 +112,13 @@ export default function MentorDetailsPage() {
           return;
         }
 
-        setMentor(result.data);
+// 👇 展平结构，把 mentor 信息合并进来
+        const mergedMentor = {
+          ...result.data,
+          ...(result.data.mentor || {}),
+        };
+        setMentor(mergedMentor);
+
       } catch (err) {
         console.error('Error fetching mentor:', err);
         message.error('Unexpected error fetching mentor');
@@ -194,13 +199,8 @@ export default function MentorDetailsPage() {
         const start_time = new Date(`${dateStr} ${startTimeStr}`).toISOString();
         const end_time = new Date(`${dateStr} ${endTimeStr}`).toISOString();
 
-        const servicePriceMap: Record<string, number> = {
-          'Resume Review': 3000,
-          'Interview Preparation': 4000,
-          'Career Guidance': 5000,
-        };
-
-        const calculatedPrice = servicePriceMap[supportType ?? ''] ?? 1500;
+        const calculatedPrice =
+            mentor.services?.find((s: any) => s.type === supportType)?.price ?? 1500;
 
         const response = await fetch('/api/appointment/insert', {
           method: 'POST',
@@ -254,6 +254,12 @@ export default function MentorDetailsPage() {
     }
   };
 
+  const supportTopics: { name: string }[] = Array.isArray(mentor?.services)
+      ? mentor.services.map((s: any) =>
+          typeof s === 'string' ? { name: s } : { name: s.type }
+      )
+      : [];
+
   const handleBecomeMentor = () => {
     if (!isSignedIn) return;
     router.push(`/signup/mentor/${user?.id}`);
@@ -297,11 +303,18 @@ export default function MentorDetailsPage() {
                 </Card>
                 <Card className={styles.infoCard} title="Services" bordered>
                   <div className={styles.serviceTags}>
-                    {['Resume Review', 'Interview Preparation', 'Career Guidance'].map((service) => (
-                        <Tag key={service} className={styles.serviceTag}>{service}</Tag>
-                    ))}
+                    {Array.isArray(mentor.services) && mentor.services.length > 0 ? (
+                        mentor.services.map((service: any, idx: number) => (
+                            <Tag key={idx} className={styles.serviceTag}>
+                              {service.type} - ¥{(service.price / 100).toFixed(2)}
+                            </Tag>
+                        ))
+                    ) : (
+                        <Text type="secondary">This mentor has not listed any services.</Text>
+                    )}
                   </div>
                 </Card>
+
               </div>
 
               <div className={styles.rightSection}>
@@ -357,14 +370,14 @@ export default function MentorDetailsPage() {
                 <Select
                     style={{ width: '100%', marginBottom: 16 }}
                     placeholder="Pick the topic you want to focus on."
-                    options={[
-                      { value: 'Resume Review', label: 'Resume Review' },
-                      { value: 'Interview Preparation', label: 'Interview Preparation' },
-                      { value: 'Career Guidance', label: 'Career Guidance' },
-                    ]}
+                    options={supportTopics.map((topic) => ({
+                      value: topic.name,
+                      label: topic.name,
+                    }))}
                     value={supportType}
                     onChange={setSupportType}
                 />
+
 
                 <p style={{ marginBottom: 8, marginTop: 24 }}><strong>Help your mentor understand you better</strong></p>
                 <TextArea
@@ -575,9 +588,6 @@ export default function MentorDetailsPage() {
               </div>
           )}
 
-
-
-
           {step === 4 && (
               <div>
                 <p>Jumping to the payment page...</p>
@@ -611,7 +621,6 @@ export default function MentorDetailsPage() {
             </Button>
           </div>
         </Modal>
-
 
         <Modal
             open={isWeChatModalVisible}
