@@ -156,33 +156,45 @@ export default function MentorAvailability({
         setSelectedSlot(null);
     };
 
-    const headerRender = ({value}: { value: Dayjs }) => {
+    const headerRender = ({ value }: { value: Dayjs }) => {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
         return (
-            <div className={styles.calendarHeader}>
-                <Button onClick={() => handlePanelChange(value.subtract(1, 'month'))} className={styles.navButton}>
-                    {'<'}
-                </Button>
-                <span className={styles.monthText}>{months[value.month()]}</span>
-                <Button onClick={() => handlePanelChange(value.add(1, 'month'))} className={styles.navButton}>
-                    {'>'}
-                </Button>
-                <Select
-                    size="small"
-                    value={value.year()}
-                    options={Array.from({length: 10}, (_, i) => ({
-                        label: value.year() - 5 + i,
-                        value: value.year() - 5 + i,
-                    }))}
-                    onChange={(newYear) => handlePanelChange(value.year(newYear))}
-                    className={styles.yearSelect}
-                />
+            <div className={styles.calendarHeaderWrapper}>
+                {/* ✅ 上：时区显示 */}
+                <div className={styles.timezoneText}>
+                    <span role="img" aria-label="globe">🌐</span>{' '}
+                    <strong>(GMT{dayjs().format('Z')}) {userTimezone}</strong>
+                </div>
+
+                {/* ✅ 下：月份和年份选择区域 */}
+                <div className={styles.calendarHeader}>
+                    <Button onClick={() => handlePanelChange(value.subtract(1, 'month'))} className={styles.navButton}>
+                        {'<'}
+                    </Button>
+                    <span className={styles.monthText}>{months[value.month()]}</span>
+                    <Button onClick={() => handlePanelChange(value.add(1, 'month'))} className={styles.navButton}>
+                        {'>'}
+                    </Button>
+                    <Select
+                        size="small"
+                        value={value.year()}
+                        options={Array.from({ length: 10 }, (_, i) => ({
+                            label: value.year() - 5 + i,
+                            value: value.year() - 5 + i,
+                        }))}
+                        onChange={(newYear) => handlePanelChange(value.year(newYear))}
+                        className={styles.yearSelect}
+                    />
+                </div>
             </div>
         );
     };
 
+
+
     return (
-        <Card title="Mentor's Availability" className={styles.availabilityCard}>
+        <Card className={styles.availabilityCard}>
             <Calendar
                 fullscreen={false}
                 onSelect={handleDateSelect}
@@ -198,12 +210,30 @@ export default function MentorAvailability({
                     <Text strong className={styles.timeSlotsTitle}>
                         Available Time Slots on {selectedDate.format('MMMM D, YYYY')}
                     </Text>
-                    <div style={{display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 12px'}}>
-                        <ClockCircleOutlined style={{color: '#999'}}/>
-                        <span style={{color: '#555', fontSize: 13}}>
-                            Times are shown in your local timezone: <strong>{userTimezone}</strong>
-                        </span>
+                    {/*可选的具体时间选择处的时区显示*/}
+                    {/*<div style={{display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 12px'}}>*/}
+                    {/*    <ClockCircleOutlined style={{color: '#999'}}/>*/}
+                    {/*    <span style={{color: '#555', fontSize: 13}}>*/}
+                    {/*        Times are shown in your local timezone: <strong>{userTimezone}</strong>*/}
+                    {/*    </span>*/}
+                    {/*</div>*/}
+
+                    <div style={{
+                        backgroundColor: '#f9f9ff',
+                        borderLeft: '4px solid #1890ff',
+                        padding: '12px 16px',
+                        borderRadius: 4,
+                        margin: '8px 0 16px',
+                        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+                    }}>
+                        <div style={{ color: '#1890ff', fontWeight: 600, fontSize: 14 }}>
+                            <span role="img" aria-label="megaphone">📣</span> Your first 15-min coffee chat is on us!
+                        </div>
+                        <div style={{ color: '#1890ff', fontSize: 13, marginTop: 4 }}>
+                            Pick any available slot — your session will take place in the first 15 min.
+                        </div>
                     </div>
+
 
                     {availabilityData.has(selectedDate.format('YYYY-MM-DD')) ? (
                         <>

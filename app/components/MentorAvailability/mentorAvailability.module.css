@@ -140,3 +140,15 @@
   border-color: #1890ff;
   background-color: #f0f7ff;
 }
+
+/*.calendarHeaderWrapper {*/
+/*  display: flex;*/
+/*  flex-direction: column;*/
+/*  align-items: center;*/
+/*}*/
+
+.timezoneText {
+  font-size: 14px;
+  text-align: left;
+  margin-bottom: 12px; /* 控制时区和年月之间的间距 */
+}

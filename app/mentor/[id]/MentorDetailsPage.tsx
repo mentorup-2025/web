@@ -112,7 +112,6 @@ export default function MentorDetailsPage() {
           return;
         }
 
-// 👇 展平结构，把 mentor 信息合并进来
         const mergedMentor = {
           ...result.data,
           ...(result.data.mentor || {}),
@@ -245,7 +244,6 @@ export default function MentorDetailsPage() {
     setStep(step + 1);
   };
 
-
   const handleBack = () => {
     if (step === 1) {
       setIsBookingModalVisible(false);
@@ -271,7 +269,6 @@ export default function MentorDetailsPage() {
   return (
       <Layout className={styles.layout}>
         <NavBar />
-
         <Content style={{ paddingTop: 88 }} className={styles.content}>
           {/* NavBar is fixed, so we add paddingTop to avoid overlap */}
           <div className={styles.container}>
@@ -324,7 +321,7 @@ export default function MentorDetailsPage() {
                       mentorId={mentor.user_id}
                       onSlotSelect={(date, time) => setSelectedSlot({ date, time })}
                       onBook={() => {
-                        setStep(2); // ⬅️ 直接从第二步开始
+                        setStep(2); // 直接从第二步开始
                         setIsBookingModalVisible(true);
                       }}
                   />
@@ -378,7 +375,6 @@ export default function MentorDetailsPage() {
                     onChange={setSupportType}
                 />
 
-
                 <p style={{ marginBottom: 8, marginTop: 24 }}><strong>Help your mentor understand you better</strong></p>
                 <TextArea
                     rows={4}
@@ -401,7 +397,7 @@ export default function MentorDetailsPage() {
                       <div
                           style={{
                             border: '1px solid #d9d9d9',
-                            borderBottom: 'none', // ⛳️ 关键！去掉底部边框以无缝连接下方上传框
+                            borderBottom: 'none', // 关键！去掉底部边框以无缝连接下方上传框
                             borderTopLeftRadius: 8,
                             borderTopRightRadius: 8,
                             padding: '12px 16px',
@@ -445,10 +441,8 @@ export default function MentorDetailsPage() {
                             }}
                         />
 
-
                       </div>
                   )}
-
 
                   {/* 拖拽上传框 */}
                   <Upload.Dragger
