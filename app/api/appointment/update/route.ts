@@ -75,4 +75,4 @@ export async function POST(request: Request) {
 
         return respErr('Failed to update appointment');
     }
-} 
+}
