@@ -26,7 +26,6 @@ export async function POST(
         const mentor = await upsertMentor(params.id, body);
 
         revalidateTag('mentorlist');
-        revalidatePath('/mentor-list');
         console.log(`Mentor profile updated for user ${userId}`);
         
         return respJson(200, 'Mentor updated successfully', mentor);

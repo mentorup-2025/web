@@ -5,8 +5,9 @@ import ClientSearchPage from "./ClientSearchPage";
 const { Content } = Layout;
 
 export default async function SearchPage() {
-  // Server-side data fetching with Vercel Data Cache
+  // Server-side data fetching with no caching to ensure fresh data
   const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/mentor/list`, {
+    cache: 'no-store',
     next: { tags: ['mentorlist'] }
   });
   const data = await res.json();
