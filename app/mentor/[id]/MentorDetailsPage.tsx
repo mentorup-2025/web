@@ -135,6 +135,7 @@ export default function MentorDetailsPage() {
 
       if (event.data?.type === 'paymentFailed') {
         console.log('🟠 Received paymentFailed from child window');
+        setIsBookingModalVisible(false);
         setIsPaymentFailedModalVisible(true);
       }
     };
