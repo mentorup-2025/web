@@ -12,5 +12,26 @@ export default async function SearchPage() {
   const data = await res.json();
   const mentors: Mentor[] = data.data || [];
 
-  return <ClientSearchPage initialMentors={mentors} />;
+  // Add timestamp to validate if page is cached
+  const timestamp = new Date().toISOString();
+  console.log('Page rendered at:', timestamp);
+
+  return (
+    <div>
+      {/* Debug info - remove in production */}
+      <div style={{ 
+        position: 'fixed', 
+        top: 0, 
+        right: 0, 
+        background: 'red', 
+        color: 'white', 
+        padding: '4px 8px', 
+        fontSize: '12px',
+        zIndex: 9999 
+      }}>
+        Rendered: {timestamp}
+      </div>
+      <ClientSearchPage initialMentors={mentors} />
+    </div>
+  );
 }
