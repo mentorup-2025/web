@@ -83,6 +83,20 @@ export default function MentorDetailsPage() {
           }]
           : [];
 
+  function getUserTimeZoneAbbreviation(): string {
+    try {
+      const formatter = new Intl.DateTimeFormat(undefined, {
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timeZoneName: 'short',
+      });
+
+      const parts = formatter.formatToParts(new Date());
+      const tzPart = parts.find(part => part.type === 'timeZoneName');
+      return tzPart?.value || '';
+    } catch {
+      return '';
+    }
+  }
 
   useEffect(() => {
     const fetchMenteeResume = async () => {
@@ -193,10 +207,26 @@ export default function MentorDetailsPage() {
       try {
         const dateStr = selectedSlot?.date!;
         const timeStr = selectedSlot?.time!;
-        const [startTimeStr, endTimeStr] = timeStr.split(' - ');
+        // const [startTimeStr, endTimeStr] = timeStr.split(' - ');
+        //
+        // const start_time = new Date(`${dateStr} ${startTimeStr}`).toISOString();
+        // const end_time = new Date(`${dateStr} ${endTimeStr}`).toISOString();
+        // 临时为15分钟coffee chat设置的逻辑
+        const [startTimeStr] = timeStr.split(' - ');
+        const startTimeObj = dayjs(`${dateStr} ${startTimeStr}`, 'YYYY-MM-DD h:mm A');
 
-        const start_time = new Date(`${dateStr} ${startTimeStr}`).toISOString();
-        const end_time = new Date(`${dateStr} ${endTimeStr}`).toISOString();
+        let endTimeObj: dayjs.Dayjs;
+
+        if (supportType === 'Free coffee chat (15 mins)') {
+          endTimeObj = startTimeObj.add(15, 'minute');
+        } else {
+          const [, endTimeStr] = timeStr.split(' - ');
+          endTimeObj = dayjs(`${dateStr} ${endTimeStr}`, 'YYYY-MM-DD h:mm A');
+        }
+
+        const start_time = startTimeObj.toISOString();
+        const end_time = endTimeObj.toISOString();
+
 
         const calculatedPrice =
             mentor.services?.find((s: any) => s.type === supportType)?.price ?? 1500;
@@ -257,6 +287,8 @@ export default function MentorDetailsPage() {
           typeof s === 'string' ? { name: s } : { name: s.type }
       )
       : [];
+
+  const userTzAbbr = getUserTimeZoneAbbreviation();
 
   const handleBecomeMentor = () => {
     if (!isSignedIn) return;
@@ -359,6 +391,26 @@ export default function MentorDetailsPage() {
 
           {step === 2 && (
               <div>
+                <p style={{ fontSize: 20, fontWeight: 600, marginBottom: 20 }}>
+                  Share the information below with the mentor.
+                </p>
+
+                {selectedSlot?.time && (
+                    <p style={{ fontSize: 15, fontWeight: 500, marginBottom: 20 }}>
+                      Session Time: {
+                      supportType === 'Free coffee chat (15 mins)'
+                          ? (() => {
+                            const [start] = selectedSlot.time.split(' - ');
+                            const startTime = dayjs(`2020-01-01 ${start}`, 'YYYY-MM-DD h:mm A');
+                            const endTime = startTime.add(15, 'minute'); // 15分钟coffee chat的逻辑
+                            return `${startTime.format('h:mm A')} - ${endTime.format('h:mm A')} ${userTzAbbr}`;
+                          })()
+                          : `${selectedSlot.time} ${userTzAbbr}`
+                    }
+                    </p>
+                )}
+
+
                 <p style={{ marginBottom: 8 }}>
                   <strong>
                     What kind of support are you looking for? <span style={{ color: 'red' }}>*</span>
