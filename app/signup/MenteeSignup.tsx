@@ -174,7 +174,7 @@ export default function MenteeSignu({ userId }: MenteeSignupProps) {
           <Button 
             type="primary" 
             size="large"
-            onClick={() => router.push('/search')}
+            onClick={() => router.push('/mentor-list')}
           >
             Start Exploration
           </Button>
