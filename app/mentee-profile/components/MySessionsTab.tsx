@@ -1,5 +1,6 @@
 'use client';
 
+import { useParams } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import {
     Card,
@@ -151,7 +152,9 @@ const RescheduleModal = ({
     );
 };
 export default function MySessionsTab() {
-    const { user } = useUser();
+    // const { user } = useUser();
+    const params = useParams();
+    const menteeId = params?.id as string;
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -166,14 +169,14 @@ export default function MySessionsTab() {
     const [isModalVisible, setIsModalVisible] = useState(false);
 
     const fetchAppointments = useCallback(async () => {
-        if (!user?.id) return;
+        if (!menteeId) return;
         setLoading(true);
         try {
             // 1) 获取所有 appointment
             const apptRes = await fetch('/api/appointment/get', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: user.id }),
+                body: JSON.stringify({ user_id: menteeId }),
             });
             const apptJson = await apptRes.json();
             if (!apptRes.ok || apptJson.code !== 0) {
@@ -182,7 +185,7 @@ export default function MySessionsTab() {
             const rawAppts: any[] = apptJson.data.appointments;
 
             // 2) 获取这一 mentee 收到的所有 proposals
-            const propRes = await fetch(`/api/reschedule_proposal/${user.id}`);
+            const propRes = await fetch(`/api/reschedule_proposal/${menteeId}`);
             const propJson = await propRes.json();
             if (!propRes.ok || propJson.code !== 0) {
                 throw new Error(propJson.message || '获取提案失败');
@@ -197,7 +200,7 @@ export default function MySessionsTab() {
 
             // 3) 预加载 otherUser 信息
             const otherIds = Array.from(new Set(
-                rawAppts.map(a => a.mentor_id === user.id ? a.mentee_id : a.mentor_id)
+                rawAppts.map(a => a.mentor_id === menteeId ? a.mentee_id : a.mentor_id)
             ));
             const userMap: Record<string, any> = {};
             await Promise.all(otherIds.map(async id => {
@@ -217,7 +220,7 @@ export default function MySessionsTab() {
                 }
                 const date = start.format('YYYY-MM-DD');
                 const time = `${start.format('HH:mm')} - ${end.format('HH:mm')}`;
-                const otherId = a.mentor_id === user.id ? a.mentee_id : a.mentor_id;
+                const otherId = a.mentor_id === menteeId ? a.mentee_id : a.mentor_id;
 
                 // 从 allProposals 中找出当前 appointment 对应的 proposal
                 const proposal = allProposals.find(p => p.appointment_id === a.id);
@@ -245,7 +248,7 @@ export default function MySessionsTab() {
         } finally {
             setLoading(false);
         }
-    }, [user?.id]);
+    }, [menteeId]);
 
     useEffect(() => {
         fetchAppointments();
@@ -311,7 +314,7 @@ export default function MySessionsTab() {
                 body: JSON.stringify({
                     appointment_id: repTarget.apptId,
                     proposed_time_ranges: [[s.toISOString(), e.toISOString()]],
-                    proposer: user!.id,
+                    proposer: menteeId,
                     receiver: appointments.find(a=>a.id===repTarget.apptId)!.otherUser.id
                 }),
             });
@@ -461,7 +464,7 @@ export default function MySessionsTab() {
                         body: JSON.stringify({
                             appointment_id: currentAppt!.id,
                             proposed_time_ranges: ranges,
-                            proposer: user!.id,
+                            proposer: menteeId,
                             receiver: currentAppt!.otherUser.id,
                         }),
                     });

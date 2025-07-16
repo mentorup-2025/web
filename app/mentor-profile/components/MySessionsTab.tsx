@@ -1,5 +1,6 @@
 'use client';
 
+import { useParams } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import {
     Card,
@@ -27,7 +28,7 @@ import {
     MinusCircleOutlined,
     PlusOutlined
 } from '@ant-design/icons';
-import { useUser } from '@clerk/nextjs';
+// import { useUser } from '@clerk/nextjs';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -36,7 +37,13 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const { Title, Text } = Typography;
-
+// 在组件顶部或合适的位置
+function getShortTimeZone() {
+    const dtf = new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' });
+    const parts = dtf.formatToParts(new Date());
+    const tz = parts.find(p => p.type === 'timeZoneName')?.value;
+    return tz || '';
+}
 interface Proposal {
     id: string;
     appointment_id: string;
@@ -152,7 +159,9 @@ const RescheduleModal = ({
     );
 };
 export default function MySessionsTab() {
-    const { user } = useUser();
+    // const { user } = useUser();
+    const params = useParams();
+    const mentorId = params?.id as string;
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -166,9 +175,18 @@ export default function MySessionsTab() {
     const [form] = Form.useForm();
     const [isRescheduleOpen, setIsRescheduleOpen] = useState(false)
 
+    const [isExplanationOpen, setIsExplanationOpen] = useState(false);
+    const [explanation, setExplanation] = useState('');
+    const [exForm] = Form.useForm();
+
+    const [isReviewOpen, setIsReviewOpen] = useState(false);
+    const [reviewAppt, setReviewAppt] = useState<Appointment | null>(null);
+
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [confirmAppt, setConfirmAppt] = useState<Appointment | null>(null);
 
     const fetchAppointments = useCallback(async () => {
-        if (!user?.id) return;
+        if (!mentorId) return;
 
         (async () => {
             setLoading(true);
@@ -177,7 +195,7 @@ export default function MySessionsTab() {
                 const apptRes = await fetch('/api/appointment/get', {
                     method: 'POST',
                     headers:{ 'Content-Type':'application/json' },
-                    body: JSON.stringify({ user_id: user.id }),
+                    body: JSON.stringify({ user_id: mentorId }),
                 });
                 const apptJson = await apptRes.json();
                 const rawAppts = apptJson.data.appointments as any[];
@@ -185,7 +203,7 @@ export default function MySessionsTab() {
                 // 2) 预载入每条 appointment “另一方” 的 user info
                 //    如果当前登录的是导师，另一方就是 mentee_id
                 const otherIds = Array.from(new Set(
-                    rawAppts.map(a => a.mentor_id === user.id ? a.mentee_id : a.mentor_id)
+                    rawAppts.map(a => a.mentor_id === mentorId ? a.mentee_id : a.mentor_id)
                 ));
                 const userMap: Record<string, any> = {};
                 await Promise.all(otherIds.map(async id => {
@@ -206,10 +224,10 @@ export default function MySessionsTab() {
                     const start = m[1] ? dayjs.utc(m[1]).local() : dayjs.utc(new Date());
                     const end   = m[2] ? dayjs.utc(m[2]).local() : dayjs.utc(new Date());
 
-                    const otherId = a.mentor_id === user.id ? a.mentee_id : a.mentor_id;
+                    const otherId = a.mentor_id === mentorId ? a.mentee_id : a.mentor_id;
 
                     // --- 关键：这里用 otherId 去拉提案列表 ---
-                    const pRes = await fetch(`/api/reschedule_proposal/${otherId}`);
+                    const pRes = await fetch(`/api/reschedule_proposal/${mentorId}`);
                     const pJson = await pRes.json();
                     let proposal: Proposal|undefined = undefined;
                     if (pRes.ok && pJson.code === 0 && Array.isArray(pJson.data)) {
@@ -249,12 +267,45 @@ export default function MySessionsTab() {
                 setLoading(false);
             }
         })();
-    }, [user?.id]);
+    }, [mentorId]);
 
     useEffect(() => {
         fetchAppointments();
     }, [fetchAppointments]);
+    const handleConfirmCurrentTime = async (appt: Appointment) => {
+        try {
+            // 拆分 "HH:mm - HH:mm"
+            const [startStr, endStr] = appt.time.split(' - ');
+            // 拼成完整的 ISO 时间
+            const startISO = dayjs(`${appt.date} ${startStr}`).toISOString();
+            const endISO   = dayjs(`${appt.date} ${endStr}`).toISOString();
 
+            const res = await fetch('/api/appointment/confirm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    appointment_id: appt.id,
+                    start_time: startISO,
+                    end_time: endISO,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || '确认失败');
+
+            message.success('已确认会话时间');
+            // 本地更新状态
+            setAppointments(list =>
+                list.map(a =>
+                    a.id === appt.id
+                        ? { ...a, status: 'confirmed', time: `${startStr} - ${endStr}` }
+                        : a
+                )
+            );
+        } catch (err: any) {
+            console.error(err);
+            message.error(err.message || '确认失败');
+        }
+    };
     // Accept：更新 appointment（status + time_slot）
     const handleAccept = async (prop: Proposal) => {
         try {
@@ -315,8 +366,8 @@ export default function MySessionsTab() {
                 body: JSON.stringify({
                     appointment_id: repTarget.apptId,
                     proposed_time_ranges: [[s.toISOString(), e.toISOString()]],
-                    proposer: appointments.find(a => a.id === repTarget.apptId)!.otherUser.id,
-                    receiver: user!.id,
+                    proposer: mentorId,
+                    receiver: appointments.find(a => a.id === repTarget.apptId)!.otherUser.id,
                 }),
             });
             message.success('已发送新提案');
@@ -348,7 +399,7 @@ export default function MySessionsTab() {
                 appointment_id: currentAppt.id,
                 proposed_time_ranges: [[start.toISOString(), end.toISOString()]],
                 proposer: currentAppt.otherUser.id,
-                receiver: user!.id,
+                receiver: mentorId,
             };
 
             const res = await fetch('/api/appointment/reschedule', {
@@ -401,108 +452,144 @@ export default function MySessionsTab() {
                         key={appt.id}
                         style={{ marginBottom: 16 }}
                         title={
-                            <Space>
-                                <CalendarOutlined /> {appt.date}
-                                <ClockCircleOutlined style={{ marginLeft: 16 }} /> {appt.time}
-                                <Tag color="blue">{appt.status}</Tag>
-                            </Space>
-                        }
-                        actions={[
-                            <div
-                                key="reschedule"
-                                onClick={() => {
-                                    if (appt.proposal?.status === 'pending') {
-                                        message.warning('Please handle the mentee’s reschedule request first.');
-                                    } else {
-                                        showRescheduleModal(appt);
-                                    }
-                                }}
-                                style={appt.proposal?.status === 'pending'
-                                    ? { opacity: 0.5, cursor: 'not-allowed' }
-                                    : { cursor: 'pointer' }}
-                            >
-                                <CalendarTwoTone style={{ fontSize: 18 }} />
-                                <div>Reschedule</div>
-                            </div>,
-                            <div key="cancel">
-                                <CloseCircleOutlined style={{ fontSize: 18 }} />
-                                <div>Cancel</div>
-                            </div>,
-                            <div key="noshow">
-                                <FrownOutlined style={{ fontSize: 18 }} />
-                                <div>No Show</div>
-                            </div>,
-                            <div key="join">
-                                <BellOutlined style={{ fontSize: 18 }} />
-                                <div>Join</div>
-                            </div>,
-                        ]}
-                    >
-                        {/* 如果有 pending 提案，展示 Accept/Decline */}
-                        {appt.proposal?.status === 'pending' && (
-                            <div
-                                style={{
-                                    background: '#fff1f0',        // 浅红背景
-                                    border: '1px solid #ff4d4f',  // 红色边框
-                                    padding: 16,
-                                    marginBottom: 16,
-                                    borderRadius: 4,
-                                }}
-                            >
-                                <Text strong style={{ display: 'block', marginBottom: 12 }}>
-                                    Your mentee requested to reschedule. Please choose a slot or click “Propose New Time”.
+                            <Space align="center" style={{ position: 'relative', width: 1056, height: 28 }}>
+                                <CalendarOutlined />
+                                <Text
+                                    style={{
+                                        fontWeight: 700,
+                                        fontSize: 16,
+                                        lineHeight: '24px',
+                                    }}
+                                >
+                                    {appt.date}
                                 </Text>
 
-                                <Radio.Group
-                                    onChange={e => setSelectedProposal({ [appt.id]: e.target.value })}
-                                    value={selectedProposal[appt.id]}
-                                    style={{ display: 'block', marginBottom: 16 }}
+                                <ClockCircleOutlined style={{ marginLeft: 16 }} />
+                                <Text
+                                    style={{
+                                        fontWeight: 700,
+                                        fontSize: 16,
+                                        lineHeight: '24px',
+                                    }}
                                 >
-                                    {appt.proposal.proposed_time_ranges.map((range, idx) => (
-                                        <Radio key={idx} value={idx} style={{ display: 'block', margin: '8px 0' }}>
-                                            <Space>
-                                                <BellOutlined />
-                                                <Text>
-                                                    {dayjs(range[0]).format('YYYY-MM-DD HH:mm')} –{' '}
-                                                    {dayjs(range[1]).format('HH:mm')}
-                                                </Text>
-                                            </Space>
-                                        </Radio>
-                                    ))}
-                                </Radio.Group>
+                                    {appt.time} {getShortTimeZone()}
+                                </Text>
 
-                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-                                    <Button
-                                        type="primary"
-                                        onClick={() => handleAccept(appt.proposal!)}
+                                {/* —— 新增：pending 时显示 “Waiting for Confirmation” —— */}
+                                {appt.proposal?.status === 'pending' ? (
+                                    <Text
+                                        style={{
+                                            marginLeft: 54,
+                                            fontWeight: 700,
+                                            fontSize: 16,
+                                            lineHeight: '24px',
+                                            color: '#1890FF', // Primary/6
+                                        }}
                                     >
-                                        Confirm
+                                        Waiting for Confirmation
+                                    </Text>
+                                ) : (
+                                    <Text
+                                        style={{
+                                            marginLeft: 54,
+                                            fontWeight: 700,
+                                            fontSize: 16,
+                                            lineHeight: '24px',
+                                            color: '#1890FF', // Secondary .45
+                                        }}
+                                    >
+                                        {(() => {
+                                            const start = dayjs(
+                                                `${appt.date} ${appt.time.split(' - ')[0]}`,
+                                                'YYYY-MM-DD HH:mm'
+                                            );
+                                            const now = dayjs();
+                                            const days = start.diff(now, 'day');
+                                            const hours = start.diff(now.add(days, 'day'), 'hour');
+                                            return `In ${days} Days ${hours} Hours`;
+                                        })()}
+                                    </Text>
+                                )}
+
+                                {/* —— 修改：状态 Tag 永远显示 —— */}
+                                <Tag
+                                    style={{
+                                        position: 'absolute',
+                                        right: 0,
+                                        top: 2,
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        padding: '1px 8px',
+                                        gap: 10,
+                                        background: '#E6F7FF',
+                                        border: '1px dashed #91D5FF',
+                                        borderRadius: 2,
+                                        fontWeight: 400,
+                                        fontSize: 12,
+                                        lineHeight: '20px',
+                                        color: '#1890FF',
+                                    }}
+                                >
+                                    {appt.status}
+                                </Tag>
+                            </Space>
+                        }
+                        actions={
+                            (appt.proposal?.status === 'pending' || appt.status === 'paid')
+                                // —— 修改：pending 时只显示 Review 按钮 ——
+                                ? [
+                                    <Button
+                                        key="review"
+                                        type="primary"
+                                        style={{ width: '100%' }}
+                                        onClick={() => {
+                                            if (appt.status === 'paid') {
+                                                setConfirmAppt(appt);
+                                                setIsConfirmOpen(true);
+                                            } else {
+                                                setReviewAppt(appt);
+                                                setIsReviewOpen(true);
+                                            }
+                                        }}
+                                    >
+                                        <BellOutlined style={{ marginRight: 8 }} />
+                                        Review and Confirm the Session Request
                                     </Button>
-                                    <Button onClick={() => handleDecline(appt.id, appt.proposal!.id)}>
-                                        Propose New Time
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
+                                ]
+                                // 非 pending 时显示原有四个操作
+                                : [
+                                    <div key="reschedule" onClick={() => {
+                                        if (!appt.proposal) showRescheduleModal(appt);
+                                        else message.warning('请先处理现有提案');
+                                    }} style={{ cursor: 'pointer' }}>
+                                        <CalendarTwoTone style={{ fontSize: 18 }} /><div>Reschedule</div>
+                                    </div>,
+                                    <div key="cancel">
+                                        <CloseCircleOutlined style={{ fontSize: 18 }} /><div>Cancel</div>
+                                    </div>,
+                                    <div key="noshow">
+                                        <FrownOutlined style={{ fontSize: 18 }} /><div>No Show</div>
+                                    </div>,
+                                    <div key="join">
+                                        <BellOutlined style={{ fontSize: 18 }} /><div>Join</div>
+                                    </div>,
+                                ]
+                        }
+                    >
+                        {/* —— 移除：原先 inline pending 区块 —— */}
+
                         <Space>
                             <Avatar>{appt.otherUser.username.charAt(0)}</Avatar>
                             <Text strong>{appt.otherUser.username}</Text>
                         </Space>
-
                         <div style={{ marginTop: 8 }}>
                             <Text type="secondary">Notes:</Text>
                             <p>{appt.description}</p>
                         </div>
-
                         {appt.resume_url && (
                             <div style={{ marginTop: 4 }}>
                                 <FileOutlined />
-                                <a
-                                    href={appt.resume_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    style={{ marginLeft: 8 }}
-                                >
+                                <a href={appt.resume_url} target="_blank" rel="noreferrer" style={{ marginLeft: 8 }}>
                                     Resume
                                 </a>
                             </div>
@@ -511,6 +598,171 @@ export default function MySessionsTab() {
                 ))
             )}
 
+            <Modal
+                title="Confirming Your Session"
+                visible={isConfirmOpen}
+                onCancel={() => setIsConfirmOpen(false)}
+                footer={[
+                    <Button key="cancel" danger onClick={() => {
+                        // TODO: 调用取消的接口
+                        setIsConfirmOpen(false);
+                    }}>
+                        Cancel Session
+                    </Button>,
+                    <Button key="reschedule" onClick={() => {
+                        // 先关掉确认框，再打开重排框
+                        setIsConfirmOpen(false);
+                        if (confirmAppt) {
+                            setCurrentAppt(confirmAppt);
+                            setIsRescheduleOpen(true);
+                        }
+                    }}>
+                        Reschedule Session
+                    </Button>,
+                    <Button key="confirm" type="primary" onClick={() => {
+                        if (confirmAppt) {
+                            handleConfirmCurrentTime(confirmAppt);
+                        }
+                        setIsConfirmOpen(false);
+                    }}>
+                        Confirm the Session
+                    </Button>
+                ]}
+            >
+                {/* Session Time */}
+                <div style={{ marginBottom: 16 }}>
+                    <Text strong>Session Time:</Text>{' '}
+                    <Text style={{ fontWeight: 400, color: '#000' }}>
+                        {confirmAppt?.date} {confirmAppt?.time} {getShortTimeZone()}
+                    </Text>
+                </div>
+
+                {/* Mentee */}
+                <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center' }}>
+                    <Text strong style={{ marginRight: 8 }}>Mentee:</Text>
+                    <Avatar size="small" style={{ marginRight: 4 }}>
+                        {confirmAppt?.otherUser.username.charAt(0)}
+                    </Avatar>
+                    <Text style={{ fontWeight: 400, color: '#000' }}>
+                        {confirmAppt?.otherUser.username}
+                    </Text>
+                </div>
+
+                {/* Support for */}
+                <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center' }}>
+                    <Text strong style={{ marginRight: 8 }}>Support for:</Text>
+                    <Text style={{ fontWeight: 400, color: '#000' }}>
+                        {'Service name Placeholder'}
+                    </Text>
+                </div>
+            </Modal>
+
+            <Modal
+                title="Reschedule Your Session"
+                visible={isReviewOpen}
+                onCancel={() => setIsReviewOpen(false)}
+                footer={[
+                    <Button key="cancel" danger onClick={() => { /* TODO: Cancel the session */ }}>
+                        Cancel the Session
+                    </Button>,
+                    (selectedProposal[reviewAppt?.id ?? ''] === (reviewAppt?.proposal?.proposed_time_ranges.length ?? 0))
+                        ? (
+                            <Button
+                                key="propose"
+                                type="primary"
+                                onClick={() => {
+                                    // 先关闭当前 “Review” 弹窗，再打开重排时段的弹窗
+                                    setIsReviewOpen(false);
+                                    setIsRescheduleOpen(true);
+                                }}
+                            >
+                                Propose More Time
+                            </Button>
+                        )
+                        : (
+                            <Button
+                                key="confirm"
+                                type="primary"
+                                onClick={() => {
+                                    if (reviewAppt?.proposal) {
+                                        handleAccept(reviewAppt.proposal);
+                                    }
+                                    setIsReviewOpen(false);
+                                }}
+                            >
+                                Confirm the New Time
+                            </Button>
+                        )
+                ]}
+            >
+                {/* Reschedule Notes */}
+                <Text strong style={{ display: 'block', marginBottom: 8 }}>Reschedule Notes</Text>
+                <Text
+                    style={{
+                        display: 'block',
+                        padding: '8px',
+                        border: '1px solid #d9d9d9',
+                        borderRadius: 4,
+                        marginBottom: 24,
+                    }}
+                >
+                    Sorry for the change — something urgent came up at work. I've proposed new times that I hope will work for you.
+                </Text>
+
+                {/* Proposed New Time Slots */}
+                <Text strong style={{ display: 'block', marginBottom: 8 }}>Proposed New Time Slots</Text>
+                <Radio.Group
+                    onChange={e => {
+                        if (reviewAppt?.id) {
+                            setSelectedProposal({ [reviewAppt.id]: e.target.value });
+                        }
+                    }}
+                    value={selectedProposal[reviewAppt?.id ?? '']}
+                    disabled={!reviewAppt}
+                    style={{ display: 'block', marginBottom: 16 }}
+                >
+                    {/* 原始时间，划线显示 */}
+                    <Text style={{ display: 'inline-block', marginRight: 8, color: '#1890FF' }}>
+                        Original Time:
+                    </Text>
+                    <Text
+                        delete
+                        style={{
+                            display: 'inline-block',
+                            marginBottom: 8,
+                            color: 'rgba(0,0,0,0.45)', // 灰色
+                            fontSize: 14,
+                            lineHeight: '22px',
+                        }}
+                    >
+                        {reviewAppt?.date} {reviewAppt?.time} {getShortTimeZone()}
+                    </Text>
+
+                    {/* 可选的新时间段 */}
+                    {reviewAppt?.proposal?.proposed_time_ranges.map((range, idx) => (
+                        <Radio key={idx} value={idx} style={{ display: 'block', margin: '8px 0' }}>
+                            <Space>
+                                {/*<BellOutlined />*/}
+                                <Text>
+                                    {dayjs(range[0]).format('MM/DD dddd h:mmA')} –{' '}
+                                    {dayjs(range[1]).format('h:mmA')} {getShortTimeZone()}
+                                </Text>
+                            </Space>
+                        </Radio>
+                    ))}
+
+                    {/* 最后一个“更多选项” */}
+                    <Radio
+                        value={reviewAppt?.proposal?.proposed_time_ranges.length}
+                        style={{ display: 'block', margin: '8px 0' }}
+                    >
+                        <Space>
+                            {/*<BellOutlined />*/}
+                            <Text>No suitable time, ask mentor to propose more options.</Text>
+                        </Space>
+                    </Radio>
+                </Radio.Group>
+            </Modal>
             <RescheduleModal
                 visible={isRescheduleOpen}
                 onCancel={() => setIsRescheduleOpen(false)}
@@ -521,8 +773,8 @@ export default function MySessionsTab() {
                         body: JSON.stringify({
                             appointment_id: currentAppt!.id,
                             proposed_time_ranges: ranges,
-                            proposer: currentAppt!.otherUser.id,
-                            receiver: user!.id,
+                            proposer: mentorId,
+                            receiver: currentAppt!.otherUser.id,
                         }),
                     })
                     message.success('已发送新提案')
