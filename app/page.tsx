@@ -10,7 +10,6 @@ import Link from 'next/link'
 import { Switch } from 'antd'
 import MarqueeSection from './MarqueeSection'
 import styles from './styles/features.module.css'
-import { Role } from '../types'
 import { useMentorStatus } from './hooks/useMentorStatus';
 
 // Translation object with all your content
@@ -167,7 +166,7 @@ export default function Home() {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  const isMentor = user?.publicMetadata?.role === Role.MENTOR;
+  const { isMentor } = useMentorStatus();
 
   useEffect(() => {
     const checkMentorStatus = async () => {
