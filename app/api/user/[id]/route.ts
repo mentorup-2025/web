@@ -17,4 +17,4 @@ export async function GET(
         console.error('Error in get user:', error);
         return respErr('Failed to get user');
     }
-} 
+}
