@@ -444,7 +444,6 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
         years_of_experience: Number(allValues.yearsOfExperience),
         years_of_experience_recorded_date: new Date(),
         services,
-        introduction: allValues.introduction,
       };
 
       // First API call to create/update mentor profile
@@ -470,7 +469,8 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
         username: allValues.displayName,
         linkedin: allValues.linkedin ?? '',
         wechat: allValues.wechat ?? '',
-        industries: selectedIndustries
+        industries: selectedIndustries,
+        introduction: allValues.introduction,
       };
 
       const userUpdateResponse = await fetch('/api/user/update', {
@@ -480,6 +480,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
       });
 
       const userUpdateResult = await userUpdateResponse.json();
+
 
       if (userUpdateResult.code === -1) {
         notification.error({
