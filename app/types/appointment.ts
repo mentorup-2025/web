@@ -9,6 +9,7 @@ export interface Appointment {
     service_type: string;
     price: number;
     link?: string;  // Google Meet link
+    cancel_reason?: string;  // Reason for cancellation
 }
 
 export interface CreateAppointmentInput {
@@ -35,6 +36,7 @@ export interface UpdateAppointmentInput {
     link?: string;  // Google Meet link
     extra_info?: string; // Extra information
     description?: string; // Description
+    cancel_reason?: string; // Reason for cancellation
 }
 
 export interface ReserveAppointmentResponse {

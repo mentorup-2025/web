@@ -12,7 +12,7 @@ export async function POST(request: Request) {
         }
 
         // Validate that at least one update field is provided
-        if (!input.status && !input.link && !input.resume_url && !input.extra_info && !input.description) {
+        if (!input.status && !input.link  && !input.extra_info && !input.description && !input.cancel_reason) {
             return respErr('No update fields provided');
         }
 
@@ -26,10 +26,6 @@ export async function POST(request: Request) {
             return respErr('Link must be a string');
         }
 
-        // Validate resume_url if provided
-        if (input.resume_url && typeof input.resume_url !== 'string') {
-            return respErr('Resume URL must be a string');
-        }
 
         // Validate extra_info if provided
         if (input.extra_info && typeof input.extra_info !== 'string') {
@@ -39,6 +35,16 @@ export async function POST(request: Request) {
         // Validate description if provided
         if (input.description && typeof input.description !== 'string') {
             return respErr('Description must be a string');
+        }
+
+        // Validate cancel_reason if provided
+        if (input.cancel_reason && typeof input.cancel_reason !== 'string') {
+            return respErr('Cancel reason must be a string');
+        }
+
+        // Validate that if cancel_reason is provided, status must be canceled'
+        if (input.cancel_reason && (!input.status || input.status !== 'canceled')) {
+            return respErr('Cancel reason can only be provided when status is set to canceled');
         }
 
         // Check if appointment exists and is confirmed
@@ -56,9 +62,9 @@ export async function POST(request: Request) {
         await updateAppointment(input.appointment_id, {
             status: input.status,
             link: input.link,
-            resume_url: input.resume_url,
             extra_info: input.extra_info,
-            description: input.description
+            description: input.description,
+            cancel_reason: input.cancel_reason
         });
 
         return respData({ message: 'Appointment updated successfully' });
