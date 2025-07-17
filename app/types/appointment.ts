@@ -33,7 +33,6 @@ export interface UpdateAppointmentInput {
     appointment_id: string;
     status?: 'confirmed' | 'completed' | 'canceled' | 'noshow';
     link?: string;  // Google Meet link
-    resume_url?: string; // Resume URL
     extra_info?: string; // Extra information
     description?: string; // Description
 }

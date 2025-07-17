@@ -241,7 +241,6 @@ export default function MentorDetailsPage() {
             end_time,
             service_type: supportType,
             description,
-            resume_url: resumeUrl,
             price: calculatedPrice,
           }),
         });
