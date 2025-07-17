@@ -15,6 +15,7 @@ export interface User {
   mentor?: Mentor | null; // Optional mentor ID, defaults to null
   profile_url?: string | null; // Optional image URL
   introduction?: string | null; // Optional introduction
+  payout_preference?: string | null; // Optional payout preference
 }
 
 export interface CreateUserInput {
@@ -29,6 +30,7 @@ export interface CreateUserInput {
   status?: UserStatus;  // Optional status
   profile_url?: string | null; // Optional image URL
   introduction?: string | null; // Optional introduction
+  payout_preference?: string | null; // Optional payout preference
 }
 
 export interface UpdateUserInput {
@@ -43,6 +45,7 @@ export interface UpdateUserInput {
   job_target?: JobTarget | null; // Optional job target update
   profile_url?: string | null; // Optional image URL
   introduction?: string | null; // Optional introduction
+  payout_preference?: string | null; // Optional payout preference update
 }
 
 export interface UserCredentials {
