@@ -28,7 +28,8 @@ export async function createRescheduleProposal(input: CreateRescheduleProposalIn
       proposed_time: data.proposed_time,
       receiver: data.receiver,
       proposer: data.proposer,
-      proposed_at: data.proposed_at
+      proposed_at: data.proposed_at,
+      reason: data.reason
     };
 
     return proposal;
@@ -81,7 +82,8 @@ export async function getRescheduleProposal(appointmentId: string): Promise<Resc
       proposed_time: data.proposed_time.map((range: any) => [range.lower, range.upper]),
       receiver: data.receiver,
       proposer: data.proposer,
-      proposed_at: data.proposed_at
+      proposed_at: data.proposed_at,
+      reason: data.reason
     };
 
     return proposal;
@@ -143,7 +145,8 @@ export async function listRescheduleProposalsByReceiver(receiverId: string): Pro
         proposed_time: proposedTime,
         receiver: item.receiver,
         proposer: item.proposer,
-        proposed_at: item.proposed_at
+        proposed_at: item.proposed_at,
+        reason: item.reason,
       };
       
       console.log('Transformed result:', result);
