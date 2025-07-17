@@ -14,7 +14,8 @@ export async function createRescheduleProposal(input: CreateRescheduleProposalIn
         proposed_start_times: proposed_start_times,
         proposed_end_times: proposed_end_times,
         receiver: input.receiver,
-        proposer: input.proposer
+        proposer: input.proposer,
+        reason: input.reason,
       });
 
     if (error) {
