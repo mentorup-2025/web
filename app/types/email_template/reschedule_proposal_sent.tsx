@@ -86,7 +86,7 @@ const RescheduleProposalSentEmail: React.FC<RescheduleProposalSentProps> = ({
           <Text style={text}>
             You'll receive an email notification once they respond. If you need to make any changes 
             to your proposal, please contact us at{' '}
-            <Link href="mailto:contactus@mentorup.com">contactus@mentorup.com</Link>
+            <Link href="mailto:contactus@mentorup.info">contactus@mentorup.info</Link>
           </Text>
 
           <Hr style={hr} />

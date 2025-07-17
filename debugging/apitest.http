@@ -148,7 +148,7 @@ POST {{baseUri}}/api/email
 Content-Type: application/json
 
 {
-  "from": "appointments@mentorup.com",
+  "from": "contactus@mentorup.info",
   "to": "test@example.com"
 }
 

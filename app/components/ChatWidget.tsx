@@ -59,7 +59,7 @@ function GuestChatContent({ messages, onSelect }: { messages: { role: string; co
             </div>
             <div className="p-3 text-[12px] text-gray-500 text-center">
                 Still have questions?{" "}
-                <a href="mailto:support@example.com" className="text-blue-500 underline">
+                <a href="mailto:contactus@mentorup.info" className="text-blue-500 underline">
                     Send us an email
                 </a>
             </div>
@@ -87,7 +87,7 @@ export default function ChatWidget() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                from: "onboarding@resend.dev",
+                from: "contactus@mentorup.info",
                 to: email,
                 type: emailType,
                 message: {

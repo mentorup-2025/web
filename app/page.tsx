@@ -656,7 +656,7 @@ export default function Home() {
 
             <div className={styles.footerCopyright}>
               <p className="text-gray-500 text-sm mt-8">
-                ©2025 MentorUp contactemail@mentorup.com.
+                ©2025 MentorUp contactus@mentorup.info.
               </p>
                         <p className="text-gray-500 text-sm mt-8 flex justify-center gap-6">
               <a href="/privacy">Privacy Policy & Term of use</a>

@@ -67,7 +67,7 @@ const MenteeApptRequestEmail: React.FC<MenteeApptRequestProps> = ({
 
           <Text style={text}>
             If you have any questions, please contact us at{' '}
-            <Link href="mailto:contactus@mentorup.com">contactus@mentorup.com</Link>
+            <Link href="mailto:contactus@mentorup.info">contactus@mentorup.info</Link>
           </Text>
 
           <Hr style={hr} />

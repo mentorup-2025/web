@@ -86,7 +86,7 @@ const RescheduleProposalReceivedEmail: React.FC<RescheduleProposalReceivedProps>
           <Text style={text}>
             Please respond within 24 hours to ensure we can finalize the appointment details. 
             If you have any questions, please contact us at{' '}
-            <Link href="mailto:contactus@mentorup.com">contactus@mentorup.com</Link>
+            <Link href="mailto:contactus@mentorup.info">contactus@mentorup.info</Link>
           </Text>
 
           <Hr style={hr} />

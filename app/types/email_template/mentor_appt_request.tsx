@@ -72,8 +72,8 @@ const MentorApptRequestEmail: React.FC<MentorApptRequestProps> = ({
           </Text>
 
           <Text style={text}>
-            If you have any questions or need assistance, please contact us at{' '}
-            <Link href="mailto:contactus@mentorup.com">contactus@mentorup.com</Link>
+            If you have any questions, please contact us at{' '}
+            <Link href="mailto:contactus@mentorup.info">contactus@mentorup.info</Link>
           </Text>
 
           <Text style={text}>
