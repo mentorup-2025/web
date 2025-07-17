@@ -15,6 +15,7 @@ import {
     Form,
     DatePicker,
     Button,
+    Input,
     Radio
 } from 'antd';
 import {
@@ -65,99 +66,8 @@ interface Appointment {
     };
     proposal?: Proposal;
 }
-const RescheduleModal = ({
-                             visible,
-                             onCancel,
-                             onSubmit,
-                         }: {
-    visible: boolean;
-    onCancel: () => void;
-    onSubmit: (ranges: [string, string][]) => Promise<void>;
-}) => {
-    const [form] = Form.useForm();
+const bookedSlotsStatePlaceholder: [string, string][] = [];
 
-    const handleOk = async () => {
-        try {
-            const values = await form.validateFields();
-            const ranges: [string, string][] = values.slots.map(
-                (r: [dayjs.Dayjs, dayjs.Dayjs]) => [r[0].toISOString(), r[1].toISOString()]
-            );
-            await onSubmit(ranges);
-            form.resetFields();
-        } catch (err: any) {
-            message.error(err.message || 'Submission failed');
-        }
-    };
-
-    return (
-        <Modal
-            title="Reschedule Session"
-            visible={visible}
-            onOk={handleOk}
-            onCancel={() => {
-                form.resetFields();
-                onCancel();
-            }}
-            okText="Submit"
-        >
-            <p style={{ marginBottom: 12, fontStyle: 'italic' }}>
-                Please suggest 3–5 one-hour time slots (whole hours only)
-            </p>
-            <Form form={form} layout="vertical" name="rescheduleForm">
-                <Form.List name="slots" initialValue={[]}>
-                    {(fields, { add, remove }) => (
-                        <>
-                            {fields.map(({ key, name, ...restField }) => (
-                                <Space key={key} align="baseline" style={{ display: 'flex', marginBottom: 8 }}>
-                                    <Form.Item
-                                        {...restField}
-                                        name={[name]}
-                                        rules={[
-                                            { required: true, message: 'Required' },
-                                            {
-                                                validator: (_, value: [dayjs.Dayjs, dayjs.Dayjs]) => {
-                                                    if (!value || value.length !== 2) {
-                                                        return Promise.reject('Pick a range');
-                                                    }
-                                                    const [s, e] = value;
-                                                    if (s.minute() !== 0 || e.minute() !== 0) {
-                                                        return Promise.reject('Must be whole hours');
-                                                    }
-                                                    if (e.diff(s, 'hour') !== 1) {
-                                                        return Promise.reject('Duration must be 1 hour');
-                                                    }
-                                                    return Promise.resolve();
-                                                },
-                                            },
-                                        ]}
-                                    >
-                                        <DatePicker.RangePicker
-                                            // note: build error
-                                            // showTime={{ format: 'HH:mm', minuteStep: 60 }}
-                                            showTime={{ format: 'HH:mm' }}
-                                            format="YYYY-MM-DD HH:mm"
-                                        />
-                                    </Form.Item>
-                                    <MinusCircleOutlined onClick={() => remove(name)} />
-                                </Space>
-                            ))}
-                            <Form.Item>
-                                <Button
-                                    type="dashed"
-                                    onClick={() => add()}
-                                    icon={<PlusOutlined />}
-                                    disabled={fields.length >= 5}
-                                >
-                                    Add time slot
-                                </Button>
-                            </Form.Item>
-                        </>
-                    )}
-                </Form.List>
-            </Form>
-        </Modal>
-    );
-};
 export default function MySessionsTab() {
     // const { user } = useUser();
     const params = useParams();
@@ -168,9 +78,6 @@ export default function MySessionsTab() {
     const [selectedProposal, setSelectedProposal] = useState<Record<string, number>>({});
 
     // Reschedule modal state
-    const [repModalVisible, setRepModalVisible] = useState(false);
-    const [repTarget, setRepTarget] = useState<{ apptId: string; propId: string } | null>(null);
-    const [isModalVisible, setIsModalVisible] = useState(false);
     const [currentAppt, setCurrentAppt] = useState<Appointment | null>(null);
     const [form] = Form.useForm();
     const [isRescheduleOpen, setIsRescheduleOpen] = useState(false)
@@ -184,6 +91,11 @@ export default function MySessionsTab() {
 
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [confirmAppt, setConfirmAppt] = useState<Appointment | null>(null);
+
+    const [isCancelOpen, setIsCancelOpen] = useState(false);
+    const [cancelReason, setCancelReason] = useState('');
+
+    const [bookedSlots, setBookedSlots] = useState<[string,string][]>([]);
 
     const fetchAppointments = useCallback(async () => {
         if (!mentorId) return;
@@ -260,6 +172,7 @@ export default function MySessionsTab() {
                 }));
 
                 setAppointments(enriched);
+
             } catch (e: any) {
                 console.error(e);
                 message.error(e.message || '加载失败');
@@ -355,87 +268,65 @@ export default function MySessionsTab() {
         // 打开重排弹窗
         setIsRescheduleOpen(true)
     };
-    const submitReproposal = async () => {
-        if (!repTarget) return;
-        try {
-            const { range } = await form.validateFields();
-            const [s, e] = range;
-            await fetch('/api/appointment/reschedule', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    appointment_id: repTarget.apptId,
-                    proposed_time_ranges: [[s.toISOString(), e.toISOString()]],
-                    proposer: mentorId,
-                    receiver: appointments.find(a => a.id === repTarget.apptId)!.otherUser.id,
-                }),
-            });
-            message.success('已发送新提案');
-            setRepModalVisible(false);
-            // 重新拉一次
-            setLoading(true);
-            await new Promise(r => setTimeout(r, 200));
-            setLoading(false);
-        } catch (e: any) {
-            message.error(e.message);
-        }
-    };
+
 
     // 打开重排弹窗
     const showRescheduleModal = (appt: Appointment) => {
         setCurrentAppt(appt);
         form.resetFields();
+        // —— 在这里只取出当前 mentor + 这个 mentee 已有的已确认时段 ——
+        const slotsForThisPair: [string,string][] = appointments
+            .filter(a =>
+                (a.status === 'confirmed' || a.status === 'reschedule_in_progress')
+                && a.otherUser.id === appt.otherUser.id  // 同一个 mentee
+            )
+            .map(a => {
+                const [s, e] = a.time.split(' - ');
+                return [
+                    dayjs(`${a.date} ${s}`, 'YYYY-MM-DD HH:mm').toISOString(),
+                    dayjs(`${a.date} ${e}`, 'YYYY-MM-DD HH:mm').toISOString()
+                ];
+            });
+        setBookedSlots(slotsForThisPair);
+        // —— 计算完毕 ——
         setIsRescheduleOpen(true);
     };
 
-    // 确认提交重排
-    const handleOk = async () => {
+    const showCancelModal = (appt: Appointment) => {
+        setCurrentAppt(appt);
+        setCancelReason('');
+        setIsCancelOpen(true);
+    };
+
+
+
+    const handleRescheduleOk = async () => {
         try {
-            const { range } = await form.validateFields();
-            if (!currentAppt || !range) return;
-
-            const [start, end] = range;
-            const payload = {
-                appointment_id: currentAppt.id,
-                proposed_time_ranges: [[start.toISOString(), end.toISOString()]],
-                proposer: currentAppt.otherUser.id,
-                receiver: mentorId,
-            };
-
-            const res = await fetch('/api/appointment/reschedule', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Error');
-
-            // 1. 通知成功
-            message.success('Reschedule request sent!');
-
-            // 2. 更新这条预约的状态为 "reschedule_in_progress"
-            setAppointments((prev) =>
-                prev.map((appt) =>
-                    appt.id === currentAppt.id
-                        ? { ...appt, status: 'reschedule_in_progress' }
-                        : appt
-                )
+            const values = await form.validateFields();
+            const ranges: [string, string][] = values.slots.map(
+                (r: [dayjs.Dayjs, dayjs.Dayjs]) => [r[0].toISOString(), r[1].toISOString()]
             );
 
-            // 3. 关闭弹窗
-            setIsModalVisible(false);
-            setCurrentAppt(null);
+            // —— 直接调用 reschedule 接口 ——
+            await fetch('/api/appointment/reschedule', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    appointment_id: currentAppt!.id,
+                    proposed_time_ranges: ranges,
+                    proposer: mentorId,
+                    receiver: currentAppt!.otherUser.id,
+                }),
+            });
+
+            message.success('Reschedule request sent!');
+            form.resetFields();
+            setIsRescheduleOpen(false);
+            fetchAppointments();
         } catch (err: any) {
             message.error(err.message || 'Submission failed');
         }
     };
-
-    // 取消弹窗
-    const handleCancel = () => {
-        setIsModalVisible(false);
-        setCurrentAppt(null);
-    };
-
 
 
     return (
@@ -476,7 +367,8 @@ export default function MySessionsTab() {
                                 </Text>
 
                                 {/* —— 新增：pending 时显示 “Waiting for Confirmation” —— */}
-                                {appt.proposal?.status === 'pending' ? (
+                                {appt.status === 'canceled' ? null
+                                 : appt.proposal?.status === 'pending' ? (
                                     <Text
                                         style={{
                                             marginLeft: 54,
@@ -521,13 +413,17 @@ export default function MySessionsTab() {
                                         alignItems: 'center',
                                         padding: '1px 8px',
                                         gap: 10,
-                                        background: '#E6F7FF',
-                                        border: '1px dashed #91D5FF',
+                                        // 根据状态切换背景色和边框色
+                                        background: appt.status === 'canceled' ? '#FFF1F0' : '#E6F7FF',
+                                        border: appt.status === 'canceled'
+                                            ? '1px dashed #FFA39E'
+                                            : '1px dashed #91D5FF',
                                         borderRadius: 2,
                                         fontWeight: 400,
                                         fontSize: 12,
                                         lineHeight: '20px',
-                                        color: '#1890FF',
+                                        // 根据状态切换字体颜色
+                                        color: appt.status === 'canceled' ? '#FF4D4F' : '#1890FF',
                                     }}
                                 >
                                     {appt.status}
@@ -535,7 +431,7 @@ export default function MySessionsTab() {
                             </Space>
                         }
                         actions={
-                            (appt.proposal?.status === 'pending' || appt.status === 'paid')
+                            (appt.status !== 'canceled' && (appt.proposal?.status === 'pending' || appt.status === 'paid'))
                                 // —— 修改：pending 时只显示 Review 按钮 ——
                                 ? [
                                     <Button
@@ -557,23 +453,50 @@ export default function MySessionsTab() {
                                     </Button>
                                 ]
                                 // 非 pending 时显示原有四个操作
-                                : [
-                                    <div key="reschedule" onClick={() => {
-                                        if (!appt.proposal) showRescheduleModal(appt);
-                                        else message.warning('请先处理现有提案');
-                                    }} style={{ cursor: 'pointer' }}>
-                                        <CalendarTwoTone style={{ fontSize: 18 }} /><div>Reschedule</div>
-                                    </div>,
-                                    <div key="cancel">
-                                        <CloseCircleOutlined style={{ fontSize: 18 }} /><div>Cancel</div>
-                                    </div>,
-                                    <div key="noshow">
-                                        <FrownOutlined style={{ fontSize: 18 }} /><div>No Show</div>
-                                    </div>,
-                                    <div key="join">
-                                        <BellOutlined style={{ fontSize: 18 }} /><div>Join</div>
-                                    </div>,
-                                ]
+                                : (
+                                    // 如果是 canceled 或 noshow，就渲染一个空数组，或者渲染“禁用”样式
+                                    appt.status === 'canceled' || appt.status === 'noshow'
+                                        ? []  // 不显示任何操作
+                                        : [
+                                            // 正常四个操作：
+                                            <div
+                                                key="reschedule"
+                                                onClick={() => showRescheduleModal(appt)}
+                                                style={{
+                                                    cursor: 'pointer',
+                                                }}
+                                            >
+                                                <CalendarTwoTone style={{ fontSize: 18 }} /><div>Reschedule</div>
+                                            </div>,
+                                            <div
+                                                key="cancel"
+                                                onClick={() => showCancelModal(appt)}
+                                                style={{
+                                                    cursor: 'pointer',
+                                                }}
+                                            >
+                                                <CloseCircleOutlined style={{ fontSize: 18 }} /><div>Cancel</div>
+                                            </div>,
+                                            <div
+                                                key="noshow"
+                                                onClick={() => {/* 如果你想给 noshow 加点事儿可以写在这里 */}}
+                                                style={{
+                                                    cursor: 'pointer',
+                                                }}
+                                            >
+                                                <FrownOutlined style={{ fontSize: 18 }} /><div>No Show</div>
+                                            </div>,
+                                            <div
+                                                key="join"
+                                                onClick={() => {/* 同理 */}}
+                                                style={{
+                                                    cursor: 'pointer',
+                                                }}
+                                            >
+                                                <BellOutlined style={{ fontSize: 18 }} /><div>Join</div>
+                                            </div>,
+                                        ]
+                                )
                         }
                     >
                         {/* —— 移除：原先 inline pending 区块 —— */}
@@ -586,14 +509,33 @@ export default function MySessionsTab() {
                             <Text type="secondary">Notes:</Text>
                             <p>{appt.description}</p>
                         </div>
-                        {appt.resume_url && (
-                            <div style={{ marginTop: 4 }}>
-                                <FileOutlined />
-                                <a href={appt.resume_url} target="_blank" rel="noreferrer" style={{ marginLeft: 8 }}>
-                                    Resume
+                        {appt.resume_url && (() => {
+                            // 1. 先取出最后一段 "1752650411087-jakes-resume.pdf"
+                            const fullName = appt.resume_url.split('/').pop() || '';
+                            // 2. 再去掉前面的时间戳部分，只保留 “jakes-resume.pdf”
+                            const displayName = fullName.includes('-')
+                                ? fullName.split('-').slice(1).join('-')
+                                : fullName;
+                            return (
+                                <a
+                                    href={appt.resume_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        marginTop: 8,
+                                        color: '#1890FF',
+                                        textDecoration: 'none'
+                                    }}
+                                >
+                                    <FileOutlined style={{ fontSize: 18, marginRight: 8 }} />
+                                    <span style={{ textDecoration: 'underline' }}>
+        {displayName}
+      </span>
                                 </a>
-                            </div>
-                        )}
+                            );
+                        })()}
                     </Card>
                 ))
             )}
@@ -662,7 +604,14 @@ export default function MySessionsTab() {
                 visible={isReviewOpen}
                 onCancel={() => setIsReviewOpen(false)}
                 footer={[
-                    <Button key="cancel" danger onClick={() => { /* TODO: Cancel the session */ }}>
+                    <Button
+                        key="cancel"
+                        danger
+                        onClick={() => {
+                            setIsReviewOpen(false);
+                            if (reviewAppt) showCancelModal(reviewAppt);
+                        }}
+                    >
                         Cancel the Session
                     </Button>,
                     (selectedProposal[reviewAppt?.id ?? ''] === (reviewAppt?.proposal?.proposed_time_ranges.length ?? 0))
@@ -673,6 +622,7 @@ export default function MySessionsTab() {
                                 onClick={() => {
                                     // 先关闭当前 “Review” 弹窗，再打开重排时段的弹窗
                                     setIsReviewOpen(false);
+                                    setCurrentAppt(reviewAppt);
                                     setIsRescheduleOpen(true);
                                 }}
                             >
@@ -763,45 +713,246 @@ export default function MySessionsTab() {
                     </Radio>
                 </Radio.Group>
             </Modal>
-            <RescheduleModal
-                visible={isRescheduleOpen}
-                onCancel={() => setIsRescheduleOpen(false)}
-                onSubmit={async (ranges) => {
-                    await fetch('/api/appointment/reschedule', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            appointment_id: currentAppt!.id,
-                            proposed_time_ranges: ranges,
-                            proposer: mentorId,
-                            receiver: currentAppt!.otherUser.id,
-                        }),
-                    })
-                    message.success('已发送新提案')
-                    setIsRescheduleOpen(false)
-                    fetchAppointments();
-                }}
-            />
             <Modal
-                title="Propose New Time"
-                visible={repModalVisible}
-                onOk={submitReproposal}
-                onCancel={() => setRepModalVisible(false)}
-                okText="Send Proposal"
+                title="Reschedule Your Session"
+                visible={isRescheduleOpen}
+                open={isRescheduleOpen}
+                onOk={handleRescheduleOk}
+                onCancel={() => {
+                    form.resetFields();
+                    setIsRescheduleOpen(false);
+                }}
+                okText="Confirm and Send"
+                cancelText="Back"
             >
-                <Form form={form} layout="vertical">
-                    <Form.Item
-                        name="range"
-                        label="Your available time"
-                        rules={[{ required: true, message: 'Pick a time range' }]}
-                    >
-                        <DatePicker.RangePicker
-                            showTime
-                            style={{ width: '100%' }}
-                            format="YYYY-MM-DD HH:mm"
-                        />
-                    </Form.Item>
+                <p style={{ marginBottom: 8 }}>
+                    Based on your availability, please propose time slots for{' '}
+                    <strong>Mentee:</strong>{' '}
+                    <strong><u>{currentAppt?.otherUser.username}</u></strong>.
+                </p>
+                <p style={{ marginBottom: 12, fontStyle: 'italic' }}>
+                    Please suggest 3–5 one-hour time slots (whole hours only)
+                </p>
+
+                <Form form={form} layout="vertical" name="rescheduleForm">
+                    <Form.List name="slots" initialValue={[]}>
+                        {(fields, { add, remove }) => (
+                            <>
+                                {fields.map(({ key, name, ...restField }) => (
+                                    <Space
+                                        key={key}
+                                        align="baseline"
+                                        style={{ display: 'flex', marginBottom: 8 }}
+                                    >
+                                        <Form.Item
+                                            {...restField}
+                                            name={[name]}
+                                            rules={[
+                                                { required: true, message: 'Required' },
+                                                {
+                                                    validator: (_, value: [dayjs.Dayjs, dayjs.Dayjs]) => {
+                                                        if (!value || value.length !== 2)
+                                                            return Promise.reject('Pick a range');
+                                                        const [s, e] = value;
+                                                        if (s.minute() !== 0 || e.minute() !== 0)
+                                                            return Promise.reject('Must be whole hours');
+                                                        if (e.diff(s, 'hour') !== 1)
+                                                            return Promise.reject('Duration must be 1 hour');
+                                                        return Promise.resolve();
+                                                    },
+                                                },
+                                            ]}
+                                        >
+                                            <DatePicker.RangePicker
+                                                showTime={{ format: 'HH:mm' }}
+                                                format="YYYY-MM-DD HH:mm"
+                                                disabledDate={current => !!current && current < dayjs().startOf('day')}
+                                                disabledTime={current => {
+                                                    if (!current) return {};
+
+                                                    // 计算当天哪些小时已被同一对 mentor/mentee 占用
+                                                    const blocked = new Set<number>();
+                                                    bookedSlots.forEach(([s, e]) => {
+                                                        const st = dayjs(s), en = dayjs(e);
+                                                        if (st.isSame(current, 'day')) {
+                                                            for (let h = st.hour(); h < en.hour(); h++) {
+                                                                blocked.add(h);
+                                                            }
+                                                        }
+                                                    });
+
+                                                    return {
+                                                        // 禁掉所有占用的小时
+                                                        disabledHours: () => Array.from(blocked),
+
+                                                        // 只禁掉 1–59 分钟，放行 0 分钟
+                                                        disabledMinutes: () => Array.from({ length: 59 }, (_, i) => i + 1),
+
+                                                        // **允许** 0 秒，禁掉 1–59 秒（或直接去掉这个配置让秒钟默认全放行）
+                                                        disabledSeconds: () => Array.from({ length: 59 }, (_, i) => i + 1),
+                                                    };
+                                                }}
+                                            />
+                                        </Form.Item>
+                                        <MinusCircleOutlined onClick={() => remove(name)} />
+                                    </Space>
+                                ))}
+                                <Form.Item>
+                                    <Button
+                                        type="dashed"
+                                        onClick={() => add()}
+                                        icon={<PlusOutlined />}
+                                        disabled={fields.length >= 5}
+                                    >
+                                        Add time slot
+                                    </Button>
+                                </Form.Item>
+                            </>
+                        )}
+                    </Form.List>
                 </Form>
+            </Modal>
+            <Modal
+                title="Cancel Your Session"
+                open={isCancelOpen}
+                onCancel={() => setIsCancelOpen(false)}
+                width="90vw"
+                centered                             // ← 这一行让 Modal 上下左右都居中
+                style={{ maxWidth: 560 }}
+                bodyStyle={{
+                    padding: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 12,
+                }}
+                footer={
+                    <div
+                        style={{
+                            display: 'flex',                               // 按钮行使用 flex 布局
+                            justifyContent: 'space-between',               // 两端对齐
+                            width: '100%',
+                            padding: '0 0px 0px',                        // 底部内边距同 body 左右
+                            boxSizing: 'border-box',
+                        }}
+                    >
+                        {/* Back 按钮 */}
+                        <Button
+                            style={{
+                                flex: 1,                                      // 平分宽度
+                                height: 32,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                background: '#FFFFFF',
+                                border: '1px solid #D9D9D9',
+                                boxShadow: '0px 2px 0px rgba(0, 0, 0, 0.016)',
+                                borderRadius: 2,
+                            }}
+                            onClick={() => setIsCancelOpen(false)}
+                        >
+                            Back
+                        </Button>
+
+                        {/* Cancel Session Anyway 按钮 */}
+                        <Button
+                            style={{
+                                flex: 1,
+                                height: 32,
+                                marginLeft: 16,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                background: '#FF4D4F',
+                                boxShadow: '0px 2px 0px rgba(0, 0, 0, 0.043)',
+                                borderRadius: 2,
+                            }}
+                            type="primary"
+                            danger
+                            onClick={async () => {
+                                if (!currentAppt) return;
+                                try {
+                                    // 调用你的 update 接口
+                                    await fetch('/api/appointment/update', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            appointment_id: currentAppt.id,
+                                            status: 'canceled',
+                                            description: cancelReason,
+                                        }),
+                                    });
+                                    message.success('Session canceled');
+                                    setAppointments(list =>
+                                        list.map(a =>
+                                            a.id === currentAppt.id ? { ...a, status: 'canceled' } : a
+                                        )
+                                    );
+                                } catch (err: any) {
+                                    message.error(err.message || 'Cancel failed');
+                                } finally {
+                                    setIsCancelOpen(false);
+                                }
+                            }}
+                        >
+                            Cancel Session Anyway
+                        </Button>
+                    </div>
+                }
+            >
+                {/* 弹窗内容区 */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                    {/* 提示文字 */}
+                    <p
+                        style={{
+                            margin: 0,
+                            fontSize: 14,
+                            lineHeight: '16px',
+                            color: '#FF4D4F',                             // Dust Red / 5
+                        }}
+                    >
+                        * If you cancel within 48 hours of the session time, a $5 service fee will be deducted from your refund to cover scheduling and processing costs.
+                    </p>
+                    <p
+                        style={{
+                            margin: 0,
+                            fontSize: 14,
+                            lineHeight: '16px',
+                            color: '#000',
+                        }}
+                    >
+                        Let your mentee/mentor know why you’re canceling. Or email{' '}
+                        <span style={{ color: '#1890FF', textDecoration: 'underline' }}>
+                                mentorup.contact@gmail.com
+                              </span>{' '}
+                        to let us know your concerns.
+                    </p>
+                </div>
+
+                {/* 文本输入区 */}
+                <Form.Item
+                    name="reason"
+                    style={{
+                        width: '100%',
+                        marginBottom: 0  // 这里设置你想要的下外边距，比如 8px
+                    }}
+                >
+                    <Input.TextArea
+                        placeholder="Briefly explain why you're canceling..."
+                        autoSize={{ minRows: 4 }}
+                        value={cancelReason}
+                        onChange={e => setCancelReason(e.target.value)}
+                        style={{
+                            width: '100%',
+                            background: '#FFFFFF',
+                            border: '1px solid #D9D9D9',
+                            borderRadius: 2,
+                            padding: '5px 12px',
+                            fontSize: 14,
+                            lineHeight: '22px',
+                            color: cancelReason ? '#000' : 'rgba(0,0,0,0.25)',
+                        }}
+                    />
+                </Form.Item>
             </Modal>
         </div>
     );
