@@ -16,7 +16,8 @@ import {
     DatePicker,
     Button,
     Input,
-    Radio
+    Radio,
+    Tabs
 } from 'antd';
 import {
     CalendarOutlined,
@@ -68,6 +69,8 @@ interface Appointment {
 }
 const bookedSlotsStatePlaceholder: [string, string][] = [];
 
+type FilterKey = 'upcoming' | 'past' | 'cancelled';
+
 export default function MySessionsTab() {
     // const { user } = useUser();
     const params = useParams();
@@ -97,6 +100,19 @@ export default function MySessionsTab() {
 
     const [bookedSlots, setBookedSlots] = useState<[string,string][]>([]);
 
+    const [filter, setFilter] = useState<FilterKey>('upcoming');
+
+    // 根据 status 来做分类
+    const filteredAppointments = appointments.filter(a => {
+        if (filter === 'upcoming') {
+            return ['confirmed', 'paid', 'reschedule_in_progress'].includes(a.status);
+        }
+        if (filter === 'past') {
+            return a.status === 'completed';
+        }
+        // cancelled
+        return ['canceled', 'noshow'].includes(a.status);
+    });
     const fetchAppointments = useCallback(async () => {
         if (!mentorId) return;
 
@@ -333,87 +349,75 @@ export default function MySessionsTab() {
         <div style={{ padding: 16 }}>
             <Title level={3}>My Sessions</Title>
 
+            {/* —— 三个分类标签页 —— */}
+            <Tabs
+                activeKey={filter}
+                onChange={key => setFilter(key as FilterKey)}
+                items={[
+                    { key: 'upcoming',   label: 'Upcoming'   },
+                    { key: 'past',       label: 'Past'       },
+                    { key: 'cancelled',  label: 'Cancelled'  },
+                ]}
+            />
+
             {loading ? (
                 <Spin size="large" />
-            ) : appointments.length === 0 ? (
+            ) : filteredAppointments.length === 0 ? (
                 <Empty description="No sessions found." />
             ) : (
-                appointments.map((appt) => (
+                filteredAppointments.map(appt => (
                     <Card
                         key={appt.id}
                         style={{ marginBottom: 16 }}
                         title={
-                            <Space align="center" style={{ position: 'relative', width: 1056, height: 28 }}>
+                            <Space align="center" style={{ position: 'relative', width: '100%' }}>
                                 <CalendarOutlined />
-                                <Text
-                                    style={{
-                                        fontWeight: 700,
-                                        fontSize: 16,
-                                        lineHeight: '24px',
-                                    }}
-                                >
-                                    {appt.date}
-                                </Text>
-
+                                <Text strong>{appt.date}</Text>
                                 <ClockCircleOutlined style={{ marginLeft: 16 }} />
-                                <Text
-                                    style={{
-                                        fontWeight: 700,
-                                        fontSize: 16,
-                                        lineHeight: '24px',
-                                    }}
-                                >
-                                    {appt.time} {getShortTimeZone()}
-                                </Text>
+                                <Text strong>{appt.time} {getShortTimeZone()}</Text>
 
-                                {/* —— 新增：pending 时显示 “Waiting for Confirmation” —— */}
-                                {appt.status === 'canceled' ? null
-                                 : appt.proposal?.status === 'pending' ? (
-                                    <Text
-                                        style={{
-                                            marginLeft: 54,
-                                            fontWeight: 700,
-                                            fontSize: 16,
-                                            lineHeight: '24px',
-                                            color: '#1890FF', // Primary/6
-                                        }}
-                                    >
-                                        Waiting for Confirmation
-                                    </Text>
-                                ) : (
-                                    <Text
-                                        style={{
-                                            marginLeft: 54,
-                                            fontWeight: 700,
-                                            fontSize: 16,
-                                            lineHeight: '24px',
-                                            color: '#1890FF', // Secondary .45
-                                        }}
-                                    >
-                                        {(() => {
-                                            const start = dayjs(
-                                                `${appt.date} ${appt.time.split(' - ')[0]}`,
-                                                'YYYY-MM-DD HH:mm'
-                                            );
-                                            const now = dayjs();
-                                            const days = start.diff(now, 'day');
-                                            const hours = start.diff(now.add(days, 'day'), 'hour');
-                                            return `In ${days} Days ${hours} Hours`;
-                                        })()}
-                                    </Text>
+                                {appt.status !== 'canceled' && (
+                                    appt.proposal?.status === 'pending' ? (
+                                        <Text
+                                            style={{
+                                                marginLeft: 54,
+                                                fontWeight: 700,
+                                                fontSize: 16,
+                                                lineHeight: '24px',
+                                                color: '#1890FF',
+                                            }}
+                                        >
+                                            Waiting for Confirmation
+                                        </Text>
+                                    ) : (
+                                        <Text
+                                            style={{
+                                                marginLeft: 54,
+                                                fontWeight: 700,
+                                                fontSize: 16,
+                                                lineHeight: '24px',
+                                                color: '#1890FF',
+                                            }}
+                                        >
+                                            {(() => {
+                                                const start = dayjs(
+                                                    `${appt.date} ${appt.time.split(' - ')[0]}`,
+                                                    'YYYY-MM-DD HH:mm'
+                                                );
+                                                const now = dayjs();
+                                                const days = start.diff(now, 'day');
+                                                const hours = start.diff(now.add(days, 'day'), 'hour');
+                                                return `In ${days} Days ${hours} Hours`;
+                                            })()}
+                                        </Text>
+                                    )
                                 )}
 
-                                {/* —— 修改：状态 Tag 永远显示 —— */}
                                 <Tag
                                     style={{
                                         position: 'absolute',
                                         right: 0,
                                         top: 2,
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        padding: '1px 8px',
-                                        gap: 10,
-                                        // 根据状态切换背景色和边框色
                                         background: appt.status === 'canceled' ? '#FFF1F0' : '#E6F7FF',
                                         border: appt.status === 'canceled'
                                             ? '1px dashed #FFA39E'
@@ -422,11 +426,14 @@ export default function MySessionsTab() {
                                         fontWeight: 400,
                                         fontSize: 12,
                                         lineHeight: '20px',
-                                        // 根据状态切换字体颜色
                                         color: appt.status === 'canceled' ? '#FF4D4F' : '#1890FF',
                                     }}
                                 >
-                                    {appt.status}
+                                    {appt.status === 'confirmed'
+                                        ? 'Upcoming'
+                                        : appt.status === 'reschedule_in_progress'
+                                            ? 'Reschedule In Progress'
+                                            : appt.status}
                                 </Tag>
                             </Space>
                         }
