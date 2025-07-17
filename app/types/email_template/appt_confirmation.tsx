@@ -75,9 +75,8 @@ const ApptConfirmationEmail: React.FC<ApptConfirmationProps> = ({
           </Text>
 
           <Text style={text}>
-            If you need to reschedule or have any questions about this appointment, 
-            please contact us at{' '}
-            <Link href="mailto:contactus@mentorup.com">contactus@mentorup.com</Link>
+            If you have any questions or need assistance, please contact us at{' '}
+            <Link href="mailto:contactus@mentorup.info">contactus@mentorup.info</Link>
           </Text>
 
           <Text style={text}>

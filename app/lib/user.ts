@@ -28,7 +28,9 @@ export async function createUser(input: CreateUserInput): Promise<User> {
             wechat: input.wechat,
             status: input.status,
             created_at: new Date().toISOString(),
-            profile_url: input.profile_url
+            profile_url: input.profile_url,
+            introduction: input.introduction,
+            payout_preference: input.payout_preference
         };
 
         // Insert user into database
