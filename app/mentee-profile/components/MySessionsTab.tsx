@@ -146,17 +146,7 @@ export default function MySessionsTab() {
 
             setAppointments(enriched);
 
-            // 5) 构造 bookedSlots（confirmed + reschedule_in_progress）
-            const slots = enriched
-                .filter(a => a.status === 'confirmed' || a.status === 'reschedule_in_progress')
-                .map(a => {
-                    const [s,e] = a.time.split(' - ');
-                    return [
-                        dayjs(`${a.date} ${s}`, 'YYYY-MM-DD HH:mm').toISOString(),
-                        dayjs(`${a.date} ${e}`, 'YYYY-MM-DD HH:mm').toISOString(),
-                    ];
-                });
-            setBookedSlots(slots);
+
 
         } catch (e: any) {
             console.error(e);
@@ -204,18 +194,21 @@ export default function MySessionsTab() {
     const showRescheduleModal = (appt: Appointment) => {
         setCurrentAppt(appt);
         form.resetFields();
-        // 过滤出同一对 mentor/mentee 的已确认时段
-        const pairSlots = appointments
+        // —— 在这里只取出当前 mentor + 这个 mentee 已有的已确认时段 ——
+        const slotsForThisPair: [string,string][] = appointments
             .filter(a =>
-                (a.status==='confirmed'||a.status==='reschedule_in_progress')
-                && a.otherUser.id===appt.otherUser.id
+                (a.status === 'confirmed' || a.status === 'reschedule_in_progress')
+                && a.otherUser.id === appt.otherUser.id  // 同一个 mentee
             )
-            .map(a=> {
-                const [s,e] = a.time.split(' - ');
-                return [ dayjs(`${a.date} ${s}`).toISOString(),
-                    dayjs(`${a.date} ${e}`).toISOString() ];
+            .map(a => {
+                const [s, e] = a.time.split(' - ');
+                return [
+                    dayjs(`${a.date} ${s}`, 'YYYY-MM-DD HH:mm').toISOString(),
+                    dayjs(`${a.date} ${e}`, 'YYYY-MM-DD HH:mm').toISOString()
+                ];
             });
-        setBookedSlots(pairSlots);
+        setBookedSlots(slotsForThisPair);
+        // —— 计算完毕 ——
         setIsRescheduleOpen(true);
     };
     // 点击 Cancel 按钮
