@@ -4,6 +4,7 @@ export interface RescheduleProposal {
     receiver: string;
     proposer: string;
     proposed_at: string;
+    reason: string;
 }
 
 export interface CreateRescheduleProposalInput {
@@ -11,6 +12,7 @@ export interface CreateRescheduleProposalInput {
     proposed_time_ranges: [string, string][];  // Array of [start_time, end_time] pairs
     receiver: string;
     proposer: string;
+    reason: string;
 }
 
 export interface DeleteRescheduleProposalInput {
