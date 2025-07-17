@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     // Validate required fields
-    const { appointment_id, proposed_time_ranges, receiver, proposer } = body;
+    const { appointment_id, proposed_time_ranges, receiver, proposer, reason } = body;
     
     if (!appointment_id || !proposed_time_ranges || !receiver || !proposer) {
       return respErr('Missing required fields: appointment_id, proposed_time_ranges, receiver, proposer');
@@ -65,7 +65,8 @@ export async function POST(request: NextRequest) {
       appointment_id,
       proposed_time_ranges,
       receiver,
-      proposer
+      proposer,
+      reason,
     };
 
     const proposal = await createRescheduleProposal(input);
