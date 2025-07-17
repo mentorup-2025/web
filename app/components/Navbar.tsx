@@ -23,7 +23,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const { isMentor } = useMentorStatus();
+  const { isMentor, loading: isMentorLoading } = useMentorStatus();
 
   const handleBecomeMentor = () => {
     if (user?.id) {
@@ -55,7 +55,7 @@ export default function Navbar() {
             </SignedOut>
 
             <SignedIn>
-              {isMentor === false && (
+              {!isMentorLoading && isMentor === false && (
                   <Button type="primary" onClick={handleBecomeMentor}>
                     Become a Mentor
                   </Button>
