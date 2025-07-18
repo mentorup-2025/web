@@ -40,3 +40,23 @@ export async function upsertMentor(userId: string, input: UpsertMentorInput): Pr
         throw error;
     }
 }
+
+export async function updateMentor(
+    userId: string,
+    updates: Partial<UpsertMentorInput>
+): Promise<Mentor> {
+    try {
+        const { data, error } = await getSupabaseClient()
+            .from('mentors')
+            .update(updates)
+            .eq('user_id', userId)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data!;
+    } catch (err) {
+        console.error('Error in updateMentor:', err);
+        throw err;
+    }
+}

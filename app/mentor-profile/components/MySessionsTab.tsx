@@ -60,6 +60,7 @@ interface Appointment {
     status: string;
     description: string;
     resume_url?: string;
+    service_type: string;
     otherUser: {
         id: string;
         username: string;
@@ -178,6 +179,7 @@ export default function MySessionsTab() {
                             : 'Invalid',
                         status:      a.status,
                         description: a.description,
+                        service_type: a.service_type,
                         resume_url:  a.resume_url,
                         otherUser: {
                             id:       otherId,
@@ -347,7 +349,7 @@ export default function MySessionsTab() {
 
     return (
         <div style={{ padding: 16 }}>
-            <Title level={3}>My Sessions</Title>
+            {/*<Title level={3}>My Sessions</Title>*/}
 
             {/* —— 三个分类标签页 —— */}
             <Tabs
@@ -365,7 +367,13 @@ export default function MySessionsTab() {
             ) : filteredAppointments.length === 0 ? (
                 <Empty description="No sessions found." />
             ) : (
-                filteredAppointments.map(appt => (
+                [...filteredAppointments]
+                    .sort((a, b) => {
+                        const aStart = dayjs(`${a.date} ${a.time.split(' - ')[0]}`, 'YYYY-MM-DD HH:mm');
+                        const bStart = dayjs(`${b.date} ${b.time.split(' - ')[0]}`, 'YYYY-MM-DD HH:mm');
+                        return aStart.diff(bStart); // 时间近的排前面
+                    })
+                    .map(appt => (
                     <Card
                         key={appt.id}
                         style={{ marginBottom: 16 }}
@@ -400,14 +408,17 @@ export default function MySessionsTab() {
                                             }}
                                         >
                                             {(() => {
-                                                const start = dayjs(
-                                                    `${appt.date} ${appt.time.split(' - ')[0]}`,
-                                                    'YYYY-MM-DD HH:mm'
-                                                );
+                                                const start = dayjs(`${appt.date} ${appt.time.split(' - ')[0]}`, 'YYYY-MM-DD HH:mm');
                                                 const now = dayjs();
-                                                const days = start.diff(now, 'day');
-                                                const hours = start.diff(now.add(days, 'day'), 'hour');
-                                                return `In ${days} Days ${hours} Hours`;
+                                                const diffInHours = start.diff(now, 'hour');
+                                                const diffInDays = start.diff(now, 'day');
+
+                                                if (diffInHours < 24) {
+                                                    return `In ${diffInHours} Hours`;
+                                                } else {
+                                                    const hours = start.diff(now.add(diffInDays, 'day'), 'hour');
+                                                    return `In ${diffInDays} Days ${hours} Hours`;
+                                                }
                                             })()}
                                         </Text>
                                     )
@@ -491,7 +502,7 @@ export default function MySessionsTab() {
                                                     cursor: 'pointer',
                                                 }}
                                             >
-                                                <FrownOutlined style={{ fontSize: 18 }} /><div>No Show</div>
+                                                <FrownOutlined style={{ fontSize: 18 }} /><div>Report Issue</div>
                                             </div>,
                                             <div
                                                 key="join"
@@ -511,6 +522,9 @@ export default function MySessionsTab() {
                         <Space>
                             <Avatar>{appt.otherUser.username.charAt(0)}</Avatar>
                             <Text strong>{appt.otherUser.username}</Text>
+                            <Text type="secondary" style={{ marginLeft: 8 }}>
+                                ({appt.service_type})
+                            </Text>
                         </Space>
                         <div style={{ marginTop: 8 }}>
                             <Text type="secondary">Notes:</Text>
