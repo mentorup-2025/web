@@ -646,4 +646,58 @@ GET {{baseUri}}/api/user/non-existent-user-id/get_coffee_chat_time
 ### Test Get Coffee Chat Count - Invalid UUID Format
 GET {{baseUri}}/api/user/invalid-uuid-format/get_coffee_chat_time
 
+### Test Generate Google Meet Link
+POST {{baseUri}}/api/meet/generate
+Content-Type: application/json
+
+{
+    "start_time": "2025-08-21T14:00:00Z",
+    "end_time": "2025-08-21T15:00:00Z",
+    "mentor_email": "bensonguan15@gmail.com",
+    "mentee_email": "bensonguan10@gmail.com"
+}
+
+### Test Generate Google Meet Link - Missing Start Time
+POST {{baseUri}}/api/meet/generate
+Content-Type: application/json
+
+{
+    "end_time": "2025-03-21T15:00:00Z"
+}
+
+### Test Generate Google Meet Link - Missing End Time
+POST {{baseUri}}/api/meet/generate
+Content-Type: application/json
+
+{
+    "start_time": "2025-03-21T14:00:00Z"
+}
+
+### Test Generate Google Meet Link - Invalid Time Format
+POST {{baseUri}}/api/meet/generate
+Content-Type: application/json
+
+{
+    "start_time": "invalid-time",
+    "end_time": "2025-03-21T15:00:00Z"
+}
+
+### Test Generate Google Meet Link - End Time Before Start Time
+POST {{baseUri}}/api/meet/generate
+Content-Type: application/json
+
+{
+    "start_time": "2025-03-21T15:00:00Z",
+    "end_time": "2025-03-21T14:00:00Z"
+}
+
+### Test Generate Google Meet Link - 30 Minute Meeting
+POST {{baseUri}}/api/meet/generate
+Content-Type: application/json
+
+{
+    "start_time": "2025-03-21T10:00:00Z",
+    "end_time": "2025-03-21T10:30:00Z"
+}
+
 
