@@ -1,5 +1,6 @@
 'use client';
 
+import React, { Fragment } from 'react';
 import { useEffect, useState, useCallback } from 'react';
 import styles from './AvailabilityTab.module.css';
 import {
@@ -16,7 +17,8 @@ import {
 } from 'antd';
 import { LockOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
-
+import utc from 'dayjs/plugin/utc';
+dayjs.extend(utc);
 const { Title } = Typography;
 // 我们分别给两个 RangePicker 起别名，避免名字冲突：
 const TimeRangePicker = TimePicker.RangePicker;
@@ -39,10 +41,15 @@ interface Props {
     userId: string;
 }
 
+const slotKey = (s: Slot) => `${s.day_of_week}-${s.start_time}-${s.end_time}`;
+
+
 export default function AvailabilityTab({ userId }: Props) {
     const [slots, setSlots] = useState<Slot[]>([]);
+    const [originalSlots, setOriginalSlots] = useState<Slot[]>([]);
     const [blocks, setBlocks] = useState<BlockItem[]>([]);
     const [loading, setLoading] = useState(false);
+    const [slotErrors, setSlotErrors] = useState<Record<number, string>>({});
 
     const dayNames = [
         'Sunday',
@@ -86,40 +93,13 @@ export default function AvailabilityTab({ userId }: Props) {
             fetchBlocks(),
         ])
             .then(([availRes]) => {
-                // 后端返回示例（代码中假设）：
-                // {
-                //   code: 0,
-                //   message: "ok",
-                //   data: [
-                //     {
-                //       id: "...",
-                //       mentor_id: "...",
-                //       weekday: 6,
-                //       start_time: "18:00:00",
-                //       end_time: "22:00:00"
-                //     }
-                //   ]
-                // }
-                //
-                // 我们把它映射成前端内部使用的 Slot[] 格式：
-                const byDay: Record<number, Slot> = {};
-                (availRes.data || []).forEach((item: any) => {
-                    // 后端字段叫 weekday，前端内部叫 day_of_week
-                    const dow = item.weekday as number;
-                    // 把 "HH:mm:ss" 截成 "HH:mm"
-                    const hhmmStart = (item.start_time as string).slice(0, 5);
-                    const hhmmEnd = (item.end_time as string).slice(0, 5);
-
-                    if (!byDay[dow]) {
-                        byDay[dow] = {
-                            day_of_week: dow,
-                            start_time: hhmmStart,
-                            end_time: hhmmEnd,
-                        };
-                    }
-                });
-
-                setSlots(Object.values(byDay));
+                const fetchedSlots: Slot[] = (availRes.data || []).map((item: any) => ({
+                    day_of_week: item.weekday as number,
+                    start_time:  dayjs.utc(item.start_time, 'HH:mm:ss').local().format(timeFormat),
+                    end_time:    dayjs.utc(item.end_time,   'HH:mm:ss').local().format(timeFormat),
+                }));
+                setSlots(fetchedSlots);
+                setOriginalSlots(fetchedSlots);
             })
             .catch(() => {
                 message.error('Failed to load availability.');
@@ -132,7 +112,53 @@ export default function AvailabilityTab({ userId }: Props) {
     // 保存「Weekly Available Hours」
     const handleSaveSlots = async (slotsToSave: Slot[] = slots) => {
         setLoading(true);
+        if (Object.keys(slotErrors).length > 0) {
+            message.error('Please fix all errors before saving');
+            setLoading(false);
+            return;
+        }
+        // 1. Ensure each slot is at least 1 hour long
+        const tooShort = slotsToSave.some(s => {
+            const start = dayjs(s.start_time, timeFormat);
+            const end   = dayjs(s.end_time,   timeFormat);
+            // diff in hours (floating point); require ≥1
+            return end.diff(start, 'hour', true) < 1;
+        });
+        if (tooShort) {
+            message.error('Each time slot must be at least 1 hour long');
+            setLoading(false);
+            return;
+        }
 
+// 2. Slots on the same day must not overlap
+        const groups = slotsToSave.reduce<Record<number, Slot[]>>((acc, s) => {
+            (acc[s.day_of_week] ||= []).push(s);
+            return acc;
+        }, {});
+        for (const [day, list] of Object.entries(groups)) {
+            // sort by start time
+            const sorted = list
+                .map(s => ({ ...s }))
+                .sort((a, b) =>
+                    dayjs(a.start_time, timeFormat).isBefore(dayjs(b.start_time, timeFormat))
+                        ? -1
+                        : 1
+                );
+            // check pairwise
+            for (let i = 1; i < sorted.length; i++) {
+                const prevEnd   = dayjs(sorted[i - 1].end_time,   timeFormat);
+                const currStart = dayjs(sorted[i    ].start_time, timeFormat);
+                if (currStart.isBefore(prevEnd)) {
+                    message.error(
+                        `On ${dayNames[Number(day)]}, slots ` +
+                        `${sorted[i - 1].start_time}-${sorted[i - 1].end_time} ` +
+                        `and ${sorted[i].start_time}-${sorted[i].end_time} overlap`
+                    );
+                    setLoading(false);
+                    return;
+                }
+            }
+        }
         // client-side 验证：保证 start < end
         const isValidSlots = slotsToSave.every(slot => {
             const start = dayjs(slot.start_time, timeFormat);
@@ -140,7 +166,7 @@ export default function AvailabilityTab({ userId }: Props) {
             return start.isValid() && end.isValid() && end.isAfter(start);
         });
         if (!isValidSlots) {
-            message.error('Invalid time slots - please check your times');
+            message.error('Invalid time slots – please check your start and end times');
             setLoading(false);
             return;
         }
@@ -151,12 +177,17 @@ export default function AvailabilityTab({ userId }: Props) {
             const payload = {
                 user_id: userId,
                 availabilities: slotsToSave.map(s => ({
-                    day_of_week: s.day_of_week, // 后端要求字段叫 weekday
-                    start_time: s.start_time,
-                    end_time: s.end_time,
+                    day_of_week: s.day_of_week,
+                    start_time: dayjs(s.start_time, 'HH:mm')       // 本地 HH:mm → UTC HH:mm:ss
+                        .utc()
+                        .format('HH:mm'),
+                    end_time:   dayjs(s.end_time,   'HH:mm')
+                        .utc()
+                        .format('HH:mm'),
+
                 })),
             };
-
+            console.log('→ saving availability payload:', JSON.stringify(payload, null, 2));
             const res = await fetch('/api/availability/update', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -172,21 +203,21 @@ export default function AvailabilityTab({ userId }: Props) {
             message.success('Weekly availability updated successfully.');
             // （可选）如果你想再重新拉一次最新数据：
             // const refreshed = await fetch(`/api/availability/${userId}/get`).then(r => r.json());
-            // // 同步刷新 UI
-            // const byDay: Record<number, Slot> = {};
-            // (refreshed.data || []).forEach((item: any) => {
-            //   const dow = item.weekday;
-            //   const hhmmStart = (item.start_time as string).slice(0, 5);
-            //   const hhmmEnd = (item.end_time as string).slice(0, 5);
-            //   if (!byDay[dow]) {
-            //     byDay[dow] = {
-            //       day_of_week: dow,
-            //       start_time: hhmmStart,
-            //       end_time: hhmmEnd,
-            //     };
-            //   }
-            // });
-            // setSlots(Object.values(byDay));
+            // 同步刷新 UI
+        //     const byDay: Record<number, Slot> = {};
+        //     (refreshed.data || []).forEach((item: any) => {
+        //       const dow = item.weekday;
+        //         const hhmmStart = dayjs.utc(item.start_time, 'HH:mm').local().format(timeFormat);
+        //         const hhmmEnd   = dayjs.utc(item.end_time,   'HH:mm').local().format(timeFormat);
+        //       if (!byDay[dow]) {
+        //         byDay[dow] = {
+        //           day_of_week: dow,
+        //           start_time: hhmmStart,
+        //           end_time: hhmmEnd,
+        //         };
+        //       }
+        //     });
+        //     setSlots(Object.values(byDay));
         } catch (err: any) {
             message.error('Failed to update availability:' + err.message);
         } finally {
@@ -210,33 +241,51 @@ export default function AvailabilityTab({ userId }: Props) {
         }
 
         setSlots(next);
+        validateAll(next);
     };
 
-    // 给某一天添加默认时间段
+    // 用下面这个实现取代原来的 handleAddRow()
     const handleAddRow = () => {
+        // 找到当前所有 slots 同一天(day_of_week)的列表并按 end_time 排序
+        const lastPerDay: Record<number, Slot> = {};
+        slots.forEach(s => {
+            const prev = lastPerDay[s.day_of_week];
+            if (!prev || dayjs(s.end_time, timeFormat).isAfter(dayjs(prev.end_time, timeFormat))) {
+                lastPerDay[s.day_of_week] = s;
+            }
+        });
+
+        // 选一个默认新 day
         const used = new Set(slots.map(s => s.day_of_week));
         let newDay = 0;
-        for (let d = 0; d < 7; d++) {
-            if (!used.has(d)) {
-                newDay = d;
-                break;
-            }
+        for (; newDay < 7; newDay++) {
+            if (!used.has(newDay)) break;
         }
-        const next = [
+
+        // 计算 start/end
+        let newStart = '00:00', newEnd = '01:00';
+        const last = lastPerDay[newDay];
+        if (last) {
+            const lastEnd = dayjs(last.end_time, timeFormat);
+            newStart = lastEnd.add(1, 'hour').format(timeFormat);
+            newEnd   = lastEnd.add(2, 'hour').format(timeFormat);
+        }
+
+        setSlots([
             ...slots,
-            {
-                day_of_week: newDay,
-                start_time: '18:00',
-                end_time: '19:00',
-            },
-        ];
-        setSlots(next);
+            { day_of_week: newDay, start_time: newStart, end_time: newEnd }
+        ]);
+        validateAll([
+            ...slots,
+            { day_of_week: newDay, start_time: newStart, end_time: newEnd }
+        ]);
     };
 
     // 删除某一天的时间段
     const handleRemoveRow = (i: number) => {
         const next = slots.filter((_, idx) => idx !== i);
         setSlots(next);
+        validateAll(next);
         if (next.length === 0) {
             message.info('Please keep at least one available time slot.');
         }
@@ -248,32 +297,33 @@ export default function AvailabilityTab({ userId }: Props) {
     ) => {
         if (!dates) return;
         const [startDay, endDay] = dates;
-        // 注意 startDay 或 endDay 也可能是 null，需要额外校验
         if (!startDay || !endDay) return;
 
-        // 之后可以直接用 startDay 和 endDay（均为 Dayjs 实例）
         const dayCount = endDay.diff(startDay, 'day');
-        if (dayCount < 0) return;
-
         setLoading(true);
+
         try {
             for (let i = 0; i <= dayCount; i++) {
-                const currentDate = startDay.add(i, 'day').format('YYYY-MM-DD');
+                const localDay = startDay.add(i, 'day');
+
+                // Dayjs → JavaScript Date → ISO string （UTC）
+                const utcStart = localDay.startOf('day').utc().toDate().toISOString();
+                const utcEnd   = localDay.endOf('day').utc().toDate().toISOString();
+
                 await fetch(`/api/availability_block/${userId}/insert`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        start_date: currentDate,
-                        end_date: currentDate,
+                        start_date: utcStart,
+                        end_date:   utcEnd,
                     }),
-                }).then(r => r.json());
+                });
             }
-            message.success(
-                `Blocked dates from ${dateStrings[0]} to ${dateStrings[1]}`
-            );
+
+            message.success(`Blocked dates from ${dateStrings[0]} to ${dateStrings[1]}`);
             await fetchBlocks();
         } catch (err: any) {
-            message.error('Failed to add blocked date:' + err.message);
+            message.error('Failed to add blocked date: ' + err.message);
         } finally {
             setLoading(false);
         }
@@ -297,6 +347,41 @@ export default function AvailabilityTab({ userId }: Props) {
             setLoading(false);
         }
     };
+
+// 单行校验
+    function getSlotError(slot: Slot, idx: number, all: Slot[]): string | undefined {
+        const start = dayjs(slot.start_time, timeFormat);
+        const end   = dayjs(slot.end_time,   timeFormat);
+        if (!start.isValid() || !end.isValid() || !end.isAfter(start)) {
+            return 'End time must be after start time';
+        }
+        if (end.diff(start, 'hour', true) < 1) {
+            return 'Slot must be at least 1 hour';
+        }
+        // 同一天不重叠
+        for (let j = 0; j < all.length; j++) {
+            if (j === idx) continue;
+            const o = all[j];
+            if (o.day_of_week !== slot.day_of_week) continue;
+            const oStart = dayjs(o.start_time, timeFormat);
+            const oEnd   = dayjs(o.end_time,   timeFormat);
+            if (start.isBefore(oEnd) && end.isAfter(oStart)) {
+                return `Overlaps with ${o.start_time}-${o.end_time}`;
+            }
+        }
+        return;
+    }
+
+// 批量校验并写入 state
+    function validateAll(slotsArr: Slot[]) {
+        const errs: Record<number,string> = {};
+        slotsArr.forEach((s, i) => {
+            const e = getSlotError(s, i, slotsArr);
+            if (e) errs[i] = e;
+        });
+        setSlotErrors(errs);
+    }
+
 
     return (
         <div>
@@ -394,97 +479,95 @@ export default function AvailabilityTab({ userId }: Props) {
                                     }}
                                 >
                                     {isUnavailable ? (
-                                        <span
-                                            style={{
-                                                color: '#999',
-                                                display: 'block',
-                                                width: '100%',
-                                                textAlign: 'center',
-                                            }}
-                                        >
-                      Unavailable
-                    </span>
+                                        <span style={{ color: '#999', textAlign: 'center', width: '100%' }}>
+        Unavailable
+      </span>
                                     ) : (
-                                        daySlots.map((slot, idx) => (
-                                            <Row
-                                                key={idx}
-                                                gutter={8}
-                                                align="middle"
-                                                style={{ marginBottom: 4 }}
-                                            >
-                                                <Col>
-                                                    {/* 这里使用 TimePicker.RangePicker 来选时间段 */}
-                                                    <TimeRangePicker
-                                                        className={styles['centered-range-picker']}
-                                                        allowClear={false}
-                                                        placeholder={['Start', 'End']}
-                                                        format={timeFormat}
-                                                        hourStep={1}
-                                                        style={{
-                                                            width: '100%',
-                                                            borderRadius: 2,
-                                                            paddingRight: 40,
-                                                        }}
-                                                        value={[
-                                                            dayjs(slot.start_time, timeFormat),
-                                                            dayjs(slot.end_time, timeFormat),
-                                                        ]}
-                                                        onChange={values => {
-                                                            const [start, end] = values || [];
-                                                            updateSlot(idx, {
-                                                                start_time: start
-                                                                    ? start.format(timeFormat)
-                                                                    : slot.start_time,
-                                                                end_time: end
-                                                                    ? end.format(timeFormat)
-                                                                    : slot.end_time,
-                                                            });
-                                                        }}
-                                                    />
-                                                    <span
-                                                        style={{
-                                                            position: 'absolute',
-                                                            right: 12,
-                                                            top: '50%',
-                                                            transform: 'translateY(-50%)',
-                                                            fontSize: 14,
-                                                            color: '#000',
-                                                            pointerEvents: 'none',
-                                                        }}
-                                                    >
-                            {tzAbbr}
-                          </span>
-                                                </Col>
-                                                <Col>
-                                                    <Button
-                                                        type="text"
-                                                        onClick={() =>
-                                                            handleRemoveRow(slots.findIndex(s => s === slot))
-                                                        }
-                                                        style={{
-                                                            width: 14,
-                                                            height: 14,
-                                                            padding: 0,
-                                                            border: 'none',
-                                                            background: 'transparent',
-                                                            flex: 'none',
-                                                            order: 1,
-                                                            flexGrow: 0,
-                                                        }}
-                                                    >
-                                                        <img
-                                                            src="/images/button/close.png"
-                                                            alt="Remove"
-                                                            style={{
-                                                                width: '100%',
-                                                                height: '100%',
-                                                                objectFit: 'contain',
-                                                            }}
-                                                        />
-                                                    </Button>
-                                                </Col>
-                                            </Row>
-                                        ))
+                                        daySlots.map((slot, idxInDay) => {
+                                            // 计算全局索引
+                                            const globalIdx = slots.findIndex(
+                                                s =>
+                                                    s.day_of_week === slot.day_of_week &&
+                                                    s.start_time === slot.start_time &&
+                                                    s.end_time === slot.end_time
+                                            );
+
+                                            return (
+                                                <React.Fragment key={globalIdx}>
+                                                    <Row gutter={8} align="middle" style={{ marginBottom: 4 }}>
+                                                        <Col>
+                                                            <TimeRangePicker
+                                                                className={styles['centered-range-picker']}
+                                                                allowClear={false}
+                                                                placeholder={['Start', 'End']}
+                                                                format={timeFormat}
+                                                                hourStep={1}
+                                                                minuteStep={60 as any}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    borderRadius: 2,
+                                                                    paddingRight: 40,
+                                                                }}
+                                                                value={[
+                                                                    dayjs(slot.start_time, timeFormat),
+                                                                    dayjs(slot.end_time, timeFormat),
+                                                                ]}
+                                                                onChange={values => {
+                                                                    const [start, end] = values || [];
+                                                                    updateSlot(globalIdx, {
+                                                                        start_time: start
+                                                                            ? start.format(timeFormat)
+                                                                            : slot.start_time,
+                                                                        end_time: end
+                                                                            ? end.format(timeFormat)
+                                                                            : slot.end_time,
+                                                                    });
+                                                                }}
+                                                            />
+                                                            <span
+                                                                style={{
+                                                                    position: 'absolute',
+                                                                    right: 12,
+                                                                    top: '50%',
+                                                                    transform: 'translateY(-50%)',
+                                                                    fontSize: 14,
+                                                                    color: '#000',
+                                                                    pointerEvents: 'none',
+                                                                }}
+                                                            >
+                  {tzAbbr}
+                </span>
+                                                        </Col>
+                                                        <Col>
+                                                            <Button
+                                                                type="text"
+                                                                onClick={() => handleRemoveRow(globalIdx)}
+                                                                style={{
+                                                                    width: 14,
+                                                                    height: 14,
+                                                                    padding: 0,
+                                                                    border: 'none',
+                                                                    background: 'transparent',
+                                                                }}
+                                                            >
+                                                                <img
+                                                                    src="/images/button/close.png"
+                                                                    alt="Remove"
+                                                                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                                                                />
+                                                            </Button>
+                                                        </Col>
+                                                    </Row>
+
+                                                    {/* 如果有校验错误，则在这一行下面显示 */}
+                                                    {slotErrors[globalIdx] && (
+                                                        <div style={{ color: 'red', marginLeft: 140 }}>
+                                                            {slotErrors[globalIdx]}
+                                                        </div>
+                                                    )}
+                                                </React.Fragment>
+                                            );
+                                        })
                                     )}
                                 </div>
                             </div>
@@ -494,7 +577,7 @@ export default function AvailabilityTab({ userId }: Props) {
                         <Col>
                             <Button
                                 style={{ borderRadius: 2 }}
-                                onClick={() => location.reload()}
+                                onClick={() => setSlots(originalSlots)}
                             >
                                 Cancel
                             </Button>
@@ -507,6 +590,7 @@ export default function AvailabilityTab({ userId }: Props) {
                                     backgroundColor: '#1890ff',
                                     borderColor: '#1890ff',
                                 }}
+                                disabled={Object.keys(slotErrors).length > 0}
                                 onClick={() => handleSaveSlots()}
                             >
                                 Save changes

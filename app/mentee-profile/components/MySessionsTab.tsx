@@ -15,8 +15,9 @@ import {
     Form,
     DatePicker,
     Button,
-    Radio,
     Input,
+    Radio,
+    Tabs
 } from 'antd';
 import {
     CalendarOutlined,
@@ -27,7 +28,7 @@ import {
     FrownOutlined,
     BellOutlined,
     MinusCircleOutlined,
-    PlusOutlined,
+    PlusOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -56,36 +57,55 @@ interface Appointment {
     time: string;
     status: string;
     description: string;
+    service_type: string;
     resume_url?: string;
     otherUser: { id: string; username: string };
     proposal?: Proposal;
 }
-
+const bookedSlotsStatePlaceholder: [string, string][] = [];
+type FilterKey = 'upcoming' | 'past' | 'cancelled';
 export default function MySessionsTab() {
     const params = useParams();
     const menteeId = params?.id as string;
 
     const [appointments, setAppointments] = useState<Appointment[]>([]);
-    const [loading, setLoading]         = useState(true);
+    const [loading, setLoading] = useState(true);
 
-    // 选中的 proposal index
     const [selectedProposal, setSelectedProposal] = useState<Record<string, number>>({});
 
-    // 各种 Modal 状态
-    const [isConfirmOpen, setIsConfirmOpen]     = useState(false);
-    const [isReviewOpen, setIsReviewOpen]       = useState(false);
-    const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
-    const [isCancelOpen, setIsCancelOpen]       = useState(false);
+    // Reschedule modal state
+    const [currentAppt, setCurrentAppt] = useState<Appointment | null>(null);
+    const [form] = Form.useForm();
+    const [isRescheduleOpen, setIsRescheduleOpen] = useState(false)
 
-    // 当前操作的 appointment
-    const [confirmAppt, setConfirmAppt]     = useState<Appointment | null>(null);
-    const [reviewAppt, setReviewAppt]       = useState<Appointment | null>(null);
-    const [currentAppt, setCurrentAppt]     = useState<Appointment | null>(null);
-    const [cancelReason, setCancelReason]   = useState('');
+    const [isExplanationOpen, setIsExplanationOpen] = useState(false);
+    const [explanation, setExplanation] = useState('');
+    const [exForm] = Form.useForm();
 
-    // 用来 disabled 已占用时段，按 mentor 端逻辑
-    const [bookedSlots, setBookedSlots]     = useState<[string,string][]>([]);
+    const [isReviewOpen, setIsReviewOpen] = useState(false);
+    const [reviewAppt, setReviewAppt] = useState<Appointment | null>(null);
 
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+    const [confirmAppt, setConfirmAppt] = useState<Appointment | null>(null);
+
+    const [isCancelOpen, setIsCancelOpen] = useState(false);
+    const [cancelReason, setCancelReason] = useState('');
+
+    const [bookedSlots, setBookedSlots] = useState<[string,string][]>([]);
+
+    const [filter, setFilter] = useState<FilterKey>('upcoming');
+
+    // 根据 status 来做分类
+    const filteredAppointments = appointments.filter(a => {
+        if (filter === 'upcoming') {
+            return ['confirmed', 'paid', 'reschedule_in_progress'].includes(a.status);
+        }
+        if (filter === 'past') {
+            return a.status === 'completed';
+        }
+        // cancelled
+        return ['canceled', 'noshow'].includes(a.status);
+    });
     // 拉列表
     const fetchAppointments = useCallback(async () => {
         if (!menteeId) return;
@@ -138,6 +158,7 @@ export default function MySessionsTab() {
                     date, time,
                     status: a.status,
                     description: a.description,
+                    service_type: a.service_type,
                     resume_url: a.resume_url,
                     otherUser: { id: otherId, username: userMap[otherId]?.username || 'Anonymous' },
                     proposal,
@@ -240,16 +261,31 @@ export default function MySessionsTab() {
         }
     };
 
-    const [form] = Form.useForm();
 
     return (
         <div style={{ padding:16 }}>
-            <Title level={3}>My Sessions</Title>
-            {loading
-                ? <Spin size="large"/>
-                : appointments.length===0
-                    ? <Empty description="No sessions found."/>
-                    : appointments.map(appt=>(
+            {/*<Title level={3}>My Sessions</Title>*/}
+            <Tabs
+                activeKey={filter}
+                onChange={key => setFilter(key as FilterKey)}
+                items={[
+                    { key: 'upcoming',   label: 'Upcoming'   },
+                    { key: 'past',       label: 'Past'       },
+                    { key: 'cancelled',  label: 'Cancelled'  },
+                ]}
+            />
+            {loading ? (
+                <Spin size="large" />
+            ) : filteredAppointments.length === 0 ? (
+                <Empty description="No sessions found." />
+            ) : (
+                [...filteredAppointments]
+                    .sort((a, b) => {
+                        const aStart = dayjs(`${a.date} ${a.time.split(' - ')[0]}`, 'YYYY-MM-DD HH:mm');
+                        const bStart = dayjs(`${b.date} ${b.time.split(' - ')[0]}`, 'YYYY-MM-DD HH:mm');
+                        return aStart.diff(bStart); // 时间近的排前面
+                    })
+                    .map(appt => (
                         <Card
                             key={appt.id}
                             style={{ marginBottom:16 }}
@@ -268,10 +304,17 @@ export default function MySessionsTab() {
                                             </Text>
                                             : <Text style={{ marginLeft:54,fontWeight:700,fontSize:16,color:'#1890FF' }}>
                                                 {(() => {
-                                                    const st = dayjs(`${appt.date} ${appt.time.split(' - ')[0]}`,'YYYY-MM-DD HH:mm');
-                                                    const diffDays = st.diff(dayjs(),'day');
-                                                    const diffHrs  = st.diff(dayjs().add(diffDays,'day'),'hour');
-                                                    return `In ${diffDays} Days ${diffHrs} Hours`;
+                                                    const start = dayjs(`${appt.date} ${appt.time.split(' - ')[0]}`, 'YYYY-MM-DD HH:mm');
+                                                    const now = dayjs();
+                                                    const diffInHours = start.diff(now, 'hour');
+                                                    const diffInDays = start.diff(now, 'day');
+
+                                                    if (diffInHours < 24) {
+                                                        return `In ${diffInHours} Hours`;
+                                                    } else {
+                                                        const hours = start.diff(now.add(diffInDays, 'day'), 'hour');
+                                                        return `In ${diffInDays} Days ${hours} Hours`;
+                                                    }
                                                 })()}
                                             </Text>
                                     }
@@ -321,14 +364,18 @@ export default function MySessionsTab() {
                                                 <div key="cancel" onClick={()=>showCancelModal(appt)} style={{ cursor:'pointer' }}>
                                                     <CloseCircleOutlined style={{ fontSize:18 }}/><div>Cancel</div>
                                                 </div>,
-                                                <div key="noshow"><FrownOutlined style={{ fontSize:18 }}/><div>No Show</div></div>,
+                                                <div key="noshow"><FrownOutlined style={{ fontSize:18 }}/><div>Report Issue</div></div>,
                                                 <div key="join"><BellOutlined style={{ fontSize:18 }}/><div>Join</div></div>,
                                             ]
                                     )
                                     : []
                             }
                         >
-                            <Space><Avatar>{appt.otherUser.username[0]}</Avatar><Text strong>{appt.otherUser.username}</Text></Space>
+                            <Space><Avatar>{appt.otherUser.username[0]}</Avatar><Text strong>{appt.otherUser.username}</Text>
+                                <Text type="secondary" style={{ marginLeft: 8 }}>
+                                    ({appt.service_type})
+                                </Text>
+                            </Space>
                             <div style={{ marginTop:8 }}><Text type="secondary">Notes:</Text><p>{appt.description}</p></div>
                             {appt.resume_url && (() => {
                                 // 1. 先取出最后一段 "1752650411087-jakes-resume.pdf"
@@ -359,7 +406,7 @@ export default function MySessionsTab() {
                             })()}
                         </Card>
                     ))
-            }
+            )}
 
             {/* Confirm Modal */}
             <Modal

@@ -26,13 +26,13 @@ import {
   FileOutlined, DeleteOutlined
 } from '@ant-design/icons';
 import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import Navbar from '../../components/Navbar';
 import MySessionsTab from '../components/MySessionsTab';
 import PaymentTab from '../components/PaymentTab';
 import styles from '../menteeProfile.module.css';
 import { useUser } from '@clerk/nextjs';
 import dayjs from 'dayjs';
+import React, { Fragment, useEffect, useState, useCallback } from 'react';
 
 const { Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -75,35 +75,36 @@ export default function MenteeProfilePage() {
     if (hash) setActiveTab(hash);
   }, []);
 
-  const fetchUserData = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/user/${menteeId}`);
-      const result = await response.json();
+  const fetchUserData = useCallback(
+      async (forceRefresh: boolean = false) => {
+        setLoading(true);
+        try {
+          const response = await fetch(`/api/user/${menteeId}`);
+          const result = await response.json();
 
-      if (result.code === 200) {
-        // 成功时清空任何旧的 error
-        setError(null);
-        const data = result.data;
-        setUserData(data);
-        setDraftUsername(data.username || '');
-        setDraftJobTarget({
-          level: data.job_target?.level || '',
-          title: data.job_target?.title || '',
-        });
-        setDraftLinkedin(data.linkedin || '');
-        setIntroduction(data.introduction || '');
-      } else {
-        throw new Error(result.message || 'Failed to fetch user data');
-      }
-    } catch (err: any) {
-      console.error('Error fetching user data:', err);
-      // 只 setError，不再 throw
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+          if (result.code === 200) {
+            setError(null);
+            const data = result.data;
+            setUserData(data);
+            setDraftUsername(data.username || '');
+            setDraftJobTarget({
+              level: data.job_target?.level || '',
+              title: data.job_target?.title || '',
+            });
+            setDraftLinkedin(data.linkedin || '');
+            setIntroduction(data.introduction || '');
+          } else {
+            throw new Error(result.message || 'Failed to fetch user data');
+          }
+        } catch (err: any) {
+          console.error('Error fetching user data:', err);
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      },
+      [menteeId]  // <- 依赖数组写在这里
+  );
   useEffect(() => {
     fetchUserData();
   }, [menteeId]);
@@ -142,6 +143,7 @@ export default function MenteeProfilePage() {
 
       if (userUpdateResp.ok) {
         message.success('Profile updated successfully');
+        fetchUserData(true);
       } else {
         message.error('Failed to update profile');
       }
@@ -237,13 +239,15 @@ export default function MenteeProfilePage() {
       }
 
       // Refetch user data to refresh UI
-      await fetchUserData();
+      setUserData((prev: any) => (prev ? { ...prev, resume: fileUrl } : prev));
       setResumeKey(prev => prev + 1);
       setDraggerKey(prev => prev + 1);
+
 
       // 正确调用 onSuccess
       onSuccess({ status: 'done', name: file.name, url: fileUrl }, file);
       message.success('Resume uploaded successfully');
+      await fetchUserData(true);
     } catch (err: any) {
       console.error('Resume upload failed:', err);
       message.error(err.message || 'Upload error');
@@ -267,11 +271,13 @@ export default function MenteeProfilePage() {
         throw new Error('Failed to delete resume');
       }
 
-      await fetchUserData();
+      setUserData((prev: any) => (prev ? { ...prev, resume: null } : prev));
       setResumeKey(prev => prev + 1);
       setDraggerKey(prev => prev + 1);
 
+
       message.success('Resume deleted successfully');
+      await fetchUserData(true);
     } catch (err: any) {
       console.error('Error deleting resume:', err);
       message.error(err.message || 'Failed to delete resume');
@@ -308,7 +314,15 @@ export default function MenteeProfilePage() {
                   </Text>
                   <Space className={styles.socialLinks}>
                     {userData.linkedin && (
-                        <a href={userData.linkedin} target="_blank" rel="noopener noreferrer">
+                        <a
+                            href={
+                              userData.linkedin.startsWith('http://') || userData.linkedin.startsWith('https://')
+                                  ? userData.linkedin
+                                  : `https://${userData.linkedin}`
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
                           <LinkedinFilled className={styles.socialIcon} />
                         </a>
                     )}
@@ -328,7 +342,11 @@ export default function MenteeProfilePage() {
                     title="Introduction"
                     extra={<EditOutlined style={{ cursor: 'pointer' }} onClick={openIntroModal} />}
                 >
-                  <Paragraph>{introduction}</Paragraph>
+                  <Paragraph>
+                    {introduction && introduction.trim()
+                        ? introduction
+                        : "This mentee hasn't added a self introduction yet."}
+                  </Paragraph>
                 </Card>
 
                 <Card key={resumeKey} title="Resume" style={{ marginTop: 24 }}>
@@ -461,36 +479,36 @@ export default function MenteeProfilePage() {
                       }}
                       style={{ width: '100%', marginBottom: 12, marginTop: 4 }}
                   >
-                    <Option value="ai_researcher">AI Researcher</Option>
-                    <Option value="backend_engineer">Backend Engineer</Option>
-                    <Option value="blockchain_developer">Blockchain Developer</Option>
-                    <Option value="business_analyst">Business Analyst</Option>
-                    <Option value="business_intelligence">Business Intelligence</Option>
-                    <Option value="cloud_architect">Cloud Architect</Option>
-                    <Option value="data_analyst">Data Analyst</Option>
-                    <Option value="data_engineer">Data Engineer</Option>
-                    <Option value="data_scientist">Data Scientist</Option>
-                    <Option value="database_administrator">Database Administrator</Option>
-                    <Option value="devops_engineer">DevOps Engineer</Option>
-                    <Option value="engineering_manager">Engineering Manager</Option>
-                    <Option value="frontend_engineer">Frontend Engineer</Option>
-                    <Option value="fullstack_engineer">Full Stack Engineer</Option>
-                    <Option value="game_developer">Game Developer</Option>
-                    <Option value="machine_learning_engineer">Machine Learning Engineer</Option>
-                    <Option value="mobile_developer">Mobile Developer</Option>
-                    <Option value="network_engineer">Network Engineer</Option>
-                    <Option value="product_designer">Product Designer</Option>
-                    <Option value="product_manager">Product Manager</Option>
-                    <Option value="project_manager">Project Manager</Option>
-                    <Option value="qa_engineer">QA Engineer</Option>
-                    <Option value="security_engineer">Security Engineer</Option>
-                    <Option value="software_engineer">Software Engineer</Option>
-                    <Option value="solution_architect">Solution Architect</Option>
-                    <Option value="system_administrator">System Administrator</Option>
-                    <Option value="technical_lead">Technical Lead</Option>
-                    <Option value="technical_product_manager">Technical Product Manager</Option>
-                    <Option value="ui_designer">UI Designer</Option>
-                    <Option value="ux_designer">UX Designer</Option>
+                    <Option value="ai_researcher" label="AI Researcher">AI Researcher</Option>
+                    <Option value="backend_engineer" label="Backend Engineer">Backend Engineer</Option>
+                    <Option value="blockchain_developer" label="Blockchain Developer">Blockchain Developer</Option>
+                    <Option value="business_analyst" label="Business Analyst">Business Analyst</Option>
+                    <Option value="business_intelligence" label="Business Intelligence">Business Intelligence</Option>
+                    <Option value="cloud_architect" label="Cloud Architect">Cloud Architect</Option>
+                    <Option value="data_analyst" label="Data Analyst">Data Analyst</Option>
+                    <Option value="data_engineer" label="Data Engineer">Data Engineer</Option>
+                    <Option value="data_scientist" label="Data Scientist">Data Scientist</Option>
+                    <Option value="database_administrator" label="Database Administrator">Database Administrator</Option>
+                    <Option value="devops_engineer" label="DevOps Engineer">DevOps Engineer</Option>
+                    <Option value="engineering_manager" label="Engineering Manager">Engineering Manager</Option>
+                    <Option value="frontend_engineer" label="Frontend Engineer">Frontend Engineer</Option>
+                    <Option value="fullstack_engineer" label="Full Stack Engineer">Full Stack Engineer</Option>
+                    <Option value="game_developer" label="Game Developer">Game Developer</Option>
+                    <Option value="machine_learning_engineer" label="Machine Learning Engineer">Machine Learning Engineer</Option>
+                    <Option value="mobile_developer" label="Mobile Developer">Mobile Developer</Option>
+                    <Option value="network_engineer" label="Network Engineer">Network Engineer</Option>
+                    <Option value="product_designer" label="Product Designer">Product Designer</Option>
+                    <Option value="product_manager" label="Product Manager">Product Manager</Option>
+                    <Option value="project_manager" label="Project Manager">Project Manager</Option>
+                    <Option value="qa_engineer" label="QA Engineer">QA Engineer</Option>
+                    <Option value="security_engineer" label="Security Engineer">Security Engineer</Option>
+                    <Option value="software_engineer" label="Software Engineer">Software Engineer</Option>
+                    <Option value="solution_architect" label="Solution Architect">Solution Architect</Option>
+                    <Option value="system_administrator" label="System Administrator">System Administrator</Option>
+                    <Option value="technical_lead" label="Technical Lead">Technical Lead</Option>
+                    <Option value="technical_product_manager" label="Technical Product Manager">Technical Product Manager</Option>
+                    <Option value="ui_designer" label="UI Designer">UI Designer</Option>
+                    <Option value="ux_designer" label="UX Designer">UX Designer</Option>
                   </Select>
 
                   <Text strong>LinkedIn URL</Text>
@@ -501,19 +519,26 @@ export default function MenteeProfilePage() {
                   />
                 </Modal>
 
+
                 <Modal
                     title="Introduction"
                     open={editModalVisible}
                     onCancel={() => setEditModalVisible(false)}
-                    footer={[
-                      <Button key="cancel" onClick={() => setEditModalVisible(false)}>Cancel</Button>,
-                      <Button key="save" type="primary" onClick={handleModalOk}>Save</Button>,
-                    ]}
+                    footer={
+                      <div style={{ marginTop: 24 }}>
+                        <Space>
+                          <Button key="cancel" onClick={() => setEditModalVisible(false)}>Cancel</Button>
+                          <Button key="save" type="primary" onClick={handleModalOk}>Save</Button>
+                        </Space>
+                      </div>
+                    }
                 >
                   <TextArea
                       rows={4}
                       value={draftIntro}
                       onChange={e => setDraftIntro(e.target.value)}
+                      maxLength={200} // 限制输入最多 200 字
+                      showCount // 显示字数计数器（可选）
                       placeholder="Edit your introduction"
                   />
                 </Modal>

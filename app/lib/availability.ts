@@ -76,8 +76,8 @@ export async function getMentorAvailability(input: {
 export async function blockAvailability(input: BlockAvailabilityInput): Promise<void> {
     try {
         // For single day blocks or date ranges, we want to block the entire day(s)
-        const startDateTime = `${input.start_date}T00:00:00Z`;  // Start of day in UTC
-        const endDateTime = `${input.end_date}T23:59:59.999Z`;  // End of day in UTC
+        const startDateTime = `${input.start_date}`;  // Start of day in UTC（在前端里直接计算好了utc时间传入这里）
+        const endDateTime = `${input.end_date}`;  // End of day in UTC（在前端里直接计算好了utc时间传入这里）
 
         // Insert block into mentor_blocks table
         const { error } = await getSupabaseClient()
