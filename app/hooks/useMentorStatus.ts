@@ -3,27 +3,24 @@ import { useUser } from '@clerk/nextjs';
 
 export const useMentorStatus = () => {
   const { user } = useUser();
-  const [isMentor, setIsMentor] = useState<boolean>(false);
+  const [isMentor, setIsMentor] = useState<boolean>(true);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkMentorStatus = async () => {
       if (!user?.id) {
         setIsMentor(false);
-        setLoading(false);
+        setLoading(true);
         return;
       }
-
-      console.log('user?.id', user?.id);
 
       try {
         const response = await fetch(`/api/user/${user.id}`);
         const data = await response.json();
-        console.log('data', data);
         setIsMentor(data.data.mentor !== null);
       } catch (error) {
         console.error('Error checking mentor status:', error);
-        setIsMentor(false);
+        setIsMentor(true);
       } finally {
         setLoading(false);
       }

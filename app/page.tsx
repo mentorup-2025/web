@@ -166,7 +166,7 @@ export default function Home() {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  const { isMentor } = useMentorStatus();
+  const { isMentor, loading: isMentorLoading } = useMentorStatus();
 
   useEffect(() => {
     const checkMentorStatus = async () => {
@@ -350,7 +350,7 @@ export default function Home() {
                 </SignedOut>
                 <SignedIn>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    {isMentor === false && (
+                    {!isMentorLoading && isMentor === false && (
                       <Button 
                         type="primary" 
                         onClick={handleBecomeMentor}
