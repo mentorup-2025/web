@@ -632,4 +632,18 @@ Content-Type: application/json
     "end_time": "2025-03-18T16:00:00Z"
 }
 
+### Coffee Chat Time API Tests
+
+### Test Get Coffee Chat Count - Success Case
+GET {{baseUri}}/api/user/93137255-d7ac-4219-90d9-a886ae987732/get_coffee_chat_time
+
+### Test Get Coffee Chat Count - Specific User
+GET {{baseUri}}/api/user/user_2znhLduIMIbCKhYRGiqVm0iEKwB/get_coffee_chat_time
+
+### Test Get Coffee Chat Count - Non-existent User
+GET {{baseUri}}/api/user/non-existent-user-id/get_coffee_chat_time
+
+### Test Get Coffee Chat Count - Invalid UUID Format
+GET {{baseUri}}/api/user/invalid-uuid-format/get_coffee_chat_time
+
 
