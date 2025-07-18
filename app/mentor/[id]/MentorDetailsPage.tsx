@@ -334,7 +334,7 @@ export default function MentorDetailsPage() {
                     {Array.isArray(mentor.services) && mentor.services.length > 0 ? (
                         mentor.services.map((service: any, idx: number) => (
                             <Tag key={idx} className={styles.serviceTag}>
-                              {service.type} - ¥{(service.price / 100).toFixed(2)}
+                              {service.type} - ${(service.price).toFixed(2)}
                             </Tag>
                         ))
                     ) : (
@@ -350,12 +350,14 @@ export default function MentorDetailsPage() {
                   <Title level={3} className={styles.availabilityHeader}>Mentor's Availability</Title>
                   <MentorAvailability
                       mentorId={mentor.user_id}
+                      services={mentor.services || []}
                       onSlotSelect={(date, time) => setSelectedSlot({ date, time })}
                       onBook={() => {
-                        setStep(2); // 直接从第二步开始
+                        setStep(2);
                         setIsBookingModalVisible(true);
                       }}
                   />
+
                 </SignedIn>
                 <SignedOut>
                   <Card>
@@ -605,7 +607,7 @@ export default function MentorDetailsPage() {
                     <span style={{ fontSize: 16, fontWeight: 500 }}>Pay in USD (U.S. Dollar)</span>
                   </div>
                   <div style={{ fontSize: 18, fontWeight: 600 }}>
-                    ${price ? (price / 100).toFixed(2) : '0.00'}
+                    ${price ? (price).toFixed(2) : '0.00'}
                   </div>
                 </div>
 
