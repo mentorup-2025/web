@@ -127,7 +127,7 @@ export default function CheckoutForm({ amount, appointmentId }: CheckoutFormProp
                 }}
             />
             <Button type="primary" htmlType="submit" loading={loading} className="mt-4">
-                Pay ${(amount / 100).toFixed(2)}
+                Pay ${(amount).toFixed(2)}
             </Button>
         </form>
     );

@@ -65,6 +65,7 @@ export default function MentorDetailsPage() {
   const [qrScanned, setQrScanned] = useState(false);
   const [isPaymentFailedModalVisible, setIsPaymentFailedModalVisible] = useState(false);
   const [userResume, setUserResume] = useState<string | null>(null);
+  const [coffeeChatCount, setCoffeeChatCount] = useState<number>(0);
 
   // 👇 resume file list 渲染逻辑统一处理
   const resumeFileList: UploadFile[] = resume
@@ -161,6 +162,27 @@ export default function MentorDetailsPage() {
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, []);
+
+  useEffect(() => {
+    const fetchCoffeeChatCount = async () => {
+      if (!user?.id || !mentor?.user_id) return;
+      try {
+        // const res = await fetch(`/api/coffee-chat-count/${user.id}`);
+        const res = await fetch(`/api/user/${user.id}/get_coffee_chat_time`);
+        const result = await res.json();
+        if (res.ok) {
+          setCoffeeChatCount(result.data); // 这是次数，例如 0 表示还没约
+        } else {
+          console.error('Failed to fetch coffee chat count');
+        }
+      } catch (err) {
+        console.error('Error fetching coffee chat count:', err);
+      }
+    };
+
+    fetchCoffeeChatCount();
+  }, [user?.id, mentor?.user_id]);
+
 
   const handleNext = async () => {
     if (step === 2) {
@@ -281,11 +303,29 @@ export default function MentorDetailsPage() {
     }
   };
 
-  const supportTopics: { name: string }[] = Array.isArray(mentor?.services)
-      ? mentor.services.map((s: any) =>
-          typeof s === 'string' ? { name: s } : { name: s.type }
-      )
+  const supportTopicsOptions = Array.isArray(mentor?.services)
+      ? mentor.services.map((service: any) => {
+        const type = typeof service === 'string' ? service : service.type;
+        const isFreeChat = type.toLowerCase() === 'free coffee chat (15 mins)'; // 大小写不敏感
+        const usedUp = isFreeChat && coffeeChatCount > 0;
+
+        return {
+          value: type,
+          label: (
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>{type}</span>
+                {isFreeChat && (
+                    <span style={{ color: '#1890ff', marginLeft: 8, fontSize: 12 }}>
+                {usedUp ? '0/1 free times left' : '1/1 free times left'}
+              </span>
+                )}
+              </div>
+          ),
+          disabled: usedUp,
+        };
+      })
       : [];
+
 
   const userTzAbbr = getUserTimeZoneAbbreviation();
 
@@ -334,7 +374,7 @@ export default function MentorDetailsPage() {
                     {Array.isArray(mentor.services) && mentor.services.length > 0 ? (
                         mentor.services.map((service: any, idx: number) => (
                             <Tag key={idx} className={styles.serviceTag}>
-                              {service.type} - ¥{(service.price / 100).toFixed(2)}
+                              {service.type} - ${(service.price).toFixed(2)}
                             </Tag>
                         ))
                     ) : (
@@ -350,12 +390,14 @@ export default function MentorDetailsPage() {
                   <Title level={3} className={styles.availabilityHeader}>Mentor's Availability</Title>
                   <MentorAvailability
                       mentorId={mentor.user_id}
+                      services={mentor.services || []}
                       onSlotSelect={(date, time) => setSelectedSlot({ date, time })}
                       onBook={() => {
-                        setStep(2); // 直接从第二步开始
+                        setStep(2);
                         setIsBookingModalVisible(true);
                       }}
                   />
+
                 </SignedIn>
                 <SignedOut>
                   <Card>
@@ -418,13 +460,11 @@ export default function MentorDetailsPage() {
                 <Select
                     style={{ width: '100%', marginBottom: 16 }}
                     placeholder="Pick the topic you want to focus on."
-                    options={supportTopics.map((topic) => ({
-                      value: topic.name,
-                      label: topic.name,
-                    }))}
+                    options={supportTopicsOptions}
                     value={supportType}
                     onChange={setSupportType}
                 />
+
 
                 <p style={{ marginBottom: 8, marginTop: 24 }}><strong>Help your mentor understand you better</strong></p>
                 <TextArea
@@ -519,8 +559,10 @@ export default function MentorDetailsPage() {
                       Click or drag file to this area {resume || userResume ? 'to replace' : 'to upload'}
                     </p>
                     <p className="ant-upload-hint" style={{ textAlign: 'center' }}>
-                      Support for a single file. Strictly prohibit uploading company data or other banned files.
+                      Please upload your resume here (<strong>PDF format only</strong>).<br />
+                      Only one file is allowed. Uploading company-sensitive information or any prohibited files is strictly forbidden.
                     </p>
+
                   </Upload.Dragger>
 
                 </div>
@@ -605,7 +647,7 @@ export default function MentorDetailsPage() {
                     <span style={{ fontSize: 16, fontWeight: 500 }}>Pay in USD (U.S. Dollar)</span>
                   </div>
                   <div style={{ fontSize: 18, fontWeight: 600 }}>
-                    ${price ? (price / 100).toFixed(2) : '0.00'}
+                    ${price ? (price).toFixed(2) : '0.00'}
                   </div>
                 </div>
 

@@ -35,7 +35,7 @@ export default function PaymentInner() {
                 <div className="flex justify-between items-center mt-2">
                     <span className="text-gray-600">Total Amount:</span>
                     <span className="text-xl font-bold text-blue-600">
-                        ${(totalAmount / 100).toFixed(2)}
+                        ${(totalAmount).toFixed(2)}
                     </span>
                 </div>
             </div>
