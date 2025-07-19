@@ -559,10 +559,10 @@ export default function MentorDetailsPage() {
                       Click or drag file to this area {resume || userResume ? 'to replace' : 'to upload'}
                     </p>
                     <p className="ant-upload-hint" style={{ textAlign: 'center' }}>
-                      Please upload your resume here (PDF format only).
+                      Please upload your resume here (<strong>PDF format only</strong>).<br />
                       Only one file is allowed. Uploading company-sensitive information or any prohibited files is strictly forbidden.
-
                     </p>
+
                   </Upload.Dragger>
 
                 </div>
