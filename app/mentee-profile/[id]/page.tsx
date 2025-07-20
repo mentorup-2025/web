@@ -45,7 +45,13 @@ interface JobTarget {
   level: string;
   title: string;
 }
-
+function beautify(s?: string) {
+  if (!s) return ''
+  return s
+      .split('_')
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ')
+}
 export default function MenteeProfilePage() {
   const params = useParams();
   const menteeId = params?.id as string;
@@ -309,8 +315,19 @@ export default function MenteeProfilePage() {
                   </Space>
                   <Text className={styles.title} style={{ display: 'block', marginTop: 4 }}>
                     Target Job:&nbsp;
-                    {userData.job_target?.title}
-                    {` (${userData.job_target?.level} level)`}
+                    {(() => {
+                      const rawTitle = userData.job_target?.title
+                      const rawLevel = userData.job_target?.level
+
+                      const title = beautify(rawTitle)
+                      // 注意：Level 后面自带“ Level”词尾
+                      const level = rawLevel ? beautify(rawLevel) + ' Level' : ''
+
+                      if (title && level) return `${title} (${level})`
+                      if (title)         return title
+                      if (level)         return level
+                      return 'Not specified'
+                    })()}
                   </Text>
                   <Space className={styles.socialLinks}>
                     {userData.linkedin && (

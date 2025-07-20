@@ -59,6 +59,7 @@ interface Appointment {
     time: string;
     status: string;
     description: string;
+    cancel_reason: string;
     resume_url?: string;
     service_type: string;
     otherUser: {
@@ -84,7 +85,10 @@ export default function MySessionsTab() {
     // Reschedule modal state
     const [currentAppt, setCurrentAppt] = useState<Appointment | null>(null);
     const [form] = Form.useForm();
-    const [isRescheduleOpen, setIsRescheduleOpen] = useState(false)
+    const [isRescheduleReasonModalOpen, setIsRescheduleReasonModalOpen] = useState(false);
+    const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
+    const [isRescheduleSlotsModalOpen, setIsRescheduleSlotsModalOpen] = useState(false);
+    const [rescheduleComment, setRescheduleComment] = useState('');
 
     const [isExplanationOpen, setIsExplanationOpen] = useState(false);
     const [explanation, setExplanation] = useState('');
@@ -103,6 +107,10 @@ export default function MySessionsTab() {
 
     const [filter, setFilter] = useState<FilterKey>('upcoming');
 
+    const [isReportOpen, setIsReportOpen] = useState(false);
+    const [reportReason, setReportReason] = useState('');
+
+
     // 根据 status 来做分类
     const filteredAppointments = appointments.filter(a => {
         if (filter === 'upcoming') {
@@ -114,6 +122,29 @@ export default function MySessionsTab() {
         // cancelled
         return ['canceled', 'noshow'].includes(a.status);
     });
+    const handleSlotCalendarChange = (dates: [dayjs.Dayjs | null, dayjs.Dayjs | null], fieldName: number[]) => {
+        const [start, end] = dates;
+        // 如果只选了开始时间
+        if (start && !end) {
+            const autoEnd = start.add(1, 'hour');
+            // 直接把 form 插入 start + 1h
+            form.setFieldsValue({
+                slots: form.getFieldValue('slots').map((slot: any, idx: number) =>
+                    idx === fieldName[0] ? [start, autoEnd] : slot
+                )
+            });
+            // 冲突检测
+            const conflict = bookedSlots.some(([bs, be]) => {
+                const bsDay = dayjs(bs), beDay = dayjs(be);
+                return start.isBefore(beDay) && autoEnd.isAfter(bsDay);
+            });
+            if (conflict) {
+                message.warning('⚠️ 该时间段与已有的 session 冲突，请重选。');
+            }
+        }
+    };
+
+
     const fetchAppointments = useCallback(async () => {
         if (!mentorId) return;
 
@@ -179,17 +210,20 @@ export default function MySessionsTab() {
                             : 'Invalid',
                         status:      a.status,
                         description: a.description,
+                        cancel_reason: a.cancel_reason,
                         service_type: a.service_type,
                         resume_url:  a.resume_url,
                         otherUser: {
                             id:       otherId,
                             username: userMap[otherId]?.username || 'Anonymous',
+                            mentor:   userMap[otherId]?.mentor    || false,
                         },
                         proposal,    // ← 一定要把它放进来
                     };
                 }));
 
-                setAppointments(enriched);
+                const onlyMentees = enriched.filter(a => !a.otherUser.mentor);
+                setAppointments(onlyMentees);
 
             } catch (e: any) {
                 console.error(e);
@@ -279,35 +313,18 @@ export default function MySessionsTab() {
     };
 
     const handleDecline = (apptId: string, propId: string) => {
-        // 找到被拒绝的那条 appointment
         const appt = appointments.find(a => a.id === apptId)!
-        // 记住当前 appointment
         setCurrentAppt(appt)
-        // 打开重排弹窗
-        setIsRescheduleOpen(true)
-    };
+        setRescheduleComment('')
+        setIsRescheduleReasonModalOpen(true)  // ← 直接打开原因输入弹窗
+    }
 
 
     // 打开重排弹窗
     const showRescheduleModal = (appt: Appointment) => {
         setCurrentAppt(appt);
-        form.resetFields();
-        // —— 在这里只取出当前 mentor + 这个 mentee 已有的已确认时段 ——
-        const slotsForThisPair: [string,string][] = appointments
-            .filter(a =>
-                (a.status === 'confirmed' || a.status === 'reschedule_in_progress')
-                && a.otherUser.id === appt.otherUser.id  // 同一个 mentee
-            )
-            .map(a => {
-                const [s, e] = a.time.split(' - ');
-                return [
-                    dayjs(`${a.date} ${s}`, 'YYYY-MM-DD HH:mm').toISOString(),
-                    dayjs(`${a.date} ${e}`, 'YYYY-MM-DD HH:mm').toISOString()
-                ];
-            });
-        setBookedSlots(slotsForThisPair);
-        // —— 计算完毕 ——
-        setIsRescheduleOpen(true);
+        setRescheduleComment('');
+        setIsRescheduleReasonModalOpen(true);
     };
 
     const showCancelModal = (appt: Appointment) => {
@@ -316,6 +333,10 @@ export default function MySessionsTab() {
         setIsCancelOpen(true);
     };
 
+    const handleRescheduleReasonNext = () => {
+        setIsRescheduleReasonModalOpen(false);
+        setIsRescheduleSlotsModalOpen(true);
+    };
 
 
     const handleRescheduleOk = async () => {
@@ -334,17 +355,84 @@ export default function MySessionsTab() {
                     proposed_time_ranges: ranges,
                     proposer: mentorId,
                     receiver: currentAppt!.otherUser.id,
+                    // reason: rescheduleComment,
                 }),
             });
 
             message.success('Reschedule request sent!');
             form.resetFields();
-            setIsRescheduleOpen(false);
+            setIsRescheduleSlotsModalOpen(false);
             fetchAppointments();
         } catch (err: any) {
             message.error(err.message || 'Submission failed');
         }
+
     };
+
+    const handleCancelOk = async () => {
+        if (!currentAppt) return;
+        try {
+            await fetch('/api/appointment/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    appointment_id: currentAppt.id,
+                    status: 'canceled',
+                    cancel_reason: cancelReason,    // <- 这里带上 cancel_reason
+                }),
+            });
+            message.success('Session canceled');
+            // 本地更新状态
+            setAppointments(list =>
+                list.map(a =>
+                    a.id === currentAppt.id ? { ...a, status: 'canceled' } : a
+                )
+            );
+        } catch (err: any) {
+            message.error(err.message || 'Cancel failed');
+        } finally {
+            setIsCancelOpen(false);
+        }
+    };
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setAppointments(list =>
+                list.map(appt => {
+                    if (appt.status === 'confirmed') {
+                        // 拆出结束时间
+                        const [, endStr] = appt.time.split(' - ')
+                        const endMoment = dayjs(`${appt.date} ${endStr}`, 'YYYY-MM-DD HH:mm')
+                        // 如果现在已经超过结束时间 1 分钟
+                        if (dayjs().isAfter(endMoment.add(1, 'minute'))) {
+                            // 1) 本地更新状态
+                            // 2) （可选）同步到后端
+                            fetch('/api/appointment/update', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    appointment_id: appt.id,
+                                    status:         'completed'
+                                }),
+                            }).catch(() => {/* 忽略网络错误 */})
+                            return { ...appt, status: 'completed' }
+                        }
+                    }
+                    return appt
+                })
+            )
+        }, 60_000) // 每分钟执行一次
+
+        return () => clearInterval(timer)
+    }, [])
+
+    const showReportModal = (appt: Appointment) => {
+        setCurrentAppt(appt);
+        setReportReason('');
+        setIsReportOpen(true);
+    };
+
+
 
 
     return (
@@ -397,31 +485,50 @@ export default function MySessionsTab() {
                                         >
                                             Waiting for Confirmation
                                         </Text>
-                                    ) : (
-                                        <Text
-                                            style={{
-                                                marginLeft: 54,
-                                                fontWeight: 700,
-                                                fontSize: 16,
-                                                lineHeight: '24px',
-                                                color: '#1890FF',
-                                            }}
-                                        >
-                                            {(() => {
-                                                const start = dayjs(`${appt.date} ${appt.time.split(' - ')[0]}`, 'YYYY-MM-DD HH:mm');
-                                                const now = dayjs();
-                                                const diffInHours = start.diff(now, 'hour');
-                                                const diffInDays = start.diff(now, 'day');
-
-                                                if (diffInHours < 24) {
-                                                    return `In ${diffInHours} Hours`;
-                                                } else {
-                                                    const hours = start.diff(now.add(diffInDays, 'day'), 'hour');
-                                                    return `In ${diffInDays} Days ${hours} Hours`;
-                                                }
-                                            })()}
-                                        </Text>
-                                    )
+                                    ) : (() => {
+                                        const start = dayjs(
+                                            `${appt.date} ${appt.time.split(' - ')[0]}`,
+                                            'YYYY-MM-DD HH:mm'
+                                        );
+                                        const now = dayjs();
+                                        const diffInHours = start.diff(now, 'hour');
+                                        // 如果小于等于 0，就不显示任何东西
+                                        if (diffInHours <= 0) {
+                                            return null;
+                                        }
+                                        // 小于 24 小时
+                                        if (diffInHours < 24) {
+                                            return (
+                                                <Text
+                                                    style={{
+                                                        marginLeft: 54,
+                                                        fontWeight: 700,
+                                                        fontSize: 16,
+                                                        lineHeight: '24px',
+                                                        color: '#1890FF',
+                                                    }}
+                                                >
+                                                    In {diffInHours} Hours
+                                                </Text>
+                                            );
+                                        }
+                                        // >= 24 小时
+                                        const diffInDays = start.diff(now, 'day');
+                                        const hoursAfterDays = start.diff(now.add(diffInDays, 'day'), 'hour');
+                                        return (
+                                            <Text
+                                                style={{
+                                                    marginLeft: 54,
+                                                    fontWeight: 700,
+                                                    fontSize: 16,
+                                                    lineHeight: '24px',
+                                                    color: '#1890FF',
+                                                }}
+                                            >
+                                                In {diffInDays} Days {hoursAfterDays} Hours
+                                            </Text>
+                                        );
+                                    })()
                                 )}
 
                                 <Tag
@@ -449,71 +556,58 @@ export default function MySessionsTab() {
                             </Space>
                         }
                         actions={
-                            (appt.status !== 'canceled' && (appt.proposal?.status === 'pending' || appt.status === 'paid'))
-                                // —— 修改：pending 时只显示 Review 按钮 ——
+                            filter === 'past'
+                                // Past 分页只显示 Report Issue
                                 ? [
-                                    <Button
-                                        key="review"
-                                        type="primary"
-                                        style={{ width: '100%' }}
-                                        onClick={() => {
-                                            if (appt.status === 'paid') {
-                                                setConfirmAppt(appt);
-                                                setIsConfirmOpen(true);
-                                            } else {
-                                                setReviewAppt(appt);
-                                                setIsReviewOpen(true);
-                                            }
-                                        }}
+                                    <div
+                                        key="report-issue"
+                                        onClick={() => showReportModal(appt)}
+                                        style={{ cursor: 'pointer' }}
                                     >
-                                        <BellOutlined style={{ marginRight: 8 }} />
-                                        Review and Confirm the Session Request
-                                    </Button>
+                                        <FrownOutlined style={{ fontSize: 18 }} />
+                                        <div>Report Issue</div>
+                                    </div>
                                 ]
-                                // 非 pending 时显示原有四个操作
+                                // 非 past：走你原来的逻辑
                                 : (
-                                    // 如果是 canceled 或 noshow，就渲染一个空数组，或者渲染“禁用”样式
-                                    appt.status === 'canceled' || appt.status === 'noshow'
-                                        ? []  // 不显示任何操作
-                                        : [
-                                            // 正常四个操作：
-                                            <div
-                                                key="reschedule"
-                                                onClick={() => showRescheduleModal(appt)}
-                                                style={{
-                                                    cursor: 'pointer',
+                                    (appt.status !== 'canceled' && (appt.proposal?.status === 'pending' || appt.status === 'paid'))
+                                        ? [
+                                            <Button
+                                                key="review"
+                                                type="primary"
+                                                style={{ width: '100%' }}
+                                                onClick={() => {
+                                                    if (appt.status === 'paid') {
+                                                        setConfirmAppt(appt);
+                                                        setIsConfirmOpen(true);
+                                                    } else {
+                                                        setReviewAppt(appt);
+                                                        setIsReviewOpen(true);
+                                                    }
                                                 }}
                                             >
-                                                <CalendarTwoTone style={{ fontSize: 18 }} /><div>Reschedule</div>
-                                            </div>,
-                                            <div
-                                                key="cancel"
-                                                onClick={() => showCancelModal(appt)}
-                                                style={{
-                                                    cursor: 'pointer',
-                                                }}
-                                            >
-                                                <CloseCircleOutlined style={{ fontSize: 18 }} /><div>Cancel</div>
-                                            </div>,
-                                            <div
-                                                key="noshow"
-                                                onClick={() => {/* 如果你想给 noshow 加点事儿可以写在这里 */}}
-                                                style={{
-                                                    cursor: 'pointer',
-                                                }}
-                                            >
-                                                <FrownOutlined style={{ fontSize: 18 }} /><div>Report Issue</div>
-                                            </div>,
-                                            <div
-                                                key="join"
-                                                onClick={() => {/* 同理 */}}
-                                                style={{
-                                                    cursor: 'pointer',
-                                                }}
-                                            >
-                                                <BellOutlined style={{ fontSize: 18 }} /><div>Join</div>
-                                            </div>,
+                                                <BellOutlined style={{ marginRight: 8 }} />
+                                                Review and Confirm the Session Request
+                                            </Button>
                                         ]
+                                        : (
+                                            appt.status === 'canceled' || appt.status === 'noshow'
+                                                ? []
+                                                : [
+                                                    <div key="reschedule" onClick={() => showRescheduleModal(appt)} style={{ cursor: 'pointer' }}>
+                                                        <CalendarTwoTone style={{ fontSize: 18 }} /><div>Reschedule</div>
+                                                    </div>,
+                                                    <div key="cancel" onClick={() => showCancelModal(appt)} style={{ cursor: 'pointer' }}>
+                                                        <CloseCircleOutlined style={{ fontSize: 18 }} /><div>Cancel</div>
+                                                    </div>,
+                                                    <div key="noshow" onClick={() => showReportModal(appt)} style={{ cursor: 'pointer' }}>
+                                                        <FrownOutlined style={{ fontSize: 18 }} /><div>Report Issue</div>
+                                                    </div>,
+                                                    <div key="join" onClick={() => {/*…*/}} style={{ cursor: 'pointer' }}>
+                                                        <BellOutlined style={{ fontSize: 18 }} /><div>Join</div>
+                                                    </div>,
+                                                ]
+                                        )
                                 )
                         }
                     >
@@ -569,6 +663,9 @@ export default function MySessionsTab() {
                     <Button key="cancel" danger onClick={() => {
                         // TODO: 调用取消的接口
                         setIsConfirmOpen(false);
+                        if (confirmAppt) setCurrentAppt(confirmAppt);
+                        setIsCancelOpen(true);
+
                     }}>
                         Cancel Session
                     </Button>,
@@ -577,7 +674,7 @@ export default function MySessionsTab() {
                         setIsConfirmOpen(false);
                         if (confirmAppt) {
                             setCurrentAppt(confirmAppt);
-                            setIsRescheduleOpen(true);
+                            setIsRescheduleReasonModalOpen(true);
                         }
                     }}>
                         Reschedule Session
@@ -619,7 +716,33 @@ export default function MySessionsTab() {
                     </Text>
                 </div>
             </Modal>
-
+            <Modal
+                title="Reschedule Your Session"
+                open={isRescheduleReasonModalOpen}
+                onCancel={() => setIsRescheduleReasonModalOpen(false)}
+                footer={[
+                    <Button key="back" onClick={() => setIsRescheduleReasonModalOpen(false)}>
+                        Back
+                    </Button>,
+                    <Button
+                        key="next"
+                        type="primary"
+                        onClick={handleRescheduleReasonNext}
+                        disabled={!rescheduleComment.trim()}
+                    >
+                        Next
+                    </Button>,
+                ]}
+            >
+                <Text>Let your mentee know why you’re rescheduling.</Text>
+                <Input.TextArea
+                    rows={4}
+                    value={rescheduleComment}
+                    onChange={e => setRescheduleComment(e.target.value)}
+                    placeholder="Briefly explain why you’re rescheduling..."
+                    style={{ marginTop: 12 }}
+                />
+            </Modal>
             <Modal
                 title="Reschedule Your Session"
                 visible={isReviewOpen}
@@ -644,7 +767,8 @@ export default function MySessionsTab() {
                                     // 先关闭当前 “Review” 弹窗，再打开重排时段的弹窗
                                     setIsReviewOpen(false);
                                     setCurrentAppt(reviewAppt);
-                                    setIsRescheduleOpen(true);
+                                    setRescheduleComment('');
+                                    setIsRescheduleReasonModalOpen(true);
                                 }}
                             >
                                 Propose More Time
@@ -736,35 +860,26 @@ export default function MySessionsTab() {
             </Modal>
             <Modal
                 title="Reschedule Your Session"
-                visible={isRescheduleOpen}
-                open={isRescheduleOpen}
+                open={isRescheduleSlotsModalOpen}
                 onOk={handleRescheduleOk}
                 onCancel={() => {
                     form.resetFields();
-                    setIsRescheduleOpen(false);
+                    setIsRescheduleSlotsModalOpen(false);
+                    setIsRescheduleReasonModalOpen(true);
                 }}
                 okText="Confirm and Send"
                 cancelText="Back"
             >
                 <p style={{ marginBottom: 8 }}>
                     Based on your availability, please propose time slots for{' '}
-                    <strong>Mentee:</strong>{' '}
-                    <strong><u>{currentAppt?.otherUser.username}</u></strong>.
+                    <strong>{currentAppt?.otherUser.username}</strong>.
                 </p>
-                <p style={{ marginBottom: 12, fontStyle: 'italic' }}>
-                    Please suggest 3–5 one-hour time slots (whole hours only)
-                </p>
-
                 <Form form={form} layout="vertical" name="rescheduleForm">
                     <Form.List name="slots" initialValue={[]}>
                         {(fields, { add, remove }) => (
                             <>
                                 {fields.map(({ key, name, ...restField }) => (
-                                    <Space
-                                        key={key}
-                                        align="baseline"
-                                        style={{ display: 'flex', marginBottom: 8 }}
-                                    >
+                                    <Space key={key} align="baseline" style={{ marginBottom: 8 }}>
                                         <Form.Item
                                             {...restField}
                                             name={[name]}
@@ -775,44 +890,32 @@ export default function MySessionsTab() {
                                                         if (!value || value.length !== 2)
                                                             return Promise.reject('Pick a range');
                                                         const [s, e] = value;
-                                                        if (s.minute() !== 0 || e.minute() !== 0)
-                                                            return Promise.reject('Must be whole hours');
-                                                        if (e.diff(s, 'hour') !== 1)
-                                                            return Promise.reject('Duration must be 1 hour');
+                                                        if (![0,30].includes(s.minute()) || ![0,30].includes(e.minute()))
+                                                            return Promise.reject('分钟只能是 0 或 30');
+                                                        if (e.diff(s, 'minutes') !== 60)
+                                                            return Promise.reject('时长必须为 1 小时');
                                                         return Promise.resolve();
                                                     },
                                                 },
                                             ]}
                                         >
                                             <DatePicker.RangePicker
-                                                showTime={{ format: 'HH:mm' }}
-                                                format="YYYY-MM-DD HH:mm"
-                                                disabledDate={current => !!current && current < dayjs().startOf('day')}
-                                                disabledTime={current => {
-                                                    if (!current) return {};
-
-                                                    // 计算当天哪些小时已被同一对 mentor/mentee 占用
-                                                    const blocked = new Set<number>();
-                                                    bookedSlots.forEach(([s, e]) => {
-                                                        const st = dayjs(s), en = dayjs(e);
-                                                        if (st.isSame(current, 'day')) {
-                                                            for (let h = st.hour(); h < en.hour(); h++) {
-                                                                blocked.add(h);
-                                                            }
-                                                        }
-                                                    });
-
-                                                    return {
-                                                        // 禁掉所有占用的小时
-                                                        disabledHours: () => Array.from(blocked),
-
-                                                        // 只禁掉 1–59 分钟，放行 0 分钟
-                                                        disabledMinutes: () => Array.from({ length: 59 }, (_, i) => i + 1),
-
-                                                        // **允许** 0 秒，禁掉 1–59 秒（或直接去掉这个配置让秒钟默认全放行）
-                                                        disabledSeconds: () => Array.from({ length: 59 }, (_, i) => i + 1),
-                                                    };
+                                                showTime={{
+                                                    format: 'HH:mm',
+                                                    minuteStep: 30   // 每 30 分钟一个档位，只会出现 00 和 30
                                                 }}
+                                                format="YYYY-MM-DD HH:mm"
+                                                onCalendarChange={(dates) => handleSlotCalendarChange(dates, [name])}
+                                                disabledDate={current => current && current < dayjs().startOf('day')}
+                                                disabledTime={current => ({
+                                                    // 小时不做限制
+                                                    disabledMinutes: () => {
+                                                        // 允许 0 和 30，其它都禁掉
+                                                        return Array.from({ length: 60 }, (_, i) => i).filter(m => m !== 0 && m !== 30);
+                                                    },
+                                                    disabledSeconds: () =>
+                                                        Array.from({ length: 59 }, (_, i) => i + 1),
+                                                })}
                                             />
                                         </Form.Item>
                                         <MinusCircleOutlined onClick={() => remove(name)} />
@@ -838,7 +941,7 @@ export default function MySessionsTab() {
                 open={isCancelOpen}
                 onCancel={() => setIsCancelOpen(false)}
                 width="90vw"
-                centered                             // ← 这一行让 Modal 上下左右都居中
+                centered
                 style={{ maxWidth: 560 }}
                 bodyStyle={{
                     padding: 0,
@@ -849,17 +952,17 @@ export default function MySessionsTab() {
                 footer={
                     <div
                         style={{
-                            display: 'flex',                               // 按钮行使用 flex 布局
-                            justifyContent: 'space-between',               // 两端对齐
+                            display: 'flex',
+                            justifyContent: 'space-between',
                             width: '100%',
-                            padding: '0 0px 0px',                        // 底部内边距同 body 左右
+                            padding: '0 0px 0px',
                             boxSizing: 'border-box',
                         }}
                     >
                         {/* Back 按钮 */}
                         <Button
                             style={{
-                                flex: 1,                                      // 平分宽度
+                                flex: 1,
                                 height: 32,
                                 display: 'flex',
                                 alignItems: 'center',
@@ -874,7 +977,7 @@ export default function MySessionsTab() {
                             Back
                         </Button>
 
-                        {/* Cancel Session Anyway 按钮 */}
+                        {/* 调用 handleCancelOk */}
                         <Button
                             style={{
                                 flex: 1,
@@ -889,31 +992,7 @@ export default function MySessionsTab() {
                             }}
                             type="primary"
                             danger
-                            onClick={async () => {
-                                if (!currentAppt) return;
-                                try {
-                                    // 调用你的 update 接口
-                                    await fetch('/api/appointment/update', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({
-                                            appointment_id: currentAppt.id,
-                                            status: 'canceled',
-                                            description: cancelReason,
-                                        }),
-                                    });
-                                    message.success('Session canceled');
-                                    setAppointments(list =>
-                                        list.map(a =>
-                                            a.id === currentAppt.id ? { ...a, status: 'canceled' } : a
-                                        )
-                                    );
-                                } catch (err: any) {
-                                    message.error(err.message || 'Cancel failed');
-                                } finally {
-                                    setIsCancelOpen(false);
-                                }
-                            }}
+                            onClick={handleCancelOk}
                         >
                             Cancel Session Anyway
                         </Button>
@@ -923,16 +1002,16 @@ export default function MySessionsTab() {
                 {/* 弹窗内容区 */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
                     {/* 提示文字 */}
-                    <p
-                        style={{
-                            margin: 0,
-                            fontSize: 14,
-                            lineHeight: '16px',
-                            color: '#FF4D4F',                             // Dust Red / 5
-                        }}
-                    >
-                        * If you cancel within 48 hours of the session time, a $5 service fee will be deducted from your refund to cover scheduling and processing costs.
-                    </p>
+                    {/*<p*/}
+                    {/*    style={{*/}
+                    {/*        margin: 0,*/}
+                    {/*        fontSize: 14,*/}
+                    {/*        lineHeight: '16px',*/}
+                    {/*        color: '#FF4D4F',*/}
+                    {/*    }}*/}
+                    {/*>*/}
+                    {/*    * If you cancel within 48 hours of the session time, a $5 service fee will be deducted from your refund to cover scheduling and processing costs.*/}
+                    {/*</p>*/}
                     <p
                         style={{
                             margin: 0,
@@ -941,10 +1020,10 @@ export default function MySessionsTab() {
                             color: '#000',
                         }}
                     >
-                        Let your mentee/mentor know why you’re canceling. Or email{' '}
+                        Let your mentee know why you’re canceling. Or email{' '}
                         <span style={{ color: '#1890FF', textDecoration: 'underline' }}>
-                                mentorup.contact@gmail.com
-                              </span>{' '}
+        mentorup.contact@gmail.com
+      </span>{' '}
                         to let us know your concerns.
                     </p>
                 </div>
@@ -954,7 +1033,7 @@ export default function MySessionsTab() {
                     name="reason"
                     style={{
                         width: '100%',
-                        marginBottom: 0  // 这里设置你想要的下外边距，比如 8px
+                        marginBottom: 0,
                     }}
                 >
                     <Input.TextArea
@@ -974,6 +1053,50 @@ export default function MySessionsTab() {
                         }}
                     />
                 </Form.Item>
+            </Modal>
+
+
+            <Modal
+                title="Report Issue"
+                open={isReportOpen}
+                onCancel={() => setIsReportOpen(false)}
+                footer={null}
+            >
+                <Text>Sorry to hear your session didn’t go well.<br/>
+                    You can report the issue to MentorUp using the buttons below.</Text>
+                <Input.TextArea
+                    rows={4}
+                    value={reportReason}
+                    onChange={e => setReportReason(e.target.value)}
+                    placeholder="Briefly explain the issue..."
+                    style={{ marginTop: 12 }}
+                />
+
+                <Space style={{ marginTop: 24, width: '100%', justifyContent: 'flex-end' }}>
+                    {/* 直接打开邮箱，不带正文 */}
+                    <Button
+                        onClick={() => window.open('mailto:mentorup.contact@gmail.com')}
+                    >
+                        Email MentorUp
+                    </Button>
+
+                    {/* 带主题 & 正文 */}
+                    <Button
+                        type="primary"
+                        disabled={!reportReason.trim()}
+                        onClick={() => {
+                            const subject = encodeURIComponent(
+                                `Issue report for session ${currentAppt?.id}`
+                            );
+                            const body = encodeURIComponent(reportReason);
+                            window.open(
+                                `mailto:mentorup.contact@gmail.com?subject=${subject}&body=${body}`
+                            );
+                        }}
+                    >
+                        Report an Issue to MentorUp
+                    </Button>
+                </Space>
             </Modal>
         </div>
     );

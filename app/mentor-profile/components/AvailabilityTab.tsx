@@ -88,16 +88,93 @@ export default function AvailabilityTab({ userId }: Props) {
         setLoading(true);
 
         Promise.all([
-            // ← 这里调用新的 GET 接口
             fetch(`/api/availability/${userId}/get`).then(r => r.json()),
             fetchBlocks(),
         ])
             .then(([availRes]) => {
-                const fetchedSlots: Slot[] = (availRes.data || []).map((item: any) => ({
-                    day_of_week: item.weekday as number,
-                    start_time:  dayjs.utc(item.start_time, 'HH:mm:ss').local().format(timeFormat),
-                    end_time:    dayjs.utc(item.end_time,   'HH:mm:ss').local().format(timeFormat),
-                }));
+                const fetchedSlots: Slot[] = (availRes.data || []).flatMap((item: any) => {
+                    console.log(
+                        `[Raw slot] UTC weekday=${item.weekday}, ` +
+                        `start_time=${item.start_time}, end_time=${item.end_time}`
+                    );
+
+                    const [sh, sm] = item.start_time.split(':').map(Number);
+                    const [eh, em] = item.end_time.split(':').map(Number);
+
+                    // 1️⃣ 基于 item.weekday 构造本周对应 UTC 日期
+                    const baseUtc = dayjs()
+                        .utc()
+                        .startOf('week')
+                        .add(item.weekday, 'day')
+                        .startOf('day');
+                    console.log(`  → baseUtc (UTC date): ${baseUtc.format('YYYY-MM-DD')}`);
+
+                    // 2️⃣ 设置时分秒
+                    const startUtc = baseUtc.hour(sh).minute(sm).second(0);
+                    const endUtc   = baseUtc.hour(eh).minute(em).second(0);
+                    console.log(
+                        `  → startUtc=${startUtc.format('YYYY-MM-DD HH:mm')}, ` +
+                        `endUtc=${endUtc.format('YYYY-MM-DD HH:mm')}`
+                    );
+
+                    // 3️⃣ 转成本地
+                    let localStart = startUtc.local();
+                    let localEnd   = endUtc.local();
+                    console.log(
+                        `  → local before round: start=${localStart.format('YYYY-MM-DD HH:mm')} ` +
+                        `(day=${localStart.day()}), end=${localEnd.format('YYYY-MM-DD HH:mm')} ` +
+                        `(day=${localEnd.day()})`
+                    );
+
+                    // 4️⃣ 统一向上取整：分钟为 59 → +1 分钟
+                    if (localStart.minute() === 59) {
+                        console.log(`  → rounding localStart from ${localStart.format('HH:mm')} →`);
+                        localStart = localStart.add(1, 'minute');
+                        console.log(`    now ${localStart.format('HH:mm')} (day=${localStart.day()})`);
+                    }
+                    if (localEnd.minute() === 59) {
+                        console.log(`  → rounding localEnd from ${localEnd.format('HH:mm')} →`);
+                        localEnd = localEnd.add(1, 'minute');
+                        console.log(`    now ${localEnd.format('HH:mm')} (day=${localEnd.day()})`);
+                    }
+
+                    // 5️⃣ 单天 or 跨天
+                    if (localEnd.isAfter(localStart)) {
+                        const slot: Slot = {
+                            day_of_week: localStart.day(),
+                            start_time:  localStart.format('HH:mm'),
+                            end_time:    localEnd.format('HH:mm'),
+                        };
+                        console.log(
+                            `  → single slot: [DOW=${slot.day_of_week}] ` +
+                            `${slot.start_time} → ${slot.end_time}`
+                        );
+                        return [slot];
+                    }
+
+                    // 跨天拆分
+                    const s1: Slot = {
+                        day_of_week: localStart.day(),
+                        start_time:  localStart.format('HH:mm'),
+                        end_time:    '23:59',
+                    };
+                    const s2: Slot = {
+                        day_of_week: localEnd.day(),
+                        start_time:  '00:00',
+                        end_time:    localEnd.format('HH:mm'),
+                    };
+                    console.log(
+                        `  → split slot1: [DOW=${s1.day_of_week}] ` +
+                        `${s1.start_time} → ${s1.end_time}`
+                    );
+                    console.log(
+                        `  → split slot2: [DOW=${s2.day_of_week}] ` +
+                        `${s2.start_time} → ${s2.end_time}`
+                    );
+                    return [s1, s2];
+                });
+
+                console.log('✅ final fetchedSlots:', fetchedSlots);
                 setSlots(fetchedSlots);
                 setOriginalSlots(fetchedSlots);
             })
@@ -108,7 +185,6 @@ export default function AvailabilityTab({ userId }: Props) {
                 setLoading(false);
             });
     }, [userId, fetchBlocks]);
-
     // 保存「Weekly Available Hours」
     const handleSaveSlots = async (slotsToSave: Slot[] = slots) => {
         setLoading(true);
@@ -171,55 +247,72 @@ export default function AvailabilityTab({ userId }: Props) {
             return;
         }
 
-// 在 handleSaveSlots(...) 内
         try {
-            // 构造请求体，注意后端期望字段名是 weekday
-            const payload = {
-                user_id: userId,
-                availabilities: slotsToSave.map(s => ({
-                    day_of_week: s.day_of_week,
-                    start_time: dayjs(s.start_time, 'HH:mm')       // 本地 HH:mm → UTC HH:mm:ss
-                        .utc()
-                        .format('HH:mm'),
-                    end_time:   dayjs(s.end_time,   'HH:mm')
-                        .utc()
-                        .format('HH:mm'),
+            // 1️⃣ 先把所有 slots 转成 UTC availabilities
+            const raw = slotsToSave.flatMap(s => {
+                const [sh, sm] = s.start_time.split(':').map(Number);
+                const [eh, em] = s.end_time.split(':').map(Number);
+                // 本周对应的本地日期
+                const baseLocalDate = dayjs()
+                    .startOf('week')
+                    .add(s.day_of_week, 'day')
+                    .startOf('day');
 
-                })),
+                const localStart = baseLocalDate.hour(sh).minute(sm);
+                const localEnd   = baseLocalDate.hour(eh).minute(em);
+
+                const startUtc = localStart.utc();
+                const endUtc   = localEnd.utc();
+
+                const startUtcDow = startUtc.day();
+                const endUtcDow   = endUtc.day();
+
+                if (startUtcDow === endUtcDow) {
+                    return [{
+                        day_of_week: startUtcDow,
+                        start_time:  startUtc.format('HH:mm'),
+                        end_time:    endUtc.format('HH:mm'),
+                    }];
+                }
+
+                return [
+                    {
+                        day_of_week: startUtcDow,
+                        start_time:  startUtc.format('HH:mm'),
+                        end_time:    '23:59',
+                    },
+                    {
+                        day_of_week: endUtcDow,
+                        start_time:  '00:00',
+                        end_time:    endUtc.format('HH:mm'),
+                    }
+                ];
+            });
+
+            // 2️⃣ 过滤掉所有 start_time === end_time 的零时长 slot
+            const availabilities = raw.filter(a => a.start_time !== a.end_time);
+
+            console.log('📦 payload.availabilities (filtered):', availabilities);
+
+            const payload = {
+                user_id:        userId,
+                availabilities,
             };
-            console.log('→ saving availability payload:', JSON.stringify(payload, null, 2));
+
+            // 3️⃣ 发送给后端
             const res = await fetch('/api/availability/update', {
-                method: 'POST',
+                method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
+                body:    JSON.stringify(payload),
             });
             if (!res.ok) {
-                // 先拿文本（有可能后端直接传了一段错误字符串），再报错
                 const errText = await res.text().catch(() => '');
                 throw new Error(errText || `HTTP ${res.status}`);
             }
-
-            // 后端只返回 200 OK，无 body，无需再做 res.json()
             message.success('Weekly availability updated successfully.');
-            // （可选）如果你想再重新拉一次最新数据：
-            // const refreshed = await fetch(`/api/availability/${userId}/get`).then(r => r.json());
-            // 同步刷新 UI
-        //     const byDay: Record<number, Slot> = {};
-        //     (refreshed.data || []).forEach((item: any) => {
-        //       const dow = item.weekday;
-        //         const hhmmStart = dayjs.utc(item.start_time, 'HH:mm').local().format(timeFormat);
-        //         const hhmmEnd   = dayjs.utc(item.end_time,   'HH:mm').local().format(timeFormat);
-        //       if (!byDay[dow]) {
-        //         byDay[dow] = {
-        //           day_of_week: dow,
-        //           start_time: hhmmStart,
-        //           end_time: hhmmEnd,
-        //         };
-        //       }
-        //     });
-        //     setSlots(Object.values(byDay));
+            setOriginalSlots([...slotsToSave]);
         } catch (err: any) {
-            message.error('Failed to update availability:' + err.message);
+            message.error('Failed to update availability: ' + err.message);
         } finally {
             setLoading(false);
         }
