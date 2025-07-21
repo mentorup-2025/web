@@ -119,6 +119,7 @@ export default function MySessionsTab() {
             });
             const apptJson = await apptRes.json();
             const rawAppts = apptJson.data.appointments as any[];
+            const menteeOnly = rawAppts.filter(a => a.mentee_id === menteeId);
 
             // 2) 拿所有 proposals
             const propRes = await fetch(`/api/reschedule_proposal/${menteeId}`);
@@ -142,7 +143,7 @@ export default function MySessionsTab() {
             }));
 
             // 4) enrich
-            const enriched: Appointment[] = rawAppts.map(a => {
+            const enriched: Appointment[] = menteeOnly.map(a => {
                 const m = a.time_slot.match(/\[(.*?),(.*?)\)/) || [];
                 let start = dayjs(), end = dayjs();
                 if (m.length === 3) {
