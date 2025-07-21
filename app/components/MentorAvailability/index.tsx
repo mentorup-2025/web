@@ -13,11 +13,13 @@ import {
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import styles from './mentorAvailability.module.css';
 import { supabase } from '../../services/supabase';
 import { ClockCircleOutlined } from '@ant-design/icons';
 
 dayjs.extend(utc);
+dayjs.extend(isSameOrBefore);
 const { Text } = Typography;
 
 interface TimeSlot {
@@ -38,9 +40,10 @@ interface Service {
 interface MentorAvailabilityProps {
     mentorId: string | number;
     services: Service[];
-    onSlotSelect: (date: string, time: string) => void;
+    onSlotSelect: (slot: { date: string; time: string }) => void;  // ✅ 改为单个对象参数
     onBook: () => void;
 }
+
 
 export default function MentorAvailability({
                                                mentorId,
@@ -107,22 +110,30 @@ export default function MentorAvailability({
                                 [start, end] = parsed;
                             }
 
-                            const startTime = dayjs(start);
+                            let startTime = dayjs(start);
                             const endTime = dayjs(end);
                             if (!startTime.isValid() || !endTime.isValid()) return;
+
+                            // Skip slots that start within the next 24 hours
                             if (startTime.isBefore(nowPlus24h)) return;
 
-                            const dateKey = startTime.format('YYYY-MM-DD');
-                            const timeSlot = `${startTime.format('h:mm A')} - ${endTime.format('h:mm A')}`;
+                            while (startTime.add(1, 'hour').isSameOrBefore(endTime)) {
+                                const nextHour = startTime.add(1, 'hour');
+                                const dateKey = startTime.format('YYYY-MM-DD');
+                                const timeSlot = `${startTime.format('h:mm A')} - ${nextHour.format('h:mm A')}`;
 
-                            if (!availabilityMap.has(dateKey)) {
-                                availabilityMap.set(dateKey, []);
+                                if (!availabilityMap.has(dateKey)) {
+                                    availabilityMap.set(dateKey, []);
+                                }
+                                availabilityMap.get(dateKey)!.push(timeSlot);
+
+                                startTime = nextHour;
                             }
-                            availabilityMap.get(dateKey)!.push(timeSlot);
                         } catch (error) {
                             console.error('Error processing slot_time:', slot_time, error);
                         }
                     });
+
 
                     setAvailabilityData(availabilityMap);
                 } else {
@@ -274,7 +285,11 @@ export default function MentorAvailability({
                                             message.error('Cannot book less than 24 hours in advance.');
                                             return;
                                         }
-                                        onSlotSelect(selectedDate.format('YYYY-MM-DD'), selectedSlot);
+                                        onSlotSelect({
+                                            date: selectedDate.format('YYYY-MM-DD'),
+                                            time: selectedSlot,
+                                        });
+
                                         onBook();
                                     }
                                 }}
