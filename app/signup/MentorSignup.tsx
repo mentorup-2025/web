@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Select, Steps, Button, Form, Input, InputNumber, Checkbox, Typography, notification, Tag } from 'antd';
 import { useRouter } from 'next/navigation';
+import { SERVICE_OPTIONS as serviceOptions } from '../services/constants';
 import styles from './signupProcess.module.css';
 
 const { Step } = Steps;
@@ -89,19 +90,6 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
     }
     setSuggestion(range);
   }, [formData.currentStatus, form.getFieldValue('currentStatus')]);
-
-  const serviceOptions = [
-    'Free coffee chat (15 mins)',
-    'Mock Interview',
-    'Resume Review',
-    'Behavioral Question Coaching',
-    'Job Search Guidance',
-    'General Career Advice',
-    'Salary Negotiation',
-    'Promotion Strategy',
-    'My Company / Role Deep Dive',
-    'Grad School Application Advice',
-  ];
 
   const industries = [
     'Technology',
@@ -401,7 +389,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
             type="primary" 
             size="large"
             className={styles.button}
-            onClick={() => router.push(`/mentor-profile/${userId}`)}
+            onClick={() => router.push(`/mentor-profile/${userId}#availability`)}
           >
             Setup your availability
           </Button>

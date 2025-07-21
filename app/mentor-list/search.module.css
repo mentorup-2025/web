@@ -131,9 +131,9 @@
   margin: 16px 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-
-  min-height: 4cqb; /* Clamp to 3 rows */
+  align-content: baseline;
+  gap: 2px;
+  min-height: 8cqb;
   overflow: hidden;
   position: relative;
   

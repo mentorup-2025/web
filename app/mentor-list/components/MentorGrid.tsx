@@ -116,7 +116,7 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
           
           <div className={styles.cardFooter}>
             <div className="text-blue-600 text-lg">
-              {user.mentor.services[0].price}/hour
+              ${user.mentor.services[0].price.toString().split('.')[0]}/hour
             </div>
             
             <Link href={`/mentor/${user.user_id}`}>

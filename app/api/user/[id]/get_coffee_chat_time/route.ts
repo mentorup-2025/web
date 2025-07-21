@@ -1,5 +1,6 @@
 import { respJson, respErr, respData } from '@/lib/resp';
 import { getUserAppointment } from '@/lib/appointment';
+import { isFreeCoffeeChat } from '../../../../services/constants';
 
 export async function GET(
     request: Request,
@@ -27,7 +28,7 @@ export async function GET(
             }
 
             // Only include "Free coffee chat (15 mins)" appointments
-            if (appointment.service_type !== "Free coffee chat (15 mins)") {
+            if (isFreeCoffeeChat(appointment.service_type)) {
                 console.log('❌ Excluded - Service type:', appointment.service_type);
                 return false;
             }
