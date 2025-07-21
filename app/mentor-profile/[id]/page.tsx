@@ -30,24 +30,13 @@ import AvailabilityTab from "../components/AvailabilityTab";
 import PaymentTab from "../components/PaymentTab";
 import styles from "../mentorProfile.module.css";
 import { useUser } from "@clerk/nextjs";
+import { allServiceTypes } from "../../services/constants";
 
 const { Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
 const { TextArea } = Input;
 
-const allServiceTypes = [
-  { key: "consultation", label: "Free Coffee Chat (15 mins)" },
-  { key: "mock_interview", label: "Mock Interview" },
-  { key: "resume_review", label: "Resume Review" },
-  { key: "behavioral_coaching", label: "Behavioral Question Coaching" },
-  { key: "job_search", label: "Job Search Guidance" },
-  { key: "career_guidance", label: "General Career Advice" },
-  { key: "salary_negotiation", label: "Salary Negotiation" },
-  { key: "promotion_strategy", label: "Promotion Strategy" },
-  { key: "role_deep_dive", label: "My Company / Role Deep Dive" },
-  { key: "grad_school", label: "Grad School Application Advice" },
-];
 
 const jobTitleOptions = [
   {

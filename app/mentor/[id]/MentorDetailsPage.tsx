@@ -1,5 +1,4 @@
 'use client';
-import Link from 'next/link';
 import {
   Layout,
   Typography,
@@ -16,9 +15,7 @@ import {
 
 import {
   LinkedinFilled,
-  UploadOutlined,
   UserOutlined,
-  InboxOutlined,
   DeleteOutlined,
   FileOutlined,
 } from '@ant-design/icons';
@@ -27,7 +24,6 @@ import {
   SignedIn,
   SignedOut,
   SignInButton,
-  UserButton,
   useUser,
 } from '@clerk/nextjs';
 
@@ -39,7 +35,9 @@ import dayjs from 'dayjs';
 import type { UploadFile } from 'antd/es/upload/interface';
 import NavBar from '../../components/Navbar';
 
-const { Header, Content } = Layout;
+import { isFreeCoffeeChat } from '../../services/constants';
+
+const { Content } = Layout;
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
@@ -239,7 +237,7 @@ export default function MentorDetailsPage() {
 
         let endTimeObj: dayjs.Dayjs;
 
-        if (supportType === 'Free coffee chat (15 mins)') {
+        if (isFreeCoffeeChat(supportType)) {
           endTimeObj = startTimeObj.add(15, 'minute');
         } else {
           const [, endTimeStr] = timeStr.split(' - ');
@@ -306,7 +304,7 @@ export default function MentorDetailsPage() {
   const supportTopicsOptions = Array.isArray(mentor?.services)
       ? mentor.services.map((service: any) => {
         const type = typeof service === 'string' ? service : service.type;
-        const isFreeChat = type.toLowerCase() === 'free coffee chat (15 mins)'; // 大小写不敏感
+        const isFreeChat = isFreeCoffeeChat(type);
         const usedUp = isFreeChat && coffeeChatCount > 0;
 
         return {
@@ -439,7 +437,7 @@ export default function MentorDetailsPage() {
                 {selectedSlot?.time && (
                     <p style={{ fontSize: 15, fontWeight: 500, marginBottom: 20 }}>
                       Session Time: {
-                      supportType === 'Free coffee chat (15 mins)'
+                      isFreeCoffeeChat(supportType)
                           ? (() => {
                             const [start] = selectedSlot.time.split(' - ');
                             const startTime = dayjs(`2020-01-01 ${start}`, 'YYYY-MM-DD h:mm A');
