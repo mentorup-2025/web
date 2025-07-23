@@ -1,10 +1,9 @@
 'use client';
 
-import React, { Fragment } from 'react';
+import React from 'react';
 import { useEffect, useState, useCallback } from 'react';
 import styles from './AvailabilityTab.module.css';
 import {
-    Typography,
     Card,
     Row,
     Col,
@@ -19,7 +18,6 @@ import { LockOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
-const { Title } = Typography;
 // 我们分别给两个 RangePicker 起别名，避免名字冲突：
 const TimeRangePicker = TimePicker.RangePicker;
 const DateRangePicker = DatePicker.RangePicker;
@@ -40,8 +38,6 @@ interface BlockItem {
 interface Props {
     userId: string;
 }
-
-const slotKey = (s: Slot) => `${s.day_of_week}-${s.start_time}-${s.end_time}`;
 
 
 export default function AvailabilityTab({ userId }: Props) {
@@ -206,7 +202,7 @@ export default function AvailabilityTab({ userId }: Props) {
             return;
         }
 
-// 2. Slots on the same day must not overlap
+        // 2. Slots on the same day must not overlap
         const groups = slotsToSave.reduce<Record<number, Slot[]>>((acc, s) => {
             (acc[s.day_of_week] ||= []).push(s);
             return acc;
@@ -441,7 +437,7 @@ export default function AvailabilityTab({ userId }: Props) {
         }
     };
 
-// 单行校验
+    // 单行校验
     function getSlotError(slot: Slot, idx: number, all: Slot[]): string | undefined {
         const start = dayjs(slot.start_time, timeFormat);
         const end   = dayjs(slot.end_time,   timeFormat);
@@ -465,7 +461,7 @@ export default function AvailabilityTab({ userId }: Props) {
         return;
     }
 
-// 批量校验并写入 state
+    // 批量校验并写入 state
     function validateAll(slotsArr: Slot[]) {
         const errs: Record<number,string> = {};
         slotsArr.forEach((s, i) => {

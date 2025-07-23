@@ -142,6 +142,20 @@ export default function MentorProfilePage() {
 
   const [activeTab, setActiveTab] = useState<string>("about");
 
+  // Open Availability tab if URL contains 'availability' in query or hash
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const search = window.location.search;
+      const hash = window.location.hash;
+      if (
+        (search && search.toLowerCase().includes('availability')) ||
+        (hash && hash.toLowerCase().includes('availability'))
+      ) {
+        setActiveTab('availability');
+      }
+    }
+  }, []);
+
   const [mentorData, setMentorData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

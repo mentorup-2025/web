@@ -52,6 +52,16 @@ export default function ClientSearchPage({ initialMentors }: ClientSearchPagePro
   const minPrice = allPrices.length > 0 ? Math.min(...allPrices) : 0;
   const maxPrice = allPrices.length > 0 ? Math.max(...allPrices) : 200;
 
+  const uniqueCompanies = Array.from(
+    new Set(mentors.map((mentor) => mentor.mentor.company).filter(Boolean))
+  );
+
+  let filteredMentors = mentors;
+
+  if (filters.company && filters.company.length > 0) {
+    filteredMentors = filteredMentors.filter(m => filters.company?.includes(m.mentor.company));
+  }
+
   return (
     <Layout className={styles.layout}>
       <Navbar />
@@ -63,9 +73,10 @@ export default function ClientSearchPage({ initialMentors }: ClientSearchPagePro
           serviceTypes={uniqueServiceTypes}
           minPrice={minPrice}
           maxPrice={maxPrice}
+          uniqueCompanies={uniqueCompanies}
         />
         <Content className={styles.content}>
-          <MentorGrid filters={filters} mentors={mentors} loading={loading} />
+          <MentorGrid filters={filters} mentors={filteredMentors} loading={loading} />
         </Content>
       </Layout>
     </Layout>

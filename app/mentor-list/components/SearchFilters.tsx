@@ -7,22 +7,16 @@ import { useState, useEffect, useCallback } from 'react';
 const { Sider } = Layout;
 const { Panel } = Collapse;
 
-interface SearchFiltersProps {
-  onFiltersChange: (filters: {
-    jobTitle?: string;
-    industries?: string[];
-    minExperience?: number;
-    maxExperience?: number;
-    minPrice?: number;
-    maxPrice?: number;
-    serviceTypes?: string[];
-  }) => void;
+// Add prop type
+type SearchFiltersProps = {
+  onFiltersChange: (newFilters: any) => void;
   jobTitles: string[];
   industries: string[];
   serviceTypes: string[];
   minPrice: number;
   maxPrice: number;
-}
+  uniqueCompanies: string[];
+};
 
 export default function SearchFilters({ 
   onFiltersChange, 
@@ -30,7 +24,8 @@ export default function SearchFilters({
   industries,
   serviceTypes,
   minPrice,
-  maxPrice 
+  maxPrice,
+  uniqueCompanies,
 }: SearchFiltersProps) {
   const [filters, setFilters] = useState({
     jobTitle: '',
@@ -39,7 +34,8 @@ export default function SearchFilters({
     maxExperience: 20,
     minPrice: minPrice,
     maxPrice: maxPrice,
-    serviceTypes: [] as string[]
+    serviceTypes: [] as string[],
+    company: [] as string[],
   });
 
   // Memoize the filter change handler
@@ -86,6 +82,13 @@ export default function SearchFilters({
       ...prev,
       minPrice: value[0],
       maxPrice: value[1]
+    }));
+  };
+
+  const handleCompanyChange = (values: string[]) => {
+    setFilters(prev => ({
+      ...prev,
+      company: values
     }));
   };
 
@@ -160,6 +163,20 @@ export default function SearchFilters({
             {serviceTypes.map(type => (
               <Checkbox key={type} value={type}>
                 {type}
+              </Checkbox>
+            ))}
+          </Checkbox.Group>
+        </Panel>
+
+        {/* New Company Panel */}
+        <Panel header="Company" key="company">
+          <Checkbox.Group
+            className={styles.checkboxGroup}
+            onChange={(values) => handleCompanyChange(values as string[])}
+          >
+            {uniqueCompanies && uniqueCompanies.map(company => (
+              <Checkbox key={company} value={company}>
+                {company}
               </Checkbox>
             ))}
           </Checkbox.Group>
