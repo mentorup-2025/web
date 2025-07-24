@@ -17,7 +17,7 @@ export async function GET(
         // 3. Only include appointments with service_type "Free coffee chat (15 mins)"
         const coffeeChatAppointments = appointments.filter(appointment => {
             // Exclude canceled or pending appointments
-            if (appointment.status === 'canceled' || appointment.status === 'pending') {
+            if (appointment.status === 'canceled') {
                 console.log('❌ Excluded - Status:', appointment.status);
                 return false;
             }
