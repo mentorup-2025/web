@@ -38,10 +38,6 @@ dayjs.extend(timezone);
 
 import type { Appointment } from '@/types/appointment';
 import type { RescheduleProposal } from '@/types/reschedule_proposal';
-<<<<<<< HEAD
-=======
-import { getUser } from '@/lib/user';
->>>>>>> e9e5474 (consolidate the interface used in backend and frontend. Allow join to join the meeting link)
 import { User } from '@/types';
 
 const { Title, Text } = Typography;
