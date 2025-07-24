@@ -315,7 +315,7 @@ export default function MentorDetailsPage() {
                   <div className={styles.profileText}>
                     <Title level={2} className={styles.name}>{mentor.username}</Title>
                     <Text className={styles.jobTitle}>
-                      {mentor.job_target?.title} @{mentor.job_target?.company}
+                      {mentor.title} @{mentor.company}
                     </Text>
                   </div>
                   {mentor.linkedin && (

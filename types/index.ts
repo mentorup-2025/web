@@ -38,4 +38,5 @@ export interface SearchFiltersType {
   minPrice?: number;
   maxPrice?: number;
   serviceTypes?: string[];
+  company?: string[];
 }
