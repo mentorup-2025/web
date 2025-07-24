@@ -37,7 +37,11 @@ import timezone from 'dayjs/plugin/timezone';
 import type { Appointment } from '@/types/appointment';
 import type { RescheduleProposal } from '@/types/reschedule_proposal';
 import type { User } from '@/types/user';
+<<<<<<< HEAD
 // Remove import { getUser } from '@/lib/user';
+=======
+import { getUser } from '@/lib/user';
+>>>>>>> e9e5474 (consolidate the interface used in backend and frontend. Allow join to join the meeting link)
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -128,91 +132,43 @@ export default function MySessionsTab() {
 
     const fetchAppointments = useCallback(async () => {
         if (!mentorId) return;
-
-        (async () => {
-            setLoading(true);
-            try {
-                // 1) 拿到所有 appointments
-                const apptRes = await fetch('/api/appointment/get', {
-                    method: 'POST',
-                    headers:{ 'Content-Type':'application/json' },
-                    body: JSON.stringify({ user_id: mentorId }),
-                });
-                const apptJson = await apptRes.json();
-                const rawAppts = apptJson.data.appointments as any[];
-
-                // 2) 预载入每条 appointment “另一方” 的 user info
-                //    如果当前登录的是导师，另一方就是 mentee_id
-                const otherIds = Array.from(new Set(
-                    rawAppts.map(a => a.mentor_id === mentorId ? a.mentee_id : a.mentor_id)
-                ));
-                const userMap: Record<string, any> = {};
-                await Promise.all(otherIds.map(async id => {
-                    const ures = await fetch(`/api/user/${id}`);
-                    const { data } = await ures.json();
-                    if (data) userMap[id] = data;
-                }));
-
-                // 3) 为每条 appointment 拉它专属的 proposal
-                const enriched = await Promise.all(rawAppts.map(async a => {
-                    // parse timeslot…
-                    const m = a.time_slot.match(/\[(.*?),(.*?)\)/) || [];
-
-                    // note: build error with `dayjs.invalid`
-                    // const start = m[1] ? dayjs.utc(m[1]).local() : dayjs.invalid;
-                    // const end   = m[2] ? dayjs.utc(m[2]).local() : dayjs.invalid;
-                    // note: not ideal, but use today's date as fallback
-                    const start = m[1] ? dayjs.utc(m[1]).local() : dayjs.utc(new Date());
-                    const end   = m[2] ? dayjs.utc(m[2]).local() : dayjs.utc(new Date());
-
-                    const otherId = a.mentor_id === mentorId ? a.mentee_id : a.mentor_id;
-
-                    // --- 关键：这里用 otherId 去拉提案列表 ---
-                    const pRes = await fetch(`/api/reschedule_proposal/${mentorId}`);
-                    const pJson = await pRes.json();
-                    let proposal: Proposal|undefined = undefined;
-                    if (pRes.ok && pJson.code === 0 && Array.isArray(pJson.data)) {
-                        const pItem = (pJson.data as any[]).find(p => p.id === a.id);
-                        if (pItem) {
-                            proposal = {
-                                id:       pItem.id,
-                                appointment_id: pItem.id,
-                                proposed_time_ranges: pItem.proposed_time,
-                                status:   'pending',
-                            };
-                        }
-                    }
-
-                    return {
-                        id:          a.id,
-                        date:        start.isValid() ? start.format('YYYY-MM-DD') : 'Invalid',
-                        time:        start.isValid() && end.isValid()
-                            ? `${start.format('HH:mm')} - ${end.format('HH:mm')}`
-                            : 'Invalid',
-                        status:      a.status,
-                        description: a.description,
-                        cancel_reason: a.cancel_reason,
-                        service_type: a.service_type,
-                        resume_url:  a.resume_url,
-                        otherUser: {
-                            id:       otherId,
-                            username: userMap[otherId]?.username || 'Anonymous',
-                            mentor:   userMap[otherId]?.mentor    || false,
-                        },
-                        proposal,    // ← 一定要把它放进来
-                    };
-                }));
-
-                // const onlyMentees = enriched.filter(a => !a.otherUser.mentor);
-                setAppointments(enriched);
-
-            } catch (e: any) {
-                console.error(e);
-                message.error(e.message || '加载失败');
-            } finally {
-                setLoading(false);
-            }
-        })();
+        setLoading(true);
+        try {
+            // 1) Get all appointments
+            const apptRes = await fetch('/api/appointment/get', {
+                method: 'POST',
+                headers:{ 'Content-Type':'application/json' },
+                body: JSON.stringify({ user_id: mentorId }),
+            });
+            const apptJson = await apptRes.json();
+            const rawAppts = apptJson.data.appointments as Appointment[];
+            // 2) Get all proposals for this mentor
+            const propRes = await fetch(`/api/reschedule_proposal/${mentorId}`);
+            const propJson = await propRes.json();
+            setProposals(propJson.data as RescheduleProposal[]);
+            // 3) Preload all user info (mentor and mentee, including mentor user itself)
+            const userIds = Array.from(new Set([
+                ...rawAppts.map(a => a.mentor_id),
+                ...rawAppts.map(a => a.mentee_id),
+                mentorId
+            ]));
+            const userMapTemp: Record<string, User> = {};
+            await Promise.all(userIds.map(async id => {
+                try {
+                    const user = await getUser(id);
+                    if (user) userMapTemp[id] = user;
+                } catch (error) {
+                    console.error(`Failed to fetch user ${id}:`, error);
+                }
+            }));
+            setUserMap(userMapTemp);
+            setAppointments(rawAppts);
+        } catch (e: any) {
+            console.error(e);
+            message.error(e.message || '加载失败');
+        } finally {
+            setLoading(false);
+        }
     }, [mentorId]);
 
     useEffect(() => {
@@ -321,22 +277,17 @@ export default function MySessionsTab() {
                 (r: [dayjs.Dayjs, dayjs.Dayjs]) => [r[0].toISOString(), r[1].toISOString()]
             );
 
-            // 2. 构造 payload
-            const payload = {
-                appointment_id: currentAppt!.id,
-                proposed_time_ranges: ranges,
-                proposer: mentorId,
-                receiver: currentAppt!.otherUser.id,
-                reason: rescheduleComment,    // ✅ 一定要带上 reason
-            };
-            await fetch(`/api/reschedule_proposal/${currentAppt!.id}`, {
-                method: 'DELETE',
-            });
-            // 3. 调接口
-            const res = await fetch('/api/appointment/reschedule', {
+            // —— 直接调用 reschedule 接口 ——
+            await fetch('/api/appointment/reschedule', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
+                body: JSON.stringify({
+                    appointment_id: currentAppt!.id,
+                    proposed_time_ranges: ranges,
+                    proposer: mentorId,
+                    receiver: currentAppt!.mentee_id,
+                    // reason: rescheduleComment,
+                }),
             });
             const data = await res.json();
 
