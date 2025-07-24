@@ -8,17 +8,17 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Get user from Clerk session
-    const { userId } = await auth();
+    // // Get user from Clerk session
+    // const { userId } = await auth();
     
-    if (!userId) {
-      return respErr('Unauthorized: User not authenticated');
-    }
+    // if (!userId) {
+    //   return respErr('Unauthorized: User not authenticated');
+    // }
 
-    // Validate that the authenticated user ID matches the user ID in the URL parameter
-    if (userId !== params.id) {
-      return respErr('Unauthorized: User ID from session does not match user ID in URL');
-    }
+    // // Validate that the authenticated user ID matches the user ID in the URL parameter
+    // if (userId !== params.id) {
+    //   return respErr('Unauthorized: User ID from session does not match user ID in URL');
+    // }
 
     const user_id = params.id;
     
