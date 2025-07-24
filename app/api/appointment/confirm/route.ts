@@ -1,10 +1,11 @@
 import { NextRequest } from 'next/server';
-import { confirmAppointment, getAppointment } from '@/lib/appointment';
+import { confirmAppointment, getAppointment, updateAppointment } from '@/lib/appointment';
 import { getUser } from '@/lib/user';
 import { sendEmail } from '@/lib/email';
 import { EmailTemplate } from '@/types/email';
 import { convertUTCToPDT } from '@/lib/utc_to_pdt';
 import { respData, respErr } from '@/lib/resp';
+import { generateMeetLink } from '@/lib/meet';
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,6 +48,24 @@ export async function POST(request: NextRequest) {
       return respData({ appointment_id, status: 'confirmed', start_time, end_time });
     }
 
+    // Generate Meet link and update appointment
+    let meetLink = '';
+    try {
+      const meet = await generateMeetLink({
+        start_time,
+        end_time,
+        mentor_email: mentor.email,
+        mentee_email: mentee.email
+      });
+      meetLink = meet.meeting_link;
+      if (!meetLink) {
+        throw new Error('Google Meet link was not generated.');
+      }
+      await updateAppointment(appointment_id, { link: meetLink });
+    } catch (meetErr) {
+      throw new Error('Google Meet link was not generated.');
+    }
+
     // Convert UTC times to PDT
     const pdtStartTime = convertUTCToPDT(appointment.start_time);
     const pdtEndTime = convertUTCToPDT(appointment.end_time);
@@ -65,7 +84,8 @@ export async function POST(request: NextRequest) {
             menteeName: mentee.username,
             serviceName: appointment.service_type,
             appointmentStartTime: pdtStartTime,
-            appointmentEndTime: pdtEndTime
+            appointmentEndTime: pdtEndTime,
+            meetLink
           }
         ),
         // Send email to mentor
@@ -79,7 +99,8 @@ export async function POST(request: NextRequest) {
             menteeName: mentee.username,
             serviceName: appointment.service_type,
             appointmentStartTime: pdtStartTime,
-            appointmentEndTime: pdtEndTime
+            appointmentEndTime: pdtEndTime,
+            meetLink
           }
         )
       ]);
@@ -93,7 +114,7 @@ export async function POST(request: NextRequest) {
       // Don't fail the entire process if email fails
     }
 
-    return respData({ appointment_id, status: 'confirmed', start_time, end_time });
+    return respData({ appointment_id, status: 'confirmed', start_time, end_time, meetLink });
 
   } catch (error: any) {
     console.error('Error confirming appointment:', error);

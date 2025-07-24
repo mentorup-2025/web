@@ -34,6 +34,10 @@ import {
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import type { Appointment } from '@/types/appointment';
+import type { RescheduleProposal } from '@/types/reschedule_proposal';
+import type { User } from '@/types/user';
+// Remove import { getUser } from '@/lib/user';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -46,32 +50,6 @@ function getShortTimeZone() {
     const tz = parts.find(p => p.type === 'timeZoneName')?.value;
     return tz || '';
 }
-interface Proposal {
-    id: string;
-    appointment_id: string;
-    proposed_time_ranges: [string, string][];
-    status: 'pending' | 'accepted' | 'declined';
-}
-
-interface Appointment {
-    id: string;
-    date: string;
-    time: string;
-    status: string;
-    description: string;
-    cancel_reason: string;
-    resume_url?: string;
-    service_type: string;
-    otherUser: {
-        id: string;
-        username: string;
-        avatar_url?: string;
-    };
-    proposal?: Proposal;
-}
-const bookedSlotsStatePlaceholder: [string, string][] = [];
-
-type FilterKey = 'upcoming' | 'past' | 'cancelled';
 
 export default function MySessionsTab() {
     // const { user } = useUser();
@@ -105,10 +83,13 @@ export default function MySessionsTab() {
 
     const [bookedSlots, setBookedSlots] = useState<[string,string][]>([]);
 
-    const [filter, setFilter] = useState<FilterKey>('upcoming');
+    const [filter, setFilter] = useState<'upcoming' | 'past' | 'cancelled'>('upcoming');
 
     const [isReportOpen, setIsReportOpen] = useState(false);
     const [reportReason, setReportReason] = useState('');
+
+    const [userMap, setUserMap] = useState<Record<string, User>>({});
+    const [proposals, setProposals] = useState<RescheduleProposal[]>([]);
 
 
     // 根据 status 来做分类
@@ -139,7 +120,7 @@ export default function MySessionsTab() {
                 return start.isBefore(beDay) && autoEnd.isAfter(bsDay);
             });
             if (conflict) {
-                message.warning('⚠️ 该时间段与已有的 session 冲突，请重选。');
+                message.warning('⚠️ This time slot conflicts with an existing session. Please choose another.');
             }
         }
     };
@@ -147,91 +128,44 @@ export default function MySessionsTab() {
 
     const fetchAppointments = useCallback(async () => {
         if (!mentorId) return;
-
-        (async () => {
-            setLoading(true);
-            try {
-                // 1) 拿到所有 appointments
-                const apptRes = await fetch('/api/appointment/get', {
-                    method: 'POST',
-                    headers:{ 'Content-Type':'application/json' },
-                    body: JSON.stringify({ user_id: mentorId }),
-                });
-                const apptJson = await apptRes.json();
-                const rawAppts = apptJson.data.appointments as any[];
-
-                // 2) 预载入每条 appointment “另一方” 的 user info
-                //    如果当前登录的是导师，另一方就是 mentee_id
-                const otherIds = Array.from(new Set(
-                    rawAppts.map(a => a.mentor_id === mentorId ? a.mentee_id : a.mentor_id)
-                ));
-                const userMap: Record<string, any> = {};
-                await Promise.all(otherIds.map(async id => {
-                    const ures = await fetch(`/api/user/${id}`);
-                    const { data } = await ures.json();
-                    if (data) userMap[id] = data;
-                }));
-
-                // 3) 为每条 appointment 拉它专属的 proposal
-                const enriched = await Promise.all(rawAppts.map(async a => {
-                    // parse timeslot…
-                    const m = a.time_slot.match(/\[(.*?),(.*?)\)/) || [];
-
-                    // note: build error with `dayjs.invalid`
-                    // const start = m[1] ? dayjs.utc(m[1]).local() : dayjs.invalid;
-                    // const end   = m[2] ? dayjs.utc(m[2]).local() : dayjs.invalid;
-                    // note: not ideal, but use today's date as fallback
-                    const start = m[1] ? dayjs.utc(m[1]).local() : dayjs.utc(new Date());
-                    const end   = m[2] ? dayjs.utc(m[2]).local() : dayjs.utc(new Date());
-
-                    const otherId = a.mentor_id === mentorId ? a.mentee_id : a.mentor_id;
-
-                    // --- 关键：这里用 otherId 去拉提案列表 ---
-                    const pRes = await fetch(`/api/reschedule_proposal/${mentorId}`);
-                    const pJson = await pRes.json();
-                    let proposal: Proposal|undefined = undefined;
-                    if (pRes.ok && pJson.code === 0 && Array.isArray(pJson.data)) {
-                        const pItem = (pJson.data as any[]).find(p => p.id === a.id);
-                        if (pItem) {
-                            proposal = {
-                                id:       pItem.id,
-                                appointment_id: pItem.id,
-                                proposed_time_ranges: pItem.proposed_time,
-                                status:   'pending',
-                            };
-                        }
-                    }
-
-                    return {
-                        id:          a.id,
-                        date:        start.isValid() ? start.format('YYYY-MM-DD') : 'Invalid',
-                        time:        start.isValid() && end.isValid()
-                            ? `${start.format('HH:mm')} - ${end.format('HH:mm')}`
-                            : 'Invalid',
-                        status:      a.status,
-                        description: a.description,
-                        cancel_reason: a.cancel_reason,
-                        service_type: a.service_type,
-                        resume_url:  a.resume_url,
-                        otherUser: {
-                            id:       otherId,
-                            username: userMap[otherId]?.username || 'Anonymous',
-                            mentor:   userMap[otherId]?.mentor    || false,
-                        },
-                        proposal,    // ← 一定要把它放进来
-                    };
-                }));
-
-                // const onlyMentees = enriched.filter(a => !a.otherUser.mentor);
-                setAppointments(enriched);
-
-            } catch (e: any) {
-                console.error(e);
-                message.error(e.message || '加载失败');
-            } finally {
-                setLoading(false);
-            }
-        })();
+        setLoading(true);
+        try {
+            // 1) Get all appointments
+            const apptRes = await fetch('/api/appointment/get', {
+                method: 'POST',
+                headers:{ 'Content-Type':'application/json' },
+                body: JSON.stringify({ user_id: mentorId }),
+            });
+            const apptJson = await apptRes.json();
+            const rawAppts = apptJson.data.appointments as Appointment[];
+            // 2) Get all proposals for this mentor
+            const propRes = await fetch(`/api/reschedule_proposal/${mentorId}`);
+            const propJson = await propRes.json();
+            setProposals(propJson.data as RescheduleProposal[]);
+            // 3) Preload all user info (mentor and mentee, including mentor user itself)
+            const userIds = Array.from(new Set([
+                ...rawAppts.map(a => a.mentor_id),
+                ...rawAppts.map(a => a.mentee_id),
+                mentorId
+            ]));
+            const userMapTemp: Record<string, User> = {};
+            await Promise.all(userIds.map(async id => {
+                try {
+                    const res = await fetch(`/api/user/${id}`);
+                    const json = await res.json();
+                    if (json.data) userMapTemp[id] = json.data;
+                } catch (error) {
+                    console.error(`Failed to fetch user ${id}:`, error);
+                }
+            }));
+            setUserMap(userMapTemp);
+            setAppointments(rawAppts);
+        } catch (e: any) {
+            console.error(e);
+            message.error(e.message || '加载失败');
+        } finally {
+            setLoading(false);
+        }
     }, [mentorId]);
 
     useEffect(() => {
@@ -239,12 +173,12 @@ export default function MySessionsTab() {
     }, [fetchAppointments]);
     const handleConfirmCurrentTime = async (appt: Appointment) => {
         try {
-            // 拆分 "HH:mm - HH:mm"
-            const [startStr, endStr] = appt.time.split(' - ');
-            // 拼成完整的 ISO 时间
-            const startISO = dayjs(`${appt.date} ${startStr}`).toISOString();
-            const endISO   = dayjs(`${appt.date} ${endStr}`).toISOString();
-
+            const startISO = appt.start_time;
+            const endISO = appt.end_time;
+            const startStr = dayjs(appt.start_time).format('HH:mm');
+            const endStr = dayjs(appt.end_time).format('HH:mm');
+            const timeStr = `${startStr} - ${endStr}`;
+            const dateStr = dayjs(appt.start_time).format('YYYY-MM-DD');
             const res = await fetch('/api/appointment/confirm', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -255,52 +189,45 @@ export default function MySessionsTab() {
                 }),
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.message || '确认失败');
-
-            message.success('已确认会话时间');
-            // 本地更新状态
+            if (!res.ok) throw new Error(data.message || 'Confirmation failed');
+            message.success('Session time confirmed');
             setAppointments(list =>
                 list.map(a =>
                     a.id === appt.id
-                        ? { ...a, status: 'confirmed', time: `${startStr} - ${endStr}` }
+                        ? { ...a, status: 'confirmed' }
                         : a
                 )
             );
         } catch (err: any) {
             console.error(err);
-            message.error(err.message || '确认失败');
+            message.error(err.message || 'Confirmation failed');
         }
     };
     // Accept：更新 appointment（status + time_slot）
-    const handleAccept = async (prop: Proposal) => {
+    const handleAccept = async (prop: RescheduleProposal) => {
         try {
-            const selectedIdx = selectedProposal[prop.appointment_id];
+            const selectedIdx = selectedProposal[prop.id];
             if (selectedIdx == null) {
-                // WARN -> WARNING
-                return message.warning('请先选择一个时间段');
+                return message.warning('Please select a time slot');
             }
 
-            const [start_time, end_time] = prop.proposed_time_ranges[selectedIdx];
+            const [start_time, end_time] = prop.proposed_time[selectedIdx];
 
             const res = await fetch('/api/appointment/confirm', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ appointment_id: prop.appointment_id, start_time, end_time }),
+                body: JSON.stringify({ appointment_id: prop.id, start_time, end_time }),
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.message || '确认失败');
+            if (!res.ok) throw new Error(data.message || 'Confirmation failed');
 
-            message.success('已确认新时间');
+            message.success('Session time confirmed');
             setAppointments(apps =>
                 apps.map(a =>
-                    a.id === prop.appointment_id
+                    a.id === prop.id
                         ? {
                             ...a,
                             status: 'confirmed',
-                            proposal: {
-                                ...a.proposal!,
-                                status: 'accepted',
-                            },
                             time: `${dayjs(start_time).format('HH:mm')} - ${dayjs(end_time).format('HH:mm')}`,
                         }
                         : a
@@ -347,30 +274,18 @@ export default function MySessionsTab() {
                 (r: [dayjs.Dayjs, dayjs.Dayjs]) => [r[0].toISOString(), r[1].toISOString()]
             );
 
-            // 2. 构造 payload
-            const payload = {
-                appointment_id: currentAppt!.id,
-                proposed_time_ranges: ranges,
-                proposer: mentorId,
-                receiver: currentAppt!.otherUser.id,
-                reason: rescheduleComment,    // ✅ 一定要带上 reason
-            };
-            await fetch(`/api/reschedule_proposal/${currentAppt!.id}`, {
-                method: 'DELETE',
-            });
-            // 3. 调接口
-            const res = await fetch('/api/appointment/reschedule', {
+            // —— 直接调用 reschedule 接口 ——
+            await fetch('/api/appointment/reschedule', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
+                body: JSON.stringify({
+                    appointment_id: currentAppt!.id,
+                    proposed_time_ranges: ranges,
+                    proposer: mentorId,
+                    receiver: currentAppt!.mentee_id,
+                    // reason: rescheduleComment,
+                }),
             });
-            const data = await res.json();
-
-            if (!res.ok) {
-                // 后端返回错误信息时给用户提示
-                throw new Error(data.message || `Server responded ${res.status}`);
-            }
-
             message.success('Reschedule request sent!');
             form.resetFields();
             setIsRescheduleSlotsModalOpen(false);
@@ -413,9 +328,7 @@ export default function MySessionsTab() {
             setAppointments(list =>
                 list.map(appt => {
                     if (appt.status === 'confirmed') {
-                        // 拆出结束时间
-                        const [, endStr] = appt.time.split(' - ')
-                        const endMoment = dayjs(`${appt.date} ${endStr}`, 'YYYY-MM-DD HH:mm')
+                        const endMoment = dayjs(appt.end_time);
                         // 如果现在已经超过结束时间 1 分钟
                         if (dayjs().isAfter(endMoment.add(1, 'minute'))) {
                             // 1) 本地更新状态
@@ -427,7 +340,7 @@ export default function MySessionsTab() {
                                     appointment_id: appt.id,
                                     status:         'completed'
                                 }),
-                            }).catch(() => {/* 忽略网络错误 */})
+                            }).catch(() => {/* ignore network error */})
                             return { ...appt, status: 'completed' }
                         }
                     }
@@ -455,7 +368,7 @@ export default function MySessionsTab() {
             {/* —— 三个分类标签页 —— */}
             <Tabs
                 activeKey={filter}
-                onChange={key => setFilter(key as FilterKey)}
+                onChange={key => setFilter(key as 'upcoming' | 'past' | 'cancelled')}
                 items={[
                     { key: 'upcoming',   label: 'Upcoming'   },
                     { key: 'past',       label: 'Past'       },
@@ -470,203 +383,113 @@ export default function MySessionsTab() {
             ) : (
                 [...filteredAppointments]
                     .sort((a, b) => {
-                        const aStart = dayjs(`${a.date} ${a.time.split(' - ')[0]}`, 'YYYY-MM-DD HH:mm');
-                        const bStart = dayjs(`${b.date} ${b.time.split(' - ')[0]}`, 'YYYY-MM-DD HH:mm');
-                        return aStart.diff(bStart); // 时间近的排前面
+                        const aStart = dayjs(a.start_time);
+                        const bStart = dayjs(b.start_time);
+                        return aStart.diff(bStart);
                     })
-                    .map(appt => (
-                    <Card
-                        key={appt.id}
-                        style={{ marginBottom: 16 }}
-                        title={
-                            <Space align="center" style={{ position: 'relative', width: '100%' }}>
-                                <CalendarOutlined />
-                                <Text strong>{appt.date}</Text>
-                                <ClockCircleOutlined style={{ marginLeft: 16 }} />
-                                <Text strong>{appt.time} {getShortTimeZone()}</Text>
-
-                                {appt.status !== 'canceled' && (
-                                    appt.proposal?.status === 'pending' ? (
-                                        <Text
+                    .map(appt => {
+                        const date = dayjs(appt.start_time).format('YYYY-MM-DD');
+                        const time = `${dayjs(appt.start_time).format('HH:mm')} - ${dayjs(appt.end_time).format('HH:mm')}`;
+                        const mentee = userMap[appt.mentee_id];
+                        const mentor = userMap[appt.mentor_id];
+                        const otherUser = mentee && mentee.id === mentorId ? mentor : mentee;
+                        const menteeResumeUrl = mentee?.resume;
+                        const proposal = proposals.find(p => p.id === appt.id);
+                        return (
+                            <Card
+                                key={appt.id}
+                                style={{ marginBottom: 16 }}
+                                title={
+                                    <Space align="center" style={{ position: 'relative', width: '100%' }}>
+                                        <CalendarOutlined />
+                                        <Text strong>{date}</Text>
+                                        <ClockCircleOutlined style={{ marginLeft: 16 }} />
+                                        <Text strong>{time} {getShortTimeZone()}</Text>
+                                        <Tag
                                             style={{
-                                                marginLeft: 54,
-                                                fontWeight: 700,
-                                                fontSize: 16,
-                                                lineHeight: '24px',
-                                                color: '#1890FF',
+                                                position: 'absolute',
+                                                right: 0,
+                                                top: 2,
+                                                background: appt.status === 'canceled' ? '#FFF1F0' : '#E6F7FF',
+                                                border: appt.status === 'canceled'
+                                                    ? '1px dashed #FFA39E'
+                                                    : '1px dashed #91D5FF',
+                                                borderRadius: 2,
+                                                fontWeight: 400,
+                                                fontSize: 12,
+                                                lineHeight: '20px',
+                                                color: appt.status === 'canceled' ? '#FF4D4F' : '#1890FF',
                                             }}
                                         >
-                                            Waiting for Confirmation
-                                        </Text>
-                                    ) : (() => {
-                                        const start = dayjs(
-                                            `${appt.date} ${appt.time.split(' - ')[0]}`,
-                                            'YYYY-MM-DD HH:mm'
-                                        );
-                                        const now = dayjs();
-                                        const diffInHours = start.diff(now, 'hour');
-                                        // 如果小于等于 0，就不显示任何东西
-                                        if (diffInHours <= 0) {
-                                            return null;
-                                        }
-                                        // 小于 24 小时
-                                        if (diffInHours < 24) {
-                                            return (
-                                                <Text
-                                                    style={{
-                                                        marginLeft: 54,
-                                                        fontWeight: 700,
-                                                        fontSize: 16,
-                                                        lineHeight: '24px',
-                                                        color: '#1890FF',
-                                                    }}
-                                                >
-                                                    In {diffInHours} Hours
-                                                </Text>
-                                            );
-                                        }
-                                        // >= 24 小时
-                                        const diffInDays = start.diff(now, 'day');
-                                        const hoursAfterDays = start.diff(now.add(diffInDays, 'day'), 'hour');
-                                        return (
-                                            <Text
-                                                style={{
-                                                    marginLeft: 54,
-                                                    fontWeight: 700,
-                                                    fontSize: 16,
-                                                    lineHeight: '24px',
-                                                    color: '#1890FF',
-                                                }}
-                                            >
-                                                In {diffInDays} Days {hoursAfterDays} Hours
-                                            </Text>
-                                        );
-                                    })()
-                                )}
-
-                                <Tag
-                                    style={{
-                                        position: 'absolute',
-                                        right: 0,
-                                        top: 2,
-                                        background: appt.status === 'canceled' ? '#FFF1F0' : '#E6F7FF',
-                                        border: appt.status === 'canceled'
-                                            ? '1px dashed #FFA39E'
-                                            : '1px dashed #91D5FF',
-                                        borderRadius: 2,
-                                        fontWeight: 400,
-                                        fontSize: 12,
-                                        lineHeight: '20px',
-                                        color: appt.status === 'canceled' ? '#FF4D4F' : '#1890FF',
-                                    }}
-                                >
-                                    {appt.status === 'confirmed'
-                                        ? 'Upcoming'
-                                        : appt.status === 'reschedule_in_progress'
-                                            ? 'Reschedule In Progress'
-                                            : appt.status}
-                                </Tag>
-                            </Space>
-                        }
-                        actions={
-                            filter === 'past'
-                                // Past 分页只显示 Report Issue
-                                ? [
-                                    <div
-                                        key="report-issue"
-                                        onClick={() => showReportModal(appt)}
-                                        style={{ cursor: 'pointer' }}
-                                    >
-                                        <FrownOutlined style={{ fontSize: 18 }} />
-                                        <div>Report Issue</div>
-                                    </div>
-                                ]
-                                // 非 past：走你原来的逻辑
-                                : (
-                                    (appt.status !== 'canceled' && (appt.proposal?.status === 'pending' || appt.status === 'paid'))
-                                        ? [
+                                            {appt.status === 'confirmed'
+                                                ? 'Upcoming'
+                                                : appt.status === 'reschedule_in_progress'
+                                                    ? 'Reschedule In Progress'
+                                                    : appt.status}
+                                        </Tag>
+                                    </Space>
+                                }
+                                actions={[
+                                    <div key="join">
+                                        <BellOutlined style={{ fontSize: 18 }} />
+                                        <div>
                                             <Button
-                                                key="review"
-                                                type="primary"
-                                                style={{ width: '100%' }}
+                                                type="link"
+                                                style={{ padding: 0, color: appt.link ? '#1890FF' : '#bfbfbf', cursor: appt.link ? 'pointer' : 'not-allowed' }}
+                                                disabled={!appt.link}
                                                 onClick={() => {
-                                                    if (appt.status === 'paid') {
-                                                        setConfirmAppt(appt);
-                                                        setIsConfirmOpen(true);
-                                                    } else {
-                                                        setReviewAppt(appt);
-                                                        setIsReviewOpen(true);
+                                                    if (appt.link) {
+                                                        window.location.href = appt.link;
                                                     }
                                                 }}
                                             >
-                                                <BellOutlined style={{ marginRight: 8 }} />
-                                                Review and Confirm the Session Request
+                                                Join
                                             </Button>
-                                        ]
-                                        : (
-                                            appt.status === 'canceled' || appt.status === 'noshow'
-                                                ? []
-                                                : [
-                                                    <div key="reschedule" onClick={() => showRescheduleModal(appt)} style={{ cursor: 'pointer' }}>
-                                                        <CalendarTwoTone style={{ fontSize: 18 }} /><div>Reschedule</div>
-                                                    </div>,
-                                                    <div key="cancel" onClick={() => showCancelModal(appt)} style={{ cursor: 'pointer' }}>
-                                                        <CloseCircleOutlined style={{ fontSize: 18 }} /><div>Cancel</div>
-                                                    </div>,
-                                                    <div key="noshow" onClick={() => showReportModal(appt)} style={{ cursor: 'pointer' }}>
-                                                        <FrownOutlined style={{ fontSize: 18 }} /><div>Report Issue</div>
-                                                    </div>,
-                                                    <div key="join" onClick={() => {/*…*/}} style={{ cursor: 'pointer' }}>
-                                                        <BellOutlined style={{ fontSize: 18 }} /><div>Join</div>
-                                                    </div>,
-                                                ]
-                                        )
-                                )
-                        }
-                    >
-                        {/* —— 移除：原先 inline pending 区块 —— */}
-
-                        <Space>
-                            <Avatar>{appt.otherUser.username.charAt(0)}</Avatar>
-                            <Text strong>{appt.otherUser.username}</Text>
-                            <Text type="secondary" style={{ marginLeft: 8 }}>
-                                ({appt.service_type})
-                            </Text>
-                        </Space>
-                        <div style={{ marginTop: 8 }}>
-                            <Text type="secondary">Notes:</Text>
-                            <p>{appt.description}</p>
-                        </div>
-                        {appt.resume_url && (() => {
-                            // 1. 先取出最后一段 "1752650411087-jakes-resume.pdf"
-                            const fullName = appt.resume_url.split('/').pop() || '';
-                            // 2. 再去掉前面的时间戳部分，只保留 “jakes-resume.pdf”
-                            const displayName = fullName.includes('-')
-                                ? fullName.split('-').slice(1).join('-')
-                                : fullName;
-                            return (
-                                <a
-                                    href={appt.resume_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        marginTop: 8,
-                                        color: '#1890FF',
-                                        textDecoration: 'none'
-                                    }}
-                                >
-                                    <FileOutlined style={{ fontSize: 18, marginRight: 8 }} />
-                                    <span style={{ textDecoration: 'underline' }}>
-        {displayName}
-      </span>
-                                </a>
-                            );
-                        })()}
-                    </Card>
-                ))
-            )}
+                                        </div>
+                                    </div>,
+                                ]}
+                            >
+                                <Space>
+                                    <Avatar>{otherUser?.username?.[0]}</Avatar>
+                                    <Text strong>{otherUser?.username}</Text>
+                                    <Text type="secondary" style={{ marginLeft: 8 }}>
+                                        ({appt.service_type})
+                                    </Text>
+                                </Space>
+                                <div style={{ marginTop: 8 }}>
+                                    <Text type="secondary">Notes:</Text>
+                                    <p>{appt.cancel_reason}</p>
+                                </div>
+                                {menteeResumeUrl && (() => {
+                                    const fullName = menteeResumeUrl.split('/').pop() || '';
+                                    const displayName = fullName.includes('-')
+                                        ? fullName.split('-').slice(1).join('-')
+                                        : fullName;
+                                    return (
+                                        <a
+                                            href={menteeResumeUrl}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                marginTop: 8,
+                                                color: '#1890FF',
+                                                textDecoration: 'none'
+                                            }}
+                                        >
+                                            <FileOutlined style={{ fontSize: 18, marginRight: 8 }} />
+                                            <span style={{ textDecoration: 'underline' }}>
+                                                {displayName}
+                                            </span>
+                                        </a>
+                                    );
+                                })()}
+                            </Card>
+                        );
+                    })
+                )}
+            {/* The rest of the component, e.g. modals, goes here */}
 
             <Modal
                 title="Confirming Your Session"
@@ -706,7 +529,7 @@ export default function MySessionsTab() {
                 <div style={{ marginBottom: 16 }}>
                     <Text strong>Session Time:</Text>{' '}
                     <Text style={{ fontWeight: 400, color: '#000' }}>
-                        {confirmAppt?.date} {confirmAppt?.time} {getShortTimeZone()}
+                        {confirmAppt && `${dayjs(confirmAppt.start_time).format('YYYY-MM-DD HH:mm')} - ${dayjs(confirmAppt.end_time).format('HH:mm')} ${getShortTimeZone()}`}
                     </Text>
                 </div>
 
@@ -714,10 +537,10 @@ export default function MySessionsTab() {
                 <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center' }}>
                     <Text strong style={{ marginRight: 8 }}>Mentee:</Text>
                     <Avatar size="small" style={{ marginRight: 4 }}>
-                        {confirmAppt?.otherUser.username.charAt(0)}
+                        {confirmAppt?.mentee_id ? userMap[confirmAppt.mentee_id]?.username?.charAt(0) : ''}
                     </Avatar>
                     <Text style={{ fontWeight: 400, color: '#000' }}>
-                        {confirmAppt?.otherUser.username}
+                        {confirmAppt?.mentee_id ? userMap[confirmAppt.mentee_id]?.username : ''}
                     </Text>
                 </div>
 
@@ -771,36 +594,36 @@ export default function MySessionsTab() {
                     >
                         Cancel the Session
                     </Button>,
-                    (selectedProposal[reviewAppt?.id ?? ''] === (reviewAppt?.proposal?.proposed_time_ranges.length ?? 0))
-                        ? (
-                            <Button
-                                key="propose"
-                                type="primary"
-                                onClick={() => {
-                                    // 先关闭当前 “Review” 弹窗，再打开重排时段的弹窗
-                                    setIsReviewOpen(false);
-                                    setCurrentAppt(reviewAppt);
-                                    setRescheduleComment('');
-                                    setIsRescheduleReasonModalOpen(true);
-                                }}
-                            >
-                                Propose More Time
-                            </Button>
-                        )
-                        : (
-                            <Button
-                                key="confirm"
-                                type="primary"
-                                onClick={() => {
-                                    if (reviewAppt?.proposal) {
-                                        handleAccept(reviewAppt.proposal);
-                                    }
-                                    setIsReviewOpen(false);
-                                }}
-                            >
-                                Confirm the New Time
-                            </Button>
-                        )
+                    (() => {
+                        const proposal = proposals.find(p => p.id === reviewAppt?.id);
+                        return (selectedProposal[reviewAppt?.id ?? ''] === (proposal?.proposed_time.length ?? 0))
+                            ? (
+                                <Button
+                                    key="propose"
+                                    type="primary"
+                                    onClick={() => {
+                                        setIsReviewOpen(false);
+                                        setCurrentAppt(reviewAppt);
+                                        setRescheduleComment('');
+                                        setIsRescheduleReasonModalOpen(true);
+                                    }}
+                                >
+                                    Propose More Time
+                                </Button>
+                            )
+                            : (
+                                <Button
+                                    key="confirm"
+                                    type="primary"
+                                    onClick={() => {
+                                        if (proposal) handleAccept(proposal);
+                                        setIsReviewOpen(false);
+                                    }}
+                                >
+                                    Confirm the New Time
+                                </Button>
+                            );
+                    })()
                 ]}
             >
                 {/* Reschedule Notes */}
@@ -816,7 +639,6 @@ export default function MySessionsTab() {
                 >
                     Sorry for the change — something urgent came up at work. I've proposed new times that I hope will work for you.
                 </Text>
-
                 {/* Proposed New Time Slots */}
                 <Text strong style={{ display: 'block', marginBottom: 8 }}>Proposed New Time Slots</Text>
                 <Radio.Group
@@ -843,29 +665,31 @@ export default function MySessionsTab() {
                             lineHeight: '22px',
                         }}
                     >
-                        {reviewAppt?.date} {reviewAppt?.time} {getShortTimeZone()}
+                        {reviewAppt && `${dayjs(reviewAppt.start_time).format('YYYY-MM-DD HH:mm')} - ${dayjs(reviewAppt.end_time).format('HH:mm')} ${getShortTimeZone()}`}
                     </Text>
-
                     {/* 可选的新时间段 */}
-                    {reviewAppt?.proposal?.proposed_time_ranges.map((range, idx) => (
-                        <Radio key={idx} value={idx} style={{ display: 'block', margin: '8px 0' }}>
-                            <Space>
-                                {/*<BellOutlined />*/}
-                                <Text>
-                                    {dayjs(range[0]).format('MM/DD dddd h:mmA')} –{' '}
-                                    {dayjs(range[1]).format('h:mmA')} {getShortTimeZone()}
-                                </Text>
-                            </Space>
-                        </Radio>
-                    ))}
-
+                    {(() => {
+                        console.log('proposals:', proposals, 'reviewAppt:', reviewAppt);
+                        const proposal = proposals.find(p => p.id === reviewAppt?.id);
+                        return proposal?.proposed_time.map((range, idx) => (
+                            <Radio key={idx} value={idx} style={{ display: 'block', margin: '8px 0' }}>
+                                <Space>
+                                    <Text>
+                                        {dayjs(range[0]).format('MM/DD dddd h:mmA')} – {dayjs(range[1]).format('h:mmA')} {getShortTimeZone()}
+                                    </Text>
+                                </Space>
+                            </Radio>
+                        ));
+                    })()}
                     {/* 最后一个“更多选项” */}
                     <Radio
-                        value={reviewAppt?.proposal?.proposed_time_ranges.length}
+                        value={(() => {
+                            const proposal = proposals.find(p => p.id === reviewAppt?.id);
+                            return proposal?.proposed_time.length || 0;
+                        })()}
                         style={{ display: 'block', margin: '8px 0' }}
                     >
                         <Space>
-                            {/*<BellOutlined />*/}
                             <Text>No suitable time, ask mentor to propose more options.</Text>
                         </Space>
                     </Radio>
@@ -885,7 +709,7 @@ export default function MySessionsTab() {
             >
                 <p style={{ marginBottom: 8 }}>
                     Based on your availability, please propose time slots for{' '}
-                    <strong>{currentAppt?.otherUser.username}</strong>.
+                    <strong>{currentAppt?.mentee_id ? userMap[currentAppt.mentee_id]?.username : ''}</strong>.
                 </p>
                 <Form form={form} layout="vertical" name="rescheduleForm">
                     <Form.List name="slots" initialValue={[]}>
@@ -904,9 +728,9 @@ export default function MySessionsTab() {
                                                             return Promise.reject('Pick a range');
                                                         const [s, e] = value;
                                                         if (![0,30].includes(s.minute()) || ![0,30].includes(e.minute()))
-                                                            return Promise.reject('分钟只能是 0 或 30');
+                                                            return Promise.reject('Minutes can only be 0 or 30');
                                                         if (e.diff(s, 'minutes') !== 60)
-                                                            return Promise.reject('时长必须为 1 小时');
+                                                            return Promise.reject('Duration must be 1 hour');
                                                         return Promise.resolve();
                                                     },
                                                 },
