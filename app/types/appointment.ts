@@ -1,4 +1,5 @@
 export interface Appointment {
+    id: string; // Unique identifier for the appointment
     mentor_id: string;
     mentee_id: string;
     start_time: string;
