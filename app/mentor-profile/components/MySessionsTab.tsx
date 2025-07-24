@@ -37,7 +37,7 @@ import timezone from 'dayjs/plugin/timezone';
 import type { Appointment } from '@/types/appointment';
 import type { RescheduleProposal } from '@/types/reschedule_proposal';
 import type { User } from '@/types/user';
-import { getUser } from '@/lib/user';
+// Remove import { getUser } from '@/lib/user';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -142,7 +142,7 @@ export default function MySessionsTab() {
             const propRes = await fetch(`/api/reschedule_proposal/${mentorId}`);
             const propJson = await propRes.json();
             setProposals(propJson.data as RescheduleProposal[]);
-            // 3) Preload all user info (mentor and mentee, including mentor user itself)
+            // 3) Preload all user info (mentor and mentee, including mentor user itself) using /api/user/[id]
             const userIds = Array.from(new Set([
                 ...rawAppts.map(a => a.mentor_id),
                 ...rawAppts.map(a => a.mentee_id),
@@ -151,8 +151,9 @@ export default function MySessionsTab() {
             const userMapTemp: Record<string, User> = {};
             await Promise.all(userIds.map(async id => {
                 try {
-                    const user = await getUser(id);
-                    if (user) userMapTemp[id] = user;
+                    const res = await fetch(`/api/user/${id}`);
+                    const json = await res.json();
+                    if (json.data) userMapTemp[id] = json.data;
                 } catch (error) {
                     console.error(`Failed to fetch user ${id}:`, error);
                 }

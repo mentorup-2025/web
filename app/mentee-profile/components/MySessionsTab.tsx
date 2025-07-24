@@ -38,7 +38,6 @@ dayjs.extend(timezone);
 
 import type { Appointment } from '@/types/appointment';
 import type { RescheduleProposal } from '@/types/reschedule_proposal';
-import { getUser } from '@/lib/user';
 import { User } from '@/types';
 
 const { Title, Text } = Typography;
@@ -118,7 +117,7 @@ export default function MySessionsTab() {
             const allProps: RescheduleProposal[] = (propJson.data as any[]).map(p => (p));
             setProposals(allProps);
 
-            // 3) 预加载 userMap (should include current user/mentee)
+            // 3) 预加载 userMap (should include current user/mentee) using /api/user/[id]
             const otherIds = Array.from(new Set([
                 ...rawAppts.map(a => a.mentor_id === menteeId ? a.mentee_id : a.mentor_id),
                 menteeId // ensure current user is included
@@ -126,14 +125,14 @@ export default function MySessionsTab() {
             const userMapTemp: Record<string, User> = {};
             await Promise.all(otherIds.map(async id => {
                 try {
-                    const user = await getUser(id);
-                    if (user) userMapTemp[id] = user;
+                    const res = await fetch(`/api/user/${id}`);
+                    const json = await res.json();
+                    if (json.data) userMapTemp[id] = json.data;
                 } catch (error) {
                     console.error(`Failed to fetch user ${id}:`, error);
                 }
             }));
             setUserMap(userMapTemp);
-
             setAppointments(menteeOnly.map(appt => ({ ...appt })));
         } catch (e: any) {
             console.error(e);
