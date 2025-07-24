@@ -211,8 +211,8 @@ export default function MenteeSignu({ userId }: MenteeSignupProps) {
       const userUpdateData = {
         userId,
         username: allValues.displayName,
-        wechat: allValues.wechat,
-        linkedin: allValues.linkedin,
+        wechat: allValues.wechat.trim(),
+        linkedin: allValues.linkedin.trim(),
         industries: selectedIndustries,
         job_target: {
           title: allValues.targetRole,

@@ -427,8 +427,8 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
       const services = (allValues.servicesList || []).map((type: string) => ({ type, price: 5 + 1.45 * allValues.basePrice }));
 
       const mentorData = {
-        company: allValues.company,
-        title: allValues.title,
+        company: allValues.company.trim(),
+        title: allValues.title.trim(),
         years_of_experience: Number(allValues.yearsOfExperience),
         years_of_experience_recorded_date: new Date(),
         services,
