@@ -16,18 +16,25 @@ export async function GET(
         // 2. Exclude appointments where the user is the mentor (only include where user is mentee)
         // 3. Only include appointments with service_type "Free coffee chat (15 mins)"
         const coffeeChatAppointments = appointments.filter(appointment => {
-            // ✅ Only count if:
-            // 1. user is the mentee
-            // 2. status is not canceled or pending
-            // 3. service type is Free coffee chat
+            // Exclude canceled or pending appointments
+            if (appointment.status === 'canceled') {
+                console.log('❌ Excluded - Status:', appointment.status);
+                return false;
+            }
 
-            const isMentee = appointment.mentee_id === params.id;
-            const isValidStatus = appointment.status !== 'canceled' && appointment.status !== 'pending';
-            const isFreeChat = isFreeCoffeeChat(appointment.service_type);
+            // Exclude appointments where user is mentor (only include where user is mentee)
+            if (appointment.mentor_id === params.id) {
+                return false;
+            }
 
-            return isMentee && isValidStatus && isFreeChat;
+            // Only include "Free coffee chat (15 mins)" appointments
+            if (isFreeCoffeeChat(appointment.service_type)) {
+                console.log('❌ Excluded - Service type:', appointment.service_type);
+                return false;
+            }
+
+            return true;
         });
-
 
         // Return the count of filtered appointments
         const coffeeChatCount = coffeeChatAppointments.length;
