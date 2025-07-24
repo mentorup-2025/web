@@ -185,6 +185,7 @@ export default function MentorDetailsPage() {
     if (step === 2) {
       let resumeUrl = userResume;
 
+      // 如果用户当前上传了新的简历，先上传到 S3
       if (!resumeUrl && resume) {
         try {
           const res = await fetch('/api/resume/upload', {
@@ -224,6 +225,7 @@ export default function MentorDetailsPage() {
         }
       }
 
+      // 预约时间 + 服务类型有效
       if (supportType && mentor?.services && selectedSlot?.date && selectedSlot?.time) {
         try {
           const dateStr = selectedSlot.date;
@@ -243,14 +245,49 @@ export default function MentorDetailsPage() {
               mentor.services.find((s: any) => s.type === supportType)?.price ?? 1500;
 
           setPrice(isFreeCoffeeChat(supportType) ? 0 : calculatedPrice);
+
+          // ✅ 如果是免费 coffee chat，直接预约成功，无需进入支付
+          if (isFreeCoffeeChat(supportType)) {
+            if (!user?.id) {
+              message.error('User not signed in');
+              return;
+            }
+            const response = await fetch('/api/appointment/insert', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                mentor_id: mentor.user_id,
+                mentee_id: user.id,
+                start_time: startTimeObj.toISOString(),
+                end_time: endTimeObj.toISOString(),
+                service_type: supportType,
+                description,
+                price: 0,
+              }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || result.code === -1 || !result.data?.appointment_id) {
+              message.error(result.message || 'Failed to create appointment');
+              return;
+            }
+
+            setIsBookingModalVisible(false);
+            setIsSuccessModalVisible(true);
+            setStep(1);
+            return; // ⛔ 不继续进入 Step 3
+          }
         } catch (error) {
           console.error('Failed to calculate session time/price:', error);
         }
       }
     }
 
+    // 正常进入下一步（Step 3 或 Step 4）
     setStep(step + 1);
   };
+
 
 
 
@@ -334,7 +371,7 @@ export default function MentorDetailsPage() {
                     {Array.isArray(mentor.services) && mentor.services.length > 0 ? (
                         mentor.services.map((service: any, idx: number) => (
                             <Tag key={idx} className={styles.serviceTag}>
-                              {service.type} - ${(service.price).toFixed(2)}
+                              {service.type} - ${Math.round(service.price)}
                             </Tag>
                         ))
                     ) : (
@@ -532,131 +569,165 @@ export default function MentorDetailsPage() {
           )}
 
           {step === 3 && (
-              <div>
-                <Title level={4} style={{ marginBottom: 28 }}>Payment Method</Title>
-
-                {/* 👉 如果是免费服务，提示无需付款 */}
-                {supportType === 'Free coffee chat (15 mins)' ? (
+              supportType === 'Free coffee chat (15 mins)' ? (
+                  <div>
+                    <Title level={4} style={{ marginBottom: 20 }}>Confirm Free Session</Title>
                     <p style={{ fontSize: 16, color: '#52c41a', marginBottom: 20 }}>
                       This is a free session. No payment is required.
                     </p>
-                ) : (
-                    <>
-                      <p style={{ marginBottom: 12 }}>Which way would you like to pay?</p>
-
-                      {/* Stripe 支付方式 */}
-                      <div
-                          style={{
-                            border: selectedPaymentMethod === 'stripe' ? '2px solid #1890ff' : '1px solid #d9d9d9',
-                            borderRadius: 8,
-                            padding: '24px 20px',
-                            marginBottom: 20,
-                            minHeight: 80,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            cursor: 'pointer',
-                            position: 'relative',
-                            whiteSpace: 'nowrap',
-                          }}
-                          onClick={() => setSelectedPaymentMethod('stripe')}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                          <input type="radio" checked={selectedPaymentMethod === 'stripe'} readOnly />
-                          <img src="/stripe-icon.png" alt="Stripe" style={{ height: 24 }} />
-                          <span style={{ fontSize: 16, fontWeight: 500 }}>Pay in USD (U.S. Dollar)</span>
-                        </div>
-                        <div style={{ fontSize: 18, fontWeight: 600 }}>
-                          ${price ? price.toFixed(2) : '0.00'}
-                        </div>
-                      </div>
-                    </>
-                )}
-
-                {/* 操作按钮 */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
-                  <Button onClick={handleBack}>Back</Button>
-                  <Button
-                      type="primary"
-                      onClick={async () => {
-                        if (!selectedSlot || !supportType || !mentor || !user?.id) {
-                          message.error('Missing required booking info');
-                          return;
-                        }
-
-                        try {
-                          const dateStr = selectedSlot.date;
-                          const timeStr = selectedSlot.time;
-                          const [startTimeStr] = timeStr.split(' - ');
-                          const startTimeObj = dayjs(`${dateStr} ${startTimeStr}`, 'YYYY-MM-DD h:mm A');
-
-                          let endTimeObj: dayjs.Dayjs;
-                          if (supportType === 'Free coffee chat (15 mins)') {
-                            endTimeObj = startTimeObj.add(15, 'minute');
-                          } else {
-                            const [, endTimeStr] = timeStr.split(' - ');
-                            endTimeObj = dayjs(`${dateStr} ${endTimeStr}`, 'YYYY-MM-DD h:mm A');
-                          }
-
-                          const start_time = startTimeObj.toISOString();
-                          const end_time = endTimeObj.toISOString();
-                          const calculatedPrice =
-                              supportType === 'Free coffee chat (15 mins)'
-                                  ? 0
-                                  : mentor.services?.find((s: any) => s.type === supportType)?.price ?? 1500;
-
-                          const response = await fetch('/api/appointment/insert', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              mentor_id: mentor.user_id,
-                              mentee_id: user.id,
-                              start_time,
-                              end_time,
-                              service_type: supportType,
-                              description,
-                              price: calculatedPrice,
-                            }),
-                          });
-
-                          const result = await response.json();
-
-                          if (!response.ok || result.code === -1 || !result.data?.appointment_id) {
-                            message.error(result.message || 'Failed to create appointment');
-                            return;
-                          }
-
-                          const appointmentId = result.data.appointment_id;
-
-                          if (supportType === 'Free coffee chat (15 mins)') {
-                            // 🎉 免费服务，跳过支付，直接弹出成功弹窗
-                            setIsBookingModalVisible(false);
-                            setIsSuccessModalVisible(true);
-                            setStep(1);
-                          } else {
-                            // 💳 有偿服务，继续支付流程
-                            if (selectedPaymentMethod === 'stripe') {
-                              setStep(4);
-                              window.open(`/booking/payment?appointmentId=${appointmentId}&amount=${calculatedPrice}`, '_blank');
-                            } else if (selectedPaymentMethod === 'wechat') {
-                              setAppointmentId(appointmentId);
-                              setPrice(calculatedPrice);
-                              setIsWeChatModalVisible(true);
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
+                      <Button onClick={handleBack}>Back</Button>
+                      <Button
+                          type="primary"
+                          onClick={async () => {
+                            if (!selectedSlot || !supportType || !mentor || !user?.id) {
+                              message.error('Missing required booking info');
+                              return;
                             }
-                          }
-                        } catch (err) {
-                          console.error('Failed to create appointment before payment:', err);
-                          message.error('Unexpected error creating appointment');
-                        }
-                      }}
-                  >
-                    {supportType === 'Free coffee chat (15 mins)' ? 'Confirm Booking' : 'Pay for the Session'}
-                  </Button>
-                </div>
-              </div>
+
+                            try {
+                              const dateStr = selectedSlot.date;
+                              const timeStr = selectedSlot.time;
+                              const [startTimeStr] = timeStr.split(' - ');
+                              const startTimeObj = dayjs(`${dateStr} ${startTimeStr}`, 'YYYY-MM-DD h:mm A');
+                              const endTimeObj = startTimeObj.add(15, 'minute');
+
+                              const start_time = startTimeObj.toISOString();
+                              const end_time = endTimeObj.toISOString();
+
+                              const response = await fetch('/api/appointment/insert', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  mentor_id: mentor.user_id,
+                                  mentee_id: user.id,
+                                  start_time,
+                                  end_time,
+                                  service_type: supportType,
+                                  description,
+                                  price: 0,
+                                }),
+                              });
+
+                              const result = await response.json();
+
+                              if (!response.ok || result.code === -1 || !result.data?.appointment_id) {
+                                message.error(result.message || 'Failed to create appointment');
+                                return;
+                              }
+
+                              // 🎉 成功预约，弹窗
+                              setIsBookingModalVisible(false);
+                              setIsSuccessModalVisible(true);
+                              setStep(1);
+                            } catch (err) {
+                              console.error('Failed to create free appointment:', err);
+                              message.error('Unexpected error creating appointment');
+                            }
+                          }}
+                      >
+                        Confirm Booking
+                      </Button>
+                    </div>
+                  </div>
+              ) : (
+                  <div>
+                    <Title level={4} style={{ marginBottom: 28 }}>Payment Method</Title>
+
+                    <p style={{ marginBottom: 12 }}>Which way would you like to pay?</p>
+
+                    <div
+                        style={{
+                          border: selectedPaymentMethod === 'stripe' ? '2px solid #1890ff' : '1px solid #d9d9d9',
+                          borderRadius: 8,
+                          padding: '24px 20px',
+                          marginBottom: 20,
+                          minHeight: 80,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          cursor: 'pointer',
+                          position: 'relative',
+                          whiteSpace: 'nowrap',
+                        }}
+                        onClick={() => setSelectedPaymentMethod('stripe')}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <input type="radio" checked={selectedPaymentMethod === 'stripe'} readOnly />
+                        <img src="/stripe-icon.png" alt="Stripe" style={{ height: 24 }} />
+                        <span style={{ fontSize: 16, fontWeight: 500 }}>Pay in USD (U.S. Dollar)</span>
+                      </div>
+                      <div style={{ fontSize: 18, fontWeight: 600 }}>
+                        ${price ? price.toFixed(2) : '0.00'}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
+                      <Button onClick={handleBack}>Back</Button>
+                      <Button
+                          type="primary"
+                          onClick={async () => {
+                            if (!selectedSlot || !supportType || !mentor || !user?.id) {
+                              message.error('Missing required booking info');
+                              return;
+                            }
+
+                            try {
+                              const dateStr = selectedSlot.date;
+                              const timeStr = selectedSlot.time;
+                              const [startTimeStr] = timeStr.split(' - ');
+                              const startTimeObj = dayjs(`${dateStr} ${startTimeStr}`, 'YYYY-MM-DD h:mm A');
+                              const [, endTimeStr] = timeStr.split(' - ');
+                              const endTimeObj = dayjs(`${dateStr} ${endTimeStr}`, 'YYYY-MM-DD h:mm A');
+
+                              const start_time = startTimeObj.toISOString();
+                              const end_time = endTimeObj.toISOString();
+                              const calculatedPrice =
+                                  mentor.services?.find((s: any) => s.type === supportType)?.price ?? 1500;
+
+                              const response = await fetch('/api/appointment/insert', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  mentor_id: mentor.user_id,
+                                  mentee_id: user.id,
+                                  start_time,
+                                  end_time,
+                                  service_type: supportType,
+                                  description,
+                                  price: calculatedPrice,
+                                }),
+                              });
+
+                              const result = await response.json();
+
+                              if (!response.ok || result.code === -1 || !result.data?.appointment_id) {
+                                message.error(result.message || 'Failed to create appointment');
+                                return;
+                              }
+
+                              const appointmentId = result.data.appointment_id;
+
+                              if (selectedPaymentMethod === 'stripe') {
+                                setStep(4);
+                                window.open(`/booking/payment?appointmentId=${appointmentId}&amount=${calculatedPrice}`, '_blank');
+                              } else if (selectedPaymentMethod === 'wechat') {
+                                setAppointmentId(appointmentId);
+                                setPrice(calculatedPrice);
+                                setIsWeChatModalVisible(true);
+                              }
+                            } catch (err) {
+                              console.error('Failed to create paid appointment:', err);
+                              message.error('Unexpected error creating appointment');
+                            }
+                          }}
+                      >
+                        Pay for the Session
+                      </Button>
+                    </div>
+                  </div>
+              )
           )}
-
-
 
 
           {step === 4 && (
