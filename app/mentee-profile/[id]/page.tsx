@@ -554,7 +554,7 @@ export default function MenteeProfilePage() {
                       rows={4}
                       value={draftIntro}
                       onChange={e => setDraftIntro(e.target.value)}
-                      maxLength={200} // 限制输入最多 200 字
+                      maxLength={1500} // 限制输入最多 200 字
                       showCount // 显示字数计数器（可选）
                       placeholder="Edit your introduction"
                   />

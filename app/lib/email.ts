@@ -9,7 +9,8 @@ import NewUserWelcomeEmail, { NewUserWelcomeProps } from '@/types/email_template
 import RefundProcessedEmail, { RefundProcessedProps } from '@/types/email_template/refund_processed';
 import OrderContactEmail, { OrderContactEmailProps } from '@/types/email_template/order_contact';
 import MentorApptRequestEmail, { MentorApptRequestProps } from '@/types/email_template/mentor_appt_request';
-
+import SessionReportIssueEmail, {SessionReportIssueProps} from '@/types/email_template/session_report_issue';
+import SessionCanceledEmail, {SessionCanceledProps} from '@/types/email_template/SessionCanceledEmail';
 const resend = getResendClient();
 
 const getEmailComponent = (type: EmailTemplate, data: Record<string, any>) => {
@@ -30,6 +31,10 @@ const getEmailComponent = (type: EmailTemplate, data: Record<string, any>) => {
       return createElement(RefundProcessedEmail, data as RefundProcessedProps);
     case EmailTemplate.ORDER_CONTACT.toString():
       return createElement(OrderContactEmail, data as OrderContactEmailProps);
+    case EmailTemplate.SESSION_REPORT_ISSUE.toString():
+      return createElement(SessionReportIssueEmail, data as SessionReportIssueProps);
+    case EmailTemplate.SESSION_CANCELED.toString():
+      return createElement(SessionCanceledEmail, data as SessionCanceledProps);
     default:
       throw new Error(`Unknown email template: ${type}`);
   }

@@ -128,44 +128,91 @@ export default function MySessionsTab() {
 
     const fetchAppointments = useCallback(async () => {
         if (!mentorId) return;
-        setLoading(true);
-        try {
-            // 1) Get all appointments
-            const apptRes = await fetch('/api/appointment/get', {
-                method: 'POST',
-                headers:{ 'Content-Type':'application/json' },
-                body: JSON.stringify({ user_id: mentorId }),
-            });
-            const apptJson = await apptRes.json();
-            const rawAppts = apptJson.data.appointments as Appointment[];
-            // 2) Get all proposals for this mentor
-            const propRes = await fetch(`/api/reschedule_proposal/${mentorId}`);
-            const propJson = await propRes.json();
-            setProposals(propJson.data as RescheduleProposal[]);
-            // 3) Preload all user info (mentor and mentee, including mentor user itself) using /api/user/[id]
-            const userIds = Array.from(new Set([
-                ...rawAppts.map(a => a.mentor_id),
-                ...rawAppts.map(a => a.mentee_id),
-                mentorId
-            ]));
-            const userMapTemp: Record<string, User> = {};
-            await Promise.all(userIds.map(async id => {
-                try {
-                    const res = await fetch(`/api/user/${id}`);
-                    const json = await res.json();
-                    if (json.data) userMapTemp[id] = json.data;
-                } catch (error) {
-                    console.error(`Failed to fetch user ${id}:`, error);
-                }
-            }));
-            setUserMap(userMapTemp);
-            setAppointments(rawAppts);
-        } catch (e: any) {
-            console.error(e);
-            message.error(e.message || '加载失败');
-        } finally {
-            setLoading(false);
-        }
+
+        (async () => {
+            setLoading(true);
+            try {
+                // 1) 拿到所有 appointments
+                const apptRes = await fetch('/api/appointment/get', {
+                    method: 'POST',
+                    headers:{ 'Content-Type':'application/json' },
+                    body: JSON.stringify({ user_id: mentorId }),
+                });
+                const apptJson = await apptRes.json();
+                const rawAppts = apptJson.data.appointments as any[];
+
+                // 2) 预载入每条 appointment “另一方” 的 user info
+                //    如果当前登录的是导师，另一方就是 mentee_id
+                const otherIds = Array.from(new Set(
+                    rawAppts.map(a => a.mentor_id === mentorId ? a.mentee_id : a.mentor_id)
+                ));
+                const userMap: Record<string, any> = {};
+                await Promise.all(otherIds.map(async id => {
+                    const ures = await fetch(`/api/user/${id}`);
+                    const { data } = await ures.json();
+                    if (data) userMap[id] = data;
+                }));
+
+                // 3) 为每条 appointment 拉它专属的 proposal
+                const enriched = await Promise.all(rawAppts.map(async a => {
+                    // parse timeslot…
+                    const m = a.time_slot.match(/\[(.*?),(.*?)\)/) || [];
+
+                    // note: build error with `dayjs.invalid`
+                    // const start = m[1] ? dayjs.utc(m[1]).local() : dayjs.invalid;
+                    // const end   = m[2] ? dayjs.utc(m[2]).local() : dayjs.invalid;
+                    // note: not ideal, but use today's date as fallback
+                    const start = m[1] ? dayjs.utc(m[1]).local() : dayjs.utc(new Date());
+                    const end   = m[2] ? dayjs.utc(m[2]).local() : dayjs.utc(new Date());
+
+                    const otherId = a.mentor_id === mentorId ? a.mentee_id : a.mentor_id;
+
+                    // --- 关键：这里用 otherId 去拉提案列表 ---
+                    const pRes = await fetch(`/api/reschedule_proposal/${mentorId}`);
+                    const pJson = await pRes.json();
+                    let proposal: Proposal|undefined = undefined;
+                    if (pRes.ok && pJson.code === 0 && Array.isArray(pJson.data)) {
+                        const pItem = (pJson.data as any[]).find(p => p.id === a.id);
+                        if (pItem) {
+                            proposal = {
+                                id:       pItem.id,
+                                appointment_id: pItem.id,
+                                proposed_time_ranges: pItem.proposed_time,
+                                status:   'pending',
+                            };
+                        }
+                    }
+
+                    return {
+                        id:          a.id,
+                        date:        start.isValid() ? start.format('YYYY-MM-DD') : 'Invalid',
+                        time:        start.isValid() && end.isValid()
+                            ? `${start.format('HH:mm')} - ${end.format('HH:mm')}`
+                            : 'Invalid',
+                        status:      a.status,
+                        description: a.description,
+                        cancel_reason: a.cancel_reason,
+                        service_type: a.service_type,
+                        resume_url:  a.resume_url,
+                        otherUser: {
+                            id:       otherId,
+                            username: userMap[otherId]?.username || 'Anonymous',
+                            mentor:   userMap[otherId]?.mentor    || false,
+                        },
+                        proposal,    // ← 一定要把它放进来
+                    };
+                }));
+
+                // const onlyMentees = enriched.filter(a => !a.otherUser.mentor);
+                setAppointments(enriched);
+
+            } catch (e: any) {
+                console.error(e);
+                message.error(e.message || '加载失败');
+            } finally {
+                setLoading(false);
+            }
+        })();
     }, [mentorId]);
 
     useEffect(() => {
@@ -268,32 +315,45 @@ export default function MySessionsTab() {
 
     const handleRescheduleOk = async () => {
         try {
+            // 1. 校验表单
             const values = await form.validateFields();
             const ranges: [string, string][] = values.slots.map(
                 (r: [dayjs.Dayjs, dayjs.Dayjs]) => [r[0].toISOString(), r[1].toISOString()]
             );
 
-            // —— 直接调用 reschedule 接口 ——
-            await fetch('/api/appointment/reschedule', {
+            // 2. 构造 payload
+            const payload = {
+                appointment_id: currentAppt!.id,
+                proposed_time_ranges: ranges,
+                proposer: mentorId,
+                receiver: currentAppt!.otherUser.id,
+                reason: rescheduleComment,    // ✅ 一定要带上 reason
+            };
+            await fetch(`/api/reschedule_proposal/${currentAppt!.id}`, {
+                method: 'DELETE',
+            });
+            // 3. 调接口
+            const res = await fetch('/api/appointment/reschedule', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    appointment_id: currentAppt!.id,
-                    proposed_time_ranges: ranges,
-                    proposer: mentorId,
-                    receiver: currentAppt!.mentee_id,
-                    // reason: rescheduleComment,
-                }),
+                body: JSON.stringify(payload),
             });
+            const data = await res.json();
+
+            if (!res.ok) {
+                // 后端返回错误信息时给用户提示
+                throw new Error(data.message || `Server responded ${res.status}`);
+            }
 
             message.success('Reschedule request sent!');
             form.resetFields();
             setIsRescheduleSlotsModalOpen(false);
             fetchAppointments();
+
         } catch (err: any) {
+            console.error('handleRescheduleOk error:', err);
             message.error(err.message || 'Submission failed');
         }
-
     };
 
     const handleCancelOk = async () => {
@@ -547,7 +607,7 @@ export default function MySessionsTab() {
                 <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center' }}>
                     <Text strong style={{ marginRight: 8 }}>Support for:</Text>
                     <Text style={{ fontWeight: 400, color: '#000' }}>
-                        {'Service name Placeholder'}
+                        {confirmAppt?.service_type}
                     </Text>
                 </div>
             </Modal>
@@ -920,14 +980,24 @@ export default function MySessionsTab() {
                     <Button
                         type="primary"
                         disabled={!reportReason.trim()}
-                        onClick={() => {
-                            const subject = encodeURIComponent(
-                                `Issue report for session ${currentAppt?.id}`
-                            );
-                            const body = encodeURIComponent(reportReason);
-                            window.open(
-                                `mailto:mentorup.contact@gmail.com?subject=${subject}&body=${body}`
-                            );
+                        onClick={async () => {
+                            try {
+                                const res = await fetch('/api/appointment/report_issue', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        appointmentId: currentAppt?.id,
+                                        issueDescription: reportReason,
+                                    })
+                                });
+                                const data = await res.json();
+                                if (!res.ok) throw new Error(data.message || 'Report failed');
+                                message.success('Issue reported successfully!');
+                                setIsReportOpen(false);
+                            } catch (err: any) {
+                                console.error('report error', err);
+                                message.error(err.message || 'Failed to report issue');
+                            }
                         }}
                     >
                         Report an Issue to MentorUp
