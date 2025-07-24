@@ -364,7 +364,9 @@ export default function MentorDetailsPage() {
                   )}
                 </div>
                 <Card className={styles.infoCard} title="Introduction" bordered>
-                  Please introduce yourself to your future mentees.
+                  {mentor.introduction
+                      ? <Text>{mentor.introduction}</Text>
+                      : <Text type="secondary">This mentor has not provided an introduction yet.</Text>}
                 </Card>
                 <Card className={styles.infoCard} title="Services" bordered>
                   <div className={styles.serviceTags}>
