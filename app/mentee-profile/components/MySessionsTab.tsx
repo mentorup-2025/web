@@ -121,11 +121,7 @@ export default function MySessionsTab() {
             const allProps: RescheduleProposal[] = (propJson.data as any[]).map(p => (p));
             setProposals(allProps);
 
-<<<<<<< HEAD
             // 3) 预加载 userMap (should include current user/mentee) using /api/user/[id]
-=======
-            // 3) 预加载 userMap (should include current user/mentee)
->>>>>>> e9e5474 (consolidate the interface used in backend and frontend. Allow join to join the meeting link)
             const otherIds = Array.from(new Set([
                 ...rawAppts.map(a => a.mentor_id === menteeId ? a.mentee_id : a.mentor_id),
                 menteeId // ensure current user is included
@@ -133,23 +129,14 @@ export default function MySessionsTab() {
             const userMapTemp: Record<string, User> = {};
             await Promise.all(otherIds.map(async id => {
                 try {
-<<<<<<< HEAD
                     const res = await fetch(`/api/user/${id}`);
                     const json = await res.json();
                     if (json.data) userMapTemp[id] = json.data;
-=======
-                    const user = await getUser(id);
-                    if (user) userMapTemp[id] = user;
->>>>>>> e9e5474 (consolidate the interface used in backend and frontend. Allow join to join the meeting link)
                 } catch (error) {
                     console.error(`Failed to fetch user ${id}:`, error);
                 }
             }));
             setUserMap(userMapTemp);
-<<<<<<< HEAD
-=======
-
->>>>>>> e9e5474 (consolidate the interface used in backend and frontend. Allow join to join the meeting link)
             setAppointments(menteeOnly.map(appt => ({ ...appt })));
         } catch (e: any) {
             console.error(e);

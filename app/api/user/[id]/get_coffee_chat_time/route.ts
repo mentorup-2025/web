@@ -33,8 +33,8 @@ export async function GET(
                 return false;
             }
 
-            return true;
         });
+
 
         // Return the count of filtered appointments
         const coffeeChatCount = coffeeChatAppointments.length;

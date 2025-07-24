@@ -37,11 +37,7 @@ import timezone from 'dayjs/plugin/timezone';
 import type { Appointment } from '@/types/appointment';
 import type { RescheduleProposal } from '@/types/reschedule_proposal';
 import type { User } from '@/types/user';
-<<<<<<< HEAD
 // Remove import { getUser } from '@/lib/user';
-=======
-import { getUser } from '@/lib/user';
->>>>>>> e9e5474 (consolidate the interface used in backend and frontend. Allow join to join the meeting link)
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -155,8 +151,9 @@ export default function MySessionsTab() {
             const userMapTemp: Record<string, User> = {};
             await Promise.all(userIds.map(async id => {
                 try {
-                    const user = await getUser(id);
-                    if (user) userMapTemp[id] = user;
+                    const res = await fetch(`/api/user/${id}`);
+                    const json = await res.json();
+                    if (json.data) userMapTemp[id] = json.data;
                 } catch (error) {
                     console.error(`Failed to fetch user ${id}:`, error);
                 }
@@ -289,13 +286,6 @@ export default function MySessionsTab() {
                     // reason: rescheduleComment,
                 }),
             });
-            const data = await res.json();
-
-            if (!res.ok) {
-                // 后端返回错误信息时给用户提示
-                throw new Error(data.message || `Server responded ${res.status}`);
-            }
-
             message.success('Reschedule request sent!');
             form.resetFields();
             setIsRescheduleSlotsModalOpen(false);
