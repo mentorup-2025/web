@@ -129,6 +129,9 @@ const jobTitleOptions = [
   },
 ];
 
+const tabKeys = ["about", "sessions", "availability", "payments"] as const;
+type TabKey = typeof tabKeys[number];
+
 function labelToKey(label: string) {
   return allServiceTypes.find(s => s.label === label)?.key;
 }
@@ -140,7 +143,7 @@ export default function MentorProfilePage() {
   const { user, isSignedIn } = useUser();
   const isOwnProfile = isSignedIn && user?.id === mentorId;
 
-  const [activeTab, setActiveTab] = useState<string>("about");
+
 
   // Open Availability tab if URL contains 'availability' in query or hash
   useEffect(() => {
@@ -167,12 +170,41 @@ export default function MentorProfilePage() {
   const [draftTitle, setDraftTitle] = useState("");
   const [draftCompany, setDraftCompany] = useState("");
   const [draftServices, setDraftServices] = useState<Record<string, boolean>>({});
-  const [draftPrice, setDraftPrice] = useState(0);
+  const [draftPrice, setDraftPrice] = useState(0);     // 毛利价，从后端来的原始 price
+  const [netPrice, setNetPrice]       = useState(0);     // 用户在 UI 上输入的净价
 
   // —————— Modal 可见性 ——————
   const [editProfileVisible, setEditProfileVisible] = useState(false);
   const [editIntroVisible, setEditIntroVisible] = useState(false);
   const [servicesModalVisible, setServicesModalVisible] = useState(false);
+
+  const initialHash = typeof window !== "undefined"
+      ? (window.location.hash.slice(1) as TabKey)
+      : null;
+  const isValid = initialHash && tabKeys.includes(initialHash);
+  const [activeTab, setActiveTab] = useState<TabKey>(
+      isValid ? initialHash! : "about"
+  );
+
+  // 2️⃣ 切换 Tab 时更新 hash
+  const onTabChange = (key: string) => {
+    setActiveTab(key as TabKey);
+    if (typeof window !== "undefined") {
+      history.replaceState(null, "", `#${key}`);
+    }
+  };
+
+  // 3️⃣ 监听地址栏手动改 hash
+  useEffect(() => {
+    const handleHashChange = () => {
+      const h = window.location.hash.slice(1) as TabKey;
+      if (tabKeys.includes(h)) {
+        setActiveTab(h);
+      }
+    };
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
 
   // —————— 1. GET /api/user/[id] 拉全量数据 ——————
   const fetchMentorData = async () => {
@@ -200,7 +232,11 @@ export default function MentorProfilePage() {
       });
       setDraftServices(boolMap);
       setDraftPrice(Object.values(priceMap)[0] || 0);
+      const priceFromServer = Number(data.mentor?.services?.[0]?.price ?? 0);
+      setDraftPrice(priceFromServer);
 
+      // 2️⃣ 立刻根据你的公式算出 netPrice，并存进 state
+      setNetPrice((priceFromServer - 5) / 1.45);
       setMentorData(data);
     } catch (err) {
       console.error(err);
@@ -282,6 +318,7 @@ export default function MentorProfilePage() {
   const handleSaveServices = async () => {
     setServicesModalVisible(false);
     try {
+      const gross = netPrice * 1.45 + 5
       const servicesPayload = Object.entries(draftServices)
           .filter(([_, checked]) => checked)
           .map(([key]) => {
@@ -289,7 +326,7 @@ export default function MentorProfilePage() {
             const label = allServiceTypes.find(s => s.key === key)?.label;
             return {
               type: label ?? key,      // 如果意外没找到，就暂时保底用 key
-              price: draftPrice,
+              price: Number(gross.toFixed(1))
             };
           });
       const res = await fetch(`/api/mentor/update/${mentorId}`, {
@@ -506,7 +543,7 @@ export default function MentorProfilePage() {
             </div>
           </Modal>
 
-          <Tabs activeKey={activeTab} onChange={(k) => setActiveTab(k)}>
+          <Tabs activeKey={activeTab} onChange={onTabChange}>
             <TabPane tab="About Me" key="about">
               <div className={styles.tabContent}>
                 {/* —— Introduction 卡片 —— */}
@@ -582,13 +619,13 @@ export default function MentorProfilePage() {
                       color: "#999",
                     }}
                   >
-                    {(draftIntro?.length ?? 0)} / 200
+                    {(draftIntro?.length ?? 0)} / 1500
                   </Text>
                   <TextArea
                     rows={4}
                     value={draftIntro}
                     onChange={(e) => setDraftIntro(e.target.value)}
-                    maxLength={200}
+                    maxLength={1500}
                     placeholder="Edit your introduction"
                     style={{ borderRadius: 2 }}
                   />
@@ -643,10 +680,10 @@ export default function MentorProfilePage() {
                     <Input
                         prefix="$"
                         suffix="/hour"
-                        value={draftPrice}
+                        value={netPrice}
                         onChange={(e) => {
                           const val = parseFloat(e.target.value.replace(/[^\d.]/g, ''));
-                          setDraftPrice(isNaN(val) ? 0 : val);
+                          setNetPrice(isNaN(val) ? 0 : val);
                         }}
                         placeholder="Enter your hourly rate"
                         style={{ width: '100%', marginTop: 4 }}

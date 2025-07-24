@@ -1,5 +1,10 @@
+import { NextRequest } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 import { respData, respErr } from '@/lib/resp';
 import { getAppointment, updateAppointment } from '@/lib/appointment';
+import { sendEmail } from '@/lib/email';
+import { EmailTemplate } from '@/types/email';
+import { getUser } from '@/lib/user';
 import { UpdateAppointmentInput } from '@/types/appointment';
 
 export async function POST(request: Request) {
@@ -66,6 +71,54 @@ export async function POST(request: Request) {
             description: input.description,
             cancel_reason: input.cancel_reason
         });
+
+        // 6. 如果取消，则发邮件
+        if (input.status === 'canceled') {
+            console.log('✉️ 检测到 status=canceled，开始发邮件流程');
+            // 拿 mentee
+            const mentee = await getUser(appointment.mentee_id);
+            const mentor = await getUser(appointment.mentor_id);
+            console.log('👤 getUser 返回 mentee =', mentee);
+            console.log('👤 getUser 返回 mentor =', mentor);
+            // 6.1 发给 mentee
+            if (mentee && mentor) {
+                console.log('✉️ 给 mentee:', mentee.email);
+                await sendEmail(
+                    'MentorUp <no-reply@mentorup.info>',
+                    mentee.email,
+                    EmailTemplate.SESSION_CANCELED,
+                    {
+                        recipientName: mentee.username,
+                        mentorName: mentor.username,
+                        appointmentId: input.appointment_id,
+                        cancelReason: input.cancel_reason,
+                        sessionDate: appointment.start_time.split('T')[0],
+                        sessionTime: new Date(appointment.start_time).toLocaleTimeString(),
+                    }
+                );
+                console.log('✅ 已发送取消邮件给 mentee');
+            } else {
+                console.log('⚠️ mentee 没有 email，不发给 mentee');
+            }
+
+            // 6.2 发给 support inbox
+            console.log('✉️ 给 support inbox: mentorup.contact@gmail.com');
+            await sendEmail(
+                'MentorUp <no-reply@mentorup.info>',
+                'mentorup.contact@gmail.com',
+                EmailTemplate.SESSION_CANCELED,
+                {
+                    recipientName: 'MentorUp Support',
+                    appointmentId: input.appointment_id,
+                    cancelReason: input.cancel_reason,
+                    sessionDate: appointment.start_time.split('T')[0],
+                    sessionTime: new Date(appointment.start_time).toLocaleTimeString(),
+                }
+            );
+            console.log('✅ 已发送取消邮件给 support inbox');
+        }
+
+        console.log('🎉 Appointment update flow 完成');
 
         return respData({ message: 'Appointment updated successfully' });
 
