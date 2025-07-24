@@ -222,8 +222,8 @@ export default function MySessionsTab() {
                     };
                 }));
 
-                const onlyMentees = enriched.filter(a => !a.otherUser.mentor);
-                setAppointments(onlyMentees);
+                // const onlyMentees = enriched.filter(a => !a.otherUser.mentor);
+                setAppointments(enriched);
 
             } catch (e: any) {
                 console.error(e);
@@ -341,32 +341,45 @@ export default function MySessionsTab() {
 
     const handleRescheduleOk = async () => {
         try {
+            // 1. 校验表单
             const values = await form.validateFields();
             const ranges: [string, string][] = values.slots.map(
                 (r: [dayjs.Dayjs, dayjs.Dayjs]) => [r[0].toISOString(), r[1].toISOString()]
             );
 
-            // —— 直接调用 reschedule 接口 ——
-            await fetch('/api/appointment/reschedule', {
+            // 2. 构造 payload
+            const payload = {
+                appointment_id: currentAppt!.id,
+                proposed_time_ranges: ranges,
+                proposer: mentorId,
+                receiver: currentAppt!.otherUser.id,
+                reason: rescheduleComment,    // ✅ 一定要带上 reason
+            };
+            await fetch(`/api/reschedule_proposal/${currentAppt!.id}`, {
+                method: 'DELETE',
+            });
+            // 3. 调接口
+            const res = await fetch('/api/appointment/reschedule', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    appointment_id: currentAppt!.id,
-                    proposed_time_ranges: ranges,
-                    proposer: mentorId,
-                    receiver: currentAppt!.otherUser.id,
-                    // reason: rescheduleComment,
-                }),
+                body: JSON.stringify(payload),
             });
+            const data = await res.json();
+
+            if (!res.ok) {
+                // 后端返回错误信息时给用户提示
+                throw new Error(data.message || `Server responded ${res.status}`);
+            }
 
             message.success('Reschedule request sent!');
             form.resetFields();
             setIsRescheduleSlotsModalOpen(false);
             fetchAppointments();
+
         } catch (err: any) {
+            console.error('handleRescheduleOk error:', err);
             message.error(err.message || 'Submission failed');
         }
-
     };
 
     const handleCancelOk = async () => {
@@ -712,7 +725,7 @@ export default function MySessionsTab() {
                 <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center' }}>
                     <Text strong style={{ marginRight: 8 }}>Support for:</Text>
                     <Text style={{ fontWeight: 400, color: '#000' }}>
-                        {'Service name Placeholder'}
+                        {confirmAppt?.service_type}
                     </Text>
                 </div>
             </Modal>
@@ -1084,14 +1097,24 @@ export default function MySessionsTab() {
                     <Button
                         type="primary"
                         disabled={!reportReason.trim()}
-                        onClick={() => {
-                            const subject = encodeURIComponent(
-                                `Issue report for session ${currentAppt?.id}`
-                            );
-                            const body = encodeURIComponent(reportReason);
-                            window.open(
-                                `mailto:mentorup.contact@gmail.com?subject=${subject}&body=${body}`
-                            );
+                        onClick={async () => {
+                            try {
+                                const res = await fetch('/api/appointment/report_issue', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        appointmentId: currentAppt?.id,
+                                        issueDescription: reportReason,
+                                    })
+                                });
+                                const data = await res.json();
+                                if (!res.ok) throw new Error(data.message || 'Report failed');
+                                message.success('Issue reported successfully!');
+                                setIsReportOpen(false);
+                            } catch (err: any) {
+                                console.error('report error', err);
+                                message.error(err.message || 'Failed to report issue');
+                            }
                         }}
                     >
                         Report an Issue to MentorUp
