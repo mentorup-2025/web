@@ -18,6 +18,7 @@ interface ApptConfirmationProps {
   serviceName: string;
   appointmentStartTime: string;
   appointmentEndTime: string;
+  meetLink?: string;
 }
 
 const ApptConfirmationEmail: React.FC<ApptConfirmationProps> = ({
@@ -26,7 +27,8 @@ const ApptConfirmationEmail: React.FC<ApptConfirmationProps> = ({
   menteeName,
   serviceName,
   appointmentStartTime,
-  appointmentEndTime
+  appointmentEndTime,
+  meetLink
 }) => {
   // Format the date and time
   const formatDateTime = (dateTimeStr: string) => {
@@ -62,6 +64,9 @@ const ApptConfirmationEmail: React.FC<ApptConfirmationProps> = ({
             <Text style={detailLine}><strong>Service:</strong> {serviceName}</Text>
             <Text style={detailLine}><strong>Start Time:</strong> {formatDateTime(appointmentStartTime)}</Text>
             <Text style={detailLine}><strong>End Time:</strong> {formatDateTime(appointmentEndTime)}</Text>
+            {meetLink && (
+              <Text style={detailLine}><strong>Meeting Link:</strong> <Link href={meetLink}>{meetLink}</Link></Text>
+            )}
           </Section>
 
           <Text style={text}>
