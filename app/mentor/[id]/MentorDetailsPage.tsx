@@ -181,7 +181,6 @@ export default function MentorDetailsPage() {
     fetchCoffeeChatCount();
   }, [user?.id, mentor?.user_id]);
 
-
   const handleNext = async () => {
     if (step === 2) {
       let resumeUrl = userResume;
@@ -217,81 +216,44 @@ export default function MentorDetailsPage() {
           }
 
           resumeUrl = fileUrl;
+          setUserResume(fileUrl);
         } catch (err) {
-          console.error('AWS S3 resume upload failed:', err);
+          console.error('Resume upload error:', err);
           message.error('Unexpected error uploading resume');
           return;
         }
       }
 
-      try {
-        const dateStr = selectedSlot?.date!;
-        const timeStr = selectedSlot?.time!;
-        // const [startTimeStr, endTimeStr] = timeStr.split(' - ');
-        //
-        // const start_time = new Date(`${dateStr} ${startTimeStr}`).toISOString();
-        // const end_time = new Date(`${dateStr} ${endTimeStr}`).toISOString();
-        // 临时为15分钟coffee chat设置的逻辑
-        const [startTimeStr] = timeStr.split(' - ');
-        const startTimeObj = dayjs(`${dateStr} ${startTimeStr}`, 'YYYY-MM-DD h:mm A');
+      if (supportType && mentor?.services && selectedSlot?.date && selectedSlot?.time) {
+        try {
+          const dateStr = selectedSlot.date;
+          const timeStr = selectedSlot.time;
+          const [startTimeStr] = timeStr.split(' - ');
+          const startTimeObj = dayjs(`${dateStr} ${startTimeStr}`, 'YYYY-MM-DD h:mm A');
 
-        let endTimeObj: dayjs.Dayjs;
-
-        if (isFreeCoffeeChat(supportType)) {
-          endTimeObj = startTimeObj.add(15, 'minute');
-        } else {
-          const [, endTimeStr] = timeStr.split(' - ');
-          endTimeObj = dayjs(`${dateStr} ${endTimeStr}`, 'YYYY-MM-DD h:mm A');
-        }
-
-        const start_time = startTimeObj.toISOString();
-        const end_time = endTimeObj.toISOString();
-
-
-        const calculatedPrice =
-            mentor.services?.find((s: any) => s.type === supportType)?.price ?? 1500;
-
-        const response = await fetch('/api/appointment/insert', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            mentor_id: mentor.user_id,
-            mentee_id: user?.id,
-            start_time,
-            end_time,
-            service_type: supportType,
-            description,
-            price: calculatedPrice,
-          }),
-        });
-
-        const result = await response.json();
-
-        if (result.code === -1) {
-          if (result.message?.includes('Time slot is already booked')) {
-            message.error('This time slot has already been booked. Please choose another.');
+          let endTimeObj: dayjs.Dayjs;
+          if (isFreeCoffeeChat(supportType)) {
+            endTimeObj = startTimeObj.add(15, 'minute');
           } else {
-            message.error(result.message || 'Failed to create appointment. Please try again.');
+            const [, endTimeStr] = timeStr.split(' - ');
+            endTimeObj = dayjs(`${dateStr} ${endTimeStr}`, 'YYYY-MM-DD h:mm A');
           }
-          return;
-        }
 
-        if (!response.ok || result.error || !result.data?.appointment_id) {
-          message.error('Failed to create appointment. Please try again.');
-          return;
-        }
+          const calculatedPrice =
+              mentor.services.find((s: any) => s.type === supportType)?.price ?? 1500;
 
-        setAppointmentId(result.data.appointment_id);
-        setPrice(calculatedPrice);
-      } catch (err) {
-        console.error('Error creating appointment:', err);
-        message.error('Unexpected error');
-        return;
+          setPrice(isFreeCoffeeChat(supportType) ? 0 : calculatedPrice);
+        } catch (error) {
+          console.error('Failed to calculate session time/price:', error);
+        }
       }
     }
 
     setStep(step + 1);
   };
+
+
+
 
   const handleBack = () => {
     if (step === 1) {
@@ -389,7 +351,8 @@ export default function MentorDetailsPage() {
                   <MentorAvailability
                       mentorId={mentor.user_id}
                       services={mentor.services || []}
-                      onSlotSelect={(date, time) => setSelectedSlot({ date, time })}
+                      onSlotSelect={(slot) => setSelectedSlot(slot)}
+
                       onBook={() => {
                         setStep(2);
                         setIsBookingModalVisible(true);
@@ -440,14 +403,15 @@ export default function MentorDetailsPage() {
                       isFreeCoffeeChat(supportType)
                           ? (() => {
                             const [start] = selectedSlot.time.split(' - ');
-                            const startTime = dayjs(`2020-01-01 ${start}`, 'YYYY-MM-DD h:mm A');
-                            const endTime = startTime.add(15, 'minute'); // 15分钟coffee chat的逻辑
+                            const startTime = dayjs(`${selectedSlot.date} ${start}`, 'YYYY-MM-DD h:mm A');
+                            const endTime = startTime.add(15, 'minute');
                             return `${startTime.format('h:mm A')} - ${endTime.format('h:mm A')} ${userTzAbbr}`;
                           })()
                           : `${selectedSlot.time} ${userTzAbbr}`
                     }
                     </p>
                 )}
+
 
 
                 <p style={{ marginBottom: 8 }}>
@@ -570,108 +534,130 @@ export default function MentorDetailsPage() {
           {step === 3 && (
               <div>
                 <Title level={4} style={{ marginBottom: 28 }}>Payment Method</Title>
-                <p style={{ marginBottom: 12 }}>Which way would you like to pay?</p>
 
-                {/*/!* WeChat Pay Option *!/*/}
-                {/*<div*/}
-                {/*    style={{*/}
-                {/*      border: selectedPaymentMethod === 'wechat' ? '2px solid #1890ff' : '1px solid #d9d9d9',*/}
-                {/*      borderRadius: 8,*/}
-                {/*      padding: '24px 20px',*/}
-                {/*      marginBottom: 20,*/}
-                {/*      minHeight: 80,*/}
-                {/*      display: 'flex',*/}
-                {/*      alignItems: 'center',*/}
-                {/*      justifyContent: 'space-between',*/}
-                {/*      cursor: 'pointer',*/}
-                {/*      position: 'relative',*/}
-                {/*      whiteSpace: 'nowrap',*/}
-                {/*    }}*/}
-                {/*    onClick={() => setSelectedPaymentMethod('wechat')}*/}
-                {/*>*/}
-                {/*  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>*/}
-                {/*    <input*/}
-                {/*        type="radio"*/}
-                {/*        checked={selectedPaymentMethod === 'wechat'}*/}
-                {/*        readOnly*/}
-                {/*    />*/}
-                {/*    <img src="/wechat-pay.png" alt="WeChat Pay" style={{ height: 24 }} />*/}
-                {/*    <span style={{ fontSize: 16, color: '#1890ff', fontWeight: 500 }}>微信支付</span>*/}
-                {/*  </div>*/}
-                {/*  <div style={{ fontSize: 18, fontWeight: 600 }}>*/}
-                {/*    ${price ? ((price / 100) * 0.98).toFixed(2) : '0.00'}*/}
-                {/*  </div>*/}
-                {/*  <div*/}
-                {/*      style={{*/}
-                {/*        position: 'absolute',*/}
-                {/*        top: -10,*/}
-                {/*        right: -10,*/}
-                {/*        backgroundColor: '#ffc107',*/}
-                {/*        color: '#000',*/}
-                {/*        fontWeight: 600,*/}
-                {/*        padding: '2px 6px',*/}
-                {/*        fontSize: 12,*/}
-                {/*        borderRadius: 4,*/}
-                {/*      }}*/}
-                {/*  >*/}
-                {/*    Price 2% off*/}
-                {/*  </div>*/}
-                {/*</div>*/}
+                {/* 👉 如果是免费服务，提示无需付款 */}
+                {supportType === 'Free coffee chat (15 mins)' ? (
+                    <p style={{ fontSize: 16, color: '#52c41a', marginBottom: 20 }}>
+                      This is a free session. No payment is required.
+                    </p>
+                ) : (
+                    <>
+                      <p style={{ marginBottom: 12 }}>Which way would you like to pay?</p>
 
-                {/* Stripe Option */}
-                <div
-                    style={{
-                      border: selectedPaymentMethod === 'stripe' ? '2px solid #1890ff' : '1px solid #d9d9d9',
-                      borderRadius: 8,
-                      padding: '24px 20px',
-                      marginBottom: 20,
-                      minHeight: 80,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      cursor: 'pointer',
-                      position: 'relative',
-                      whiteSpace: 'nowrap',
-                    }}
-                    onClick={() => setSelectedPaymentMethod('stripe')}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <input
-                        type="radio"
-                        checked={selectedPaymentMethod === 'stripe'}
-                        readOnly
-                    />
-                    <img src="/stripe-icon.png" alt="Stripe" style={{ height: 24 }} />
-                    <span style={{ fontSize: 16, fontWeight: 500 }}>Pay in USD (U.S. Dollar)</span>
-                  </div>
-                  <div style={{ fontSize: 18, fontWeight: 600 }}>
-                    ${price ? (price).toFixed(2) : '0.00'}
-                  </div>
-                </div>
+                      {/* Stripe 支付方式 */}
+                      <div
+                          style={{
+                            border: selectedPaymentMethod === 'stripe' ? '2px solid #1890ff' : '1px solid #d9d9d9',
+                            borderRadius: 8,
+                            padding: '24px 20px',
+                            marginBottom: 20,
+                            minHeight: 80,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            cursor: 'pointer',
+                            position: 'relative',
+                            whiteSpace: 'nowrap',
+                          }}
+                          onClick={() => setSelectedPaymentMethod('stripe')}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <input type="radio" checked={selectedPaymentMethod === 'stripe'} readOnly />
+                          <img src="/stripe-icon.png" alt="Stripe" style={{ height: 24 }} />
+                          <span style={{ fontSize: 16, fontWeight: 500 }}>Pay in USD (U.S. Dollar)</span>
+                        </div>
+                        <div style={{ fontSize: 18, fontWeight: 600 }}>
+                          ${price ? price.toFixed(2) : '0.00'}
+                        </div>
+                      </div>
+                    </>
+                )}
 
-                {/* Buttons */}
+                {/* 操作按钮 */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
                   <Button onClick={handleBack}>Back</Button>
                   <Button
                       type="primary"
-                      onClick={() => {
-                        if (!appointmentId || !price) {
-                          message.error('Missing appointment ID or price');
+                      onClick={async () => {
+                        if (!selectedSlot || !supportType || !mentor || !user?.id) {
+                          message.error('Missing required booking info');
                           return;
                         }
-                        if (selectedPaymentMethod === 'stripe') {
-                          setStep(4);
-                          window.open(`/booking/payment?appointmentId=${appointmentId}&amount=${price}`, '_blank');
-                        } else if (selectedPaymentMethod === 'wechat') {
-                          setIsWeChatModalVisible(true);
+
+                        try {
+                          const dateStr = selectedSlot.date;
+                          const timeStr = selectedSlot.time;
+                          const [startTimeStr] = timeStr.split(' - ');
+                          const startTimeObj = dayjs(`${dateStr} ${startTimeStr}`, 'YYYY-MM-DD h:mm A');
+
+                          let endTimeObj: dayjs.Dayjs;
+                          if (supportType === 'Free coffee chat (15 mins)') {
+                            endTimeObj = startTimeObj.add(15, 'minute');
+                          } else {
+                            const [, endTimeStr] = timeStr.split(' - ');
+                            endTimeObj = dayjs(`${dateStr} ${endTimeStr}`, 'YYYY-MM-DD h:mm A');
+                          }
+
+                          const start_time = startTimeObj.toISOString();
+                          const end_time = endTimeObj.toISOString();
+                          const calculatedPrice =
+                              supportType === 'Free coffee chat (15 mins)'
+                                  ? 0
+                                  : mentor.services?.find((s: any) => s.type === supportType)?.price ?? 1500;
+
+                          const response = await fetch('/api/appointment/insert', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              mentor_id: mentor.user_id,
+                              mentee_id: user.id,
+                              start_time,
+                              end_time,
+                              service_type: supportType,
+                              description,
+                              price: calculatedPrice,
+                            }),
+                          });
+
+                          const result = await response.json();
+
+                          if (!response.ok || result.code === -1 || !result.data?.appointment_id) {
+                            message.error(result.message || 'Failed to create appointment');
+                            return;
+                          }
+
+                          const appointmentId = result.data.appointment_id;
+
+                          if (supportType === 'Free coffee chat (15 mins)') {
+                            // 🎉 免费服务，跳过支付，直接弹出成功弹窗
+                            setIsBookingModalVisible(false);
+                            setIsSuccessModalVisible(true);
+                            setStep(1);
+                          } else {
+                            // 💳 有偿服务，继续支付流程
+                            if (selectedPaymentMethod === 'stripe') {
+                              setStep(4);
+                              window.open(`/booking/payment?appointmentId=${appointmentId}&amount=${calculatedPrice}`, '_blank');
+                            } else if (selectedPaymentMethod === 'wechat') {
+                              setAppointmentId(appointmentId);
+                              setPrice(calculatedPrice);
+                              setIsWeChatModalVisible(true);
+                            }
+                          }
+                        } catch (err) {
+                          console.error('Failed to create appointment before payment:', err);
+                          message.error('Unexpected error creating appointment');
                         }
                       }}
                   >
-                    Pay for the Session
+                    {supportType === 'Free coffee chat (15 mins)' ? 'Confirm Booking' : 'Pay for the Session'}
                   </Button>
                 </div>
               </div>
           )}
+
+
+
 
           {step === 4 && (
               <div>
