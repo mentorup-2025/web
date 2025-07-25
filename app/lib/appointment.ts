@@ -35,12 +35,6 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
       throw error;
     }
 
-    if (isFreeCoffeeChat(input.service_type)) {
-      await updateAppointment(data.id, {
-        status: 'paid',
-      });
-    }
-
     return data as ReserveAppointmentResponse;
 
   } catch (error) {
