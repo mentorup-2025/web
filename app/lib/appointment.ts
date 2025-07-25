@@ -1,6 +1,7 @@
 import { Appointment, CreateAppointmentInput, ReserveAppointmentResponse } from '@/types';
 import { getSupabaseClient } from '../services/supabase';
 import { respOk } from './resp';
+import { isFreeCoffeeChat } from '@/services/constants';
 
 
 export async function createAppointment(input: CreateAppointmentInput): Promise<ReserveAppointmentResponse> {
@@ -32,6 +33,12 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
       }
 
       throw error;
+    }
+
+    if (isFreeCoffeeChat(input.service_type)) {
+      await updateAppointment(data.id, {
+        status: 'paid',
+      });
     }
 
     return data as ReserveAppointmentResponse;
