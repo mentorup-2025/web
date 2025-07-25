@@ -216,31 +216,38 @@ export default function MentorProfilePage() {
     try {
       const res = await fetch(`/api/user/${mentorId}`);
       const { data } = await res.json();
-      // user 侧字段
+
+      // ———— user fields ————
       setDraftUsername(data.username);
       setDraftLinkedin(data.linkedin);
-      setDraftIntro(data.introduction ?? "")
-      // mentor 侧字段
+      setDraftIntro(data.introduction ?? "");
+
+      // ———— mentor fields ————
       const mentor = data.mentor || {};
       setDraftTitle(mentor.title || "");
       setDraftCompany(mentor.company || "");
-      // services 从 data.mentor.services 数组里提取
+
+      // ———— services → draftServices map ————
+      const services = mentor.services || [];
       const boolMap: Record<string, boolean> = {};
-      const priceMap: Record<string, number> = {};
-      (data.mentor?.services || []).forEach((svc: any) => {
+      services.forEach((svc: any) => {
         const key = labelToKey(svc.type);
-        if (key) {
-          boolMap[key] = true;
-          priceMap[key] = Number(svc.price);
-        }
+        if (key) boolMap[key] = true;
       });
       setDraftServices(boolMap);
-      setDraftPrice(Object.values(priceMap)[0] || 0);
-      const priceFromServer = Number(data.mentor?.services?.[0]?.price ?? 0);
-      setDraftPrice(priceFromServer);
 
-      // 2️⃣ 立刻根据你的公式算出 netPrice，并存进 state
-      setNetPrice((priceFromServer - 5) / 1.45);
+      // ———— compute initial netPrice ————
+      // find the first non–Free Coffee service
+      const nonFree = services.find(
+          (svc: any) => svc.type !== "Free Coffee Chat (15 Mins)"
+      );
+      // if there is a paid service: (price − 5) ÷ 1.45; otherwise 0
+      const initialNet = nonFree
+          ? (Number(nonFree.price) - 5) / 1.45
+          : 0;
+      setNetPrice(initialNet);
+
+      // finally store all the data
       setMentorData(data);
     } catch (err) {
       console.error(err);
@@ -322,17 +329,20 @@ export default function MentorProfilePage() {
   const handleSaveServices = async () => {
     setServicesModalVisible(false);
     try {
-      const gross = netPrice * 1.45 + 5
+      // gross margin back-calculate
+      const gross = netPrice * 1.45 + 5;
+
       const servicesPayload = Object.entries(draftServices)
           .filter(([_, checked]) => checked)
           .map(([key]) => {
-            // 先从 allServiceTypes 找到对应项，再取它的 label 作为真正的 type
-            const label = allServiceTypes.find(s => s.key === key)?.label;
-            return {
-              type: label ?? key,      // 如果意外没找到，就暂时保底用 key
-              price: Number(gross.toFixed(1))
-            };
+            const label = allServiceTypes.find(s => s.key === key)?.label ?? key;
+            // Free Coffee Chat always 0, everything else uses gross
+            const price = label === "Free Coffee Chat (15 Mins)"
+                ? 0
+                : Number(gross.toFixed(1));
+            return { type: label, price };
           });
+
       const res = await fetch(`/api/mentor/update/${mentorId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -342,6 +352,7 @@ export default function MentorProfilePage() {
         const err = await res.json();
         throw new Error(err.error || "Failed to update services");
       }
+
       message.success("Services updated");
       await fetchMentorData();
     } catch (err: any) {
