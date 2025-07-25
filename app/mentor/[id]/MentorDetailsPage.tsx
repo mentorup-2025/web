@@ -34,6 +34,7 @@ import { useRouter, useParams } from 'next/navigation';
 import dayjs from 'dayjs';
 import type { UploadFile } from 'antd/es/upload/interface';
 import NavBar from '../../components/Navbar';
+import moment from 'moment-timezone';
 
 import { isFreeCoffeeChat } from '../../services/constants';
 
@@ -84,14 +85,8 @@ export default function MentorDetailsPage() {
 
   function getUserTimeZoneAbbreviation(): string {
     try {
-      const formatter = new Intl.DateTimeFormat(undefined, {
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        timeZoneName: 'short',
-      });
-
-      const parts = formatter.formatToParts(new Date());
-      const tzPart = parts.find(part => part.type === 'timeZoneName');
-      return tzPart?.value || '';
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      return moment.tz(timeZone).format('z'); // e.g., PST, EST, CET
     } catch {
       return '';
     }
@@ -396,6 +391,7 @@ export default function MentorDetailsPage() {
                         setStep(2);
                         setIsBookingModalVisible(true);
                       }}
+                      coffeeChatCount={coffeeChatCount}
                   />
 
                 </SignedIn>
