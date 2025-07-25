@@ -408,7 +408,7 @@ export default function MenteeProfilePage() {
                 <div style={{ position: 'relative', display: 'inline-block' }}>
                   <Avatar
                       size={120}
-                      src={isOwnProfile ? user?.imageUrl : (userData.profile_url || '/placeholder-avatar.png')}
+                      src={userData.profile_url || '/placeholder-avatar.png'}
                       className={styles.avatar}
                       style={{ cursor: isOwnProfile ? 'pointer' : 'default' }}
                       onClick={() => {
