@@ -58,7 +58,8 @@ export default function MenteeProfilePage() {
   const params = useParams();
   const menteeId = params?.id as string;
   const { user, isSignedIn } = useUser();
-  const isOwnProfile = isSignedIn && user?.id === menteeId;
+  // const isOwnProfile = isSignedIn && user?.id === menteeId;
+  const isOwnProfile = true;
 
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -86,6 +87,7 @@ export default function MenteeProfilePage() {
 
   const fetchUserData = useCallback(
       async (forceRefresh: boolean = false) => {
+        console.log('[MenteeProfile] Fetching user data for:', menteeId);
         setLoading(true);
         try {
           const response = await fetch(`/api/user/${menteeId}`);
@@ -102,11 +104,12 @@ export default function MenteeProfilePage() {
             });
             setDraftLinkedin(data.linkedin || '');
             setIntroduction(data.introduction || '');
+            console.log('[MenteeProfile] User data loaded:', data);
           } else {
             throw new Error(result.message || 'Failed to fetch user data');
           }
         } catch (err: any) {
-          console.error('Error fetching user data:', err);
+          console.error('[MenteeProfile] Error fetching user data:', err);
           setError(err.message);
         } finally {
           setLoading(false);
@@ -120,6 +123,7 @@ export default function MenteeProfilePage() {
 
   // —————— Profile Image Upload ——————
   const handleImageUpload = async (file: File) => {
+    console.log('[MenteeProfile] handleImageUpload called with file:', file);
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -131,10 +135,12 @@ export default function MenteeProfilePage() {
       });
 
       const result = await response.json();
+      console.log('[MenteeProfile] Profile image upload response:', result);
 
       if (result.code === 0) {
         message.success('Profile image updated successfully');
         setUploadImageVisible(false);
+        console.log('[MenteeProfile] Modal closed after successful upload');
         // Refresh the page data to show the new image
         await fetchUserData(true);
         // Force Clerk user to refresh
@@ -145,32 +151,55 @@ export default function MenteeProfilePage() {
         message.error(result.message || 'Failed to update profile image');
       }
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('[MenteeProfile] Error uploading image:', error);
       message.error('Failed to upload image');
     }
   };
 
   const uploadProps = {
     beforeUpload: (file: File) => {
+      console.log('[MenteeProfile] beforeUpload called with file:', file);
       const isImage = file.type.startsWith('image/');
       if (!isImage) {
+        console.log('[MenteeProfile] File rejected - not an image type:', file.type);
         message.error('You can only upload image files!');
-        return false;
+        return Upload.LIST_IGNORE; // This prevents the file from being added to the list
       }
       const isLt25M = file.size / 1024 / 1024 < 25;
       if (!isLt25M) {
+        console.log('[MenteeProfile] File rejected - too large:', file.size);
         message.error('Image must be smaller than 25MB!');
-        return false;
+        return Upload.LIST_IGNORE; // This prevents the file from being added to the list
       }
-      return false; // Prevent auto upload
+      console.log('[MenteeProfile] File accepted, proceeding with upload');
+      return true; // Allow the upload to proceed
     },
     onChange: (info: any) => {
+      console.log('[MenteeProfile] onChange triggered with info:', info);
       if (info.file.status === 'removed') {
+        console.log('[MenteeProfile] File removed');
         return;
       }
-      if (info.file.originFileObj) {
+      if (info.file.status === 'done') {
+        console.log('[MenteeProfile] File upload completed, calling handleImageUpload');
         handleImageUpload(info.file.originFileObj);
+      } else if (info.file.status === 'uploading') {
+        console.log('[MenteeProfile] File is uploading...');
+      } else if (info.file.status === 'error') {
+        console.log('[MenteeProfile] File upload error:', info.file.error);
       }
+    },
+    customRequest: ({ file, onSuccess, onError }: any) => {
+      console.log('[MenteeProfile] customRequest called with file:', file);
+      handleImageUpload(file)
+        .then(() => {
+          console.log('[MenteeProfile] Upload successful, calling onSuccess');
+          onSuccess();
+        })
+        .catch((error) => {
+          console.log('[MenteeProfile] Upload failed, calling onError:', error);
+          onError(error);
+        });
     },
   };
 
@@ -186,6 +215,11 @@ export default function MenteeProfilePage() {
   };
 
   const handleSaveProfile = async () => {
+    console.log('[MenteeProfile] Saving profile:', {
+      draftUsername,
+      draftJobTarget,
+      draftLinkedin
+    });
     setUserData((prev: any) => ({
       ...prev,
       username: draftUsername,
@@ -213,7 +247,7 @@ export default function MenteeProfilePage() {
         message.error('Failed to update profile');
       }
     } catch (error) {
-      console.error('Error updating user profile:', error);
+      console.error('[MenteeProfile] Error updating user profile:', error);
       message.error('Unexpected error while updating profile');
     }
   };
@@ -224,6 +258,7 @@ export default function MenteeProfilePage() {
   };
 
   const handleModalOk = async () => {
+    console.log('[MenteeProfile] Saving introduction:', draftIntro);
     setEditModalVisible(false);
     try {
       const introResp = await fetch('/api/user/update', {
@@ -241,7 +276,7 @@ export default function MenteeProfilePage() {
         message.error('Failed to update introduction');
       }
     } catch (err) {
-      console.error('Error updating introduction:', err);
+      console.error('[MenteeProfile] Error updating introduction:', err);
       message.error('Unexpected error while updating introduction');
     }
   };
@@ -250,6 +285,7 @@ export default function MenteeProfilePage() {
     const { file, onSuccess, onError } = options;
     if (!userData) return;
 
+    console.log('[MenteeProfile] Uploading resume:', file);
     const allowedTypes = [
       'application/pdf',
       'application/msword',
@@ -306,13 +342,13 @@ export default function MenteeProfilePage() {
       setResumeKey(prev => prev + 1);
       setDraggerKey(prev => prev + 1);
 
-
+      console.log('[MenteeProfile] Resume uploaded successfully:', fileUrl);
       // 正确调用 onSuccess
       onSuccess({ status: 'done', name: file.name, url: fileUrl }, file);
       message.success('Resume uploaded successfully');
       await fetchUserData(true);
     } catch (err: any) {
-      console.error('Resume upload failed:', err);
+      console.error('[MenteeProfile] Resume upload failed:', err);
       message.error(err.message || 'Upload error');
       // 正确调用 onError
       onError(err);
@@ -322,7 +358,7 @@ export default function MenteeProfilePage() {
   };
   const handleDeleteResume = async () => {
     setDeletingResume(true);
-
+    console.log('[MenteeProfile] Deleting resume for user:', userData?.user_id);
     try {
       const resp = await fetch('/api/user/update', {
         method: 'POST',
@@ -338,19 +374,28 @@ export default function MenteeProfilePage() {
       setResumeKey(prev => prev + 1);
       setDraggerKey(prev => prev + 1);
 
-
+      console.log('[MenteeProfile] Resume deleted');
       message.success('Resume deleted successfully');
       await fetchUserData(true);
     } catch (err: any) {
-      console.error('Error deleting resume:', err);
+      console.error('[MenteeProfile] Error deleting resume:', err);
       message.error(err.message || 'Failed to delete resume');
     } finally {
       setDeletingResume(false);
     }
   };
-  if (loading) return <div>Loading...</div>;
-  if (error) return <Alert message="Error" description={error} type="error" showIcon />;
-  if (!userData) return <Alert message="User not found" type="warning" showIcon />;
+  if (loading) {
+    console.log('[MenteeProfile] Loading...');
+    return <div>Loading...</div>;
+  }
+  if (error) {
+    console.error('[MenteeProfile] Error:', error);
+    return <Alert message="Error" description={error} type="error" showIcon />;
+  }
+  if (!userData) {
+    console.warn('[MenteeProfile] No user data found');
+    return <Alert message="User not found" type="warning" showIcon />;
+  }
 
 
   return (
@@ -368,32 +413,11 @@ export default function MenteeProfilePage() {
                       style={{ cursor: isOwnProfile ? 'pointer' : 'default' }}
                       onClick={() => {
                         if (isOwnProfile) {
+                          console.log('[MenteeProfile] Avatar clicked, opening upload modal');
                           setUploadImageVisible(true);
                         }
                       }}
                   />
-                  {isOwnProfile && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        right: 0,
-                        background: '#1890ff',
-                        borderRadius: '50%',
-                        width: 32,
-                        height: 32,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        border: '2px solid white',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                      }}
-                      onClick={() => setUploadImageVisible(true)}
-                    >
-                      <EditOutlined style={{ color: 'white', fontSize: 14 }} />
-                    </div>
-                  )}
                 </div>
                 <div className={styles.profileText}>
                   <Space align="center">
@@ -444,7 +468,10 @@ export default function MenteeProfilePage() {
             <Modal
               title="Update Profile Image"
               open={uploadImageVisible}
-              onCancel={() => setUploadImageVisible(false)}
+              onCancel={() => {
+                setUploadImageVisible(false);
+                console.log('[MenteeProfile] Modal closed by user');
+              }}
               footer={null}
               width={400}
             >
