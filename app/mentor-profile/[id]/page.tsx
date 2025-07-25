@@ -356,21 +356,25 @@ export default function MentorProfilePage() {
 
   // —————— Profile Image Upload ——————
   const handleImageUpload = async (file: File) => {
+    console.log('[MentorProfile] handleImageUpload called with file:', file);
     try {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('userId', mentorId);
 
+      console.log('[MentorProfile] Sending request to /api/profile_image/update with userId:', mentorId);
       const response = await fetch('/api/profile_image/update', {
         method: 'POST',
         body: formData,
       });
 
       const result = await response.json();
+      console.log('[MentorProfile] API response:', result);
 
       if (result.code === 0) {
         message.success('Profile image updated successfully');
         setUploadImageVisible(false);
+        console.log('[MentorProfile] Modal closed after successful upload');
         // Refresh the page data to show the new image
         await fetchMentorData();
         // Force Clerk user to refresh
@@ -381,32 +385,55 @@ export default function MentorProfilePage() {
         message.error(result.message || 'Failed to update profile image');
       }
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('[MentorProfile] Error uploading image:', error);
       message.error('Failed to upload image');
     }
   };
 
   const uploadProps = {
     beforeUpload: (file: File) => {
+      console.log('[MentorProfile] beforeUpload called with file:', file);
       const isImage = file.type.startsWith('image/');
       if (!isImage) {
+        console.log('[MentorProfile] File rejected - not an image type:', file.type);
         message.error('You can only upload image files!');
-        return false;
+        return Upload.LIST_IGNORE; // This prevents the file from being added to the list
       }
       const isLt25M = file.size / 1024 / 1024 < 25;
       if (!isLt25M) {
+        console.log('[MentorProfile] File rejected - too large:', file.size);
         message.error('Image must be smaller than 25MB!');
-        return false;
+        return Upload.LIST_IGNORE; // This prevents the file from being added to the list
       }
-      return false; // Prevent auto upload
+      console.log('[MentorProfile] File accepted, proceeding with upload');
+      return true; // Allow the upload to proceed
     },
     onChange: (info: any) => {
+      console.log('[MentorProfile] onChange triggered with info:', info);
       if (info.file.status === 'removed') {
+        console.log('[MentorProfile] File removed');
         return;
       }
-      if (info.file.originFileObj) {
+      if (info.file.status === 'done') {
+        console.log('[MentorProfile] File upload completed, calling handleImageUpload');
         handleImageUpload(info.file.originFileObj);
+      } else if (info.file.status === 'uploading') {
+        console.log('[MentorProfile] File is uploading...');
+      } else if (info.file.status === 'error') {
+        console.log('[MentorProfile] File upload error:', info.file.error);
       }
+    },
+    customRequest: ({ file, onSuccess, onError }: any) => {
+      console.log('[MentorProfile] customRequest called with file:', file);
+      handleImageUpload(file)
+        .then(() => {
+          console.log('[MentorProfile] Upload successful, calling onSuccess');
+          onSuccess();
+        })
+        .catch((error) => {
+          console.log('[MentorProfile] Upload failed, calling onError:', error);
+          onError(error);
+        });
     },
   };
 
@@ -497,28 +524,6 @@ export default function MentorProfilePage() {
                     }
                   }}
                 />
-                {isOwnProfile && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      bottom: 0,
-                      right: 0,
-                      background: '#1890ff',
-                      borderRadius: '50%',
-                      width: 32,
-                      height: 32,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      border: '2px solid white',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                    }}
-                    onClick={() => setUploadImageVisible(true)}
-                  >
-                    <EditOutlined style={{ color: 'white', fontSize: 14 }} />
-                  </div>
-                )}
               </div>
               <div className={styles.profileText}>
                 {/* —— 在这里展示 username、title、company，并加上编辑按钮 —— */}
