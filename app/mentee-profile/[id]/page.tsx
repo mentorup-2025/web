@@ -23,7 +23,9 @@ import {
   GithubOutlined,
   InboxOutlined,
   LinkOutlined,
-  FileOutlined, DeleteOutlined
+  FileOutlined, 
+  DeleteOutlined,
+  UploadOutlined,
 } from '@ant-design/icons';
 import { useParams } from 'next/navigation';
 import Navbar from '../../components/Navbar';
@@ -72,6 +74,7 @@ export default function MenteeProfilePage() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [uploadingResume, setUploadingResume] = useState(false);
   const [deletingResume, setDeletingResume] = useState(false);
+  const [uploadImageVisible, setUploadImageVisible] = useState(false);
 
   const [resumeKey, setResumeKey] = useState(0);
   const [draggerKey, setDraggerKey] = useState(0);
@@ -114,6 +117,62 @@ export default function MenteeProfilePage() {
   useEffect(() => {
     fetchUserData();
   }, [menteeId]);
+
+  // —————— Profile Image Upload ——————
+  const handleImageUpload = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('userId', menteeId);
+
+      const response = await fetch('/api/profile_image/update', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result.code === 0) {
+        message.success('Profile image updated successfully');
+        setUploadImageVisible(false);
+        // Refresh the page data to show the new image
+        await fetchUserData(true);
+        // Force Clerk user to refresh
+        if (user) {
+          await user.reload();
+        }
+      } else {
+        message.error(result.message || 'Failed to update profile image');
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      message.error('Failed to upload image');
+    }
+  };
+
+  const uploadProps = {
+    beforeUpload: (file: File) => {
+      const isImage = file.type.startsWith('image/');
+      if (!isImage) {
+        message.error('You can only upload image files!');
+        return false;
+      }
+      const isLt5M = file.size / 1024 / 1024 < 5;
+      if (!isLt5M) {
+        message.error('Image must be smaller than 5MB!');
+        return false;
+      }
+      return false; // Prevent auto upload
+    },
+    onChange: (info: any) => {
+      if (info.file.status === 'removed') {
+        return;
+      }
+      if (info.file.originFileObj) {
+        handleImageUpload(info.file.originFileObj);
+      }
+    },
+  };
 
   const openEditProfileModal = () => {
     if (!userData) return;
@@ -186,8 +245,6 @@ export default function MenteeProfilePage() {
       message.error('Unexpected error while updating introduction');
     }
   };
-
-
 
   const customResumeUpload = async (options: any) => {
     const { file, onSuccess, onError } = options;
@@ -303,11 +360,41 @@ export default function MenteeProfilePage() {
           <div className={styles.container}>
             <div className={styles.profileHeader}>
               <div className={styles.profileInfo}>
-                <Avatar
-                    size={120}
-                    src={isOwnProfile ? user?.imageUrl : (userData.avatar_url || '/placeholder-avatar.png')}
-                    className={styles.avatar}
-                />
+                <div style={{ position: 'relative', display: 'inline-block' }}>
+                  <Avatar
+                      size={120}
+                      src={isOwnProfile ? user?.imageUrl : (userData.profile_url || '/placeholder-avatar.png')}
+                      className={styles.avatar}
+                      style={{ cursor: isOwnProfile ? 'pointer' : 'default' }}
+                      onClick={() => {
+                        if (isOwnProfile) {
+                          setUploadImageVisible(true);
+                        }
+                      }}
+                  />
+                  {isOwnProfile && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        right: 0,
+                        background: '#1890ff',
+                        borderRadius: '50%',
+                        width: 32,
+                        height: 32,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        border: '2px solid white',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                      }}
+                      onClick={() => setUploadImageVisible(true)}
+                    >
+                      <EditOutlined style={{ color: 'white', fontSize: 14 }} />
+                    </div>
+                  )}
+                </div>
                 <div className={styles.profileText}>
                   <Space align="center">
                     <Title level={2} style={{ margin: 0 }}>{userData.username}</Title>
@@ -320,7 +407,7 @@ export default function MenteeProfilePage() {
                       const rawLevel = userData.job_target?.level
 
                       const title = beautify(rawTitle)
-                      // 注意：Level 后面自带“ Level”词尾
+                      // 注意：Level 后面自带" Level"词尾
                       const level = rawLevel ? beautify(rawLevel) + ' Level' : ''
 
                       if (title && level) return `${title} (${level})`
@@ -352,6 +439,27 @@ export default function MenteeProfilePage() {
                 </div>
               </div>
             </div>
+
+            {/* —— Profile Image Upload Modal —— */}
+            <Modal
+              title="Update Profile Image"
+              open={uploadImageVisible}
+              onCancel={() => setUploadImageVisible(false)}
+              footer={null}
+              width={400}
+            >
+              <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                <Upload.Dragger {...uploadProps} showUploadList={false}>
+                  <p className="ant-upload-drag-icon">
+                    <UploadOutlined />
+                  </p>
+                  <p className="ant-upload-text">Click or drag image file to upload</p>
+                  <p className="ant-upload-hint">
+                    Support for JPG, PNG, GIF files. Max size: 5MB
+                  </p>
+                </Upload.Dragger>
+              </div>
+            </Modal>
 
             <Tabs activeKey={activeTab} onChange={key => setActiveTab(key)}>
               <TabPane tab="About Me" key="about">

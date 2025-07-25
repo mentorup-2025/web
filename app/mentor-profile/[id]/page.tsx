@@ -15,12 +15,15 @@ import {
   Tag,
   Checkbox,
   Popover,
+  Upload,
 } from "antd";
 import {
   LinkedinFilled,
   GithubOutlined,
   EditOutlined,
   InfoCircleOutlined,
+  UploadOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -177,6 +180,7 @@ export default function MentorProfilePage() {
   const [editProfileVisible, setEditProfileVisible] = useState(false);
   const [editIntroVisible, setEditIntroVisible] = useState(false);
   const [servicesModalVisible, setServicesModalVisible] = useState(false);
+  const [uploadImageVisible, setUploadImageVisible] = useState(false);
 
   const initialHash = typeof window !== "undefined"
       ? (window.location.hash.slice(1) as TabKey)
@@ -350,6 +354,62 @@ export default function MentorProfilePage() {
   // “Edit Introduction” 按钮打开 `setEditIntroVisible(true)`，
   // “Edit Services” 按钮打开 `setServicesModalVisible(true)` 即可 ——
 
+  // —————— Profile Image Upload ——————
+  const handleImageUpload = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('userId', mentorId);
+
+      const response = await fetch('/api/profile_image/update', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result.code === 0) {
+        message.success('Profile image updated successfully');
+        setUploadImageVisible(false);
+        // Refresh the page data to show the new image
+        await fetchMentorData();
+        // Force Clerk user to refresh
+        if (user) {
+          await user.reload();
+        }
+      } else {
+        message.error(result.message || 'Failed to update profile image');
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      message.error('Failed to upload image');
+    }
+  };
+
+  const uploadProps = {
+    beforeUpload: (file: File) => {
+      const isImage = file.type.startsWith('image/');
+      if (!isImage) {
+        message.error('You can only upload image files!');
+        return false;
+      }
+      const isLt5M = file.size / 1024 / 1024 < 5;
+      if (!isLt5M) {
+        message.error('Image must be smaller than 5MB!');
+        return false;
+      }
+      return false; // Prevent auto upload
+    },
+    onChange: (info: any) => {
+      if (info.file.status === 'removed') {
+        return;
+      }
+      if (info.file.originFileObj) {
+        handleImageUpload(info.file.originFileObj);
+      }
+    },
+  };
+
   if (loading) return <div>Loading…</div>;
   if (!mentorData) return <div>Not found</div>;
 
@@ -421,15 +481,45 @@ export default function MentorProfilePage() {
         <div className={styles.container}>
           <div className={styles.profileHeader}>
             <div className={styles.profileInfo}>
-              <Avatar
-                size={120}
-                src={
-                  isOwnProfile
-                    ? user?.imageUrl
-                    : mentorData?.profile_url || "/placeholder-avatar.png"
-                }
-                className={styles.avatar}
-              />
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                <Avatar
+                  size={120}
+                  src={
+                    isOwnProfile
+                      ? user?.imageUrl
+                      : mentorData?.profile_url || "/placeholder-avatar.png"
+                  }
+                  className={styles.avatar}
+                  style={{ cursor: isOwnProfile ? 'pointer' : 'default' }}
+                  onClick={() => {
+                    if (isOwnProfile) {
+                      setUploadImageVisible(true);
+                    }
+                  }}
+                />
+                {isOwnProfile && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      right: 0,
+                      background: '#1890ff',
+                      borderRadius: '50%',
+                      width: 32,
+                      height: 32,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      border: '2px solid white',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    }}
+                    onClick={() => setUploadImageVisible(true)}
+                  >
+                    <EditOutlined style={{ color: 'white', fontSize: 14 }} />
+                  </div>
+                )}
+              </div>
               <div className={styles.profileText}>
                 {/* —— 在这里展示 username、title、company，并加上编辑按钮 —— */}
                 <Space align="center">
@@ -474,6 +564,27 @@ export default function MentorProfilePage() {
               </div>
             </div>
           </div>
+
+          {/* —— Profile Image Upload Modal —— */}
+          <Modal
+            title="Update Profile Image"
+            open={uploadImageVisible}
+            onCancel={() => setUploadImageVisible(false)}
+            footer={null}
+            width={400}
+          >
+            <div style={{ textAlign: 'center', padding: '20px 0' }}>
+              <Upload.Dragger {...uploadProps} showUploadList={false}>
+                <p className="ant-upload-drag-icon">
+                  <UploadOutlined />
+                </p>
+                <p className="ant-upload-text">Click or drag image file to upload</p>
+                <p className="ant-upload-hint">
+                  Support for JPG, PNG, GIF files. Max size: 5MB
+                </p>
+              </Upload.Dragger>
+            </div>
+          </Modal>
 
           {/* —— 编辑用户名/头衔/公司的 Modal —— */}
           <Modal
