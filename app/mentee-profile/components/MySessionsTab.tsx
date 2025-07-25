@@ -133,7 +133,7 @@ export default function MySessionsTab() {
                 }
             }));
             setUserMap(userMapTemp);
-            setAppointments(menteeOnly.map(appt => ({ ...appt })));
+            setAppointments(menteeOnly);
         } catch (e: any) {
             console.error(e);
             message.error(e.message || '加载失败');
