@@ -749,7 +749,7 @@ export default function MentorDetailsPage() {
             footer={null}
             onCancel={() => setIsSuccessModalVisible(false)}
         >
-          <Title level={4}>Session Confirmed</Title>
+          <Title level={4}>Session Scheduled - Pending Mentor Confirmation</Title>
           <p>Check your email for session details.</p>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
             <Button onClick={() => setIsSuccessModalVisible(false)}>Stay On This Page</Button>
