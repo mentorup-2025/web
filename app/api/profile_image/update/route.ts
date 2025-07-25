@@ -23,10 +23,10 @@ export async function POST(request: NextRequest) {
       return respErr('File must be an image');
     }
 
-    // Validate file size (e.g., max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    // Validate file size (e.g., max 25MB)
+    const maxSize = 25 * 1024 * 1024; // 25MB
     if (file.size > maxSize) {
-      return respErr('File size must be less than 5MB');
+      return respErr('File size must be less than 25MB');
     }
 
     // Update the profile image using the helper method with the file directly
