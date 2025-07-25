@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     // Extract the new image URL from Clerk's response
     // According to Clerk's response format, the image URL is in the image_url field
-    const newImageUrl = result.user?.image_url;
+    const newImageUrl = result.user?.imageUrl;
     
     if (newImageUrl) {
       // Update the user's profile_url in our database using the UpdateUserInput type
