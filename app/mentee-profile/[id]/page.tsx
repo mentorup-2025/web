@@ -157,9 +157,9 @@ export default function MenteeProfilePage() {
         message.error('You can only upload image files!');
         return false;
       }
-      const isLt5M = file.size / 1024 / 1024 < 5;
-      if (!isLt5M) {
-        message.error('Image must be smaller than 5MB!');
+      const isLt25M = file.size / 1024 / 1024 < 25;
+      if (!isLt25M) {
+        message.error('Image must be smaller than 25MB!');
         return false;
       }
       return false; // Prevent auto upload
@@ -455,7 +455,7 @@ export default function MenteeProfilePage() {
                   </p>
                   <p className="ant-upload-text">Click or drag image file to upload</p>
                   <p className="ant-upload-hint">
-                    Support for JPG, PNG, GIF files. Max size: 5MB
+                    Support for JPG, PNG, GIF files. Max size: 25MB
                   </p>
                 </Upload.Dragger>
               </div>
