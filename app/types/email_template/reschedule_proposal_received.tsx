@@ -89,6 +89,11 @@ const RescheduleProposalReceivedEmail: React.FC<RescheduleProposalReceivedProps>
             <Link href="mailto:contactus@mentorup.info">contactus@mentorup.info</Link>
           </Text>
 
+          <Text style={text}>
+            You can view and manage your appointments by visiting{' '}
+            <Link href="https://www.mentorup.info">https://www.mentorup.info</Link>
+          </Text>
+
           <Hr style={hr} />
 
           <Text style={footer}>

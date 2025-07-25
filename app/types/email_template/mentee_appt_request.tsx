@@ -66,6 +66,11 @@ const MenteeApptRequestEmail: React.FC<MenteeApptRequestProps> = ({
           </Text>
 
           <Text style={text}>
+            You can view and manage your appointments by visiting{' '}
+            <Link href="https://www.mentorup.info">https://www.mentorup.info</Link>
+          </Text>
+
+          <Text style={text}>
             If you have any questions, please contact us at{' '}
             <Link href="mailto:contactus@mentorup.info">contactus@mentorup.info</Link>
           </Text>

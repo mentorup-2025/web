@@ -34,7 +34,12 @@ const SessionReportIssueEmail: React.FC<SessionReportIssueProps> = ({
 
         <p>
             Please follow up with them to address their concerns. If you need further assistance, reply to this email or reach out to support at{' '}
-            <a href="mailto:mentorup.contact@gmail.com">mentorup.contact@gmail.com</a>.
+            <a href="mailto:contactus@mentorup.info">contactus@mentorup.info</a>.
+        </p>
+
+        <p>
+            You can view and manage your appointments by visiting{' '}
+            <a href="https://www.mentorup.info">https://www.mentorup.info</a>
         </p>
 
         <p>Thank you for being a part of MentorUp!</p>

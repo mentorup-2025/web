@@ -25,6 +25,10 @@ const MentorRescheduleRequestEmail: React.FC<Props> = ({
         <p>
             Please <a href={appointmentLink}>click here</a> to choose a new time that works for you.
         </p>
+        <p>
+            You can view and manage your appointments by visiting{' '}
+            <a href="https://www.mentorup.info">https://www.mentorup.info</a>
+        </p>
         <p>Thanks,<br/>The MentorUp Team</p>
     </div>
 );

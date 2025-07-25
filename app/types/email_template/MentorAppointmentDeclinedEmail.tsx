@@ -16,6 +16,10 @@ const MentorAppointmentDeclinedEmail: React.FC<Props> = ({
             Unfortunately, {mentorName} has declined the proposed time. Please log in
             to suggest a new slot that works for both of you.
         </p>
+        <p>
+            You can view and manage your appointments by visiting{' '}
+            <a href="https://www.mentorup.info">https://www.mentorup.info</a>
+        </p>
         <p>Thank you for your flexibility.</p>
         <p>— MentorUp Team</p>
     </div>
