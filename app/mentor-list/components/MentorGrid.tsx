@@ -6,6 +6,7 @@ import { UserOutlined } from '@ant-design/icons';
 import styles from '../search.module.css';
 import { useEffect, useState } from 'react';
 import { Mentor, SearchFiltersType } from '../../../types';
+import { isFreeCoffeeChat } from '../../services/constants';
 
 
 interface MentorGridProps {
@@ -116,7 +117,17 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
           
           <div className={styles.cardFooter}>
             <div className="text-blue-600 text-lg">
-              ${user.mentor.services[0].price.toString().split('.')[0]}/hour
+              {(() => {
+                const servicesArr = Object.values(user.mentor.services);
+                const firstNonCoffeeChat = servicesArr.find(service =>
+                  !isFreeCoffeeChat(service.type)
+                );
+                if (firstNonCoffeeChat) {
+                  return `$${firstNonCoffeeChat.price.toString().split('.')[0]}/hour`;
+                } else {
+                  return '';
+                }
+              })()}
             </div>
             
             <Link href={`/mentor/${user.user_id}`}>
