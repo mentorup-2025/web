@@ -2,6 +2,8 @@
 import { createAppointment } from '@/lib/appointment';
 import { CreateAppointmentInput } from '@/types';
 import { getUser } from '@/lib/user';
+import { ConfirmAppointmentPaidHelper } from '@/lib/confirm_appointment_paid';
+import { isFreeCoffeeChat } from '@/services/constants';
 
 export async function POST(request: Request) {
     try {
@@ -31,6 +33,11 @@ export async function POST(request: Request) {
 
         // Create appointment
         const result = await createAppointment(input);
+
+        // If service type is free coffee chat, confirm appointment as paid
+        if (isFreeCoffeeChat(input.service_type)) {
+            await ConfirmAppointmentPaidHelper.confirmAppointmentPaid(result.appointment_id);
+        }
 
         return respData(result);
 
