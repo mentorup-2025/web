@@ -36,7 +36,7 @@ import timezone from 'dayjs/plugin/timezone';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-import type { Appointment } from '@/types/appointment';
+import type { Appointment as APIAppointment } from '@/types/appointment'
 import type { RescheduleProposal } from '@/types/reschedule_proposal';
 import { User } from '@/types';
 
@@ -48,15 +48,43 @@ function getShortTimeZone() {
     return parts.find(p => p.type === 'timeZoneName')?.value || '';
 }
 
+interface UIAppointment extends APIAppointment {
+    proposal?: Proposal
+    otherUser: { id: string; username: string; avatar_url?: string }
+}
 
+interface Proposal {
+    id: string;
+    appointment_id: string;
+    proposed_time_ranges: [string, string][];
+    status: 'pending' | 'accepted' | 'declined';
+}
 
+// interface Appointment {
+//     id: string;
+//     date: string;
+//     time: string;
+//     status: string;
+//     description: string;
+//     cancel_reason: string;
+//     resume_url?: string;
+//     service_type: string;
+//     otherUser: {
+//         id: string;
+//         username: string;
+//         avatar_url?: string;
+//     };
+//     proposal?: Proposal;
+// }
 const bookedSlotsStatePlaceholder: [string, string][] = [];
+
 type FilterKey = 'upcoming' | 'past' | 'cancelled';
+
 export default function MySessionsTab() {
     const params = useParams();
     const menteeId = params?.id as string;
 
-    const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [appointments, setAppointments] = useState<UIAppointment[]>([]);
     const [proposals, setProposals] = useState<RescheduleProposal[]>([]);
     const [loading, setLoading] = useState(true);
     const [userMap, setUserMap] = useState<Record<string, User>>({});
@@ -64,7 +92,7 @@ export default function MySessionsTab() {
     const [selectedProposal, setSelectedProposal] = useState<Record<string, number>>({});
 
     // Reschedule modal state
-    const [currentAppt, setCurrentAppt] = useState<Appointment | null>(null);
+    const [currentAppt, setCurrentAppt] = useState<UIAppointment | null>(null);
     const [form] = Form.useForm();
     const [isRescheduleOpen, setIsRescheduleOpen] = useState(false)
 
@@ -73,10 +101,10 @@ export default function MySessionsTab() {
     const [exForm] = Form.useForm();
 
     const [isReviewOpen, setIsReviewOpen] = useState(false);
-    const [reviewAppt, setReviewAppt] = useState<Appointment | null>(null);
+    const [reviewAppt, setReviewAppt] = useState<UIAppointment | null>(null);
 
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-    const [confirmAppt, setConfirmAppt] = useState<Appointment | null>(null);
+    const [confirmAppt, setConfirmAppt] = useState<UIAppointment | null>(null);
 
     const [isCancelOpen, setIsCancelOpen] = useState(false);
     const [cancelReason, setCancelReason] = useState('');
@@ -84,6 +112,13 @@ export default function MySessionsTab() {
     const [bookedSlots, setBookedSlots] = useState<[string,string][]>([]);
 
     const [filter, setFilter] = useState<FilterKey>('upcoming');
+
+    const [isRescheduleReasonModalOpen, setIsRescheduleReasonModalOpen] = useState(false);
+    const [rescheduleComment, setRescheduleComment] = useState('');
+
+    const [isReportOpen, setIsReportOpen] = useState(false);
+    const [reportReason, setReportReason] = useState('');
+    const [isRescheduleSlotsModalOpen, setIsRescheduleSlotsModalOpen] = useState(false);
 
     // 根据 status 来做分类
     const filteredAppointments = appointments.filter(a => {
@@ -104,36 +139,50 @@ export default function MySessionsTab() {
             // 1) 拿所有 appointment
             const apptRes = await fetch('/api/appointment/get', {
                 method: 'POST',
-                headers:{ 'Content-Type':'application/json' },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user_id: menteeId }),
             });
             const apptJson = await apptRes.json();
-            const rawAppts = apptJson.data.appointments as any[];
+
+            // 防御：如果 data 或 appointments 不是数组，就用空数组
+            const rawAppts: any[] = Array.isArray(apptJson.data?.appointments)
+                ? apptJson.data.appointments
+                : [];
+
+            // 只保留 mentee 自己的
             const menteeOnly = rawAppts.filter(a => a.mentee_id === menteeId);
 
             // 2) 拿所有 proposals
             const propRes = await fetch(`/api/reschedule_proposal/${menteeId}`);
             const propJson = await propRes.json();
-            const allProps: RescheduleProposal[] = (propJson.data as any[]).map(p => (p));
+            const allProps: RescheduleProposal[] = Array.isArray(propJson.data)
+                ? (propJson.data as RescheduleProposal[])
+                : [];
             setProposals(allProps);
 
-            // 3) 预加载 userMap (should include current user/mentee) using /api/user/[id]
+            // 3) 预加载 “另一方” 用户信息（这里是导师）
             const otherIds = Array.from(new Set([
-                ...rawAppts.map(a => a.mentor_id === menteeId ? a.mentee_id : a.mentor_id),
-                menteeId // ensure current user is included
+                ...menteeOnly.map(a => a.mentor_id),
+                menteeId, // 确保把自己也 preload 了
             ]));
+
             const userMapTemp: Record<string, User> = {};
             await Promise.all(otherIds.map(async id => {
                 try {
                     const res = await fetch(`/api/user/${id}`);
                     const json = await res.json();
-                    if (json.data) userMapTemp[id] = json.data;
-                } catch (error) {
-                    console.error(`Failed to fetch user ${id}:`, error);
+                    if (json.data) {
+                        userMapTemp[id] = json.data as User;
+                    }
+                } catch (err) {
+                    console.error(`Failed to fetch user ${id}:`, err);
                 }
             }));
             setUserMap(userMapTemp);
+
+            // 4) 最后把过滤后的 appointments 放到 state
             setAppointments(menteeOnly);
+
         } catch (e: any) {
             console.error(e);
             message.error(e.message || '加载失败');
@@ -166,36 +215,66 @@ export default function MySessionsTab() {
     };
 
     // 点击 Review 按钮
-    const openReview = (appt: Appointment) => {
+    const openReview = (appt: UIAppointment) => {
         setReviewAppt(appt);
         setIsReviewOpen(true);
     };
     // 点击 Confirm 按钮
-    const openConfirm = (appt: Appointment) => {
+    const openConfirm = (appt: UIAppointment) => {
         setConfirmAppt(appt);
         setIsConfirmOpen(true);
     };
-    // 点击 Reschedule 按钮
-    const showRescheduleModal = (appt: Appointment) => {
-        setCurrentAppt(appt);
+    const handleRescheduleSlotsOk = async () => {
+        const values = await form.validateFields();
+        const ranges = values.slots.map((r:[dayjs.Dayjs,dayjs.Dayjs]) => [r[0].toISOString(), r[1].toISOString()]);
+        await fetch('/api/appointment/reschedule', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                appointment_id: currentAppt!.id,
+                proposed_time_ranges: ranges,
+                proposer: menteeId,
+                receiver: currentAppt!.mentor_id,
+                reason: rescheduleComment,
+            }),
+        });
+        message.success('Reschedule request sent!');
         form.resetFields();
-        // —— 取出当前 mentor + 这个 mentee 已有的已确认时段 ——
-        const slotsForThisPair: [string,string][] = appointments
-            .filter(a =>
-                (a.status === 'confirmed' || a.status === 'reschedule_in_progress')
-                && a.mentor_id === appt.mentor_id
-            )
-            .map(a => [a.start_time, a.end_time]);
-        setBookedSlots(slotsForThisPair);
-        setIsRescheduleOpen(true);
+        setIsRescheduleSlotsModalOpen(false);
+        fetchAppointments();
     };
-    // 点击 Cancel 按钮
-    const showCancelModal = (appt: Appointment) => {
+// 当点击 “Decline” 或 “Reschedule” 按钮时，先打开「说明原因」弹窗
+    const handleDecline = (apptId: string) => {
+        const appt = appointments.find(a => a.id === apptId)!;
+        setCurrentAppt(appt);
+        setRescheduleComment('');
+        setIsRescheduleReasonModalOpen(true);
+    };
+
+// 统一入口：打开「说明原因」弹窗
+    const showRescheduleReasonModal = (appt: UIAppointment) => {
+        setCurrentAppt(appt);
+        setRescheduleComment('');
+        setIsRescheduleReasonModalOpen(true);
+    };
+
+// 下一步：关闭原因弹窗，打开「选时间段」弹窗
+    const handleRescheduleReasonNext = () => {
+        setIsRescheduleReasonModalOpen(false);
+        setIsRescheduleSlotsModalOpen(true);
+    };
+
+// 取消时打开「取消会话」弹窗
+    const showCancelModal = (appt: UIAppointment) => {
         setCurrentAppt(appt);
         setCancelReason('');
         setIsCancelOpen(true);
     };
-
+    const showReportModal = (appt: UIAppointment) => {
+        setCurrentAppt(appt);
+        setReportReason('');
+        setIsReportOpen(true);
+    };
     // Reschedule 提交
     const handleRescheduleOk = async () => {
         try {
@@ -218,6 +297,55 @@ export default function MySessionsTab() {
         }
     };
 
+    const handleCancelOk = async () => {
+        if (!currentAppt) return;
+        try {
+            const res = await fetch('/api/appointment/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    appointment_id: currentAppt.id,
+                    status: 'canceled',
+                    cancel_reason: cancelReason,    // 注意这里用 cancel_reason
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Cancel failed');
+            message.success('Session canceled');
+            // 本地更新状态
+            setAppointments(list =>
+                list.map(a =>
+                    a.id === currentAppt.id ? { ...a, status: 'canceled' } : a
+                )
+            );
+        } catch (err: any) {
+            console.error(err);
+            message.error(err.message || 'Cancel failed');
+        } finally {
+            setIsCancelOpen(false);
+        }
+    };
+    const handleSlotCalendarChange = (dates: [dayjs.Dayjs | null, dayjs.Dayjs | null], fieldName: number[]) => {
+        const [start, end] = dates;
+        // 如果只选了开始时间
+        if (start && !end) {
+            const autoEnd = start.add(1, 'hour');
+            // 直接把 form 插入 start + 1h
+            form.setFieldsValue({
+                slots: form.getFieldValue('slots').map((slot: any, idx: number) =>
+                    idx === fieldName[0] ? [start, autoEnd] : slot
+                )
+            });
+            // 冲突检测
+            const conflict = bookedSlots.some(([bs, be]) => {
+                const bsDay = dayjs(bs), beDay = dayjs(be);
+                return start.isBefore(beDay) && autoEnd.isAfter(bsDay);
+            });
+            if (conflict) {
+                message.warning('⚠️ 该时间段与已有的 session 冲突，请重选。');
+            }
+        }
+    };
 
     return (
         <div style={{ padding:16 }}>
@@ -311,42 +439,75 @@ export default function MySessionsTab() {
                                     </Space>
                                 }
                                 actions={
-                                    appt.status!=='canceled'
-                                        ? ( proposal
-                                            ? [<Button key="review" type="primary" style={{ width:'100%' }} onClick={() => {
-                                                appt.status==='paid' ? openConfirm(appt) : openReview(appt);
-                                            }}>
-                                                <BellOutlined style={{ marginRight:8 }}/>
-                                                Review and Confirm the Session Request
-                                            </Button>]
-                                            : [
-                                                <div key="reschedule" onClick={()=>showRescheduleModal(appt)} style={{ cursor:'pointer' }}>
-                                                    <CalendarTwoTone style={{ fontSize:18 }}/><div>Reschedule</div>
-                                                </div>,
-                                                <div key="cancel" onClick={()=>showCancelModal(appt)} style={{ cursor:'pointer' }}>
-                                                    <CloseCircleOutlined style={{ fontSize:18 }}/><div>Cancel</div>
-                                                </div>,
-                                                <div key="noshow"><FrownOutlined style={{ fontSize:18 }}/><div>Report Issue</div></div>,
-                                                <div key="join">
-                                                    <BellOutlined style={{ fontSize:18 }}/>
-                                                    <div>
-                                                        <Button
-                                                            type="link"
-                                                            style={{ padding: 0, color: appt.link ? '#1890FF' : '#bfbfbf', cursor: appt.link ? 'pointer' : 'not-allowed' }}
-                                                            disabled={!appt.link}
-                                                            onClick={() => {
-                                                                if (appt.link) {
-                                                                    window.open(appt.link, '_blank', 'noopener');
-                                                                } else {
-                                                                    message.error('No meeting link available');
-                                                                }
-                                                            }}
-                                                        >Join</Button>
-                                                    </div>
-                                                </div>,
-                                            ]
+                                    filter === 'past'
+                                        // Past 分页只显示 Report Issue
+                                        ? [
+                                            <div
+                                                key="report-issue"
+                                                onClick={() => showReportModal(appt)}
+                                                style={{ cursor: 'pointer' }}
+                                            >
+                                                <FrownOutlined style={{ fontSize: 18 }} />
+                                                <div>Report Issue</div>
+                                            </div>
+                                        ]
+                                        // 非 past：走你原来的逻辑
+                                        : (
+                                            (appt.status !== 'canceled' && (appt.proposal?.status === 'pending' ))
+                                                ? [
+                                                    <Button
+                                                        key="review"
+                                                        type="primary"
+                                                        style={{ width: '100%' }}
+                                                        onClick={() => {
+                                                            if (appt.status === 'paid') {
+                                                                setConfirmAppt(appt);
+                                                                setIsConfirmOpen(true);
+                                                            } else {
+                                                                setReviewAppt(appt);
+                                                                setIsReviewOpen(true);
+                                                            }
+                                                        }}
+                                                    >
+                                                        <BellOutlined style={{ marginRight: 8 }} />
+                                                        Review and Confirm the Session Request
+                                                    </Button>
+                                                ]
+                                                : (
+                                                    appt.status === 'canceled' || appt.status === 'noshow'
+                                                        ? []
+                                                        : [
+                                                            <div
+                                                                key="reschedule"
+                                                                onClick={() => {
+                                                                    if (appt.service_type === 'Free Coffee Chat (15 Mins)') {
+                                                                        return; // 禁用状态，不响应
+                                                                    }
+                                                                    showRescheduleReasonModal(appt);
+                                                                }}
+                                                                style={{
+                                                                    cursor: appt.service_type === 'Free Coffee Chat (15 Mins)' ? 'not-allowed' : 'pointer',
+                                                                    opacity: appt.service_type === 'Free Coffee Chat (15 Mins)' ? 0.5 : 1,
+                                                                    display: 'flex',
+                                                                    flexDirection: 'column',
+                                                                    alignItems: 'center'
+                                                                }}
+                                                            >
+                                                                <CalendarTwoTone style={{ fontSize: 18 }} />
+                                                                <div>Reschedule</div>
+                                                            </div>,
+                                                            <div key="cancel" onClick={() => showCancelModal(appt)} style={{ cursor: 'pointer' }}>
+                                                                <CloseCircleOutlined style={{ fontSize: 18 }} /><div>Cancel</div>
+                                                            </div>,
+                                                            <div key="noshow" onClick={() => showReportModal(appt)} style={{ cursor: 'pointer' }}>
+                                                                <FrownOutlined style={{ fontSize: 18 }} /><div>Report Issue</div>
+                                                            </div>,
+                                                            <div key="join" onClick={() => {/*…*/}} style={{ cursor: 'pointer' }}>
+                                                                <BellOutlined style={{ fontSize: 18 }} /><div>Join</div>
+                                                            </div>,
+                                                        ]
+                                                )
                                         )
-                                        : []
                                 }
                             >
                                 <Space>
@@ -392,10 +553,18 @@ export default function MySessionsTab() {
                 visible={isConfirmOpen}
                 onCancel={()=>setIsConfirmOpen(false)}
                 footer={[
-                    <Button key="cancel" danger onClick={()=>setIsConfirmOpen(false)}>Cancel Session</Button>,
+                    <Button key="cancel" danger onClick={() => {
+                        setIsConfirmOpen(false);
+                        if (confirmAppt) {
+                            setCurrentAppt(confirmAppt);
+                            setIsCancelOpen(true);
+                        }
+                    }}>
+                        Cancel Session
+                    </Button>,
                     <Button key="reschedule" onClick={()=>{
                         setIsConfirmOpen(false);
-                        if (confirmAppt) showRescheduleModal(confirmAppt);
+                        if (confirmAppt) showRescheduleReasonModal(confirmAppt);
                     }}>Reschedule Session</Button>,
                     <Button key="confirm" type="primary" onClick={()=>{
                         const proposal = proposals.find(p => p.id === confirmAppt?.id);
@@ -436,7 +605,7 @@ export default function MySessionsTab() {
                         return (selectedProposal[reviewAppt?.id||''] === (proposal?.proposed_time.length||0))
                             ? <Button key="propose" type="primary" onClick={()=>{
                                 setIsReviewOpen(false);
-                                if (reviewAppt) showRescheduleModal(reviewAppt);
+                                if (reviewAppt) showRescheduleReasonModal(reviewAppt);
                             }}>Propose More Time</Button>
                             : <Button key="confirm" type="primary" onClick={()=>{
                                 if (proposal) handleAccept(proposal);
@@ -506,37 +675,38 @@ export default function MySessionsTab() {
                                             {...restField}
                                             name={[name]}
                                             rules={[
-                                                { required:true, message:'Required' },
+                                                { required: true, message: 'Required' },
                                                 {
-                                                    validator:(_, value:[dayjs.Dayjs,dayjs.Dayjs])=>{
-                                                        if (!value || value.length!==2) return Promise.reject('Pick a range');
-                                                        const [s,e] = value;
-                                                        if (s.minute()!==0||e.minute()!==0) return Promise.reject('Must be whole hours');
-                                                        if (e.diff(s,'hour')!==1) return Promise.reject('Duration must be 1 hour');
+                                                    validator: (_, value: [dayjs.Dayjs, dayjs.Dayjs]) => {
+                                                        if (!value || value.length !== 2)
+                                                            return Promise.reject('Pick a range');
+                                                        const [s, e] = value;
+                                                        if (![0,30].includes(s.minute()) || ![0,30].includes(e.minute()))
+                                                            return Promise.reject('分钟只能是 0 或 30');
+                                                        if (e.diff(s, 'minutes') !== 60)
+                                                            return Promise.reject('时长必须为 1 小时');
                                                         return Promise.resolve();
-                                                    }
-                                                }
+                                                    },
+                                                },
                                             ]}
                                         >
                                             <DatePicker.RangePicker
-                                                showTime={{ format:'HH:mm' }}
-                                                format="YYYY-MM-DD HH:mm"
-                                                disabledDate={cur=>!!cur && cur<dayjs().startOf('day')}
-                                                disabledTime={cur=>{
-                                                    if (!cur) return {};
-                                                    const blocked = new Set<number>();
-                                                    bookedSlots.forEach(([s,e])=>{
-                                                        const st=dayjs(s), en=dayjs(e);
-                                                        if (st.isSame(cur,'day')) {
-                                                            for(let h=st.hour();h<en.hour();h++) blocked.add(h);
-                                                        }
-                                                    });
-                                                    return {
-                                                        disabledHours:()=>Array.from(blocked),
-                                                        disabledMinutes:()=>Array.from({length:59},(_,i)=>i+1),
-                                                        disabledSeconds:()=>Array.from({length:59},(_,i)=>i+1),
-                                                    };
+                                                showTime={{
+                                                    format: 'HH:mm',
+                                                    minuteStep: 30   // 每 30 分钟一个档位，只会出现 00 和 30
                                                 }}
+                                                format="YYYY-MM-DD HH:mm"
+                                                onCalendarChange={(dates) => handleSlotCalendarChange(dates, [name])}
+                                                disabledDate={current => current && current < dayjs().startOf('day')}
+                                                disabledTime={current => ({
+                                                    // 小时不做限制
+                                                    disabledMinutes: () => {
+                                                        // 允许 0 和 30，其它都禁掉
+                                                        return Array.from({ length: 60 }, (_, i) => i).filter(m => m !== 0 && m !== 30);
+                                                    },
+                                                    disabledSeconds: () =>
+                                                        Array.from({ length: 59 }, (_, i) => i + 1),
+                                                })}
                                             />
                                         </Form.Item>
                                         <MinusCircleOutlined onClick={()=>remove(name)} />
@@ -577,25 +747,7 @@ export default function MySessionsTab() {
                                 borderRadius:2, display:'flex', alignItems:'center', justifyContent:'center',
                             }}
                             type="primary" danger
-                            onClick={async()=>{
-                                if (!currentAppt) return;
-                                try {
-                                    await fetch('/api/appointment/update', {
-                                        method:'POST', headers:{'Content-Type':'application/json'},
-                                        body: JSON.stringify({
-                                            appointment_id: currentAppt.id,
-                                            status: 'canceled',
-                                            description: cancelReason,
-                                        }),
-                                    });
-                                    message.success('Session canceled');
-                                    setAppointments(list => list.map(a => a.id===currentAppt.id?{...a,status:'canceled'}:a));
-                                } catch(err:any){
-                                    message.error(err.message||'Cancel failed');
-                                } finally {
-                                    setIsCancelOpen(false);
-                                }
-                            }}
+                            onClick={handleCancelOk}
                         >Cancel Session Anyway</Button>
                     </div>
                 }
@@ -623,6 +775,88 @@ export default function MySessionsTab() {
                         }}
                     />
                 </Form.Item>
+            </Modal>
+            <Modal
+                title="Reschedule Your Session"
+                open={isRescheduleReasonModalOpen}
+                onCancel={() => setIsRescheduleReasonModalOpen(false)}
+                footer={[
+                    <Button key="back" onClick={() => setIsRescheduleReasonModalOpen(false)}>
+                        Back
+                    </Button>,
+                    <Button
+                        key="next"
+                        type="primary"
+                        onClick={() => {
+                            setIsRescheduleReasonModalOpen(false)
+                            setIsRescheduleOpen(true)  // 或者打开下一个 slots Modal
+                        }}
+                        disabled={!explanation.trim()}
+                    >
+                        Next
+                    </Button>,
+                ]}
+            >
+                <Text>Let your mentee know why you’re rescheduling.</Text>
+                <Input.TextArea
+                    rows={4}
+                    value={explanation}
+                    onChange={e => setExplanation(e.target.value)}
+                    placeholder="Briefly explain why you’re rescheduling..."
+                    style={{ marginTop: 12 }}
+                />
+            </Modal>
+            <Modal
+                title="Report Issue"
+                open={isReportOpen}
+                onCancel={() => setIsReportOpen(false)}
+                footer={null}
+            >
+                <Text>Sorry to hear your session didn’t go well.<br/>
+                    You can report the issue to MentorUp using the buttons below.</Text>
+                <Input.TextArea
+                    rows={4}
+                    value={reportReason}
+                    onChange={e => setReportReason(e.target.value)}
+                    placeholder="Briefly explain the issue..."
+                    style={{ marginTop: 12 }}
+                />
+
+                <Space style={{ marginTop: 24, width: '100%', justifyContent: 'flex-end' }}>
+                    {/* 直接打开邮箱，不带正文 */}
+                    <Button
+                        onClick={() => window.open('mailto:mentorup.contact@gmail.com')}
+                    >
+                        Email MentorUp
+                    </Button>
+
+                    {/* 带主题 & 正文 */}
+                    <Button
+                        type="primary"
+                        disabled={!reportReason.trim()}
+                        onClick={async () => {
+                            try {
+                                const res = await fetch('/api/appointment/report_issue', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        appointmentId: currentAppt?.id,
+                                        issueDescription: reportReason,
+                                    })
+                                });
+                                const data = await res.json();
+                                if (!res.ok) throw new Error(data.message || 'Report failed');
+                                message.success('Issue reported successfully!');
+                                setIsReportOpen(false);
+                            } catch (err: any) {
+                                console.error('report error', err);
+                                message.error(err.message || 'Failed to report issue');
+                            }
+                        }}
+                    >
+                        Report an Issue to MentorUp
+                    </Button>
+                </Space>
             </Modal>
         </div>
     );
