@@ -165,10 +165,10 @@ export default function MenteeProfilePage() {
         message.error('You can only upload image files!');
         return Upload.LIST_IGNORE; // This prevents the file from being added to the list
       }
-      const isLt25M = file.size / 1024 / 1024 < 25;
-      if (!isLt25M) {
+      const isLt4M = file.size / 1024 / 1024 < 4;
+      if (!isLt4M) {
         console.log('[MenteeProfile] File rejected - too large:', file.size);
-        message.error('Image must be smaller than 25MB!');
+        message.error('Image must be smaller than 4MB!');
         return Upload.LIST_IGNORE; // This prevents the file from being added to the list
       }
       console.log('[MenteeProfile] File accepted, proceeding with upload');
