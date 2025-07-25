@@ -42,6 +42,7 @@ interface MentorAvailabilityProps {
     services: Service[];
     onSlotSelect: (slot: { date: string; time: string }) => void;
     onBook: () => void;
+    coffeeChatCount: number;
 }
 
 export default function MentorAvailability({
@@ -49,6 +50,7 @@ export default function MentorAvailability({
                                                services,
                                                onSlotSelect,
                                                onBook,
+                                               coffeeChatCount,
                                            }: MentorAvailabilityProps) {
     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
@@ -215,21 +217,24 @@ export default function MentorAvailability({
                         Available Time Slots on {selectedDate.format('MMMM D, YYYY')}
                     </Text>
 
-                    <div style={{
-                        backgroundColor: '#f9f9ff',
-                        borderLeft: '4px solid #1890ff',
-                        padding: '12px 16px',
-                        borderRadius: 4,
-                        margin: '8px 0 16px',
-                        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
-                    }}>
-                        <div style={{ color: '#1890ff', fontWeight: 600, fontSize: 14 }}>
-                            <span role="img" aria-label="megaphone">📣</span> Your first 15-min coffee chat is on us!
+                    {coffeeChatCount === 0 && (
+                        <div style={{
+                            backgroundColor: '#f9f9ff',
+                            borderLeft: '4px solid #1890ff',
+                            padding: '12px 16px',
+                            borderRadius: 4,
+                            margin: '8px 0 16px',
+                            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+                        }}>
+                            <div style={{ color: '#1890ff', fontWeight: 600, fontSize: 14 }}>
+                                <span role="img" aria-label="megaphone">📣</span> Your first 15-min coffee chat is on us!
+                            </div>
+                            <div style={{ color: '#1890ff', fontSize: 13, marginTop: 4 }}>
+                                Pick any available slot — your session will take place in the first 15 min.
+                            </div>
                         </div>
-                        <div style={{ color: '#1890ff', fontSize: 13, marginTop: 4 }}>
-                            Pick any available slot — your session will take place in the first 15 min.
-                        </div>
-                    </div>
+                    )}
+
 
                     {availabilityData.has(selectedDate.format('YYYY-MM-DD')) ? (
                         <>
@@ -247,9 +252,10 @@ export default function MentorAvailability({
                                         ? `${Math.floor(durationMinutes / 60)}h${durationMinutes % 60 ? ` ${durationMinutes % 60}m` : ''}`
                                         : `${durationMinutes}m`;
 
-                                    const price = services?.[0]?.price
-                                        ? `$${(services[0].price).toFixed(2)}`
-                                        : '$--';
+                                    const firstPaidService = services.find(s => s.price > 0);
+                                    const price = firstPaidService
+                                        ? `$${firstPaidService.price.toFixed(2)}`
+                                        : 'Free';
 
                                     const slotKey = `${selectedDate.format('YYYY-MM-DD')}|${slot}`;
                                     const isDisabled = start.isBefore(dayjs().add(24, 'hour')) || heldSlots.has(slotKey);
