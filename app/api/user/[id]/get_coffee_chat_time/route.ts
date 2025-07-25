@@ -28,10 +28,11 @@ export async function GET(
             }
 
             // Only include "Free coffee chat (15 mins)" appointments
-            if (isFreeCoffeeChat(appointment.service_type)) {
+            if (!isFreeCoffeeChat(appointment.service_type)) {
                 console.log('❌ Excluded - Service type:', appointment.service_type);
                 return false;
             }
+            return true
 
         });
 
