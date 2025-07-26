@@ -110,6 +110,7 @@ export default function MySessionsTab() {
     const [isReportOpen, setIsReportOpen] = useState(false);
     const [reportReason, setReportReason] = useState('');
 
+    const localTz = dayjs.tz.guess();
 
     // 根据 status 来做分类
     const filteredAppointments = appointments.filter(a => {
@@ -184,8 +185,8 @@ export default function MySessionsTab() {
                     // const start = m[1] ? dayjs.utc(m[1]).local() : dayjs.invalid;
                     // const end   = m[2] ? dayjs.utc(m[2]).local() : dayjs.invalid;
                     // note: not ideal, but use today's date as fallback
-                    const start = m[1] ? dayjs.utc(m[1]).local() : dayjs.utc(new Date());
-                    const end   = m[2] ? dayjs.utc(m[2]).local() : dayjs.utc(new Date());
+                    const start = m[1] ? dayjs.utc(m[1]).tz(localTz) : dayjs.utc(new Date());
+                    const end   = m[2] ? dayjs.utc(m[2]).tz(localTz) : dayjs.utc(new Date());
 
                     const otherId = a.mentor_id === mentorId ? a.mentee_id : a.mentor_id;
 
