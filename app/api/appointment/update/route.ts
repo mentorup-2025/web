@@ -6,6 +6,7 @@ import { sendEmail } from '@/lib/email';
 import { EmailTemplate } from '@/types/email';
 import { getUser } from '@/lib/user';
 import { UpdateAppointmentInput } from '@/types/appointment';
+import { convertUTCToPDT } from '@/lib/utc_to_pdt';
 
 export async function POST(request: Request) {
     try {
@@ -93,7 +94,11 @@ export async function POST(request: Request) {
                         appointmentId: input.appointment_id,
                         cancelReason: input.cancel_reason,
                         sessionDate: appointment.start_time.split('T')[0],
-                        sessionTime: new Date(appointment.start_time).toLocaleTimeString(),
+                        sessionTime: new Date(convertUTCToPDT(appointment.start_time)).toLocaleTimeString('en-US', {
+                          hour: 'numeric',
+                          minute: 'numeric',
+                          timeZoneName: 'short'
+                        }) + ' PDT',
                         isMentee: true,
                     }
                 );
@@ -103,7 +108,6 @@ export async function POST(request: Request) {
             }
 
             // 6.2 发给 support inbox
-            // console.log('✉️ 给 support inbox: contactus@mentorup.info');
             // await sendEmail(
             //     'MentorUp <contactus@mentorup.info>',
             //     'contactus@mentorup.info',
@@ -113,7 +117,11 @@ export async function POST(request: Request) {
             //         appointmentId: input.appointment_id,
             //         cancelReason: input.cancel_reason,
             //         sessionDate: appointment.start_time.split('T')[0],
-            //         sessionTime: new Date(appointment.start_time).toLocaleTimeString(),
+            //         sessionTime: new Date(convertUTCToPDT(appointment.start_time)).toLocaleTimeString('en-US', {
+            //           hour: 'numeric',
+            //           minute: 'numeric',
+            //           timeZoneName: 'short'
+            //         }) + ' PDT',
             //     }
             // );
             // console.log('✅ 已发送取消邮件给 support inbox');
@@ -130,7 +138,11 @@ export async function POST(request: Request) {
                         appointmentId: input.appointment_id,
                         cancelReason:  input.cancel_reason!,
                         sessionDate:   appointment.start_time.split('T')[0],
-                        sessionTime:   new Date(appointment.start_time).toLocaleTimeString(),
+                        sessionTime:   new Date(convertUTCToPDT(appointment.start_time)).toLocaleTimeString('en-US', {
+                          hour: 'numeric',
+                          minute: 'numeric',
+                          timeZoneName: 'short'
+                        }) + ' PDT',
                         isMentee: false,
                     }
                 );

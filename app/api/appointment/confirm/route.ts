@@ -3,7 +3,6 @@ import { confirmAppointment, getAppointment, updateAppointment } from '@/lib/app
 import { getUser } from '@/lib/user';
 import { sendEmail } from '@/lib/email';
 import { EmailTemplate } from '@/types/email';
-import { convertUTCToPDT } from '@/lib/utc_to_pdt';
 import { respData, respErr } from '@/lib/resp';
 import { generateMeetLink } from '@/lib/meet';
 
@@ -66,10 +65,6 @@ export async function POST(request: NextRequest) {
       throw new Error('Google Meet link was not generated.');
     }
 
-    // Convert UTC times to PDT
-    const pdtStartTime = convertUTCToPDT(appointment.start_time);
-    const pdtEndTime = convertUTCToPDT(appointment.end_time);
-
     // Send confirmation emails to both mentee and mentor in parallel
     try {
       await Promise.all([
@@ -83,8 +78,8 @@ export async function POST(request: NextRequest) {
             mentorName: mentor.username,
             menteeName: mentee.username,
             serviceName: appointment.service_type,
-            appointmentStartTime: pdtStartTime,
-            appointmentEndTime: pdtEndTime,
+            appointmentStartTime: appointment.start_time,
+            appointmentEndTime: appointment.end_time,
             meetLink
           }
         ),
@@ -98,8 +93,8 @@ export async function POST(request: NextRequest) {
             mentorName: mentor.username,
             menteeName: mentee.username,
             serviceName: appointment.service_type,
-            appointmentStartTime: pdtStartTime,
-            appointmentEndTime: pdtEndTime,
+            appointmentStartTime: appointment.start_time,
+            appointmentEndTime: appointment.end_time,
             meetLink
           }
         )

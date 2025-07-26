@@ -10,6 +10,7 @@ import {
   Section,
   Hr
 } from '@react-email/components';
+import { convertUTCToPDT } from '@/lib/utc_to_pdt';
 
 interface RescheduleProposalSentProps {
   proposerName: string;
@@ -30,7 +31,9 @@ const RescheduleProposalSentEmail: React.FC<RescheduleProposalSentProps> = ({
 }) => {
   // Format the date and time
   const formatDateTime = (dateTimeStr: string) => {
-    const date = new Date(dateTimeStr);
+    // Convert UTC to PDT
+    const pdtTimeStr = convertUTCToPDT(dateTimeStr);
+    const date = new Date(pdtTimeStr);
     return date.toLocaleString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -39,7 +42,7 @@ const RescheduleProposalSentEmail: React.FC<RescheduleProposalSentProps> = ({
       hour: 'numeric',
       minute: 'numeric',
       timeZoneName: 'short'
-    });
+    }) + ' PDT';
   };
 
   const formatOriginalTime = () => {
