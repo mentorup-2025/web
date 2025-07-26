@@ -119,7 +119,7 @@ export default function MySessionsTab() {
     const [isReportOpen, setIsReportOpen] = useState(false);
     const [reportReason, setReportReason] = useState('');
     const [isRescheduleSlotsModalOpen, setIsRescheduleSlotsModalOpen] = useState(false);
-
+    const localTz = dayjs.tz.guess();
     // 根据 status 来做分类
     const filteredAppointments = appointments.filter(a => {
         if (filter === 'upcoming') {
@@ -286,6 +286,7 @@ export default function MySessionsTab() {
                     proposed_time_ranges: ranges,
                     proposer: menteeId,
                     receiver: currentAppt!.mentor_id,
+                    reason: rescheduleComment,
                 }),
             });
             message.success('Reschedule request sent!');
@@ -338,7 +339,8 @@ export default function MySessionsTab() {
             });
             // 冲突检测
             const conflict = bookedSlots.some(([bs, be]) => {
-                const bsDay = dayjs(bs), beDay = dayjs(be);
+                const bsDay = dayjs.utc(bs).tz(localTz)
+                const beDay = dayjs.utc(be).tz(localTz)
                 return start.isBefore(beDay) && autoEnd.isAfter(bsDay);
             });
             if (conflict) {
@@ -366,13 +368,16 @@ export default function MySessionsTab() {
             ) : (
                 [...filteredAppointments]
                     .sort((a, b) => {
-                        const aStart = dayjs(a.start_time);
-                        const bStart = dayjs(b.start_time);
+                        const aStart = dayjs.utc(a.start_time).tz(localTz)
+                        const bStart = dayjs.utc(b.start_time).tz(localTz)
                         return aStart.diff(bStart);
                     })
                     .map(appt => {
-                        const date = dayjs(appt.start_time).format('YYYY-MM-DD');
-                        const time = `${dayjs(appt.start_time).format('HH:mm')} - ${dayjs(appt.end_time).format('HH:mm')}`;
+                        const localTz = dayjs.tz.guess()
+                        const start = dayjs.utc(appt.start_time).tz(localTz)
+                        const end   = dayjs.utc(appt.end_time).tz(localTz)
+                        const date  = start.format('YYYY-MM-DD')
+                        const time  = `${start.format('HH:mm')} - ${end.format('HH:mm')}`
                         const proposal = proposals.find(p => p.id === appt.id);
                         const otherUserId = appt.mentor_id === menteeId ? appt.mentee_id : appt.mentor_id;
                         const otherUser = userMap[otherUserId];
@@ -397,7 +402,7 @@ export default function MySessionsTab() {
                                                 </Text>
                                                 : <Text style={{ marginLeft:54,fontWeight:700,fontSize:16,color:'#1890FF' }}>
                                                     {(() => {
-                                                        const start = dayjs(appt.start_time);
+                                                        const start = dayjs.utc(appt.start_time).tz(localTz)
                                                         const now = dayjs();
                                                         const diffInHours = start.diff(now, 'hour');
                                                         const diffInDays = start.diff(now, 'day');
@@ -452,9 +457,8 @@ export default function MySessionsTab() {
                                             </div>
                                         ]
                                         // 非 past：走你原来的逻辑
-                                        : (
-                                            (appt.status !== 'canceled' && (appt.proposal?.status === 'pending' ))
-                                                ? [
+                                        : !!proposal   // ← 这里替换原先的 `proposal`
+                                            ? [
                                                     <Button
                                                         key="review"
                                                         type="primary"
@@ -505,9 +509,8 @@ export default function MySessionsTab() {
                                                             <div key="join" onClick={() => {/*…*/}} style={{ cursor: 'pointer' }}>
                                                                 <BellOutlined style={{ fontSize: 18 }} /><div>Join</div>
                                                             </div>,
-                                                        ]
-                                                )
-                                        )
+                                                        ])
+
                                 }
                             >
                                 <Space>
@@ -575,7 +578,7 @@ export default function MySessionsTab() {
             >
                 <div style={{ marginBottom:16 }}>
                     <Text strong>Session Time:</Text>{' '}
-                    <Text style={{ fontWeight:400 }}>{confirmAppt && `${dayjs(confirmAppt.start_time).format('YYYY-MM-DD HH:mm')} - ${dayjs(confirmAppt.end_time).format('HH:mm')} ${getShortTimeZone()}`}</Text>
+                    <Text style={{ fontWeight:400 }}>{confirmAppt && `${dayjs.utc(confirmAppt.start_time).tz(localTz).format('YYYY-MM-DD HH:mm')} – ${dayjs.utc(confirmAppt.end_time).tz(localTz).format('HH:mm')} ${getShortTimeZone()}`}</Text>
                 </div>
                 <div style={{ marginBottom:12, display:'flex',alignItems:'center' }}>
                     <Text strong style={{ marginRight:8 }}>Mentor:</Text>
@@ -628,18 +631,21 @@ export default function MySessionsTab() {
                     <Text delete style={{ color:'rgba(0,0,0,0.45)', fontSize:14, lineHeight:'22px' }}>
                         {reviewAppt && `${dayjs(reviewAppt.start_time).format('YYYY-MM-DD HH:mm')} - ${dayjs(reviewAppt.end_time).format('HH:mm')} ${getShortTimeZone()}`}
                     </Text>
-                    {(() => {
-                        const proposal = proposals.find(p => p.id === reviewAppt?.id);
-                        return proposal?.proposed_time.map((range: [string, string], idx: number) => (
-                            <Radio key={idx} value={idx} style={{ display:'block', margin:'8px 0' }}>
-                                <Space>
-                                    <Text>
-                                        {dayjs(range[0]).format('MM/DD dddd h:mmA')} – {dayjs(range[1]).format('h:mmA')} {getShortTimeZone()}
-                                    </Text>
-                                </Space>
-                            </Radio>
-                        ));
-                    })()}
+                    {proposals
+                        .find(p => p.id === reviewAppt?.id)
+                        ?.proposed_time.map((range, idx) => {
+                            const s = dayjs.utc(range[0]).tz(localTz);
+                            const e = dayjs.utc(range[1]).tz(localTz);
+                            return (
+                                <Radio key={idx} value={idx} style={{ display: 'block', margin: '8px 0' }}>
+                                    <Space>
+                                        <Text>
+                                            {s.format('MM/DD dddd h:mmA')} – {e.format('h:mmA')} {getShortTimeZone()}
+                                        </Text>
+                                    </Space>
+                                </Radio>
+                            );
+                        })}
                     <Radio value={(() => {
                         const proposal = proposals.find(p => p.id === reviewAppt?.id);
                         return proposal?.proposed_time.length || 0;
