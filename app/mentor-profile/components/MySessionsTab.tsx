@@ -68,6 +68,7 @@ interface Appointment {
         avatar_url?: string;
     };
     proposal?: Proposal;
+    link?: string; // Added for meeting link
 }
 const bookedSlotsStatePlaceholder: [string, string][] = [];
 
@@ -217,6 +218,7 @@ export default function MySessionsTab() {
                         cancel_reason: a.cancel_reason,
                         service_type: a.service_type,
                         resume_url:  a.resume_url,
+                        link:        a.link, // Add the meet link
                         otherUser: {
                             id:       otherId,
                             username: userMap[otherId]?.username || 'Anonymous',
@@ -449,7 +451,15 @@ export default function MySessionsTab() {
         setIsReportOpen(true);
     };
 
-
+    // Add simple join functionality using existing appointment data
+    const handleJoinClick = (appt: Appointment) => {
+        if (appt.link) {
+            // Open the meet link in a new window/tab
+            window.open(appt.link, '_blank', 'noopener,noreferrer');
+        } else {
+            alert('No meeting link available yet. Please wait for the session to be confirmed.');
+        }
+    };
 
 
     return (
@@ -636,7 +646,7 @@ export default function MySessionsTab() {
                                                     <div key="noshow" onClick={() => showReportModal(appt)} style={{ cursor: 'pointer' }}>
                                                         <FrownOutlined style={{ fontSize: 18 }} /><div>Report Issue</div>
                                                     </div>,
-                                                    <div key="join" onClick={() => {/*…*/}} style={{ cursor: 'pointer' }}>
+                                                    <div key="join" onClick={() => handleJoinClick(appt)} style={{ cursor: 'pointer' }}>
                                                         <BellOutlined style={{ fontSize: 18 }} /><div>Join</div>
                                                     </div>,
                                                 ]

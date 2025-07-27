@@ -349,6 +349,16 @@ export default function MySessionsTab() {
         }
     };
 
+    // Add simple join functionality using existing appointment data
+    const handleJoinClick = (appt: UIAppointment) => {
+        if (appt.link) {
+            // Open the meet link in a new window/tab
+            window.open(appt.link, '_blank', 'noopener,noreferrer');
+        } else {
+            alert('No meeting link available yet. Please wait for the session to be confirmed.');
+        }
+    };
+
     return (
         <div style={{ padding:16 }}>
             {/*<Title level={3}>My Sessions</Title>*/}
@@ -506,7 +516,7 @@ export default function MySessionsTab() {
                                                             <div key="noshow" onClick={() => showReportModal(appt)} style={{ cursor: 'pointer' }}>
                                                                 <FrownOutlined style={{ fontSize: 18 }} /><div>Report Issue</div>
                                                             </div>,
-                                                            <div key="join" onClick={() => {/*…*/}} style={{ cursor: 'pointer' }}>
+                                                            <div key="join" onClick={() => handleJoinClick(appt)} style={{ cursor: 'pointer' }}>
                                                                 <BellOutlined style={{ fontSize: 18 }} /><div>Join</div>
                                                             </div>,
                                                         ])
