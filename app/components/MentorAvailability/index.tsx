@@ -254,7 +254,7 @@ export default function MentorAvailability({
 
                                     const firstPaidService = services.find(s => s.price > 0);
                                     const price = firstPaidService
-                                        ? `$${firstPaidService.price.toFixed(2)}`
+                                        ? `$${Math.floor(firstPaidService.price)}`
                                         : 'Free';
 
                                     const slotKey = `${selectedDate.format('YYYY-MM-DD')}|${slot}`;

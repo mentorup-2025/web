@@ -368,7 +368,7 @@ export default function MentorDetailsPage() {
                     {Array.isArray(mentor.services) && mentor.services.length > 0 ? (
                         mentor.services.map((service: any, idx: number) => (
                             <Tag key={idx} className={styles.serviceTag}>
-                              {service.type} - ${Math.round(service.price)}
+                              {service.type} - ${Math.floor(service.price)}
                             </Tag>
                         ))
                     ) : (
