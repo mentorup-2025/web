@@ -1,6 +1,6 @@
 'use client';
 
-import { Typography, Card, Radio, Space, Button, Modal, Input, Checkbox } from 'antd';
+import { Typography, Card, Radio, Space, Button, Modal, Input, Checkbox, message } from 'antd';
 import { DollarOutlined, AlipayCircleOutlined, WechatOutlined } from '@ant-design/icons';
 import { useState, useEffect } from 'react';
 
@@ -60,12 +60,14 @@ const PaymentMethodModal = ({
     method, 
     visible, 
     onConfirm, 
-    onCancel 
+    onCancel,
+    userId
 }: { 
     method: PaymentMethod; 
     visible: boolean; 
-    onConfirm: () => void; 
+    onConfirm: (formData?: any) => void; 
     onCancel: () => void; 
+    userId: string;
 }) => {
     if (!method.modalConfig) return null;
 
@@ -81,6 +83,19 @@ const PaymentMethodModal = ({
     const isConnectDisabled = 
         (isWeChatModal && (!wechatId.trim() || !isConfirmed)) ||
         (isAliPayModal && (!alipayName.trim() || !alipayPhone.trim() || !isAliPayConfirmed));
+
+    const handleConfirm = () => {
+        if (isWeChatModal) {
+            onConfirm({ wechatId: wechatId.trim() });
+        } else if (isAliPayModal) {
+            onConfirm({ 
+                alipayName: alipayName.trim(), 
+                alipayPhone: alipayPhone.trim() 
+            });
+        } else {
+            onConfirm();
+        }
+    };
 
     return (
         <Modal
@@ -99,7 +114,7 @@ const PaymentMethodModal = ({
                         borderColor: isConnectDisabled ? '#d9d9d9' : '#1890ff',
                         color: isConnectDisabled ? '#bfbfbf' : '#ffffff'
                     }}
-                    onClick={onConfirm}
+                    onClick={handleConfirm}
                     disabled={isConnectDisabled}
                 >
                     {method.modalConfig.confirmText}
@@ -296,9 +311,64 @@ export default function PaymentTab({ userId }: Props) {
         }
     };
 
-    const handleModalConfirm = () => {
+    const handleModalConfirm = async (formData?: any) => {
         if (pendingMethod) {
-            setMethod(pendingMethod.value);
+            try {
+                if (pendingMethod.value === 'alipay' && formData) {
+                    // Call API for AliPay update
+                    const res = await fetch(`/api/user/${userId}/update_payout`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            alipayInfo: {
+                                name: formData.alipayName,
+                                phone: formData.alipayPhone
+                            }
+                        }),
+                    });
+                    
+                    const responseData = await res.json();
+                    
+                    if (!res.ok) {
+                        throw new Error(responseData.message || `API error: ${res.status}`);
+                    }
+                    
+                    if (responseData.code === 0) {
+                        message.success('AliPay information updated successfully');
+                        setMethod(pendingMethod.value);
+                    } else {
+                        throw new Error(responseData.message || 'Failed to update AliPay information');
+                    }
+                } else if (pendingMethod.value === 'wechat' && formData) {
+                    // Call API for WeChat Pay update
+                    const res = await fetch(`/api/user/${userId}/update_payout`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            wechatPayInfo: {
+                                wechatId: formData.wechatId
+                            }
+                        }),
+                    });
+                    
+                    const responseData = await res.json();
+                    
+                    if (!res.ok) {
+                        throw new Error(responseData.message || `API error: ${res.status}`);
+                    }
+                    
+                    if (responseData.code === 0) {
+                        message.success('WeChat Pay information updated successfully');
+                        setMethod(pendingMethod.value);
+                    } else {
+                        throw new Error(responseData.message || 'Failed to update WeChat Pay information');
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                const errorMessage = err instanceof Error ? err.message : 'Failed to update payment information.';
+                message.error(errorMessage);
+            }
         }
         setModalVisible(false);
         setPendingMethod(null);
@@ -342,6 +412,7 @@ export default function PaymentTab({ userId }: Props) {
                     visible={modalVisible}
                     onConfirm={handleModalConfirm}
                     onCancel={handleModalCancel}
+                    userId={userId}
                 />
             )}
         </div>
