@@ -19,7 +19,10 @@ const REPLIES: Record<string, string> = {
     "Payment methods":
         "Currently, we accept all major credit cards and PayPal. Support for WeChat Pay is coming soon.",
     "Update account details":
-        "Email us at contactus@mentorup.info and we’ll get back to you within 24 hours.",
+        "To update your account details, please email us using the template below:\n\n" +
+        "#Your Name:\n" +
+        "#Email Address:\n" +
+        "#Details you want to update:",
 };
 
 function SuggestionButtons({ onSelect }: { onSelect: (msg: string) => void }) {
@@ -48,7 +51,7 @@ function GuestChatContent({ messages, onSelect }: { messages: { role: string; co
                             <span
                                 className={`inline-block max-w-[75%] px-3 py-2 rounded-2xl ${msg.role === "user" ? "bg-blue-100" : "bg-blue-200"} text-black text-[13px]`}
                             >
-                                {msg.content}
+                                <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
                             </span>
                         </div>
                         {msg.role === "system" && (
@@ -121,21 +124,23 @@ export default function ChatWidget() {
         let botReplyContent = "（这是一个默认回复）";
 
         if (content === "Refund requests") {
-            if (isSignedIn) {
-                setExpectingEmailType("refund");
-                botReplyContent = "We will send an email to your mailbox. Please click email button.";
-            } else {
-                setExpectingEmailType(null);
-                botReplyContent = "Please log in to see information";
-            }
-        } else if (content === "Orders or appointments contact") {
-            if (isSignedIn) {
-                setExpectingEmailType("order");
-                botReplyContent = "We will send an email to your mailbox. Please click email button.";
-            } else {
-                setExpectingEmailType(null);
-                botReplyContent = "Please log in to see information";
-            }
+            setExpectingEmailType(null); // 取消之前自动发送邮件行为（改为模板提示）
+
+            botReplyContent = `To request a refund, please email us at contactus@mentorup.info using the refund request template below:\n\n` +
+                `#Your Name:\n` +
+                `#Email used for booking:\n` +
+                `#Session details:\n` +
+                `#Reason for refund:\n` +
+                `#Additional details (if any):`;
+
+        }
+        else if (content === "Orders or appointments contact") {
+            setExpectingEmailType(null); // 不再自动发送邮件
+            botReplyContent =
+                "To help you with your order or appointment, please email us using the template below:\n\n" +
+                "#Your Name:\n" +
+                "#Email used for booking:\n" +
+                "#Question or Issue:";
         } else {
             setExpectingEmailType(null);
             botReplyContent = REPLIES[content] || botReplyContent;
@@ -184,15 +189,15 @@ export default function ChatWidget() {
                                 <div key={i}>
                                     {msg.role === "user" ? (
                                         <div className="text-right">
-                                            <span className="inline-block max-w-[80%] px-3 py-2 rounded-2xl bg-blue-100 text-black text-[13px]">
-                                                {msg.content}
-                                            </span>
+                <span className="inline-block max-w-[80%] px-3 py-2 rounded-2xl bg-blue-100 text-black text-[13px]">
+                  <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
+                </span>
                                         </div>
                                     ) : (
                                         <div className="text-left ml-2 mr-auto">
-                                            <span className="inline-block max-w-[75%] px-3 py-2 rounded-2xl bg-blue-200 text-black text-[13px]">
-                                                {msg.content}
-                                            </span>
+                <span className="inline-block max-w-[75%] px-3 py-2 rounded-2xl bg-blue-200 text-black text-[13px]">
+                  <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
+                </span>
                                         </div>
                                     )}
                                     {(i === 0 || (msg.role === "system" && i !== 0)) && (
@@ -202,32 +207,20 @@ export default function ChatWidget() {
                             ))}
                         </div>
 
-                        <div className="p-2 border-t flex gap-2">
-                            <input
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                className="flex-1 p-2 border rounded text-[13px]"
-                                placeholder={
-                                    expectingEmailType
-                                        ? "Click Email to send to your address"
-                                        : "Still have questions?"
-                                }
-                                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                            />
-                            <button
-                                onClick={sendMessage}
-                                className="bg-blue-500 text-white px-3 flex items-center gap-1 rounded text-[13px]"
+                        <div className="p-3 text-[12px] text-gray-500 text-center">
+                            Still have questions?{" "}
+                            <a
+                                href="mailto:contactus@mentorup.info"
+                                className="text-blue-500 underline"
                             >
-                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M2.94 2.94a1.5 1.5 0 012.12 0l12 12a1.5 1.5 0 01-2.12 2.12l-1.44-1.44-2.88 2.88a1 1 0 01-1.67-.75v-4.25a1 1 0 00-1-1H3a1 1 0 01-.75-1.67l2.88-2.88-1.44-1.44a1.5 1.5 0 010-2.12z" />
-                                </svg>
-                                Email
-                            </button>
+                                Send us an email
+                            </a>
                         </div>
                     </div>
                 ) : (
                     <GuestChatContent messages={messages} onSelect={handleUserInput} />
                 ))}
+
         </>
     );
 }
