@@ -265,4 +265,51 @@ Optional: Add a fade-out effect at the bottom for better UX
   font-size: 1.15rem; /* or your preferred size */
   min-height: 3.6em;  /* ensures space for 3 lines, adjust as needed */
   line-height: 1.2;   /* adjust to match your design */
-} 
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@media (max-width: 480px) {
+  .mentorGrid {
+    grid-template-columns: 1fr; /* 一列展示 */
+    gap: 16px;
+  }
+
+  .mentorCard {
+    padding: 16px;
+  }
+
+  .mentorInfo h3 {
+    font-size: 14px;
+  }
+
+  .mentorInfo p {
+    font-size: 13px;
+  }
+
+  .scheduleButton {
+    font-size: 14px;
+    padding: 6px 12px;
+  }
+
+  .avatarContainer {
+    padding: 16px 0;
+  }
+
+  .mentor-intro-ellipsis {
+    font-size: 1rem;
+    min-height: 3em;
+  }
+}
