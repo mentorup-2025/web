@@ -119,22 +119,22 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
           >
             <Input placeholder="Enter your display name" />
           </Form.Item>
-    
+
           <Form.Item
             name="currentStatus"
             label="Which of the following best describes your current role?"
             rules={[{ required: true, message: 'Please select your current status!' }]}
           >
             <Select placeholder="Select your current role">
-            <Select.Option value="student">Student</Select.Option>
-            <Select.Option value="new_graduate">New Graduate</Select.Option>
-            <Select.Option value="entry">Entry Level</Select.Option>
-            <Select.Option value="intermediate">Intermediate</Select.Option>
-            <Select.Option value="senior">Senior</Select.Option>
-            <Select.Option value="manager">Manager</Select.Option>
-            <Select.Option value="director">Director</Select.Option>
-            <Select.Option value="executive">Executive</Select.Option>
-            <Select.Option value="startup_founder">Startup Founder</Select.Option>
+              <Select.Option value="student">Student</Select.Option>
+              <Select.Option value="new_graduate">New Graduate</Select.Option>
+              <Select.Option value="entry">Entry Level</Select.Option>
+              <Select.Option value="intermediate">Intermediate</Select.Option>
+              <Select.Option value="senior">Senior</Select.Option>
+              <Select.Option value="manager">Manager</Select.Option>
+              <Select.Option value="director">Director</Select.Option>
+              <Select.Option value="executive">Executive</Select.Option>
+              <Select.Option value="startup_founder">Startup Founder</Select.Option>
             </Select>
           </Form.Item>
 
@@ -143,7 +143,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
             label="WeChat ID"
             rules={[
               { required: true, message: 'Please input your WeChat ID!' },
-              { 
+              {
                 pattern: /^[a-zA-Z0-9_-]{6,20}$/,
                 message: 'WeChat ID must be 6-20 characters long and can only contain letters, numbers, underscores, and hyphens'
               }
@@ -338,8 +338,8 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
             label="Select the services you can provide"
             rules={[{ required: true, message: 'Please select at least one service!' }]}
           >
-            <Checkbox.Group 
-              options={serviceOptions} 
+            <Checkbox.Group
+              options={serviceOptions}
               style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
             />
           </Form.Item>
@@ -354,9 +354,8 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
             {industries.map(industry => (
               <Tag
                 key={industry}
-                className={`${styles.industryBubble} ${
-                  selectedIndustries.includes(industry) ? styles.selected : ''
-                }`}
+                className={`${styles.industryBubble} ${selectedIndustries.includes(industry) ? styles.selected : ''
+                  }`}
                 onClick={() => {
                   if (selectedIndustries.includes(industry)) {
                     setSelectedIndustries(prev => prev.filter(i => i !== industry));
@@ -377,8 +376,8 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
       content: (
         <div className={styles.confirmationContent}>
           <p>This page will automatically redirect to your profile in {countdown} seconds. If not, please click the button below to go to the main page.</p>
-          <Button 
-            type="default" 
+          <Button
+            type="default"
             size="large"
             onClick={() => router.push('/mentor-list')}
             style={{ marginRight: '16px' }}
@@ -386,8 +385,8 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
             Start Exploration
           </Button>
           {/* todo: make mentor-profile availability tab open by url */}
-          <Button 
-            type="primary" 
+          <Button
+            type="primary"
             size="large"
             className={styles.button}
             onClick={() => router.push(`/mentor-profile/${userId}#availability`)}
@@ -425,12 +424,12 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
   const onFinish = async (allValues: any) => {
     try {
       // construct services array from selected services and base price - Price logic: $5 + 45% markup
-      const services = (allValues.servicesList || []).map((type: string) => ({ type, price: isFreeCoffeeChat(type) ? 0 : 5 + 1.45 * allValues.basePrice }));
+      const services = (allValues.servicesList || []).map((type: string) => ({ type, price: isFreeCoffeeChat(type) ? 0 : 5 + 1.45 * (allValues.basePrice || 0) }));
 
       const mentorData = {
-        company: allValues.company.trim(),
-        title: allValues.title.trim(),
-        years_of_experience: Number(allValues.yearsOfExperience),
+        company: (allValues.company || '').trim(),
+        title: (allValues.title || '').trim(),
+        years_of_experience: Number(allValues.yearsOfExperience) || 0,
         years_of_experience_recorded_date: new Date(),
         services,
       };
@@ -455,11 +454,11 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
       // Second API call to update user profile with LinkedIn and industries
       const userUpdateData = {
         userId,
-        username: allValues.displayName,
-        linkedin: allValues.linkedin ?? '',
-        wechat: allValues.wechat ?? '',
-        industries: selectedIndustries,
-        introduction: allValues.introduction,
+        username: allValues.displayName || '',
+        linkedin: allValues.linkedin || '',
+        wechat: allValues.wechat || '',
+        industries: selectedIndustries || [],
+        introduction: allValues.introduction || '',
       };
 
       const userUpdateResponse = await fetch('/api/user/update', {
@@ -499,8 +498,8 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
 
   return (
     <div className={styles.mentorSignup}>
-      <Steps 
-        current={current} 
+      <Steps
+        current={current}
         className={`stepsClassName ${styles.steps}`}
         onChange={handleStepClick}
       >
@@ -515,14 +514,14 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
           {current === 2 && <h2>Join our <span className={styles.blue}>hourly rate</span></h2>}
           {current === 3 && <h2>Join our <span className={styles.blue}>Mentor Community</span></h2>}
           {current === 4 && <h2>Welcome to the <span className={styles.blue}>MentorUp Community! </span>We're excited to have you here.</h2>}
-          
+
           <Form
             form={form}
             layout="vertical"
             className={styles.form}
           >
             {steps[current].content}
-            
+
             {current < steps.length - 1 && (
               <div className={styles.stepsAction}>
                 {current > 0 && (
