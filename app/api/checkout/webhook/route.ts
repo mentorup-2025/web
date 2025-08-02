@@ -42,37 +42,58 @@ export async function POST(request: Request) {
 
     console.log('📥 Stripe Event received:', event.type);
 
-    if (event.type === 'payment_intent.succeeded') {
-      const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      const appointmentId = paymentIntent.metadata?.appointmentId;
+    // Handle Stripe Checkout Session completed event
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const appointmentId = session.metadata?.appointmentId;
+
+      console.log('✅ Checkout session completed:', {
+        sessionId: session.id,
+        appointmentId: appointmentId,
+        paymentStatus: session.payment_status,
+        amountTotal: session.amount_total,
+      });
 
       if (!appointmentId) {
-        console.error('Missing appointmentId in metadata');
+        console.error('❌ Missing appointmentId in session metadata');
         return NextResponse.json({ error: 'Missing appointmentId' }, { status: 400 });
       }
 
-      try {
-        await ConfirmAppointmentPaidHelper.confirmAppointmentPaid(appointmentId);
-      } catch (error) {
-        console.error(' Failed to  confirm appointment:', error);
-        return NextResponse.json({ error: 'Failed to confirm appointment' }, { status: 500 });
-      } 
+      // Only confirm appointment if payment was successful
+      if (session.payment_status === 'paid') {
+        try {
+          console.log(`💰 Confirming appointment ${appointmentId} as paid`);
+          await ConfirmAppointmentPaidHelper.confirmAppointmentPaid(appointmentId);
+          console.log(`✅ Appointment ${appointmentId} successfully confirmed as paid`);
+        } catch (error) {
+          console.error(`❌ Failed to confirm appointment ${appointmentId}:`, error);
+          return NextResponse.json({ error: 'Failed to confirm appointment' }, { status: 500 });
+        }
+      } else {
+        console.log(`⚠️ Session ${session.id} completed but payment status is: ${session.payment_status}`);
+      }
     }
 
-    // Handle payment failures, cancellations, and requires_action
-    if (event.type === 'payment_intent.payment_failed' || 
-        event.type === 'payment_intent.canceled') {
+    // Handle Stripe Checkout Session expired or canceled
+    if (event.type === 'checkout.session.expired' || 
+        event.type === 'checkout.session.async_payment_failed') {
       
-      const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      const appointmentId = paymentIntent.metadata?.appointmentId;
+      const session = event.data.object as Stripe.Checkout.Session;
+      const appointmentId = session.metadata?.appointmentId;
+
+      console.log(`❌ Checkout session ${event.type}:`, {
+        sessionId: session.id,
+        appointmentId: appointmentId,
+        paymentStatus: session.payment_status,
+      });
 
       if (!appointmentId) {
-        console.error('Missing appointmentId in metadata for failed/canceled payment');
+        console.error('❌ Missing appointmentId in session metadata for failed/expired session');
         return NextResponse.json({ error: 'Missing appointmentId' }, { status: 400 });
       }
 
       try {
-        console.log(`🗑️ Canceling appointment ${appointmentId} due to payment event: ${event.type}`);
+        console.log(`🗑️ Canceling appointment ${appointmentId} due to checkout event: ${event.type}`);
         await cancelAppointmentPayment(appointmentId);
         console.log(`✅ Appointment ${appointmentId} successfully canceled and deleted`);
       } catch (error) {
