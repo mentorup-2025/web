@@ -1,55 +1,10 @@
 'use client'
 import { useState } from 'react'
-import { loadStripe } from '@stripe/stripe-js'
 import Link from 'next/link'
 import ResumeUpload from '@/components/ResumeUpload' // 路径根据你项目实际位置调整
-// Initialize Stripe outside of component to avoid recreating it on each render
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
-)
 
 export default function Home() {
-  const [amount, setAmount] = useState('')
-  const [loading, setLoading] = useState(false)
   const [showUploader, setShowUploader] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-
-    try {
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          amount: parseInt(amount) * 100, // Convert to cents
-          currency: 'usd',
-        }),
-      })
-
-      const { sessionId } = await response.json()
-
-      // Get Stripe.js instance
-      const stripe = await stripePromise
-
-      // Redirect to Stripe Checkout
-      const { error } = await stripe!.redirectToCheckout({
-        sessionId,
-      })
-
-      if (error) {
-        console.error('Stripe error:', error)
-        alert(error.message)
-      }
-    } catch (error) {
-      console.error('Error:', error)
-      alert('Something went wrong. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -139,12 +94,13 @@ export default function Home() {
                 >
                   Upload Resume
                 </Link>
-                <Link
+                {/* Payment page should only be accessed through booking flow with proper parameters */}
+                {/* <Link
                     href="/booking/payment"
                     className="block w-full text-center px-4 py-2 border border-orange-500 text-orange-500 rounded-md hover:bg-orange-50 transition-colors"
                 >
                   Payment page
-                </Link>
+                </Link> */}
                 <Link
                     href="/schedule"
                     className="block w-full text-center px-4 py-2 border border-indigo-500 text-indigo-500 rounded-md hover:bg-indigo-50 transition-colors"

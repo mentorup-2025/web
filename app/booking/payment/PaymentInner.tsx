@@ -12,7 +12,6 @@ export default function PaymentInner() {
 
     const amountParam = searchParams?.get('amount');
     const appointmentId = searchParams?.get('appointmentId');
-    const userId = searchParams?.get('userId');
 
     const parsedAmount = amountParam ? parseInt(amountParam, 10) : null;
     const totalAmount = parsedAmount || 2000;
@@ -44,7 +43,6 @@ export default function PaymentInner() {
                 <CheckoutForm 
                     amount={totalAmount} 
                     appointmentId={appointmentId ?? undefined} 
-                    userId={userId ?? undefined}
                 />
             </Elements>
         </>

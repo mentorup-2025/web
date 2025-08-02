@@ -5,22 +5,23 @@ import { useEffect, useState } from 'react';
 import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { Button, message } from 'antd';
 import { loadStripe } from '@stripe/stripe-js';
+import { useUser } from '@clerk/nextjs';
 
 interface CheckoutFormProps {
     amount: number;
     appointmentId?: string;
-    userId?: string;
 }
 
 // Initialize Stripe outside of component
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
-export default function CheckoutForm({ amount, appointmentId, userId }: CheckoutFormProps) {
+export default function CheckoutForm({ amount, appointmentId }: CheckoutFormProps) {
     const elements = useElements();
     const stripe = useStripe();
     const searchParams = useSearchParams();
+    const { user } = useUser();
     const [loading, setLoading] = useState(false);
-    const localAppointmentId = appointmentId ?? searchParams?.get('appointmentId');
+    const userId = user?.id;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -98,6 +99,7 @@ export default function CheckoutForm({ amount, appointmentId, userId }: Checkout
                 <h3>Payment Summary</h3>
                 <p><strong>Amount:</strong> ${(amount / 100).toFixed(2)}</p>
                 <p><strong>Appointment ID:</strong> {appointmentId}</p>
+                <p><strong>User ID:</strong> {userId}</p>
                 <p style={{ fontSize: '14px', color: '#666' }}>
                     You will be redirected to Stripe's secure checkout page to complete your payment.
                 </p>
