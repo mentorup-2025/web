@@ -19,6 +19,8 @@ export enum EmailTemplate {
   MENTEE_APPOINTMENT_DECLINED       = 'MenteeAppointmentDeclinedEmail',
 
   SESSION_REPORT_ISSUE              = 'SessionReportIssueEmail',
+  SESSION_REPORT_ISSUE_RECEIPT      = 'SessionReportIssueReceiptEmail',
+
   SESSION_CANCELED                  = 'SessionCanceledEmail',
 }
 
@@ -53,5 +55,7 @@ export const EMAIL_TEMPLATE_TITLES: Record<EmailTemplate, string> = {
   [EmailTemplate.MENTEE_APPOINTMENT_DECLINED]:     'Your Mentee Declined the Proposed Time',
 // >>>>>>> 39dd1a5 (reschedule flow)
   [EmailTemplate.SESSION_REPORT_ISSUE]:            '[Action Required] Issue Reported for Your Session',
+  [EmailTemplate.SESSION_REPORT_ISSUE_RECEIPT]:    "Your Issue Has Been Received – We're Working on It",
+
   [EmailTemplate.SESSION_CANCELED]:       'Your MentorUp Session Has Been Canceled',
 };
