@@ -10,6 +10,7 @@ import RefundProcessedEmail, { RefundProcessedProps } from '@/types/email_templa
 import OrderContactEmail, { OrderContactEmailProps } from '@/types/email_template/order_contact';
 import MentorApptRequestEmail, { MentorApptRequestProps } from '@/types/email_template/mentor_appt_request';
 import SessionReportIssueEmail, {SessionReportIssueProps} from '@/types/email_template/session_report_issue';
+import SessionReportIssueReceiptEmail, { SessionReportIssueReceiptProps } from '@/types/email_template/SessionReportIssueReceiptEmail';
 import SessionCanceledEmail, {SessionCanceledProps} from '@/types/email_template/SessionCanceledEmail';
 const resend = getResendClient();
 
@@ -33,6 +34,8 @@ const getEmailComponent = (type: EmailTemplate, data: Record<string, any>) => {
       return createElement(OrderContactEmail, data as OrderContactEmailProps);
     case EmailTemplate.SESSION_REPORT_ISSUE.toString():
       return createElement(SessionReportIssueEmail, data as SessionReportIssueProps);
+    case EmailTemplate.SESSION_REPORT_ISSUE_RECEIPT.toString():
+      return createElement(SessionReportIssueReceiptEmail, data as SessionReportIssueReceiptProps);
     case EmailTemplate.SESSION_CANCELED.toString():
       return createElement(SessionCanceledEmail, data as SessionCanceledProps);
     default:
