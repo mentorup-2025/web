@@ -99,7 +99,7 @@ export default function CheckoutForm({ amount, appointmentId }: CheckoutFormProp
                 <h3>Payment Summary</h3>
                 <p><strong>Amount:</strong> ${(amount / 100).toFixed(2)}</p>
                 <p><strong>Appointment ID:</strong> {appointmentId}</p>
-                <p><strong>User ID:</strong> {userId}</p>
+
                 <p style={{ fontSize: '14px', color: '#666' }}>
                     You will be redirected to Stripe's secure checkout page to complete your payment.
                 </p>
