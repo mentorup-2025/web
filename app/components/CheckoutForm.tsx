@@ -9,12 +9,13 @@ import { loadStripe } from '@stripe/stripe-js';
 interface CheckoutFormProps {
     amount: number;
     appointmentId?: string;
+    userId?: string;
 }
 
 // Initialize Stripe outside of component
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
-export default function CheckoutForm({ amount, appointmentId }: CheckoutFormProps) {
+export default function CheckoutForm({ amount, appointmentId, userId }: CheckoutFormProps) {
     const elements = useElements();
     const stripe = useStripe();
     const searchParams = useSearchParams();
@@ -27,9 +28,10 @@ export default function CheckoutForm({ amount, appointmentId }: CheckoutFormProp
         // ✅ 日志打印：确认传入的参数
         console.log('🧾 Final appointmentId sent to backend:', appointmentId);
         console.log('🧾 Final amount sent to backend:', amount);
+        console.log('🧾 Final userId sent to backend:', userId);
 
-        if (!appointmentId || !amount) {
-            message.error('Missing appointment ID or amount.');
+        if (!appointmentId || !amount || !userId) {
+            message.error('Missing appointment ID, amount, or user ID.');
             return;
         }
 
@@ -39,7 +41,7 @@ export default function CheckoutForm({ amount, appointmentId }: CheckoutFormProp
             const res = await fetch('/api/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ amount, appointmentId }),
+                body: JSON.stringify({ amount, appointmentId, menteeUserId: userId }),
             });
 
             if (!res.ok) {

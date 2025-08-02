@@ -6,12 +6,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 export async function POST(req: Request) {
-    const { amount, appointmentId, couponId } = await req.json();
+    const { amount, appointmentId, couponId, menteeUserId } = await req.json();
 
-    console.log('📥 Creating Stripe Checkout Session with:', { amount, appointmentId, couponId });
+    console.log('📥 Creating Stripe Checkout Session with:', { amount, appointmentId, couponId, menteeUserId });
 
     if (!amount || !appointmentId) {
-        console.error('❌ Missing required fields:', { amount, appointmentId });
+        console.error('❌ Missing required fields:', { amount, appointmentId, menteeUserId });
         return NextResponse.json({ error: 'Missing amount or appointmentId' }, { status: 400 });
     }
 
@@ -34,6 +34,8 @@ export async function POST(req: Request) {
             ],
             mode: 'payment',
             expires_at: Math.floor(Date.now() / 1000) + (5 * 60), // 5 minutes from now
+            success_url: `https://www.mentorup.info/mentee-profile/${menteeUserId}`,
+            cancel_url: `https://www.mentorup.info/mentee-profile/${menteeUserId}`,
             metadata: {
                 appointmentId,
             },

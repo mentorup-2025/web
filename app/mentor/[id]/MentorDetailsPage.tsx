@@ -708,7 +708,7 @@ export default function MentorDetailsPage() {
 
                               if (selectedPaymentMethod === 'stripe') {
                                 setStep(4);
-                                window.open(`/booking/payment?appointmentId=${appointmentId}&amount=${calculatedPrice}`, '_blank');
+                                window.open(`/booking/payment?appointmentId=${appointmentId}&amount=${calculatedPrice}&userId=${user?.id}`, '_blank');
                               } else if (selectedPaymentMethod === 'wechat') {
                                 setAppointmentId(appointmentId);
                                 setPrice(calculatedPrice);
