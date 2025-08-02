@@ -67,10 +67,19 @@ export async function POST(request: Request) {
           console.log(`✅ Appointment ${appointmentId} successfully confirmed as paid`);
         } catch (error) {
           console.error(`❌ Failed to confirm appointment ${appointmentId}:`, error);
-          return NextResponse.json({ error: 'Failed to confirm appointment' }, { status: 500 });
+          // Don't return 500 error to prevent retries - log the error and continue
+          // This could be due to appointment already confirmed, not found, etc.
+          console.log(`⚠️ Continuing webhook processing despite appointment confirmation failure`);
         }
       } else {
         console.log(`⚠️ Session ${session.id} completed but payment status is: ${session.payment_status}`);
+        try {
+          await cancelAppointmentPayment(appointmentId);
+        } catch (error) {
+          console.error(`❌ Failed to cancel appointment ${appointmentId}:`, error);
+          // Don't return 500 error to prevent retries - log the error and continue
+          console.log(`⚠️ Continuing webhook processing despite appointment cancellation failure`);
+        }
       }
     }
 
@@ -95,10 +104,11 @@ export async function POST(request: Request) {
       try {
         console.log(`🗑️ Canceling appointment ${appointmentId} due to checkout event: ${event.type}`);
         await cancelAppointmentPayment(appointmentId);
-        console.log(`✅ Appointment ${appointmentId} successfully canceled and deleted`);
+        console.log(`✅ Appointment ${appointmentId} successfully canceled`);
       } catch (error) {
         console.error(`❌ Failed to cancel appointment ${appointmentId}:`, error);
-        return NextResponse.json({ error: 'Failed to cancel appointment' }, { status: 500 });
+        // Don't return 500 error to prevent retries - log the error and continue
+        console.log(`⚠️ Continuing webhook processing despite appointment cancellation failure`);
       }
     }
 
