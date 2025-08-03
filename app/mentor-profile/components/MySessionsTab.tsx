@@ -263,7 +263,15 @@ export default function MySessionsTab() {
                 }),
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.message || 'Confirmation failed');
+            
+            // Debug: Log the response
+            console.log('🔍 API Response:', { status: res.status, ok: res.ok, data });
+            
+            // Check both HTTP status and API response code
+            if (!res.ok || data.code === -1) {
+                console.error('❌ API Error Response:', data);
+                throw new Error(data.message || 'Confirmation failed');
+            }
 
             message.success('Session time confirmed');
             // Update local state
@@ -275,7 +283,7 @@ export default function MySessionsTab() {
                 )
             );
         } catch (err: any) {
-            console.error(err);
+            console.error('❌ Frontend Error:', err);
             message.error(err.message || 'Confirmation failed');
         }
     };
@@ -296,7 +304,15 @@ export default function MySessionsTab() {
                 body: JSON.stringify({ appointment_id: prop.appointment_id, start_time, end_time }),
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.message || 'Confirmation failed');
+            
+            // Debug: Log the response
+            console.log('🔍 API Response (Accept):', { status: res.status, ok: res.ok, data });
+            
+            // Check both HTTP status and API response code
+            if (!res.ok || data.code === -1) {
+                console.error('❌ API Error Response (Accept):', data);
+                throw new Error(data.message || 'Confirmation failed');
+            }
 
             message.success('New time confirmed');
             setAppointments(apps =>
@@ -315,7 +331,7 @@ export default function MySessionsTab() {
                 )
             );
         } catch (err: any) {
-            console.error(err);
+            console.error('❌ Frontend Error (Accept):', err);
             message.error(err.message);
         }
     };

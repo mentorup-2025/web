@@ -19,15 +19,37 @@ function validateTime(appointment: Appointment, rescheduleProposal: ReschedulePr
       return { isValid: false, source: '', error: 'Invalid time parameters' };
     }
 
+    // Convert all times to Date objects for comparison
+    const parseTime = (timeStr: string): Date => {
+      // Remove quotes if present (from database)
+      const cleanTime = timeStr.replace(/"/g, '');
+      return new Date(cleanTime);
+    };
+
+    const providedStartDate = parseTime(startTime);
+    const providedEndDate = parseTime(endTime);
+    const appointmentStartDate = parseTime(appointment.start_time);
+    const appointmentEndDate = parseTime(appointment.end_time);
+
+    console.log('🔍 Time comparison:', {
+      provided: { start: providedStartDate.toISOString(), end: providedEndDate.toISOString() },
+      original: { start: appointmentStartDate.toISOString(), end: appointmentEndDate.toISOString() }
+    });
+
     // Check if times match the original appointment times
-    if (appointment.start_time === startTime && appointment.end_time === endTime) {
+    if (appointmentStartDate.getTime() === providedStartDate.getTime() && 
+        appointmentEndDate.getTime() === providedEndDate.getTime()) {
       return { isValid: true, source: 'original appointment' };
     }
 
     // Check if times match any proposed reschedule times
     if (rescheduleProposal && rescheduleProposal.proposed_time && Array.isArray(rescheduleProposal.proposed_time)) {
       for (const [proposedStart, proposedEnd] of rescheduleProposal.proposed_time) {
-        if (proposedStart === startTime && proposedEnd === endTime) {
+        const proposedStartDate = parseTime(proposedStart);
+        const proposedEndDate = parseTime(proposedEnd);
+        
+        if (proposedStartDate.getTime() === providedStartDate.getTime() && 
+            proposedEndDate.getTime() === providedEndDate.getTime()) {
           return { isValid: true, source: 'reschedule proposal' };
         }
       }
@@ -35,8 +57,8 @@ function validateTime(appointment: Appointment, rescheduleProposal: ReschedulePr
 
     // If we get here, times don't match anything
     console.error('Time validation failed:', {
-      provided: { startTime, endTime },
-      original: { start: appointment.start_time, end: appointment.end_time },
+      provided: { startTime: providedStartDate.toISOString(), endTime: providedEndDate.toISOString() },
+      original: { start: appointmentStartDate.toISOString(), end: appointmentEndDate.toISOString() },
       proposed: rescheduleProposal?.proposed_time || 'none'
     });
 
