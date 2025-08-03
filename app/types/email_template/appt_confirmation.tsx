@@ -10,7 +10,6 @@ import {
   Section,
   Hr
 } from '@react-email/components';
-import { convertUTCToPDT } from '@/lib/utc_to_pdt';
 
 interface ApptConfirmationProps {
   recipientName: string;
@@ -33,8 +32,7 @@ const ApptConfirmationEmail: React.FC<ApptConfirmationProps> = ({
 }) => {
   // Format the date and time using UTC to PDT conversion
   const formatDateTime = (dateTimeStr: string) => {
-    const pdtTimeStr = convertUTCToPDT(dateTimeStr);
-    const date = new Date(pdtTimeStr);
+    const date = new Date(dateTimeStr);
     return date.toLocaleString('en-US', {
       weekday: 'long',
       year: 'numeric',

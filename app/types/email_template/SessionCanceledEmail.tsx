@@ -11,7 +11,6 @@ import {
     Section,
     Hr
 } from '@react-email/components';
-import { convertUTCToPDT } from '@/lib/utc_to_pdt';
 
 export interface SessionCanceledProps {
     recipientName: string;   // 收件人名字（mentee 或 mentor）
@@ -32,8 +31,7 @@ const SessionCanceledEmail: React.FC<SessionCanceledProps> = ({
                                                               }) => {
     // Format the date and time using UTC to PDT conversion
     const formatDateTime = (dateTimeStr: string) => {
-        const pdtTimeStr = convertUTCToPDT(dateTimeStr);
-        const date = new Date(pdtTimeStr);
+        const date = new Date(dateTimeStr);
         return date.toLocaleString('en-US', {
             weekday: 'long',
             year: 'numeric',
@@ -47,7 +45,7 @@ const SessionCanceledEmail: React.FC<SessionCanceledProps> = ({
 
     // Extract date and time for display
     const sessionDate = appointmentStartTime.split('T')[0];
-    const sessionTime = new Date(convertUTCToPDT(appointmentStartTime)).toLocaleTimeString('en-US', {
+    const sessionTime = new Date(appointmentStartTime).toLocaleTimeString('en-US', {
         hour: 'numeric',
         minute: '2-digit',
         timeZone: 'America/Los_Angeles'
