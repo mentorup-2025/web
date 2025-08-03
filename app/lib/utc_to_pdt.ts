@@ -12,14 +12,18 @@ export function convertUTCToPDT(utcTimeStr: string): string {
       return utcTimeStr; // Return original if invalid
     }
     
-    // Convert to PDT (UTC-7 for daylight saving, UTC-8 for standard time)
-    // Using America/Los_Angeles timezone which handles DST automatically
-    const pdtDate = new Date(utcDate.toLocaleString('en-US', {
-      timeZone: 'America/Los_Angeles'
-    }));
+    // Convert to PDT using toLocaleString with timezone
+    const pdtTimeStr = utcDate.toLocaleString('en-US', {
+      timeZone: 'America/Los_Angeles',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
     
-    // Format as ISO string in PDT
-    const pdtTimeStr = pdtDate.toISOString();
     console.log('🕐 Time conversion:', { utc: utcTimeStr, pdt: pdtTimeStr });
     
     return pdtTimeStr;
