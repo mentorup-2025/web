@@ -185,7 +185,7 @@ export default function MySessionsTab() {
 
         } catch (e: any) {
             console.error(e);
-            message.error(e.message || '加载失败');
+            message.error(e.message || 'Failed to load');
         } finally {
             setLoading(false);
         }
@@ -344,7 +344,7 @@ export default function MySessionsTab() {
                 return start.isBefore(beDay) && autoEnd.isAfter(bsDay);
             });
             if (conflict) {
-                message.warning('⚠️ 该时间段与已有的 session 冲突，请重选。');
+                message.warning('⚠️ This time slot conflicts with an existing session, please choose again.');
             }
         }
     };
