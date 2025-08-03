@@ -247,9 +247,11 @@ export default function MySessionsTab() {
         try {
             // 拆分 "HH:mm - HH:mm"
             const [startStr, endStr] = appt.time.split(' - ');
-            // 拼成完整的 ISO 时间
-            const startISO = dayjs(`${appt.date} ${startStr}`).toISOString();
-            const endISO   = dayjs(`${appt.date} ${endStr}`).toISOString();
+            
+            // Convert local time to UTC using user's timezone
+            const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const startISO = dayjs.tz(`${appt.date} ${startStr}`, localTz).utc().toISOString();
+            const endISO   = dayjs.tz(`${appt.date} ${endStr}`, localTz).utc().toISOString();
 
             const res = await fetch('/api/appointment/confirm', {
                 method: 'POST',
