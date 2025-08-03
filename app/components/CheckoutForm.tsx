@@ -42,7 +42,7 @@ export default function CheckoutForm({ amount, appointmentId }: CheckoutFormProp
             const res = await fetch('/api/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ amount, appointmentId, menteeUserId: userId }),
+                body: JSON.stringify({ amount: amount * 100, appointmentId, menteeUserId: userId }),
             });
 
             if (!res.ok) {
@@ -97,7 +97,7 @@ export default function CheckoutForm({ amount, appointmentId }: CheckoutFormProp
                 marginBottom: '16px'
             }}>
                 <h3>Payment Summary</h3>
-                <p><strong>Amount:</strong> ${(amount / 100).toFixed(2)}</p>
+                <p><strong>Amount:</strong> ${(amount).toFixed(2)}</p>
                 <p><strong>Appointment ID:</strong> {appointmentId}</p>
 
                 <p style={{ fontSize: '14px', color: '#666' }}>
@@ -106,7 +106,7 @@ export default function CheckoutForm({ amount, appointmentId }: CheckoutFormProp
             </div>
             
             <Button type="primary" htmlType="submit" loading={loading} className="mt-4" style={{ width: '100%' }}>
-                Proceed to Payment - ${(amount / 100).toFixed(2)}
+                Proceed to Payment - ${amount.toFixed(2)}
             </Button>
         </form>
     );
