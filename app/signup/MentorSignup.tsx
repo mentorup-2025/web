@@ -179,7 +179,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
           <Form.Item
             name="company"
             label="Where do you work now?"
-            rules={[{ required: false }]}
+            rules={[{ required: true, message: 'Please enter your company or school name!' }]}
           >
             <Input placeholder="Enter your company or school name" />
           </Form.Item>
