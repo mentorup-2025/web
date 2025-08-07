@@ -523,11 +523,7 @@ export default function MentorProfilePage() {
               <div style={{ position: 'relative', display: 'inline-block' }}>
                 <Avatar
                   size={120}
-                  src={
-                    isOwnProfile
-                      ? user?.imageUrl
-                      : mentorData?.profile_url || "/placeholder-avatar.png"
-                  }
+                  src={mentorData?.profile_url || "/placeholder-avatar.png"}
                   className={styles.avatar}
                   style={{ cursor: isOwnProfile ? 'pointer' : 'default' }}
                   onClick={() => {

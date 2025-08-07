@@ -35,12 +35,6 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
       throw error;
     }
 
-    if (isFreeCoffeeChat(input.service_type)) {
-      await updateAppointment(data.id, {
-        status: 'paid',
-      });
-    }
-
     return data as ReserveAppointmentResponse;
 
   } catch (error) {
@@ -75,10 +69,10 @@ export async function cancelAppointmentPayment(
   appointmentId: string
 ) {
   try {
-    // Delete the appointment row directly from the database
+    // Update the appointment status to canceled instead of deleting
     const { error } = await getSupabaseClient()
       .from('appointments')
-      .delete()
+      .update({ status: 'canceled' })
       .eq('id', appointmentId);
 
     if (error) {
@@ -86,7 +80,7 @@ export async function cancelAppointmentPayment(
       throw error;
     }
 
-    console.log(`Appointment ${appointmentId} canceled and deleted from database`);
+    console.log(`Appointment ${appointmentId} status updated to canceled`);
 
     return respOk;
 

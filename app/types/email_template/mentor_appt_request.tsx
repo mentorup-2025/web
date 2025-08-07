@@ -26,7 +26,7 @@ const MentorApptRequestEmail: React.FC<MentorApptRequestProps> = ({
   appointmentEndTime,
   appointmentId
 }) => {
-  // Format the date and time
+  // Format the date and time using UTC to PDT conversion
   const formatDateTime = (dateTimeStr: string) => {
     const date = new Date(dateTimeStr);
     return date.toLocaleString('en-US', {
@@ -35,9 +35,9 @@ const MentorApptRequestEmail: React.FC<MentorApptRequestProps> = ({
       month: 'long',
       day: 'numeric',
       hour: 'numeric',
-      minute: 'numeric',
-      timeZoneName: 'short'
-    });
+      minute: '2-digit',
+      timeZone: 'America/Los_Angeles'
+    }) + ' PDT';
   };
 
   return (

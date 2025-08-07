@@ -26,7 +26,7 @@ const MenteeApptRequestEmail: React.FC<MenteeApptRequestProps> = ({
   appointmentStartTime,
   appointmentEndTime
 }) => {
-  // Format the date and time
+  // Format the date and time using UTC to PDT conversion
   const formatDateTime = (dateTimeStr: string) => {
     const date = new Date(dateTimeStr);
     return date.toLocaleString('en-US', {
@@ -35,9 +35,9 @@ const MenteeApptRequestEmail: React.FC<MenteeApptRequestProps> = ({
       month: 'long',
       day: 'numeric',
       hour: 'numeric',
-      minute: 'numeric',
-      timeZoneName: 'short'
-    });
+      minute: '2-digit',
+      timeZone: 'America/Los_Angeles'
+    }) + ' PDT';
   };
 
   return (
@@ -63,6 +63,11 @@ const MenteeApptRequestEmail: React.FC<MenteeApptRequestProps> = ({
           <Text style={text}>
             We will send you an email once the mentor has confirmed your appointment. 
             Please check your inbox for updates.
+          </Text>
+
+          <Text style={text}>
+            You can view and manage your appointments by visiting{' '}
+            <Link href="https://www.mentorup.info">https://www.mentorup.info</Link>
           </Text>
 
           <Text style={text}>

@@ -2,7 +2,6 @@ import { confirmAppointmentPaid, getAppointment } from '@/lib/appointment';
 import { getUser } from '@/lib/user';
 import { sendEmail } from '@/lib/email';
 import { EmailTemplate } from '@/types/email';
-import { convertUTCToPDT } from '@/lib/utc_to_pdt';
 import { Appointment, User } from '@/types';
 
 export class ConfirmAppointmentPaidHelper {
@@ -37,10 +36,6 @@ export class ConfirmAppointmentPaidHelper {
       throw new Error('Failed to get user details');
     }
 
-    // Step 4: Convert UTC times to PDT
-    const pdtStartTime = convertUTCToPDT(appointment.start_time);
-    const pdtEndTime = convertUTCToPDT(appointment.end_time);
-
     // Step 5: Send confirmation emails to both mentee and mentor in parallel
     try {
       await Promise.all([
@@ -53,8 +48,8 @@ export class ConfirmAppointmentPaidHelper {
             userName: mentee.username,
             serviceName: appointment.service_type,
             mentorName: mentor.username,
-            appointmentStartTime: pdtStartTime,
-            appointmentEndTime: pdtEndTime
+            appointmentStartTime: appointment.start_time,
+            appointmentEndTime: appointment.end_time
           }
         ),
         // Send email to mentor
@@ -65,8 +60,8 @@ export class ConfirmAppointmentPaidHelper {
           {
             mentorName: mentor.username,
             serviceName: appointment.service_type,
-            appointmentStartTime: pdtStartTime,
-            appointmentEndTime: pdtEndTime,
+            appointmentStartTime: appointment.start_time,
+            appointmentEndTime: appointment.end_time,
             appointmentId: appointmentId
           }
         )

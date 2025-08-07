@@ -16,8 +16,7 @@ export interface SessionCanceledProps {
     recipientName: string;   // 收件人名字（mentee 或 mentor）
     mentorName: string;      // mentor 的名字
     appointmentId: string;
-    sessionDate: string;     // e.g. "2025-08-01"
-    sessionTime: string;     // e.g. "2:00 PM"
+    appointmentStartTime: string;  // Full UTC datetime string
     cancelReason?: string;   // 可选
     isMentee?: boolean;      // 标记收件人是否是 mentee
 }
@@ -26,63 +25,86 @@ const SessionCanceledEmail: React.FC<SessionCanceledProps> = ({
                                                                   recipientName,
                                                                   mentorName,
                                                                   appointmentId,
-                                                                  sessionDate,
-                                                                  sessionTime,
+                                                                  appointmentStartTime,
                                                                   cancelReason,
                                                                   isMentee = false,
-                                                              }) => (
-    <Html>
-        <Head />
-        <Preview>We’re Sorry – Your Session Has Been Canceled</Preview>
-        <Body style={main}>
-            <Container style={container}>
-                <Text style={h1}>We’re Sorry – Your Session Has Been Canceled</Text>
+                                                              }) => {
+    // Format the date and time using UTC to PDT conversion
+    const formatDateTime = (dateTimeStr: string) => {
+        const date = new Date(dateTimeStr);
+        return date.toLocaleString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            timeZone: 'America/Los_Angeles'
+        }) + ' PDT';
+    };
 
-                <Text style={text}>
-                    Hi {recipientName},
-                </Text>
+    // Extract date and time for display
+    const sessionDate = appointmentStartTime.split('T')[0];
+    const sessionTime = new Date(appointmentStartTime).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZone: 'America/Los_Angeles'
+    }) + ' PDT';
 
-                <Text style={text}>
-                    We’re sorry to inform you that your session with <strong>{mentorName}</strong>
-                    (Appointment ID: <em>{appointmentId}</em>) scheduled on{' '}
-                    <strong>{sessionDate} at {sessionTime}</strong> has been <strong>canceled</strong>.
-                </Text>
+    return (
+        <Html>
+            <Head />
+            <Preview>We're Sorry – Your Session Has Been Canceled</Preview>
+            <Body style={main}>
+                <Container style={container}>
+                    <Text style={h1}>We're Sorry – Your Session Has Been Canceled</Text>
 
-                {cancelReason && (
-                    <Section style={boxContainer}>
-                        <Text style={h2}>Reason Provided:</Text>
-                        <Text style={text}>{cancelReason}</Text>
-                    </Section>
-                )}
-
-                {/* 只有 mentee 收件人才能看到退款说明 */}
-                {isMentee && (
                     <Text style={text}>
-                        We will process your refund within 3–5 business days. If you have any questions,
-                        feel free to reply to this email or contact{' '}
-                        <Link
-                            href="mailto:contactus@mentorup.info"
-                            style={{ fontWeight: 'bold', color: '#1890FF' }}
-                        >
-                            contactus@mentorup.info
-                        </Link>.
+                        Hi {recipientName},
                     </Text>
-                )}
 
-                <Text style={text}>
-                    You can view and manage your appointments anytime at{' '}
-                    <Link href="https://www.mentorup.info">www.mentorup.info</Link>.
-                </Text>
+                    <Text style={text}>
+                        We're sorry to inform you that your session with <strong>{mentorName}</strong>
+                        (Appointment ID: <em>{appointmentId}</em>) scheduled on{' '}
+                        <strong>{sessionDate} at {sessionTime}</strong> has been <strong>canceled</strong>.
+                    </Text>
 
-                <Hr style={hr} />
+                    {cancelReason && (
+                        <Section style={boxContainer}>
+                            <Text style={h2}>Reason Provided:</Text>
+                            <Text style={text}>{cancelReason}</Text>
+                        </Section>
+                    )}
 
-                <Text style={footer}>
-                    Best regards,<br />The MentorUp Team
-                </Text>
-            </Container>
-        </Body>
-    </Html>
-);
+                    {/* 只有 mentee 收件人才能看到退款说明 */}
+                    {isMentee && (
+                        <Text style={text}>
+                            We will process your refund within 3–5 business days. If you have any questions,
+                            feel free to reply to this email or contact{' '}
+                            <Link
+                                href="mailto:contactus@mentorup.info"
+                                style={{ fontWeight: 'bold', color: '#1890FF' }}
+                            >
+                                contactus@mentorup.info
+                            </Link>.
+                        </Text>
+                    )}
+
+                    <Text style={text}>
+                        You can view and manage your appointments anytime at{' '}
+                        <Link href="https://www.mentorup.info">www.mentorup.info</Link>.
+                    </Text>
+
+                    <Hr style={hr} />
+
+                    <Text style={footer}>
+                        Best regards,<br />The MentorUp Team
+                    </Text>
+                </Container>
+            </Body>
+        </Html>
+    );
+};
 
 export default SessionCanceledEmail;
 

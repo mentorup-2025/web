@@ -581,7 +581,9 @@ paths:
       summary: Send an email using a template
       description: |
         Sends an email using a specified template with provided data.
-        Currently supports MenteeApptConfirmationEmail template.
+        Available templates: MenteeApptRequestEmail, MentorApptRequestEmail, ApptConfirmationEmail, 
+        RescheduleProposalSentEmail, RescheduleProposalReceivedEmail, UserSignUpConfirmationEmail, 
+        RefundProcessedEmail, OrderContactEmail, SessionReportIssueEmail, SessionCanceledEmail.
       tags:
         - Email
       requestBody:
@@ -613,9 +615,9 @@ paths:
                   example: "Appointment Confirmation - Mentorship Session"
                 type:
                   type: string
-                  enum: ["MenteeApptConfirmationEmail"]
+                  enum: ["MenteeApptRequestEmail", "MentorApptRequestEmail", "ApptConfirmationEmail", "RescheduleProposalSentEmail", "RescheduleProposalReceivedEmail", "UserSignUpConfirmationEmail", "RefundProcessedEmail", "OrderContactEmail", "SessionReportIssueEmail", "SessionCanceledEmail"]
                   description: Email template type
-                  example: "MenteeApptConfirmationEmail"
+                  example: "ApptConfirmationEmail"
                 message:
                   type: object
                   description: Template-specific data

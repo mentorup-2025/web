@@ -75,13 +75,14 @@ export async function POST(request: Request) {
         // 6. 如果取消，则发邮件
         if (input.status === 'canceled') {
             console.log('✉️ 检测到 status=canceled，开始发邮件流程');
-            // 拿 mentee
+            // 拿 mentee 和 mentor
             const mentee = await getUser(appointment.mentee_id);
             const mentor = await getUser(appointment.mentor_id);
             console.log('👤 getUser 返回 mentee =', mentee);
             console.log('👤 getUser 返回 mentor =', mentor);
+            
             // 6.1 发给 mentee
-            if (mentee && mentor) {
+            if (mentee?.email) {
                 console.log('✉️ 给 mentee:', mentee.email);
                 await sendEmail(
                     'MentorUp <contactus@mentorup.info>',
@@ -89,11 +90,10 @@ export async function POST(request: Request) {
                     EmailTemplate.SESSION_CANCELED,
                     {
                         recipientName: mentee.username,
-                        mentorName: mentor.username,
+                        mentorName: mentor?.username || 'Mentor',
                         appointmentId: input.appointment_id,
                         cancelReason: input.cancel_reason,
-                        sessionDate: appointment.start_time.split('T')[0],
-                        sessionTime: new Date(appointment.start_time).toLocaleTimeString(),
+                        appointmentStartTime: appointment.start_time,
                         isMentee: true,
                     }
                 );
@@ -102,41 +102,25 @@ export async function POST(request: Request) {
                 console.log('⚠️ mentee 没有 email，不发给 mentee');
             }
 
-            // 6.2 发给 support inbox
-            // console.log('✉️ 给 support inbox: contactus@mentorup.info');
-            // await sendEmail(
-            //     'MentorUp <contactus@mentorup.info>',
-            //     'contactus@mentorup.info',
-            //     EmailTemplate.SESSION_CANCELED,
-            //     {
-            //         recipientName: 'MentorUp Support',
-            //         appointmentId: input.appointment_id,
-            //         cancelReason: input.cancel_reason,
-            //         sessionDate: appointment.start_time.split('T')[0],
-            //         sessionTime: new Date(appointment.start_time).toLocaleTimeString(),
-            //     }
-            // );
-            // console.log('✅ 已发送取消邮件给 support inbox');
-
-            // 6.3 发给 mentor（复用同一个 SESSION_CANCELED 模板）
-            if (mentor?.email && mentee) {
+            // 6.2 发给 mentor
+            if (mentor?.email) {
+                console.log('✉️ 给 mentor:', mentor.email);
                 await sendEmail(
                     'MentorUp <contactus@mentorup.info>',
                     mentor.email,
                     EmailTemplate.SESSION_CANCELED,
                     {
-                        recipientName: mentor.username,      // 邮件里 “Hi {recipientName}”
-                        mentorName:    mentee.username,      // 邮件里 “your session with <strong>{mentorName}</strong>” 这儿反过来填 mentee
+                        recipientName: mentor.username,
+                        mentorName: mentee?.username || 'Mentee',
                         appointmentId: input.appointment_id,
-                        cancelReason:  input.cancel_reason!,
-                        sessionDate:   appointment.start_time.split('T')[0],
-                        sessionTime:   new Date(appointment.start_time).toLocaleTimeString(),
+                        cancelReason: input.cancel_reason!,
+                        appointmentStartTime: appointment.start_time,
                         isMentee: false,
                     }
                 );
                 console.log('✅ 已发送取消邮件给 mentor:', mentor.email);
             } else {
-                console.warn('⚠️ mentor.email 不可用，跳过给 mentor 发邮件');
+                console.log('⚠️ mentor 没有 email，不发给 mentor');
             }
         }
 

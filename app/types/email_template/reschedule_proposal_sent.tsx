@@ -28,7 +28,7 @@ const RescheduleProposalSentEmail: React.FC<RescheduleProposalSentProps> = ({
   originalEndTime,
   proposedTimeRanges
 }) => {
-  // Format the date and time
+  // Format the date and time using UTC to PDT conversion
   const formatDateTime = (dateTimeStr: string) => {
     const date = new Date(dateTimeStr);
     return date.toLocaleString('en-US', {
@@ -37,9 +37,9 @@ const RescheduleProposalSentEmail: React.FC<RescheduleProposalSentProps> = ({
       month: 'long',
       day: 'numeric',
       hour: 'numeric',
-      minute: 'numeric',
-      timeZoneName: 'short'
-    });
+      minute: '2-digit',
+      timeZone: 'America/Los_Angeles'
+    }) + ' PDT';
   };
 
   const formatOriginalTime = () => {
@@ -87,6 +87,11 @@ const RescheduleProposalSentEmail: React.FC<RescheduleProposalSentProps> = ({
             You'll receive an email notification once they respond. If you need to make any changes 
             to your proposal, please contact us at{' '}
             <Link href="mailto:contactus@mentorup.info">contactus@mentorup.info</Link>
+          </Text>
+
+          <Text style={text}>
+            You can view and manage your appointments by visiting{' '}
+            <Link href="https://www.mentorup.info">https://www.mentorup.info</Link>
           </Text>
 
           <Hr style={hr} />

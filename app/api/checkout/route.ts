@@ -6,37 +6,67 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 export async function POST(req: Request) {
-    const { amount, appointmentId } = await req.json();
+    const { amount, appointmentId, couponId, menteeUserId } = await req.json();
 
-    console.log('📥 Creating PaymentIntent with:', { amount, appointmentId });
+    console.log('📥 Creating Stripe Checkout Session with:', { amount, appointmentId, couponId, menteeUserId });
 
     if (!amount || !appointmentId) {
-        console.error('❌ Missing required fields:', { amount, appointmentId });
+        console.error('❌ Missing required fields:', { amount, appointmentId, menteeUserId });
         return NextResponse.json({ error: 'Missing amount or appointmentId' }, { status: 400 });
     }
 
     try {
-        const paymentIntent = await stripe.paymentIntents.create({
-            amount,
-            currency: 'usd',
-            automatic_payment_methods: { enabled: true },
+        // Create Stripe Checkout Session
+        const sessionConfig: Stripe.Checkout.SessionCreateParams = {
+            payment_method_types: ['card'],
+            line_items: [
+                {
+                    price_data: {
+                        currency: 'usd',
+                        product_data: {
+                            name: 'Mentoring Session',
+                            description: `Appointment ID: ${appointmentId}`,
+                        },
+                        unit_amount: amount, // amount in cents
+                    },
+                    quantity: 1,
+                },
+            ],
+            mode: 'payment',
+            expires_at: Math.floor(Date.now() / 1000) + (30 * 60), // 5 minutes from now
+            success_url: `https://www.mentorup.info/mentee-profile/${menteeUserId}`,
+            cancel_url: `https://www.mentorup.info/mentee-profile/${menteeUserId}`,
             metadata: {
                 appointmentId,
             },
+        };
+
+        // Add coupon if provided
+        if (couponId) {
+            sessionConfig.discounts = [
+                {
+                    coupon: couponId,
+                },
+            ];
+            console.log('🎫 Applying coupon:', couponId);
+        }
+
+        const session = await stripe.checkout.sessions.create(sessionConfig);
+
+        console.log('✅ Stripe Checkout Session created:', {
+            id: session.id,
+            status: session.status,
+            url: session.url?.slice(0, 50) + '...',
+            couponApplied: !!couponId,
         });
 
-        console.log('✅ PaymentIntent created:', {
-            id: paymentIntent.id,
-            status: paymentIntent.status,
-            clientSecret: paymentIntent.client_secret?.slice(0, 10) + '...',
-        });
-
+        // Return the session URL for frontend redirect
         return NextResponse.json({
-            clientSecret: paymentIntent.client_secret,
-            paymentIntentId: paymentIntent.id,
+            sessionId: session.id,
+            sessionUrl: session.url,
         });
     } catch (err) {
-        console.error('❌ PaymentIntent creation failed:', err);
-        return NextResponse.json({ error: 'Failed to create payment intent' }, { status: 500 });
+        console.error('❌ Stripe Checkout Session creation failed:', err);
+        return NextResponse.json({ error: 'Failed to create checkout session' }, { status: 500 });
     }
 }

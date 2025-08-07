@@ -79,7 +79,17 @@ export async function getRescheduleProposal(appointmentId: string): Promise<Resc
     // Transform the tstzrange array back to our interface format
     const proposal: RescheduleProposal = {
       id: data.id,
-      proposed_time: data.proposed_time.map((range: any) => [range.lower, range.upper]),
+      proposed_time: data.proposed_time.map((range: any) => {
+        if (typeof range === 'string') {
+          // Parse PostgreSQL range format: ["start","end")
+          const match = range.match(/\["([^"]+)","([^"]+)"\)/);
+          if (match) {
+            return [match[1], match[2]];
+          }
+        }
+        // Fallback to original logic for object format
+        return [range.lower, range.upper];
+      }),
       receiver: data.receiver,
       proposer: data.proposer,
       proposed_at: data.proposed_at,

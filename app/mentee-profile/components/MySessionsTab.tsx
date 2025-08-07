@@ -205,7 +205,7 @@ export default function MySessionsTab() {
 
         } catch (e: any) {
             console.error(e);
-            message.error(e.message || '加载失败');
+            message.error(e.message || 'Failed to load');
         } finally {
             setLoading(false);
         }
@@ -364,8 +364,18 @@ export default function MySessionsTab() {
                 return start.isBefore(beDay) && autoEnd.isAfter(bsDay);
             });
             if (conflict) {
-                message.warning('⚠️ 该时间段与已有的 session 冲突，请重选。');
+                message.warning('⚠️ This time slot conflicts with an existing session, please choose again.');
             }
+        }
+    };
+
+    // Add simple join functionality using existing appointment data
+    const handleJoinClick = (appt: UIAppointment) => {
+        if (appt.link) {
+            // Open the meet link in a new window/tab
+            window.open(appt.link, '_blank', 'noopener,noreferrer');
+        } else {
+            alert('No meeting link available yet. Please wait for the session to be confirmed.');
         }
     };
 
@@ -528,7 +538,7 @@ export default function MySessionsTab() {
                                                             <div key="noshow" onClick={() => showReportModal(appt)} style={{ cursor: 'pointer' }}>
                                                                 <FrownOutlined style={{ fontSize: 18 }} /><div>Report Issue</div>
                                                             </div>,
-                                                            <div key="join" onClick={() => {/*…*/}} style={{ cursor: 'pointer' }}>
+                                                            <div key="join" onClick={() => handleJoinClick(appt)} style={{ cursor: 'pointer' }}>
                                                                 <BellOutlined style={{ fontSize: 18 }} /><div>Join</div>
                                                             </div>,
                                                         ])

@@ -39,7 +39,7 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const { Title, Text } = Typography;
-// 在组件顶部或合适的位置
+// At the top of the component or in a suitable location
 function getShortTimeZone() {
     const dtf = new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' });
     const parts = dtf.formatToParts(new Date());
@@ -70,6 +70,7 @@ interface Appointment {
         avatar_url?: string;
     };
     proposal?: Proposal;
+    link?: string; // Added for meeting link
 }
 const bookedSlotsStatePlaceholder: [string, string][] = [];
 
@@ -150,23 +151,23 @@ export default function MySessionsTab() {
     });
     const handleSlotCalendarChange = (dates: [dayjs.Dayjs | null, dayjs.Dayjs | null], fieldName: number[]) => {
         const [start, end] = dates;
-        // 如果只选了开始时间
+        // If only start time is selected
         if (start && !end) {
             const autoEnd = start.add(1, 'hour');
-            // 直接把 form 插入 start + 1h
+            // Directly insert start + 1h into form
             form.setFieldsValue({
                 slots: form.getFieldValue('slots').map((slot: any, idx: number) =>
                     idx === fieldName[0] ? [start, autoEnd] : slot
                 )
             });
-            // 冲突检测
+            // Conflict detection
             const conflict = bookedSlots.some(([bs, be]) => {
                 const bsDay = toLocal(bs);
                 const beDay = toLocal(be);
                 return start.isBefore(beDay) && autoEnd.isAfter(bsDay);
             });
             if (conflict) {
-                message.warning('⚠️ 该时间段与已有的 session 冲突，请重选。');
+                message.warning('⚠️ This time slot conflicts with an existing session, please choose again.');
             }
         }
     };
@@ -178,7 +179,7 @@ export default function MySessionsTab() {
         (async () => {
             setLoading(true);
             try {
-                // 1) 拿到所有 appointments
+                // 1) Get all appointments
                 const apptRes = await fetch('/api/appointment/get', {
                     method: 'POST',
                     headers:{ 'Content-Type':'application/json' },
@@ -187,10 +188,10 @@ export default function MySessionsTab() {
                 const apptJson = await apptRes.json();
                 const rawAppts = apptJson.data.appointments as any[];
 
-                // —— 只保留当前用户是 mentor 的 appointment ——
+                // —— Only keep appointments where current user is mentor ——
                 const mentorAppts = rawAppts.filter(a => a.mentor_id === mentorId);
 
-                // 2) 预载入每条 appointment 的 mentee 信息
+                // 2) Pre-load mentee information for each appointment
                 const otherIds = Array.from(new Set(
                     mentorAppts.map(a => a.mentee_id)
                 ));
@@ -202,7 +203,7 @@ export default function MySessionsTab() {
                 }));
 
 
-                // 3) 为每条 appointment 拉它专属的 proposal
+                // 3) Get the specific proposal for each appointment
                 const enriched = await Promise.all(mentorAppts.map(async a => {
                     // parse timeslot…
                     const m = a.time_slot.match(/\[(.*?),(.*?)\)/) || [];
@@ -216,7 +217,7 @@ export default function MySessionsTab() {
 
                     const otherId = a.mentor_id === mentorId ? a.mentee_id : a.mentor_id;
 
-                    // --- 关键：这里用 otherId 去拉提案列表 ---
+                    // --- Key: Use otherId to get proposal list ---
                     const pRes = await fetch(`/api/reschedule_proposal/${mentorId}`);
                     const pJson = await pRes.json();
                     let proposal: Proposal|undefined = undefined;
@@ -245,12 +246,13 @@ export default function MySessionsTab() {
                         cancel_reason: a.cancel_reason,
                         service_type: a.service_type,
                         resume_url:  a.resume_url,
+                        link:        a.link, // Add the meet link
                         otherUser: {
                             id:       otherId,
                             username: userMap[otherId]?.username || 'Anonymous',
                             mentor:   userMap[otherId]?.mentor    || false,
                         },
-                        proposal,    // ← 一定要把它放进来
+                        proposal,    // ← Must include this
                     };
                 }));
 
@@ -259,7 +261,7 @@ export default function MySessionsTab() {
 
             } catch (e: any) {
                 console.error(e);
-                message.error(e.message || '加载失败');
+                message.error(e.message || 'Failed to load');
             } finally {
                 setLoading(false);
             }
@@ -271,7 +273,7 @@ export default function MySessionsTab() {
     }, [fetchAppointments]);
     const handleConfirmCurrentTime = async (appt: Appointment) => {
         try {
-            // 拆分 "HH:mm - HH:mm"
+            // Split "HH:mm - HH:mm"
             const [startStr, endStr] = appt.time.split(' - ');
             // 拼成完整的 ISO 时间
             const startISO = parseLocal(appt.date, startStr).toISOString();
@@ -287,10 +289,18 @@ export default function MySessionsTab() {
                 }),
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.message || '确认失败');
+            
+            // Debug: Log the response
+            console.log('🔍 API Response:', { status: res.status, ok: res.ok, data });
+            
+            // Check both HTTP status and API response code
+            if (!res.ok || data.code === -1) {
+                console.error('❌ API Error Response:', data);
+                throw new Error(data.message || 'Confirmation failed');
+            }
 
-            message.success('已确认会话时间');
-            // 本地更新状态
+            message.success('Session time confirmed');
+            // Update local state
             setAppointments(list =>
                 list.map(a =>
                     a.id === appt.id
@@ -299,17 +309,17 @@ export default function MySessionsTab() {
                 )
             );
         } catch (err: any) {
-            console.error(err);
-            message.error(err.message || '确认失败');
+            console.error('❌ Frontend Error:', err);
+            message.error(err.message || 'Confirmation failed');
         }
     };
-    // Accept：更新 appointment（status + time_slot）
+    // Accept: Update appointment (status + time_slot)
     const handleAccept = async (prop: Proposal) => {
         try {
             const selectedIdx = selectedProposal[prop.appointment_id];
             if (selectedIdx == null) {
                 // WARN -> WARNING
-                return message.warning('请先选择一个时间段');
+                return message.warning('Please select a time slot first');
             }
 
             const [start_time, end_time] = prop.proposed_time_ranges[selectedIdx];
@@ -320,9 +330,17 @@ export default function MySessionsTab() {
                 body: JSON.stringify({ appointment_id: prop.appointment_id, start_time, end_time }),
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.message || '确认失败');
+            
+            // Debug: Log the response
+            console.log('🔍 API Response (Accept):', { status: res.status, ok: res.ok, data });
+            
+            // Check both HTTP status and API response code
+            if (!res.ok || data.code === -1) {
+                console.error('❌ API Error Response (Accept):', data);
+                throw new Error(data.message || 'Confirmation failed');
+            }
 
-            message.success('已确认新时间');
+            message.success('New time confirmed');
             setAppointments(apps =>
                 apps.map(a =>
                     a.id === prop.appointment_id
@@ -339,7 +357,7 @@ export default function MySessionsTab() {
                 )
             );
         } catch (err: any) {
-            console.error(err);
+            console.error('❌ Frontend Error (Accept):', err);
             message.error(err.message);
         }
     };
@@ -477,7 +495,15 @@ export default function MySessionsTab() {
         setIsReportOpen(true);
     };
 
-
+    // Add simple join functionality using existing appointment data
+    const handleJoinClick = (appt: Appointment) => {
+        if (appt.link) {
+            // Open the meet link in a new window/tab
+            window.open(appt.link, '_blank', 'noopener,noreferrer');
+        } else {
+            alert('No meeting link available yet. Please wait for the session to be confirmed.');
+        }
+    };
 
 
     return (
@@ -661,7 +687,7 @@ export default function MySessionsTab() {
                                                     <div key="noshow" onClick={() => showReportModal(appt)} style={{ cursor: 'pointer' }}>
                                                         <FrownOutlined style={{ fontSize: 18 }} /><div>Report Issue</div>
                                                     </div>,
-                                                    <div key="join" onClick={() => {/*…*/}} style={{ cursor: 'pointer' }}>
+                                                    <div key="join" onClick={() => handleJoinClick(appt)} style={{ cursor: 'pointer' }}>
                                                         <BellOutlined style={{ fontSize: 18 }} /><div>Join</div>
                                                     </div>,
                                                 ]
@@ -954,9 +980,9 @@ export default function MySessionsTab() {
                                                             return Promise.reject('Pick a range');
                                                         const [s, e] = value;
                                                         if (![0,30].includes(s.minute()) || ![0,30].includes(e.minute()))
-                                                            return Promise.reject('分钟只能是 0 或 30');
+                                                            return Promise.reject('Minutes can only be 0 or 30');
                                                         if (e.diff(s, 'minutes') !== 60)
-                                                            return Promise.reject('时长必须为 1 小时');
+                                                            return Promise.reject('Duration must be 1 hour');
                                                         return Promise.resolve();
                                                     },
                                                 },
