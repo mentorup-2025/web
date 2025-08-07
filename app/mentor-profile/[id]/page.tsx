@@ -16,6 +16,7 @@ import {
   Checkbox,
   Popover,
   Upload,
+  Divider
 } from "antd";
 import {
   LinkedinFilled,
@@ -694,16 +695,24 @@ export default function MentorProfilePage() {
 
                 {/* —— Services 卡片 —— */}
                 <Card
-                  title="Services"
-                  extra={<EditOutlined onClick={() => setServicesModalVisible(true)} />}
-                  style={{ marginTop: 16, borderRadius: 4 }}
+                    title="Services"
+                    extra={<EditOutlined onClick={() => setServicesModalVisible(true)} />}
+                    style={{ marginTop: 16, borderRadius: 4 }}
                 >
+                  <div style={{ marginBottom: 16 }}>
+                    <Text>Price Per Session:</Text>{" "}
+                    <Text>${netPrice}</Text>
+                  </div>
+
+                  {/* grey horizontal line */}
+                  <Divider style={{ margin: "0 0 16px 0", borderColor: "#f0f0f0" }} />
+
                   {selectedLabels.length > 0 ? (
-                    selectedLabels.map((label) => (
-                      <Tag key={label}>{label}</Tag>
-                    ))
+                      selectedLabels.map((label) => (
+                          <Tag key={label}>{label}</Tag>
+                      ))
                   ) : (
-                    <Text type="secondary">No services selected</Text>
+                      <Text type="secondary">No services selected</Text>
                   )}
                 </Card>
 

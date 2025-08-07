@@ -682,6 +682,7 @@ export default function MySessionsTab() {
                             <Text type="secondary">Notes:</Text>
                             <p>{appt.description}</p>
                         </div>
+
                         {appt.resume_url && (() => {
                             // 1. 先取出最后一段 "1752650411087-jakes-resume.pdf"
                             const fullName = appt.resume_url.split('/').pop() || '';
