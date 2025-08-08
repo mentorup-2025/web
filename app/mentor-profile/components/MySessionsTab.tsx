@@ -57,6 +57,8 @@ interface Appointment {
     id: string;
     date: string;
     time: string;
+    startTime: string;
+    endTime:   string;
     status: string;
     description: string;
     cancel_reason: string;
@@ -113,13 +115,36 @@ export default function MySessionsTab() {
 
     const localTz = dayjs.tz.guess();
 
-    // Filter appointments by status
+    const toLocal = (timeStr?: string) => {
+        if (!timeStr) return dayjs(); // fallback to now
+        // 先尝试原始解析（有些带时区的字符串 dayjs 本身能处理）
+        let d = dayjs(timeStr);
+        if (!d.isValid()) {
+            // 把 "YYYY-MM-DD HH:mm:ss" 这种中间空格改成 T（更接近 ISO），限制只替换日期与时间之间
+            let normalized = timeStr.trim().replace(
+                /^(\d{4}-\d{2}-\d{2})[ T]+(\d{2}:\d{2}:\d{2}(?:\.\d+)?)/,
+                '$1T$2'
+            );
+            // 如果末尾没有时区信息（Z 或 ±hh:mm），假定是 UTC
+            if (!/[Zz]|[+-]\d{2}:\d{2}$/.test(normalized)) {
+                normalized += 'Z';
+            }
+            d = dayjs.utc(normalized);
+        }
+        return d.tz(localTz);
+    };
+
+    const parseLocal = (dateStr: string, timeStr: string) => {
+        return dayjs.tz(`${dateStr} ${timeStr}`, 'YYYY-MM-DD HH:mm', localTz);
+    };
+    const now = dayjs();
+    // 根据 status 来做分类
     const filteredAppointments = appointments.filter(a => {
         if (filter === 'upcoming') {
             return ['confirmed', 'paid', 'reschedule_in_progress'].includes(a.status);
         }
         if (filter === 'past') {
-            return a.status === 'completed';
+            return a.status === 'completed' || toLocal(a.endTime).isBefore(now);
         }
         // cancelled
         return ['canceled', 'noshow'].includes(a.status);
@@ -137,7 +162,8 @@ export default function MySessionsTab() {
             });
             // Conflict detection
             const conflict = bookedSlots.some(([bs, be]) => {
-                const bsDay = dayjs(bs), beDay = dayjs(be);
+                const bsDay = toLocal(bs);
+                const beDay = toLocal(be);
                 return start.isBefore(beDay) && autoEnd.isAfter(bsDay);
             });
             if (conflict) {
@@ -213,6 +239,8 @@ export default function MySessionsTab() {
                         time:        start.isValid() && end.isValid()
                             ? `${start.format('HH:mm')} - ${end.format('HH:mm')}`
                             : 'Invalid',
+                        startTime:    start.toISOString(),
+                        endTime:      end.toISOString(),
                         status:      a.status,
                         description: a.description,
                         cancel_reason: a.cancel_reason,
@@ -247,11 +275,9 @@ export default function MySessionsTab() {
         try {
             // Split "HH:mm - HH:mm"
             const [startStr, endStr] = appt.time.split(' - ');
-            
-            // Convert local time to UTC using user's timezone
-            const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            const startISO = dayjs.tz(`${appt.date} ${startStr}`, localTz).utc().toISOString();
-            const endISO   = dayjs.tz(`${appt.date} ${endStr}`, localTz).utc().toISOString();
+            // 拼成完整的 ISO 时间
+            const startISO = parseLocal(appt.date, startStr).toISOString();
+            const endISO = parseLocal(appt.date, endStr).toISOString();
 
             const res = await fetch('/api/appointment/confirm', {
                 method: 'POST',
@@ -325,7 +351,7 @@ export default function MySessionsTab() {
                                 ...a.proposal!,
                                 status: 'accepted',
                             },
-                            time: `${dayjs(start_time).format('HH:mm')} - ${dayjs(end_time).format('HH:mm')}`,
+                            time: `${toLocal(start_time).format('HH:mm')} - ${toLocal(end_time).format('HH:mm')}`,
                         }
                         : a
                 )
@@ -439,7 +465,7 @@ export default function MySessionsTab() {
                     if (appt.status === 'confirmed') {
                         // 拆出结束时间
                         const [, endStr] = appt.time.split(' - ')
-                        const endMoment = dayjs(`${appt.date} ${endStr}`, 'YYYY-MM-DD HH:mm')
+                        const endMoment = parseLocal(appt.date, endStr);
                         // 如果现在已经超过结束时间 1 分钟
                         if (dayjs().isAfter(endMoment.add(1, 'minute'))) {
                             // 1) 本地更新状态
@@ -502,8 +528,8 @@ export default function MySessionsTab() {
             ) : (
                 [...filteredAppointments]
                     .sort((a, b) => {
-                        const aStart = dayjs(`${a.date} ${a.time.split(' - ')[0]}`, 'YYYY-MM-DD HH:mm');
-                        const bStart = dayjs(`${b.date} ${b.time.split(' - ')[0]}`, 'YYYY-MM-DD HH:mm');
+                        const aStart = parseLocal(a.date, a.time.split(' - ')[0]);
+                        const bStart = parseLocal(b.date, b.time.split(' - ')[0]);
                         return aStart.diff(bStart); // 时间近的排前面
                     })
                     .map(appt => (
@@ -531,10 +557,7 @@ export default function MySessionsTab() {
                                             Waiting for Confirmation
                                         </Text>
                                     ) : (() => {
-                                        const start = dayjs(
-                                            `${appt.date} ${appt.time.split(' - ')[0]}`,
-                                            'YYYY-MM-DD HH:mm'
-                                        );
+                                        const start = parseLocal(appt.date, appt.time.split(' - ')[0]);
                                         const now = dayjs();
                                         const diffInHours = start.diff(now, 'hour');
                                         // 如果小于等于 0，就不显示任何东西
@@ -583,8 +606,8 @@ export default function MySessionsTab() {
                                         top: 2,
                                         background: appt.status === 'canceled' ? '#FFF1F0' : '#E6F7FF',
                                         border: appt.status === 'canceled'
-                                            ? '1px dashed #FFA39E'
-                                            : '1px dashed #91D5FF',
+                                            ? '1px solid #FFA39E'
+                                            : '1px solid #91D5FF',
                                         borderRadius: 2,
                                         fontWeight: 400,
                                         fontSize: 12,
@@ -685,6 +708,7 @@ export default function MySessionsTab() {
                             <Text type="secondary">Notes:</Text>
                             <p>{appt.description}</p>
                         </div>
+
                         {appt.resume_url && (() => {
                             // 1. 先取出最后一段 "1752650411087-jakes-resume.pdf"
                             const fullName = appt.resume_url.split('/').pop() || '';
@@ -904,8 +928,8 @@ export default function MySessionsTab() {
                             <Space>
                                 {/*<BellOutlined />*/}
                                 <Text>
-                                    {dayjs(range[0]).format('MM/DD dddd h:mmA')} –{' '}
-                                    {dayjs(range[1]).format('h:mmA')} {getShortTimeZone()}
+                                    {toLocal(range[0]).format('MM/DD dddd h:mmA')} –{' '}
+                                    {toLocal(range[1]).format('h:mmA')} {getShortTimeZone()}
                                 </Text>
                             </Space>
                         </Radio>

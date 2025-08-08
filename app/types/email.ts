@@ -9,6 +9,8 @@ export enum EmailTemplate {
   ORDER_CONTACT = 'OrderContactEmail',
 
   SESSION_REPORT_ISSUE              = 'SessionReportIssueEmail',
+  SESSION_REPORT_ISSUE_RECEIPT      = 'SessionReportIssueReceiptEmail',
+
   SESSION_CANCELED                  = 'SessionCanceledEmail',
 }
 
@@ -29,5 +31,7 @@ export const EMAIL_TEMPLATE_TITLES: Record<EmailTemplate, string> = {
   [EmailTemplate.REFUND_PROCESSED]: 'Your Refund from MentorUp Has Been Processed',
   [EmailTemplate.ORDER_CONTACT]: 'We\'ve Received Your Request About Your Appointment',
   [EmailTemplate.SESSION_REPORT_ISSUE]:            '[Action Required] Issue Reported for Your Session',
+  [EmailTemplate.SESSION_REPORT_ISSUE_RECEIPT]:    "Your Issue Has Been Received – We're Working on It",
+
   [EmailTemplate.SESSION_CANCELED]:       'Your MentorUp Session Has Been Canceled',
 };

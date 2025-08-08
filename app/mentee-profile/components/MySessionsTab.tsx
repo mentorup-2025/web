@@ -120,13 +120,33 @@ export default function MySessionsTab() {
     const [reportReason, setReportReason] = useState('');
     const [isRescheduleSlotsModalOpen, setIsRescheduleSlotsModalOpen] = useState(false);
     const localTz = dayjs.tz.guess();
+    const toLocal = (timeStr?: string) => {
+        if (!timeStr) return dayjs(); // fallback to now
+        // 如果原始能被 dayjs 直接解析，优先用它（再转 tz）
+        let d = dayjs(timeStr);
+        if (!d.isValid()) {
+            // 1. 把 "YYYY-MM-DD HH:mm:ss" 这种中间空格替换成 T（只针对日期时间之间那一段）
+            let normalized = timeStr.trim().replace(
+                /^(\d{4}-\d{2}-\d{2})[ T]+(\d{2}:\d{2}:\d{2}(?:\.\d+)?)/,
+                '$1T$2'
+            );
+            // 2. 如果末尾没有明确 offset 或 Z，就假定是 UTC
+            if (!/[Zz]|[+-]\d{2}:\d{2}$/.test(normalized)) {
+                normalized += 'Z';
+            }
+            d = dayjs.utc(normalized);
+        }
+        return d.tz(localTz);
+    };
+
+    const now     = dayjs();
     // 根据 status 来做分类
     const filteredAppointments = appointments.filter(a => {
         if (filter === 'upcoming') {
             return ['confirmed', 'paid', 'reschedule_in_progress'].includes(a.status);
         }
         if (filter === 'past') {
-            return a.status === 'completed';
+            return a.status === 'completed' || dayjs(a.end_time).isBefore(now);
         }
         // cancelled
         return ['canceled', 'noshow'].includes(a.status);
@@ -339,8 +359,8 @@ export default function MySessionsTab() {
             });
             // 冲突检测
             const conflict = bookedSlots.some(([bs, be]) => {
-                const bsDay = dayjs.utc(bs).tz(localTz)
-                const beDay = dayjs.utc(be).tz(localTz)
+                const bsDay = toLocal(bs);
+                const beDay = toLocal(be);
                 return start.isBefore(beDay) && autoEnd.isAfter(bsDay);
             });
             if (conflict) {
@@ -378,16 +398,15 @@ export default function MySessionsTab() {
             ) : (
                 [...filteredAppointments]
                     .sort((a, b) => {
-                        const aStart = dayjs.utc(a.start_time).tz(localTz)
-                        const bStart = dayjs.utc(b.start_time).tz(localTz)
+                        const aStart = toLocal(a.start_time);
+                        const bStart = toLocal(b.start_time);
                         return aStart.diff(bStart);
                     })
                     .map(appt => {
-                        const localTz = dayjs.tz.guess()
-                        const start = dayjs.utc(appt.start_time).tz(localTz)
-                        const end   = dayjs.utc(appt.end_time).tz(localTz)
-                        const date  = start.format('YYYY-MM-DD')
-                        const time  = `${start.format('HH:mm')} - ${end.format('HH:mm')}`
+                        const start = toLocal(appt.start_time);
+                        const end = toLocal(appt.end_time);
+                        const date = start.format('YYYY-MM-DD');
+                        const time = `${start.format('HH:mm')} - ${end.format('HH:mm')}`;
                         const proposal = proposals.find(p => p.id === appt.id);
                         const otherUserId = appt.mentor_id === menteeId ? appt.mentee_id : appt.mentor_id;
                         const otherUser = userMap[otherUserId];
@@ -412,10 +431,13 @@ export default function MySessionsTab() {
                                                 </Text>
                                                 : <Text style={{ marginLeft:54,fontWeight:700,fontSize:16,color:'#1890FF' }}>
                                                     {(() => {
-                                                        const start = dayjs.utc(appt.start_time).tz(localTz)
-                                                        const now = dayjs();
+                                                        const start = toLocal(appt.start_time);
+                                                        const now = dayjs(); // 本地时间
                                                         const diffInHours = start.diff(now, 'hour');
                                                         const diffInDays = start.diff(now, 'day');
+                                                        if (diffInHours <= 0) {
+                                                            return null;
+                                                        }
                                                         if (diffInHours < 24) {
                                                             return `In ${diffInHours} Hours`;
                                                         } else {
@@ -436,8 +458,8 @@ export default function MySessionsTab() {
                                                 gap: 10,
                                                 background: appt.status === 'canceled' ? '#FFF1F0' : '#E6F7FF',
                                                 border: appt.status === 'canceled'
-                                                    ? '1px dashed #FFA39E'
-                                                    : '1px dashed #91D5FF',
+                                                    ? '1px solid #FFA39E'
+                                                    : '1px solid #91D5FF',
                                                 borderRadius: 2,
                                                 fontWeight: 400,
                                                 fontSize: 12,
@@ -588,7 +610,9 @@ export default function MySessionsTab() {
             >
                 <div style={{ marginBottom:16 }}>
                     <Text strong>Session Time:</Text>{' '}
-                    <Text style={{ fontWeight:400 }}>{confirmAppt && `${dayjs.utc(confirmAppt.start_time).tz(localTz).format('YYYY-MM-DD HH:mm')} – ${dayjs.utc(confirmAppt.end_time).tz(localTz).format('HH:mm')} ${getShortTimeZone()}`}</Text>
+                    <Text style={{ fontWeight:400 }}>
+                        {confirmAppt && `${toLocal(confirmAppt.start_time).format('YYYY-MM-DD HH:mm')} – ${toLocal(confirmAppt.end_time).format('HH:mm')} ${getShortTimeZone()}`}
+                    </Text>
                 </div>
                 <div style={{ marginBottom:12, display:'flex',alignItems:'center' }}>
                     <Text strong style={{ marginRight:8 }}>Mentor:</Text>
@@ -639,13 +663,13 @@ export default function MySessionsTab() {
                 >
                     <Text style={{ marginRight:8, color:'#1890FF' }}>Original Time:</Text>
                     <Text delete style={{ color:'rgba(0,0,0,0.45)', fontSize:14, lineHeight:'22px' }}>
-                        {reviewAppt && `${dayjs(reviewAppt.start_time).format('YYYY-MM-DD HH:mm')} - ${dayjs(reviewAppt.end_time).format('HH:mm')} ${getShortTimeZone()}`}
+                        {reviewAppt && `${toLocal(reviewAppt.start_time).format('YYYY-MM-DD HH:mm')} - ${toLocal(reviewAppt.end_time).format('HH:mm')} ${getShortTimeZone()}`}
                     </Text>
                     {proposals
                         .find(p => p.id === reviewAppt?.id)
                         ?.proposed_time.map((range, idx) => {
-                            const s = dayjs.utc(range[0]).tz(localTz);
-                            const e = dayjs.utc(range[1]).tz(localTz);
+                            const s = toLocal(range[0]);
+                            const e = toLocal(range[1]);
                             return (
                                 <Radio key={idx} value={idx} style={{ display: 'block', margin: '8px 0' }}>
                                     <Space>
