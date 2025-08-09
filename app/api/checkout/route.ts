@@ -33,6 +33,7 @@ export async function POST(req: Request) {
                 },
             ],
             mode: 'payment',
+            allow_promotion_codes: true,
             expires_at: Math.floor(Date.now() / 1000) + (30 * 60), // 5 minutes from now
             success_url: `https://www.mentorup.info/mentee-profile/${menteeUserId}`,
             cancel_url: `https://www.mentorup.info/mentee-profile/${menteeUserId}`,
