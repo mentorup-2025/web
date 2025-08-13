@@ -17,6 +17,7 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import styles from './mentorAvailability.module.css';
 import { supabase } from '../../services/supabase';
 import { ClockCircleOutlined } from '@ant-design/icons';
+import { netToGross } from '../../services/priceHelper';
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrBefore);
@@ -252,9 +253,16 @@ export default function MentorAvailability({
                                         ? `${Math.floor(durationMinutes / 60)}h${durationMinutes % 60 ? ` ${durationMinutes % 60}m` : ''}`
                                         : `${durationMinutes}m`;
 
-                                    const firstPaidService = services.find(s => s.price > 0);
+                                    const firstPaidService =
+                                        services.find(s =>
+                                            s &&
+                                            typeof s.type === 'string' &&
+                                            !/free coffee chat/i.test(s.type) &&
+                                            (s.price ?? 0) > 0
+                                        );
+
                                     const price = firstPaidService
-                                        ? `$${Math.floor(firstPaidService.price)}`
+                                        ? `$${netToGross(firstPaidService.price)}`
                                         : 'Free';
 
                                     const slotKey = `${selectedDate.format('YYYY-MM-DD')}|${slot}`;

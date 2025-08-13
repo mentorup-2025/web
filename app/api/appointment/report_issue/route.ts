@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
                     {
                         recipientName: reporterName,
                         appointmentId,
-                        issueDescription: text,
+                        reportReason: text,
                     }
                 );
                 console.log('✅ 已发送 receipt email 给 reporter:', reporterEmail);

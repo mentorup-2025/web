@@ -7,7 +7,7 @@ import styles from '../search.module.css';
 import { useEffect, useState } from 'react';
 import { Mentor, SearchFiltersType } from '../../../types';
 import { isFreeCoffeeChat } from '../../services/constants';
-
+import { netToGross } from '../../services/priceHelper';
 
 interface MentorGridProps {
   filters: SearchFiltersType;
@@ -120,10 +120,10 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
               {(() => {
                 const servicesArr = Object.values(user.mentor.services);
                 const firstNonCoffeeChat = servicesArr.find(service =>
-                  !isFreeCoffeeChat(service.type)
+                    !isFreeCoffeeChat(service.type)
                 );
                 if (firstNonCoffeeChat) {
-                  return `$${firstNonCoffeeChat.price.toString().split('.')[0]}/hour`;
+                  return `$${netToGross(firstNonCoffeeChat.price)}/hour`;
                 } else {
                   return '';
                 }
