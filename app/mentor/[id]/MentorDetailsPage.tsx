@@ -37,6 +37,7 @@ import NavBar from '../../components/Navbar';
 import moment from 'moment-timezone';
 
 import { isFreeCoffeeChat } from '../../services/constants';
+import { netToGross } from '../../services/priceHelper';
 
 const { Content } = Layout;
 const { Title, Text } = Typography;
@@ -236,10 +237,14 @@ export default function MentorDetailsPage() {
             endTimeObj = dayjs(`${dateStr} ${endTimeStr}`, 'YYYY-MM-DD h:mm A');
           }
 
-          const calculatedPrice =
-              mentor.services.find((s: any) => s.type === supportType)?.price ?? 1500;
+          const rawNetPrice =
+              mentor.services.find((s: any) => s.type === supportType)?.price ?? 0;
 
-          setPrice(isFreeCoffeeChat(supportType) ? 0 : calculatedPrice);
+          const calculatedPrice = isFreeCoffeeChat(supportType)
+              ? 0
+              : netToGross(rawNetPrice);
+
+          setPrice(calculatedPrice);
 
           // ✅ 如果是免费 coffee chat，直接预约成功，无需进入支付
           if (isFreeCoffeeChat(supportType)) {
@@ -367,8 +372,13 @@ export default function MentorDetailsPage() {
                   <div className={styles.serviceTags}>
                     {Array.isArray(mentor.services) && mentor.services.length > 0 ? (
                         mentor.services.map((service: any, idx: number) => (
+
                             <Tag key={idx} className={styles.serviceTag}>
-                              {service.type} - ${Math.floor(service.price)}
+                              {service.type} - ${
+                              isFreeCoffeeChat(service.type)
+                                  ? 0
+                                  : netToGross(service.price)
+                            }
                             </Tag>
                         ))
                     ) : (
@@ -680,8 +690,12 @@ export default function MentorDetailsPage() {
 
                               const start_time = startTimeObj.toISOString();
                               const end_time = endTimeObj.toISOString();
-                              const calculatedPrice =
-                                  mentor.services?.find((s: any) => s.type === supportType)?.price ?? 1500;
+                              const rawNetPrice =
+                                  mentor.services?.find((s: any) => s.type === supportType)?.price ?? 0;
+
+                              const calculatedPrice = isFreeCoffeeChat(supportType)
+                                  ? 0
+                                  : netToGross(rawNetPrice);
 
                               const response = await fetch('/api/appointment/insert', {
                                 method: 'POST',

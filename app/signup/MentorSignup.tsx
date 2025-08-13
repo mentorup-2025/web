@@ -424,7 +424,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
   const onFinish = async (allValues: any) => {
     try {
       // construct services array from selected services and base price - Price logic: $5 + 45% markup
-      const services = (allValues.servicesList || []).map((type: string) => ({ type, price: isFreeCoffeeChat(type) ? 0 : 5 + 1.45 * (allValues.basePrice || 0) }));
+      const services = (allValues.servicesList || []).map((type: string) => ({ type, price: isFreeCoffeeChat(type) ? 0 : allValues.basePrice || 0 }));
 
       const mentorData = {
         company: (allValues.company || '').trim(),

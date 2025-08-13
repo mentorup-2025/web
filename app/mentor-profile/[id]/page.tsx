@@ -35,6 +35,7 @@ import PaymentTab from "../components/PaymentTab";
 import styles from "../mentorProfile.module.css";
 import { useUser } from "@clerk/nextjs";
 import { allServiceTypes } from "../../services/constants";
+import { netToGross, grossToNet } from "../../services/priceHelper";
 
 const { Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -242,12 +243,11 @@ export default function MentorProfilePage() {
       const nonFree = services.find(
           (svc: any) => svc.type !== "Free Coffee Chat (15 Mins)"
       );
-      // if there is a paid service: (price − 5) ÷ 1.45; otherwise 0
-      const initialNet = nonFree
-          ? (Number(nonFree.price) - 5) / 1.45
-          : 0;
-      setNetPrice(initialNet);
 
+      const initialNet = nonFree && nonFree.price != null
+          ? Number(nonFree.price)
+          : 0;
+      setNetPrice(Number.isFinite(initialNet) ? initialNet : 0);
       // finally store all the data
       setMentorData(data);
     } catch (err) {
@@ -331,7 +331,11 @@ export default function MentorProfilePage() {
     setServicesModalVisible(false);
     try {
       // gross margin back-calculate
-      const gross = netPrice * 1.45 + 5;
+      // const normalizedNet = Number(netPrice);
+      // if (Number.isNaN(normalizedNet) || normalizedNet < 0) {
+      //   message.error("Please enter a valid non-negative price.");
+      //   return;
+      // }
 
       const servicesPayload = Object.entries(draftServices)
           .filter(([_, checked]) => checked)
@@ -340,7 +344,7 @@ export default function MentorProfilePage() {
             // Free Coffee Chat always 0, everything else uses gross
             const price = label === "Free Coffee Chat (15 Mins)"
                 ? 0
-                : Number(gross.toFixed(1));
+                : Number(netPrice);
             return { type: label, price };
           });
 
