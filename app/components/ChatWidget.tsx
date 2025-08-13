@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { useUser } from "@clerk/nextjs";
@@ -41,24 +41,45 @@ function SuggestionButtons({ onSelect }: { onSelect: (msg: string) => void }) {
     );
 }
 
-function GuestChatContent({ messages, onSelect }: { messages: { role: string; content: string }[], onSelect: (msg: string) => void }) {
+function GuestChatContent({
+                              messages,
+                              onSelect,
+                          }: {
+    messages: { role: string; content: string }[];
+    onSelect: (msg: string) => void;
+}) {
+    // 底部锚点（未登录视图）
+    const endRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        endRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, [messages]);
+
     return (
         <div className="fixed bottom-20 right-6 w-80 h-[500px] bg-white shadow-2xl rounded-xl z-50 flex flex-col text-[14px]">
             <div className="flex-1 p-4 overflow-y-auto space-y-2">
                 {messages.map((msg, i) => (
                     <div key={i}>
-                        <div className={`${msg.role === "user" ? "text-right" : "text-left ml-2 mr-auto"}`}>
-                            <span
-                                className={`inline-block max-w-[75%] px-3 py-2 rounded-2xl ${msg.role === "user" ? "bg-blue-100" : "bg-blue-200"} text-black text-[13px]`}
-                            >
-                                <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
-                            </span>
+                        <div
+                            className={`${
+                                msg.role === "user" ? "text-right" : "text-left ml-2 mr-auto"
+                            }`}
+                        >
+              <span
+                  className={`inline-block max-w-[75%] px-3 py-2 rounded-2xl ${
+                      msg.role === "user" ? "bg-blue-100" : "bg-blue-200"
+                  } text-black text-[13px]`}
+              >
+                <pre className="whitespace-pre-wrap font-sans">
+                  {msg.content}
+                </pre>
+              </span>
                         </div>
-                        {msg.role === "system" && (
-                            <SuggestionButtons onSelect={onSelect} />
-                        )}
+                        {msg.role === "system" && <SuggestionButtons onSelect={onSelect} />}
                     </div>
                 ))}
+                {/* 底部锚点 */}
+                <div ref={endRef} />
             </div>
             <div className="p-3 text-[12px] text-gray-500 text-center">
                 Still have questions?{" "}
@@ -80,6 +101,15 @@ export default function ChatWidget() {
     ]);
     const [input, setInput] = useState("");
     const [expectingEmailType, setExpectingEmailType] = useState<null | "refund" | "order">(null);
+
+    // 底部锚点（登录视图）
+    const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+    // 每次消息有变化或面板刚打开时，滚动到底部
+    useEffect(() => {
+        if (!open) return;
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, [messages, open]);
 
     if (!isLoaded || pathname === "/") return null;
 
@@ -126,15 +156,14 @@ export default function ChatWidget() {
         if (content === "Refund requests") {
             setExpectingEmailType(null); // 取消之前自动发送邮件行为（改为模板提示）
 
-            botReplyContent = `To request a refund, please email us at contactus@mentorup.info using the refund request template below:\n\n` +
+            botReplyContent =
+                `To request a refund, please email us at contactus@mentorup.info using the refund request template below:\n\n` +
                 `#Your Name:\n` +
                 `#Email used for booking:\n` +
                 `#Session details:\n` +
                 `#Reason for refund:\n` +
                 `#Additional details (if any):`;
-
-        }
-        else if (content === "Orders or appointments contact") {
+        } else if (content === "Orders or appointments contact") {
             setExpectingEmailType(null); // 不再自动发送邮件
             botReplyContent =
                 "To help you with your order or appointment, please email us using the template below:\n\n" +
@@ -189,15 +218,15 @@ export default function ChatWidget() {
                                 <div key={i}>
                                     {msg.role === "user" ? (
                                         <div className="text-right">
-                <span className="inline-block max-w-[80%] px-3 py-2 rounded-2xl bg-blue-100 text-black text-[13px]">
-                  <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
-                </span>
+                      <span className="inline-block max-w-[80%] px-3 py-2 rounded-2xl bg-blue-100 text-black text-[13px]">
+                        <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
+                      </span>
                                         </div>
                                     ) : (
                                         <div className="text-left ml-2 mr-auto">
-                <span className="inline-block max-w-[75%] px-3 py-2 rounded-2xl bg-blue-200 text-black text-[13px]">
-                  <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
-                </span>
+                      <span className="inline-block max-w-[75%] px-3 py-2 rounded-2xl bg-blue-200 text-black text-[13px]">
+                        <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
+                      </span>
                                         </div>
                                     )}
                                     {(i === 0 || (msg.role === "system" && i !== 0)) && (
@@ -205,14 +234,13 @@ export default function ChatWidget() {
                                     )}
                                 </div>
                             ))}
+                            {/* 登录视图的底部锚点 */}
+                            <div ref={messagesEndRef} />
                         </div>
 
                         <div className="p-3 text-[12px] text-gray-500 text-center">
                             Still have questions?{" "}
-                            <a
-                                href="mailto:contactus@mentorup.info"
-                                className="text-blue-500 underline"
-                            >
+                            <a href="mailto:contactus@mentorup.info" className="text-blue-500 underline">
                                 Send us an email
                             </a>
                         </div>
@@ -220,7 +248,6 @@ export default function ChatWidget() {
                 ) : (
                     <GuestChatContent messages={messages} onSelect={handleUserInput} />
                 ))}
-
         </>
     );
 }
