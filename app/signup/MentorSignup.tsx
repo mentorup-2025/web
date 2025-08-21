@@ -187,7 +187,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
 
     const steps = [
         {
-            title: 'Current Status',
+            title: 'Name and contact',
             content: (
                 <>
                     <Form.Item
@@ -201,6 +201,8 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                     {/* ---------- Avatar section (required) ---------- */}
                     <Form.Item
                         label="Please upload your profile picture"
+                        name="avatar"
+                        rules={[{ required: true, message: 'Please upload your profile picture!' }]}
                         style={{ marginBottom: 8 }}
                     >
                         <div
@@ -217,17 +219,17 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                                 icon={<UserOutlined />}
                                 style={{ flex: '0 0 auto' }}
                             />
-                            <div style={{ lineHeight: 1.4, color: '#8c8c8c' }}>
-                                <div>Recommended size: 240 × 240 px</div>
-                                <div>JPG, PNG, GIF, Max size: 3MB</div>
-                            </div>
-                            <div style={{ marginLeft: 'auto' }}>
-                                <Button icon={<UploadOutlined />} onClick={() => setUploadImageVisible(true)}>
-                                    Upload
-                                </Button>
-                            </div>
+
+                            {/* 直接把按钮放在 Avatar 右边 */}
+                            <Button
+                                icon={<UploadOutlined />}
+                                onClick={() => setUploadImageVisible(true)}
+                            >
+                                Upload
+                            </Button>
                         </div>
                     </Form.Item>
+
 
                     <Form.Item
                         name="currentStatus"
