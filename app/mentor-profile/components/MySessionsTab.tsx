@@ -34,9 +34,11 @@ import {
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
+dayjs.extend(customParseFormat);
 
 const { Title, Text } = Typography;
 // At the top of the component or in a suitable location
@@ -115,27 +117,35 @@ export default function MySessionsTab() {
 
     const localTz = dayjs.tz.guess();
 
-    const toLocal = (timeStr?: string) => {
-        if (!timeStr) return dayjs(); // fallback to now
-        // 先尝试原始解析（有些带时区的字符串 dayjs 本身能处理）
-        let d = dayjs(timeStr);
-        if (!d.isValid()) {
-            // 把 "YYYY-MM-DD HH:mm:ss" 这种中间空格改成 T（更接近 ISO），限制只替换日期与时间之间
-            let normalized = timeStr.trim().replace(
-                /^(\d{4}-\d{2}-\d{2})[ T]+(\d{2}:\d{2}:\d{2}(?:\.\d+)?)/,
-                '$1T$2'
-            );
-            // 如果末尾没有时区信息（Z 或 ±hh:mm），假定是 UTC
-            if (!/[Zz]|[+-]\d{2}:\d{2}$/.test(normalized)) {
-                normalized += 'Z';
-            }
-            d = dayjs.utc(normalized);
+    function toLocal(input?: string) {
+        const localTz = dayjs.tz.guess();
+        if (!input) return dayjs(); // fallback
+
+        const raw = String(input).trim();
+
+        // 如果已带时区或是标准 ISO，只把空格替成 T
+        if (/[Zz]|[+-]\d{2}:\d{2}$/.test(raw)) {
+            const iso = raw.replace(' ', 'T');
+            return dayjs(iso).tz(localTz);
         }
-        return d.tz(localTz);
-    };
+
+        // 兼容：YYYY-MM-DD HH:mm 或 YYYY-MM-DD HH:mm:ss(.SSS)
+        const m = raw.match(
+            /^(\d{4}-\d{2}-\d{2})[ T](\d{2}):(\d{2})(?::(\d{2})(\.\d+)?)?$/
+        );
+        if (m) {
+            const [, d, hh, mm, ss = '00', frac = ''] = m;
+            const iso = `${d}T${hh}:${mm}:${ss}${frac}Z`; // 视为 UTC
+            return dayjs(iso).tz(localTz);
+        }
+
+        // 最后兜底：让 dayjs 尝试（可能仍会 invalid）
+        return dayjs(raw).tz(localTz);
+    }
 
     const parseLocal = (dateStr: string, timeStr: string) => {
-        return dayjs.tz(`${dateStr} ${timeStr}`, 'YYYY-MM-DD HH:mm', localTz);
+        const localTz = dayjs.tz.guess();
+        return dayjs.tz(`${dateStr}T${timeStr}`, 'YYYY-MM-DDTHH:mm', localTz);
     };
     const now = dayjs();
     // 根据 status 来做分类
@@ -212,8 +222,8 @@ export default function MySessionsTab() {
                     // const start = m[1] ? dayjs.utc(m[1]).local() : dayjs.invalid;
                     // const end   = m[2] ? dayjs.utc(m[2]).local() : dayjs.invalid;
                     // note: not ideal, but use today's date as fallback
-                    const start = m[1] ? dayjs.utc(m[1]).tz(localTz) : dayjs.utc(new Date());
-                    const end   = m[2] ? dayjs.utc(m[2]).tz(localTz) : dayjs.utc(new Date());
+                    const start = m[1] ? toLocal(m[1]) : dayjs();
+                    const end   = m[2] ? toLocal(m[2]) : dayjs();
 
                     const otherId = a.mentor_id === mentorId ? a.mentee_id : a.mentor_id;
 
@@ -235,12 +245,12 @@ export default function MySessionsTab() {
 
                     return {
                         id:          a.id,
-                        date:        start.isValid() ? start.format('YYYY-MM-DD') : 'Invalid',
-                        time:        start.isValid() && end.isValid()
+                        date:        start.isValid() ? start.format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'),
+                        time:        (start.isValid() && end.isValid())
                             ? `${start.format('HH:mm')} - ${end.format('HH:mm')}`
-                            : 'Invalid',
-                        startTime:    start.toISOString(),
-                        endTime:      end.toISOString(),
+                            : `${dayjs().format('HH:mm')} - ${dayjs().add(1, 'hour').format('HH:mm')}`,
+                        startTime:    start.isValid() ? start.toISOString() : dayjs().toISOString(),
+                        endTime:      end.isValid() ? end.toISOString() : dayjs().add(1, 'hour').toISOString(),
                         status:      a.status,
                         description: a.description,
                         cancel_reason: a.cancel_reason,
