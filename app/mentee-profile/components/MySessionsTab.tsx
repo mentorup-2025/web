@@ -119,6 +119,59 @@ export default function MySessionsTab() {
     const [isReportOpen, setIsReportOpen] = useState(false);
     const [reportReason, setReportReason] = useState('');
     const [isRescheduleSlotsModalOpen, setIsRescheduleSlotsModalOpen] = useState(false);
+
+    // ===== Feedback states =====
+    const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+    const [isThanksOpen, setIsThanksOpen] = useState(false);
+    const [feedbackRating, setFeedbackRating] = useState<number | null>(null);
+    const [feedbackComment, setFeedbackComment] = useState('');
+    const [feedbackLoading, setFeedbackLoading] = useState(false);
+
+    type ReviewItem = {
+        id: string;
+        reviewerId: string;
+        rating: number;
+        comment?: string;
+        createdAt?: string;
+    };
+    const [revieweeReviews, setRevieweeReviews] = useState<ReviewItem[]>([]);
+    const [reviewsLoading, setReviewsLoading] = useState(false);
+    const [feedbackTarget, setFeedbackTarget] = useState<{ revieweeId: string; apptId: string } | null>(null);
+
+    const EMOJIS = [
+        { value: 1, label: '😡' },
+        { value: 2, label: '😟' },
+        { value: 3, label: '😐' },
+        { value: 4, label: '😊' },
+        { value: 5, label: '😄' },
+    ];
+
+    // 拉取某个被评对象的历史评价
+    const fetchReviewsByReviewee = useCallback(async (revieweeId: string) => {
+        setReviewsLoading(true);
+        try {
+            const res = await fetch(
+                `/web/app/api/reviews/list_by_reviewee?revieweeId=${encodeURIComponent(revieweeId)}`
+            );
+            const data = await res.json();
+            const list = Array.isArray(data) ? data : data?.data;
+            setRevieweeReviews(Array.isArray(list) ? list : []);
+        } catch (err) {
+            console.error('fetch reviews error', err);
+            setRevieweeReviews([]);
+        } finally {
+            setReviewsLoading(false);
+        }
+    }, []);
+
+    const openWriteComment = (appt: UIAppointment) => {
+        // 被评对象选导师；如需评 mentee，改为 appt.mentee_id
+        const revieweeId = appt.mentor_id;
+        setFeedbackTarget({ revieweeId, apptId: appt.id });
+        setFeedbackComment('');
+        setIsFeedbackOpen(true);
+    };
+
     const localTz = dayjs.tz.guess();
     const toLocal = (timeStr?: string) => {
         if (!timeStr) return dayjs(); // fallback to now
@@ -480,68 +533,76 @@ export default function MySessionsTab() {
                                         // Past 分页只显示 Report Issue
                                         ? [
                                             <div
+                                                key="write-comment"
+                                                onClick={() => openWriteComment(appt)}
+                                                style={{ cursor: 'pointer' }}
+                                            >
+                                                <BellOutlined style={{ fontSize: 18 }} />
+                                                <div>Write a comment</div>
+                                            </div>,
+                                            <div
                                                 key="report-issue"
                                                 onClick={() => showReportModal(appt)}
                                                 style={{ cursor: 'pointer' }}
                                             >
                                                 <FrownOutlined style={{ fontSize: 18 }} />
                                                 <div>Report Issue</div>
-                                            </div>
+                                            </div>,
                                         ]
                                         // 非 past：走你原来的逻辑
                                         : !!proposal   // ← 这里替换原先的 `proposal`
                                             ? [
-                                                    <Button
-                                                        key="review"
-                                                        type="primary"
-                                                        style={{ width: '100%' }}
-                                                        onClick={() => {
-                                                            if (appt.status === 'paid') {
-                                                                setConfirmAppt(appt);
-                                                                setIsConfirmOpen(true);
-                                                            } else {
-                                                                setReviewAppt(appt);
-                                                                setIsReviewOpen(true);
-                                                            }
-                                                        }}
-                                                    >
-                                                        <BellOutlined style={{ marginRight: 8 }} />
-                                                        Review and Confirm the Session Request
-                                                    </Button>
-                                                ]
-                                                : (
-                                                    appt.status === 'canceled' || appt.status === 'noshow'
-                                                        ? []
-                                                        : [
-                                                            <div
-                                                                key="reschedule"
-                                                                onClick={() => {
-                                                                    if (appt.service_type === 'Free Coffee Chat (15 Mins)') {
-                                                                        return; // 禁用状态，不响应
-                                                                    }
-                                                                    showRescheduleReasonModal(appt);
-                                                                }}
-                                                                style={{
-                                                                    cursor: appt.service_type === 'Free Coffee Chat (15 Mins)' ? 'not-allowed' : 'pointer',
-                                                                    opacity: appt.service_type === 'Free Coffee Chat (15 Mins)' ? 0.5 : 1,
-                                                                    display: 'flex',
-                                                                    flexDirection: 'column',
-                                                                    alignItems: 'center'
-                                                                }}
-                                                            >
-                                                                <CalendarTwoTone style={{ fontSize: 18 }} />
-                                                                <div>Reschedule</div>
-                                                            </div>,
-                                                            <div key="cancel" onClick={() => showCancelModal(appt)} style={{ cursor: 'pointer' }}>
-                                                                <CloseCircleOutlined style={{ fontSize: 18 }} /><div>Cancel</div>
-                                                            </div>,
-                                                            <div key="noshow" onClick={() => showReportModal(appt)} style={{ cursor: 'pointer' }}>
-                                                                <FrownOutlined style={{ fontSize: 18 }} /><div>Report Issue</div>
-                                                            </div>,
-                                                            <div key="join" onClick={() => handleJoinClick(appt)} style={{ cursor: 'pointer' }}>
-                                                                <BellOutlined style={{ fontSize: 18 }} /><div>Join</div>
-                                                            </div>,
-                                                        ])
+                                                <Button
+                                                    key="review"
+                                                    type="primary"
+                                                    style={{ width: '100%' }}
+                                                    onClick={() => {
+                                                        if (appt.status === 'paid') {
+                                                            setConfirmAppt(appt);
+                                                            setIsConfirmOpen(true);
+                                                        } else {
+                                                            setReviewAppt(appt);
+                                                            setIsReviewOpen(true);
+                                                        }
+                                                    }}
+                                                >
+                                                    <BellOutlined style={{ marginRight: 8 }} />
+                                                    Review and Confirm the Session Request
+                                                </Button>
+                                            ]
+                                            : (
+                                                appt.status === 'canceled' || appt.status === 'noshow'
+                                                    ? []
+                                                    : [
+                                                        <div
+                                                            key="reschedule"
+                                                            onClick={() => {
+                                                                if (appt.service_type === 'Free Coffee Chat (15 Mins)') {
+                                                                    return; // 禁用状态，不响应
+                                                                }
+                                                                showRescheduleReasonModal(appt);
+                                                            }}
+                                                            style={{
+                                                                cursor: appt.service_type === 'Free Coffee Chat (15 Mins)' ? 'not-allowed' : 'pointer',
+                                                                opacity: appt.service_type === 'Free Coffee Chat (15 Mins)' ? 0.5 : 1,
+                                                                display: 'flex',
+                                                                flexDirection: 'column',
+                                                                alignItems: 'center'
+                                                            }}
+                                                        >
+                                                            <CalendarTwoTone style={{ fontSize: 18 }} />
+                                                            <div>Reschedule</div>
+                                                        </div>,
+                                                        <div key="cancel" onClick={() => showCancelModal(appt)} style={{ cursor: 'pointer' }}>
+                                                            <CloseCircleOutlined style={{ fontSize: 18 }} /><div>Cancel</div>
+                                                        </div>,
+                                                        <div key="noshow" onClick={() => showReportModal(appt)} style={{ cursor: 'pointer' }}>
+                                                            <FrownOutlined style={{ fontSize: 18 }} /><div>Report Issue</div>
+                                                        </div>,
+                                                        <div key="join" onClick={() => handleJoinClick(appt)} style={{ cursor: 'pointer' }}>
+                                                            <BellOutlined style={{ fontSize: 18 }} /><div>Join</div>
+                                                        </div>,
+                                                    ])
 
                                 }
                             >
@@ -700,10 +761,10 @@ export default function MySessionsTab() {
             >
                 <p style={{ marginBottom:8 }}>
                     Based on your availability, please propose 3–5 one-hour time slots for <strong>Mentor:</strong> <u>{currentAppt && (() => {
-                        const otherUserId = currentAppt.mentor_id === menteeId ? currentAppt.mentee_id : currentAppt.mentor_id;
-                        const otherUser = userMap[otherUserId];
-                        return otherUser?.username;
-                    })()}</u>
+                    const otherUserId = currentAppt.mentor_id === menteeId ? currentAppt.mentee_id : currentAppt.mentor_id;
+                    const otherUser = userMap[otherUserId];
+                    return otherUser?.username;
+                })()}</u>
                 </p>
                 <Form form={form} layout="vertical" name="rescheduleForm">
                     <Form.List name="slots" initialValue={[]}>
@@ -897,6 +958,102 @@ export default function MySessionsTab() {
                         Report an Issue to MentorUp
                     </Button>
                 </Space>
+            </Modal>
+            {/* Feedback (Write a comment) Modal */}
+            <Modal
+                title="Share Your Feedback"
+                open={isFeedbackOpen}
+                onCancel={() => setIsFeedbackOpen(false)}
+                footer={[
+                    <Button key="back" onClick={() => setIsFeedbackOpen(false)}>Back</Button>,
+                    <Button
+                        key="submit"
+                        type="primary"
+                        loading={feedbackLoading}
+                        disabled={!feedbackComment.trim()}
+                        onClick={async () => {
+                            if (!feedbackTarget) return;
+                            try {
+                                setFeedbackLoading(true);
+                                const res = await fetch('/api/reviews/insert', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        reviewee: feedbackTarget.revieweeId,
+                                        reviewer: menteeId,
+                                        content: feedbackComment.trim(),
+                                    }),
+                                });
+                                const data = await res.json().catch(() => ({}));
+                                if (!res.ok) throw new Error(data?.message || 'Submit failed');
+
+                                setIsFeedbackOpen(false);
+                                setIsThanksOpen(true);
+                                setFeedbackComment('');
+                            } catch (e:any) {
+                                message.error(e?.message || 'Failed to submit review');
+                            } finally {
+                                setFeedbackLoading(false);
+                            }
+                        }}
+                    >
+                        Submit
+                    </Button>
+                ]}
+            >
+                <div style={{ marginBottom: 16 }}>
+                    <Text strong>1. How satisfied are you with this mentorship session?</Text>
+                    <div style={{ marginTop: 12 }}>
+                        <Radio.Group
+                            value={feedbackRating ?? undefined}
+                            onChange={(e) => setFeedbackRating(e.target.value)}
+                        >
+                            <Space size="large">
+                                {EMOJIS.map(e => (
+                                    <Radio key={e.value} value={e.value} aria-label={`rating-${e.value}`}>
+                                        <span style={{ fontSize: 24, lineHeight: 1 }}>{e.label}</span>
+                                    </Radio>
+                                ))}
+                            </Space>
+                        </Radio.Group>
+                    </div>
+                </div>
+
+                <div style={{ marginBottom: 8 }}>
+                    <Text strong>2. Please add a review for your session.</Text>
+                </div>
+                <Input.TextArea
+                    placeholder="Share any feedback about your mentor or the session experience..."
+                    autoSize={{ minRows: 4 }}
+                    value={feedbackComment}
+                    onChange={(e) => setFeedbackComment(e.target.value)}
+                />
+
+
+            </Modal>
+            {/* Thank you Modal */}
+            <Modal
+                open={isThanksOpen}
+                footer={[
+                    <Button key="back" onClick={() => setIsThanksOpen(false)}>Back to My Session</Button>,
+                    <Button
+                        key="check"
+                        type="primary"
+                        onClick={() => {
+                            setIsThanksOpen(false);
+                            // 这里可以跳转到“我的评论”页，或刷新当前
+                            // router.push('/my/reviews') 之类；此处简单刷新
+                            // fetchAppointments();
+                        }}
+                    >
+                        Check my review
+                    </Button>
+                ]}
+                onCancel={() => setIsThanksOpen(false)}
+            >
+                <div style={{ textAlign: 'center', padding: '12px 8px' }}>
+                    <Title level={4} style={{ marginBottom: 0 }}>Thank you for your feedback!</Title>
+                </div>
             </Modal>
         </div>
     );
