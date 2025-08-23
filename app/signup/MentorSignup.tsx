@@ -148,6 +148,9 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
             else setAvatarPreview(URL.createObjectURL(file));
 
             setAvatarUploaded(true);
+            // 关键：把字段写回 Form，并清除校验错误
+            form.setFieldsValue({ avatar: url || 'uploaded' });
+            form.validateFields(['avatar']).catch(() => {});
             notification.success({ message: 'Profile image updated successfully' });
             setUploadImageVisible(false);
         } else {
@@ -609,11 +612,20 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
 
     return (
         <div className={styles.mentorSignup}>
-            <Steps current={current} className={`stepsClassName ${styles.steps}`} onChange={handleStepClick}>
+            <Steps
+                current={current}
+                onChange={handleStepClick}
+                className={`stepsClassName ${styles.steps}`}
+                direction="horizontal"        // 强制横向
+                labelPlacement="vertical"     // 文案放在点的下方，更省空间
+                responsive={false}            // 不随屏幕自动切换为竖向
+                size="small"                  // 更紧凑
+            >
                 {steps.map((item) => (
                     <Step key={item.title} title={item.title} />
                 ))}
             </Steps>
+
             <div className={styles.stepsContent}>
                 <div>
                     {current === 0 && (

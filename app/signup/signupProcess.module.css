@@ -1,268 +1,348 @@
 .layout {
-  min-height: 100vh;
+    min-height: 100vh;
 }
 
 .mainLayout {
-  padding: 24px;
-  padding-top: 100px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: linear-gradient(175deg, 
-    #f9f0ff 0%, 
-    #f9f0ff 30%, 
-    transparent 30.1%, 
-    transparent 100%
-  );
+    padding: 24px;
+    padding-top: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(
+            175deg,
+            #f9f0ff 0%,
+            #f9f0ff 30%,
+            transparent 30.1%,
+            transparent 100%
+    );
 }
 
 .content {
-  max-width: 800px;
-  width: 100%;
-  padding: 24px;
+    max-width: 800px;
+    width: 100%;
+    padding: 24px;
 }
 
 .userTypeSelection {
-  text-align: center;
-  margin-bottom: 32px;
+    text-align: center;
+    margin-bottom: 32px;
 }
 
 .userTypeSelection h2 {
-  margin-bottom: 16px;
-  color: #1f1f1f;
+    margin-bottom: 16px;
+    color: #1f1f1f;
 }
 
 .mentorSignup {
-  width: 100%;
+    width: 100%;
 }
 
-/* step progress bar  */
-.mentorSignup > div:first-child{
-  margin-top: 50px;
-  margin-bottom: 75px;
+/* step progress bar */
+.mentorSignup > div:first-child {
+    margin-top: 50px;
+    margin-bottom: 75px;
 }
 
+/* ---- Steps：固定一行横排，不再滑动 ---- */
 .steps {
-  margin-bottom: 32px;
+    margin-bottom: 56px; /* 预留空间，避免与下方内容重叠 */
+    overflow-x: hidden;
+    padding-bottom: 0;
 }
 
+/* 水平步骤容器占满一行并平均分布 */
+.steps :global(.ant-steps-horizontal) {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    flex-wrap: nowrap; /* 始终一行 */
+}
 
+/* 每个步骤平分宽度 */
+.steps :global(.ant-steps-item) {
+    flex: 1 1 0;
+    min-width: 0;        /* 防止被文字撑破 */
+    text-align: center;
+}
 
+/* 图标+文字 垂直堆叠并居中 */
+.steps :global(.ant-steps-item-container) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;   /* 水平居中 */
+    justify-content: center;
+}
 
-/* Override Ant Design Steps styles */
+/* 让 icon 居中 */
+.steps :global(.ant-steps-item-icon) {
+    margin: 0 auto;
+}
+
+/* 内容整体居中，与 icon 间隔 */
+.steps :global(.ant-steps-item-content) {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;   /* ✅ 强制文字与 icon 同一中心 */
+    justify-content: center;
+    width: auto;           /* 不要占满 100%，否则会偏 */
+    text-align: center;
+}
+
+/* —— 标题：按单词换行（每行一个单词），并与 icon 居中对齐 —— */
+.steps :global(.ant-steps-item-title) {
+    white-space: normal;       /* 允许换行 */
+    word-break: keep-all;      /* 仅在空格处断行 */
+    overflow-wrap: normal;
+    text-overflow: clip;
+    text-align: center;
+    line-height: 1.3;
+    font-size: 14px;
+    display: inline-block;     /* 使 max-width 生效并精确居中 */
+    max-width: 10ch;           /* 控制一行容纳一个单词宽度 */
+}
+
+/* 保留横向连线 */
+.steps :global(.ant-steps-horizontal .ant-steps-item-tail) {
+    display: block !important;
+}
+
+/* ---- 颜色风格覆盖 ---- */
 .steps :global(.ant-steps-item-active .ant-steps-item-icon) {
-  background-color: #9254DE !important;
-  border-color: #9254DE !important;
+    background-color: #9254DE !important;
+    border-color: #9254DE !important;
 }
 
 .steps :global(.ant-steps-item-finish .ant-steps-item-icon) {
-  border-color: #9254DE !important;
+    border-color: #9254DE !important;
 }
 
 .steps :global(.ant-steps-item-finish .ant-steps-item-icon .ant-steps-icon) {
-  color: #9254DE !important;
+    color: #9254DE !important;
 }
 
 .steps :global(.ant-steps-item-finish .ant-steps-item-tail::after) {
-  background-color: #9254DE !important;
+    background-color: #9254DE !important;
 }
 
 .steps :global(.ant-steps-item-process .ant-steps-item-icon) {
-  background-color: #9254DE !important;
-  border-color: #9254DE !important;
+    background-color: #9254DE !important;
+    border-color: #9254DE !important;
 }
-
-/* Change step layout to vertical */
-.steps :global(.ant-steps-item) {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.steps :global(.ant-steps-item-title) {
-  margin-top: 8px !important;
-  margin-left: 0 !important;
-  padding-right: 0 !important;
-}
-
-.steps :global(.ant-steps-item-tail) {
-  display: none !important;
-}
-
-.steps :global(.ant-steps-item-title)::after {
-  background-color: #9254DE;
-  top: -28px;
-} 
 
 .stepsContent {
-  margin-top: 16px;
+    margin-top: 16px;
 }
 
 .stepsContent h2 {
-  font-size: 24px;
-  text-align: center;
-  font-weight: 400;
-  color: #1f1f1f;
-  margin-bottom: 50px;
+    font-size: 24px;
+    text-align: center;
+    font-weight: 400;
+    color: #1f1f1f;
+    margin-bottom: 50px;
 }
 
 .stepsContent h2 .blue {
-  color: #9254DE;
+    color: #9254DE;
 }
+
 .button {
-  background-color: #9254DE;
+    background-color: #9254DE;
 }
 .button:hover,
-.button:where(.css-dev-only-do-not-override-1d4w9r2).ant-btn-variant-solid:not(:disabled):not(.ant-btn-disabled):hover  {
-  background-color: #7729d6!important;
+.button:where(.css-dev-only-do-not-override-1d4w9r2).ant-btn-variant-solid:not(:disabled):not(.ant-btn-disabled):hover {
+    background-color: #7729d6 !important;
 }
 
 .form {
-  max-width: 600px;
-  margin: 0 auto;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 .stepsAction {
-  margin-top: 24px;
-  text-align: center;
+    margin-top: 24px;
+    text-align: center;
 }
 
 .confirmationContent {
-  text-align: center;
-  padding: 32px;
+    text-align: center;
+    padding: 32px;
 }
 
 .confirmationContent h2 {
-  margin-bottom: 16px;
-  color: #1f1f1f;
+    margin-bottom: 16px;
+    color: #1f1f1f;
 }
 
 .confirmationContent p {
-  margin-bottom: 24px;
-  color: rgba(0, 0, 0, 0.45);
-  font-size: 16px;
+    margin-bottom: 24px;
+    color: rgba(0, 0, 0, 0.45);
+    font-size: 16px;
 }
 
 .industriesSection {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 20px;
 }
 
 .industryBubbles {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  justify-content: center;
-  padding: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+    padding: 20px;
 }
 
 .industryBubble {
-  cursor: pointer;
-  padding: 12px 24px;
-  border-radius: 30px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 2px solid #e6e6e6;
-  background-color: white;
-  font-weight: 500;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  position: relative;
-  overflow: hidden;
+    cursor: pointer;
+    padding: 12px 24px;
+    border-radius: 30px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid #e6e6e6;
+    background-color: white;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
 }
 
 .industryBubble:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border-color: #9254DE;
-  color: #9254DE;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-color: #9254DE;
+    color: #9254DE;
 }
 
 .industryBubble.selected {
-  background-color: #9254DE;
-  color: white;
-  border-color: #9254DE;
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+    background-color: #9254DE;
+    color: white;
+    border-color: #9254DE;
+    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
 }
 
 .industryBubble.selected:hover {
-  background-color: #7729d6;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(24, 144, 255, 0.4);
+    background-color: #7729d6;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(24, 144, 255, 0.4);
 }
 
 .selectedIndustries {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 24px;
-  padding: 16px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  min-height: 60px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+    padding: 16px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    min-height: 60px;
 }
 
 .selectedIndustries .ant-tag {
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-  background-color: #e6f7ff;
-  border-color: #91d5ff;
-  color: #1890ff;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    background-color: #e6f7ff;
+    border-color: #91d5ff;
+    color: #1890ff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .selectedIndustries .ant-tag-close-icon {
-  color: #1890ff;
-  font-size: 12px;
-  margin-left: 4px;
+    color: #1890ff;
+    font-size: 12px;
+    margin-left: 4px;
 }
 
 .serviceTypes {
-  margin-top: 16px;
-  padding: 16px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
+    margin-top: 16px;
+    padding: 16px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
 }
 
 .serviceTypes p {
-  margin-bottom: 12px;
-  color: #666;
-  font-size: 14px;
+    margin-bottom: 12px;
+    color: #666;
+    font-size: 14px;
 }
 
 .serviceTypes ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
 .serviceTypes li {
-  padding: 8px 0;
-  color: #333;
-  font-size: 14px;
-  border-bottom: 1px solid #eee;
+    padding: 8px 0;
+    color: #333;
+    font-size: 14px;
+    border-bottom: 1px solid #eee;
 }
 
 .serviceTypes li:last-child {
-  border-bottom: none;
+    border-bottom: none;
 }
 
 /* Responsive styles */
 @media (max-width: 768px) {
-  .mainLayout {
-    padding: 16px;
-    padding-top: 200px;
-  }
+    .mainLayout {
+        padding: 16px;
+        padding-top: 200px;
+    }
 
-  .content {
-    padding: 16px;
-  }
+    .content {
+        padding: 16px;
+    }
 
-  .steps {
-    padding: 0 16px;
-  }
-} 
+    /* 小屏同样保持固定一行、不滚动；按单词换行并与 icon 居中 */
+    .steps {
+        padding: 0 16px;
+        overflow-x: hidden;
+    }
+
+    .steps :global(.ant-steps-horizontal) {
+        justify-content: space-between;
+        flex-wrap: nowrap;
+    }
+
+    .steps :global(.ant-steps-item) {
+        flex: 1 1 0;
+        min-width: 0;
+        text-align: center;
+    }
+
+    .steps :global(.ant-steps-item-container) {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .steps :global(.ant-steps-item-content) {
+        width: 100%;
+        text-align: center;
+        margin-top: 8px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .steps :global(.ant-steps-item-title) {
+        white-space: normal;     /* 允许换行 */
+        word-break: keep-all;    /* 只在空格处断行 */
+        overflow-wrap: normal;
+        text-overflow: clip;
+        font-size: 13px;
+        display: inline-block;
+        max-width: 9ch;          /* 保证一行一个单词（可按需要微调 8-11ch） */
+        text-align: center;
+        line-height: 1.3;
+    }
+
+    .steps :global(.ant-steps-horizontal .ant-steps-item-tail) {
+        display: block !important;
+    }
+}
