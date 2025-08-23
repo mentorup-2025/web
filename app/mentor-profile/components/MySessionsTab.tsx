@@ -117,36 +117,91 @@ export default function MySessionsTab() {
 
     const localTz = dayjs.tz.guess();
 
-    function toLocal(input?: string) {
+    // 定义兼容 iOS 的 dayjs 包装
+    const _dayjs = (date?: string | Date, c?: any) => {
+        if (typeof date === 'string') {
+            date = date.replace(/-/g, '/');  // iOS 兼容
+        }
+        return dayjs(date, c);
+    };
+
+// 统一可接受的输入格式（按常见后端/数据库输出排列）
+    const KNOWN_FORMATS = [
+        'YYYY-MM-DD HH:mm',
+        'YYYY-MM-DD HH:mm:ss',
+        'YYYY-MM-DDTHH:mm',
+        'YYYY-MM-DDTHH:mm:ss',
+        'YYYY/MM/DD HH:mm',
+        'YYYY/MM/DD HH:mm:ss',
+        // 带毫秒
+        'YYYY-MM-DD HH:mm:ss.SSS',
+        'YYYY-MM-DDTHH:mm:ss.SSS',
+        'YYYY/MM/DD HH:mm:ss.SSS',
+    ];
+
+// 判断是否已带时区（Z 或 ±hh:mm）
+    const hasTZ = (s: string) => /[Zz]|[+-]\d{2}:\d{2}$/.test(s);
+
+// 解析到“有时区的 dayjs 实例”，再转到本地时区显示
+    function toLocal(input?: string | Date) {
         const localTz = dayjs.tz.guess();
-        if (!input) return dayjs(); // fallback
 
-        const raw = String(input).trim();
+        if (!input) return dayjs('');
 
-        // 如果已带时区或是标准 ISO，只把空格替成 T
-        if (/[Zz]|[+-]\d{2}:\d{2}$/.test(raw)) {
-            const iso = raw.replace(' ', 'T');
-            return dayjs(iso).tz(localTz);
+        if (input instanceof Date) {
+            return dayjs(input).tz(localTz);
         }
 
-        // 兼容：YYYY-MM-DD HH:mm 或 YYYY-MM-DD HH:mm:ss(.SSS)
-        const m = raw.match(
-            /^(\d{4}-\d{2}-\d{2})[ T](\d{2}):(\d{2})(?::(\d{2})(\.\d+)?)?$/
-        );
-        if (m) {
-            const [, d, hh, mm, ss = '00', frac = ''] = m;
-            const iso = `${d}T${hh}:${mm}:${ss}${frac}Z`; // 视为 UTC
-            return dayjs(iso).tz(localTz);
+        let raw = String(input).trim();
+
+        // iOS 兼容：仅在“无时区且非 ISO T”时做 -/-> / 替换
+        if (!hasTZ(raw) && raw.includes('-') && !raw.includes('T')) {
+            raw = raw.replace(/-/g, '/');
         }
 
-        // 最后兜底：让 dayjs 尝试（可能仍会 invalid）
-        return dayjs(raw).tz(localTz);
+        const isoish = raw.replace(' ', 'T');
+
+        // 1) 明确带时区：按原时区读，再转本地
+        if (hasTZ(raw)) {
+            const d = dayjs(isoish);
+            return d.isValid() ? d.tz(localTz) : dayjs('');
+        }
+
+        // 2) 有 'T' 但无时区：按 UTC 解析，再转本地
+        if (/T/.test(raw)) {
+            for (const fmt of [
+                'YYYY-MM-DDTHH:mm',
+                'YYYY-MM-DDTHH:mm:ss',
+                'YYYY-MM-DDTHH:mm:ss.SSS',
+            ]) {
+                const d = dayjs.tz(isoish, fmt, 'UTC').tz(localTz);
+                if (d.isValid()) return d;
+            }
+        }
+
+        // 3) 无 'T' 且无时区：按 UTC 解析，再转本地
+        for (const fmt of KNOWN_FORMATS) {
+            const d = dayjs.tz(raw, fmt, 'UTC').tz(localTz);
+            if (d.isValid()) return d;
+        }
+
+        return dayjs('');
     }
 
-    const parseLocal = (dateStr: string, timeStr: string) => {
+// 把“某天 + 时分”解析为本地时区的时刻（用于拼确认时间）
+    function parseLocal(dateStr: string, timeStr: string) {
         const localTz = dayjs.tz.guess();
-        return dayjs.tz(`${dateStr}T${timeStr}`, 'YYYY-MM-DDTHH:mm', localTz);
-    };
+
+        // 统一用空格拼，不用 T，避免奇怪平台误判
+        const raw = `${dateStr} ${timeStr}`.trim();
+
+        // 同样按上面的已知格式严格解析
+        for (const fmt of ['YYYY-MM-DD HH:mm', 'YYYY/MM/DD HH:mm']) {
+            const d = dayjs.tz(raw, fmt, localTz);
+            if (d.isValid()) return d;
+        }
+        return dayjs('');
+    }
     const now = dayjs();
     // 根据 status 来做分类
     const filteredAppointments = appointments.filter(a => {
@@ -222,8 +277,8 @@ export default function MySessionsTab() {
                     // const start = m[1] ? dayjs.utc(m[1]).local() : dayjs.invalid;
                     // const end   = m[2] ? dayjs.utc(m[2]).local() : dayjs.invalid;
                     // note: not ideal, but use today's date as fallback
-                    const start = m[1] ? toLocal(m[1]) : dayjs();
-                    const end   = m[2] ? toLocal(m[2]) : dayjs();
+                    const start = m[1] ? toLocal(m[1]) : dayjs('');
+                    const end   = m[2] ? toLocal(m[2]) : dayjs('');
 
                     const otherId = a.mentor_id === mentorId ? a.mentee_id : a.mentor_id;
 
@@ -286,8 +341,13 @@ export default function MySessionsTab() {
             // Split "HH:mm - HH:mm"
             const [startStr, endStr] = appt.time.split(' - ');
             // 拼成完整的 ISO 时间
-            const startISO = parseLocal(appt.date, startStr).toISOString();
-            const endISO = parseLocal(appt.date, endStr).toISOString();
+            const s = parseLocal(appt.date, startStr);
+            const e = parseLocal(appt.date, endStr);
+            if (!s.isValid() || !e.isValid()) {
+                return message.error('Invalid time format');
+            }
+            const startISO = s.toDate().toISOString();
+            const endISO   = e.toDate().toISOString();
 
             const res = await fetch('/api/appointment/confirm', {
                 method: 'POST',
@@ -299,10 +359,10 @@ export default function MySessionsTab() {
                 }),
             });
             const data = await res.json();
-            
+
             // Debug: Log the response
             console.log('🔍 API Response:', { status: res.status, ok: res.ok, data });
-            
+
             // Check both HTTP status and API response code
             if (!res.ok || data.code === -1) {
                 console.error('❌ API Error Response:', data);
@@ -340,10 +400,10 @@ export default function MySessionsTab() {
                 body: JSON.stringify({ appointment_id: prop.appointment_id, start_time, end_time }),
             });
             const data = await res.json();
-            
+
             // Debug: Log the response
             console.log('🔍 API Response (Accept):', { status: res.status, ok: res.ok, data });
-            
+
             // Check both HTTP status and API response code
             if (!res.ok || data.code === -1) {
                 console.error('❌ API Error Response (Accept):', data);
@@ -543,39 +603,56 @@ export default function MySessionsTab() {
                         return aStart.diff(bStart); // 时间近的排前面
                     })
                     .map(appt => (
-                    <Card
-                        key={appt.id}
-                        style={{ marginBottom: 16 }}
-                        title={
-                            <Space align="center" style={{ position: 'relative', width: '100%' }}>
-                                <CalendarOutlined />
-                                <Text strong>{appt.date}</Text>
-                                <ClockCircleOutlined style={{ marginLeft: 16 }} />
-                                <Text strong>{appt.time} {getShortTimeZone()}</Text>
+                        <Card
+                            key={appt.id}
+                            style={{ marginBottom: 16 }}
+                            title={
+                                <Space align="center" style={{ position: 'relative', width: '100%' }}>
+                                    <CalendarOutlined />
+                                    <Text strong>{appt.date}</Text>
+                                    <ClockCircleOutlined style={{ marginLeft: 16 }} />
+                                    <Text strong>{appt.time} {getShortTimeZone()}</Text>
 
-                                {appt.status !== 'canceled' && (
-                                    appt.proposal?.status === 'pending' ? (
-                                        <Text
-                                            style={{
-                                                marginLeft: 54,
-                                                fontWeight: 700,
-                                                fontSize: 16,
-                                                lineHeight: '24px',
-                                                color: '#1890FF',
-                                            }}
-                                        >
-                                            Waiting for Confirmation
-                                        </Text>
-                                    ) : (() => {
-                                        const start = parseLocal(appt.date, appt.time.split(' - ')[0]);
-                                        const now = dayjs();
-                                        const diffInHours = start.diff(now, 'hour');
-                                        // 如果小于等于 0，就不显示任何东西
-                                        if (diffInHours <= 0) {
-                                            return null;
-                                        }
-                                        // 小于 24 小时
-                                        if (diffInHours < 24) {
+                                    {appt.status !== 'canceled' && (
+                                        appt.proposal?.status === 'pending' ? (
+                                            <Text
+                                                style={{
+                                                    marginLeft: 54,
+                                                    fontWeight: 700,
+                                                    fontSize: 16,
+                                                    lineHeight: '24px',
+                                                    color: '#1890FF',
+                                                }}
+                                            >
+                                                Waiting for Confirmation
+                                            </Text>
+                                        ) : (() => {
+                                            const start = parseLocal(appt.date, appt.time.split(' - ')[0]);
+                                            const now = dayjs();
+                                            const diffInHours = start.diff(now, 'hour');
+                                            // 如果小于等于 0，就不显示任何东西
+                                            if (diffInHours <= 0) {
+                                                return null;
+                                            }
+                                            // 小于 24 小时
+                                            if (diffInHours < 24) {
+                                                return (
+                                                    <Text
+                                                        style={{
+                                                            marginLeft: 54,
+                                                            fontWeight: 700,
+                                                            fontSize: 16,
+                                                            lineHeight: '24px',
+                                                            color: '#1890FF',
+                                                        }}
+                                                    >
+                                                        In {diffInHours} Hours
+                                                    </Text>
+                                                );
+                                            }
+                                            // >= 24 小时
+                                            const diffInDays = start.diff(now, 'day');
+                                            const hoursAfterDays = start.diff(now.add(diffInDays, 'day'), 'hour');
                                             return (
                                                 <Text
                                                     style={{
@@ -586,168 +663,151 @@ export default function MySessionsTab() {
                                                         color: '#1890FF',
                                                     }}
                                                 >
-                                                    In {diffInHours} Hours
+                                                    In {diffInDays} Days {hoursAfterDays} Hours
                                                 </Text>
                                             );
-                                        }
-                                        // >= 24 小时
-                                        const diffInDays = start.diff(now, 'day');
-                                        const hoursAfterDays = start.diff(now.add(diffInDays, 'day'), 'hour');
-                                        return (
-                                            <Text
-                                                style={{
-                                                    marginLeft: 54,
-                                                    fontWeight: 700,
-                                                    fontSize: 16,
-                                                    lineHeight: '24px',
-                                                    color: '#1890FF',
-                                                }}
-                                            >
-                                                In {diffInDays} Days {hoursAfterDays} Hours
-                                            </Text>
-                                        );
-                                    })()
-                                )}
+                                        })()
+                                    )}
 
-                                <Tag
-                                    style={{
-                                        position: 'absolute',
-                                        right: 0,
-                                        top: 2,
-                                        background: appt.status === 'canceled' ? '#FFF1F0' : '#E6F7FF',
-                                        border: appt.status === 'canceled'
-                                            ? '1px solid #FFA39E'
-                                            : '1px solid #91D5FF',
-                                        borderRadius: 2,
-                                        fontWeight: 400,
-                                        fontSize: 12,
-                                        lineHeight: '20px',
-                                        color: appt.status === 'canceled' ? '#FF4D4F' : '#1890FF',
-                                    }}
-                                >
-                                    {appt.status === 'confirmed'
-                                        ? 'Upcoming'
-                                        : appt.status === 'reschedule_in_progress'
-                                            ? 'Reschedule In Progress'
-                                            : appt.status}
-                                </Tag>
-                            </Space>
-                        }
-                        actions={
-                            filter === 'past'
-                                // Past 分页只显示 Report Issue
-                                ? [
-                                    <div
-                                        key="report-issue"
-                                        onClick={() => showReportModal(appt)}
-                                        style={{ cursor: 'pointer' }}
+                                    <Tag
+                                        style={{
+                                            position: 'absolute',
+                                            right: 0,
+                                            top: 2,
+                                            background: appt.status === 'canceled' ? '#FFF1F0' : '#E6F7FF',
+                                            border: appt.status === 'canceled'
+                                                ? '1px solid #FFA39E'
+                                                : '1px solid #91D5FF',
+                                            borderRadius: 2,
+                                            fontWeight: 400,
+                                            fontSize: 12,
+                                            lineHeight: '20px',
+                                            color: appt.status === 'canceled' ? '#FF4D4F' : '#1890FF',
+                                        }}
                                     >
-                                        <FrownOutlined style={{ fontSize: 18 }} />
-                                        <div>Report Issue</div>
-                                    </div>
-                                ]
-                                // 非 past：走你原来的逻辑
-                                : (
-                                    (appt.status !== 'canceled' && (appt.proposal?.status === 'pending' || appt.status === 'paid'))
-                                        ? [
-                                            <Button
-                                                key="review"
-                                                type="primary"
-                                                style={{ width: '100%' }}
-                                                onClick={() => {
-                                                    if (appt.status === 'paid') {
-                                                        setConfirmAppt(appt);
-                                                        setIsConfirmOpen(true);
-                                                    } else {
-                                                        setReviewAppt(appt);
-                                                        setIsReviewOpen(true);
-                                                    }
-                                                }}
-                                            >
-                                                <BellOutlined style={{ marginRight: 8 }} />
-                                                Review and Confirm the Session Request
-                                            </Button>
-                                        ]
-                                        : (
-                                            appt.status === 'canceled' || appt.status === 'noshow'
-                                                ? []
-                                                : [
-                                                    <div
-                                                        key="reschedule"
-                                                        onClick={() => {
-                                                            if (appt.service_type === 'Free Coffee Chat (15 Mins)') {
-                                                                return; // 禁用状态，不响应
-                                                            }
-                                                            showRescheduleModal(appt);
-                                                        }}
-                                                        style={{
-                                                            cursor: appt.service_type === 'Free Coffee Chat (15 Mins)' ? 'not-allowed' : 'pointer',
-                                                            opacity: appt.service_type === 'Free Coffee Chat (15 Mins)' ? 0.5 : 1,
-                                                            display: 'flex',
-                                                            flexDirection: 'column',
-                                                            alignItems: 'center'
-                                                        }}
-                                                    >
-                                                        <CalendarTwoTone style={{ fontSize: 18 }} />
-                                                        <div>Reschedule</div>
-                                                    </div>,
-                                                    <div key="cancel" onClick={() => showCancelModal(appt)} style={{ cursor: 'pointer' }}>
-                                                        <CloseCircleOutlined style={{ fontSize: 18 }} /><div>Cancel</div>
-                                                    </div>,
-                                                    <div key="noshow" onClick={() => showReportModal(appt)} style={{ cursor: 'pointer' }}>
-                                                        <FrownOutlined style={{ fontSize: 18 }} /><div>Report Issue</div>
-                                                    </div>,
-                                                    <div key="join" onClick={() => handleJoinClick(appt)} style={{ cursor: 'pointer' }}>
-                                                        <BellOutlined style={{ fontSize: 18 }} /><div>Join</div>
-                                                    </div>,
-                                                ]
-                                        )
-                                )
-                        }
-                    >
-                        {/* —— 移除：原先 inline pending 区块 —— */}
+                                        {appt.status === 'confirmed'
+                                            ? 'Upcoming'
+                                            : appt.status === 'reschedule_in_progress'
+                                                ? 'Reschedule In Progress'
+                                                : appt.status}
+                                    </Tag>
+                                </Space>
+                            }
+                            actions={
+                                filter === 'past'
+                                    // Past 分页只显示 Report Issue
+                                    ? [
+                                        <div
+                                            key="report-issue"
+                                            onClick={() => showReportModal(appt)}
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            <FrownOutlined style={{ fontSize: 18 }} />
+                                            <div>Report Issue</div>
+                                        </div>
+                                    ]
+                                    // 非 past：走你原来的逻辑
+                                    : (
+                                        (appt.status !== 'canceled' && (appt.proposal?.status === 'pending' || appt.status === 'paid'))
+                                            ? [
+                                                <Button
+                                                    key="review"
+                                                    type="primary"
+                                                    style={{ width: '100%' }}
+                                                    onClick={() => {
+                                                        if (appt.status === 'paid') {
+                                                            setConfirmAppt(appt);
+                                                            setIsConfirmOpen(true);
+                                                        } else {
+                                                            setReviewAppt(appt);
+                                                            setIsReviewOpen(true);
+                                                        }
+                                                    }}
+                                                >
+                                                    <BellOutlined style={{ marginRight: 8 }} />
+                                                    Review and Confirm the Session Request
+                                                </Button>
+                                            ]
+                                            : (
+                                                appt.status === 'canceled' || appt.status === 'noshow'
+                                                    ? []
+                                                    : [
+                                                        <div
+                                                            key="reschedule"
+                                                            onClick={() => {
+                                                                if (appt.service_type === 'Free Coffee Chat (15 Mins)') {
+                                                                    return; // 禁用状态，不响应
+                                                                }
+                                                                showRescheduleModal(appt);
+                                                            }}
+                                                            style={{
+                                                                cursor: appt.service_type === 'Free Coffee Chat (15 Mins)' ? 'not-allowed' : 'pointer',
+                                                                opacity: appt.service_type === 'Free Coffee Chat (15 Mins)' ? 0.5 : 1,
+                                                                display: 'flex',
+                                                                flexDirection: 'column',
+                                                                alignItems: 'center'
+                                                            }}
+                                                        >
+                                                            <CalendarTwoTone style={{ fontSize: 18 }} />
+                                                            <div>Reschedule</div>
+                                                        </div>,
+                                                        <div key="cancel" onClick={() => showCancelModal(appt)} style={{ cursor: 'pointer' }}>
+                                                            <CloseCircleOutlined style={{ fontSize: 18 }} /><div>Cancel</div>
+                                                        </div>,
+                                                        <div key="noshow" onClick={() => showReportModal(appt)} style={{ cursor: 'pointer' }}>
+                                                            <FrownOutlined style={{ fontSize: 18 }} /><div>Report Issue</div>
+                                                        </div>,
+                                                        <div key="join" onClick={() => handleJoinClick(appt)} style={{ cursor: 'pointer' }}>
+                                                            <BellOutlined style={{ fontSize: 18 }} /><div>Join</div>
+                                                        </div>,
+                                                    ]
+                                            )
+                                    )
+                            }
+                        >
+                            {/* —— 移除：原先 inline pending 区块 —— */}
 
-                        <Space>
-                            <Avatar>{appt.otherUser.username.charAt(0)}</Avatar>
-                            <Text strong>{appt.otherUser.username}</Text>
-                            <Text type="secondary" style={{ marginLeft: 8 }}>
-                                ({appt.service_type})
-                            </Text>
-                        </Space>
-                        <div style={{ marginTop: 8 }}>
-                            <Text type="secondary">Notes:</Text>
-                            <p>{appt.description}</p>
-                        </div>
+                            <Space>
+                                <Avatar>{appt.otherUser.username.charAt(0)}</Avatar>
+                                <Text strong>{appt.otherUser.username}</Text>
+                                <Text type="secondary" style={{ marginLeft: 8 }}>
+                                    ({appt.service_type})
+                                </Text>
+                            </Space>
+                            <div style={{ marginTop: 8 }}>
+                                <Text type="secondary">Notes:</Text>
+                                <p>{appt.description}</p>
+                            </div>
 
-                        {appt.resume_url && (() => {
-                            // 1. 先取出最后一段 "1752650411087-jakes-resume.pdf"
-                            const fullName = appt.resume_url.split('/').pop() || '';
-                            // 2. 再去掉前面的时间戳部分，只保留 “jakes-resume.pdf”
-                            const displayName = fullName.includes('-')
-                                ? fullName.split('-').slice(1).join('-')
-                                : fullName;
-                            return (
-                                <a
-                                    href={appt.resume_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        marginTop: 8,
-                                        color: '#1890FF',
-                                        textDecoration: 'none'
-                                    }}
-                                >
-                                    <FileOutlined style={{ fontSize: 18, marginRight: 8 }} />
-                                    <span style={{ textDecoration: 'underline' }}>
+                            {appt.resume_url && (() => {
+                                // 1. 先取出最后一段 "1752650411087-jakes-resume.pdf"
+                                const fullName = appt.resume_url.split('/').pop() || '';
+                                // 2. 再去掉前面的时间戳部分，只保留 “jakes-resume.pdf”
+                                const displayName = fullName.includes('-')
+                                    ? fullName.split('-').slice(1).join('-')
+                                    : fullName;
+                                return (
+                                    <a
+                                        href={appt.resume_url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            marginTop: 8,
+                                            color: '#1890FF',
+                                            textDecoration: 'none'
+                                        }}
+                                    >
+                                        <FileOutlined style={{ fontSize: 18, marginRight: 8 }} />
+                                        <span style={{ textDecoration: 'underline' }}>
         {displayName}
       </span>
-                                </a>
-                            );
-                        })()}
-                    </Card>
-                ))
+                                    </a>
+                                );
+                            })()}
+                        </Card>
+                    ))
             )}
 
             <Modal

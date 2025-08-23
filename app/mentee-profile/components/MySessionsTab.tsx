@@ -33,8 +33,10 @@ import {
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(utc);
 dayjs.extend(timezone);
+dayjs.extend(customParseFormat);
 
 import type { Appointment as APIAppointment } from '@/types/appointment'
 import type { RescheduleProposal } from '@/types/reschedule_proposal';
@@ -172,25 +174,78 @@ export default function MySessionsTab() {
         setIsFeedbackOpen(true);
     };
 
+// —— iOS 兼容 + 时区安全解析（与导师版一致）——
     const localTz = dayjs.tz.guess();
-    const toLocal = (timeStr?: string) => {
-        if (!timeStr) return dayjs(); // fallback to now
-        // 如果原始能被 dayjs 直接解析，优先用它（再转 tz）
-        let d = dayjs(timeStr);
-        if (!d.isValid()) {
-            // 1. 把 "YYYY-MM-DD HH:mm:ss" 这种中间空格替换成 T（只针对日期时间之间那一段）
-            let normalized = timeStr.trim().replace(
-                /^(\d{4}-\d{2}-\d{2})[ T]+(\d{2}:\d{2}:\d{2}(?:\.\d+)?)/,
-                '$1T$2'
-            );
-            // 2. 如果末尾没有明确 offset 或 Z，就假定是 UTC
-            if (!/[Zz]|[+-]\d{2}:\d{2}$/.test(normalized)) {
-                normalized += 'Z';
-            }
-            d = dayjs.utc(normalized);
+
+// 可接受的输入格式
+    const KNOWN_FORMATS = [
+        'YYYY-MM-DD HH:mm',
+        'YYYY-MM-DD HH:mm:ss',
+        'YYYY-MM-DDTHH:mm',
+        'YYYY-MM-DDTHH:mm:ss',
+        'YYYY/MM/DD HH:mm',
+        'YYYY/MM/DD HH:mm:ss',
+        // 带毫秒
+        'YYYY-MM-DD HH:mm:ss.SSS',
+        'YYYY-MM-DDTHH:mm:ss.SSS',
+        'YYYY/MM/DD HH:mm:ss.SSS',
+    ];
+
+// 是否已带时区(结尾是Z或±hh:mm)
+    const hasTZ = (s: string) => /[Zz]|[+-]\d{2}:\d{2}$/.test(s);
+
+    function toLocal(input?: string | Date) {
+        if (!input) return dayjs('');
+
+        if (input instanceof Date) {
+            return dayjs(input).tz(localTz);
         }
-        return d.tz(localTz);
-    };
+
+        let raw = String(input).trim();
+
+        // iOS 兼容：仅当“无时区且非 ISO T”才将 YYYY-MM-DD -> YYYY/MM/DD
+        if (!hasTZ(raw) && raw.includes('-') && !raw.includes('T')) {
+            raw = raw.replace(/-/g, '/');
+        }
+
+        const isoish = raw.replace(' ', 'T');
+
+        // 1) 原串已带时区：按原时区解析再转本地
+        if (hasTZ(raw)) {
+            const d = dayjs(isoish);
+            return d.isValid() ? d.tz(localTz) : dayjs('');
+        }
+
+        // 2) 含 'T' 但无时区：按 UTC 解析再转本地
+        if (/T/.test(raw)) {
+            for (const fmt of [
+                'YYYY-MM-DDTHH:mm',
+                'YYYY-MM-DDTHH:mm:ss',
+                'YYYY-MM-DDTHH:mm:ss.SSS',
+            ]) {
+                const d = dayjs.tz(isoish, fmt, 'UTC').tz(localTz);
+                if (d.isValid()) return d;
+            }
+        }
+
+        // 3) 无 'T' 且无时区：按 UTC 解析再转本地
+        for (const fmt of KNOWN_FORMATS) {
+            const d = dayjs.tz(raw, fmt, 'UTC').tz(localTz);
+            if (d.isValid()) return d;
+        }
+
+        return dayjs('');
+    }
+
+// （可选）把“某天 + 时分”解析为本地时区，用在需要时：
+    function parseLocal(dateStr: string, timeStr: string) {
+      const raw = `${dateStr} ${timeStr}`.trim();
+      for (const fmt of ['YYYY-MM-DD HH:mm', 'YYYY/MM/DD HH:mm']) {
+        const d = dayjs.tz(raw, fmt, localTz);
+        if (d.isValid()) return d;
+      }
+      return dayjs('');
+    }
 
     const now     = dayjs();
     // 根据 status 来做分类
@@ -199,7 +254,7 @@ export default function MySessionsTab() {
             return ['confirmed', 'paid', 'reschedule_in_progress'].includes(a.status);
         }
         if (filter === 'past') {
-            return a.status === 'completed' || dayjs(a.end_time).isBefore(now);
+            return a.status === 'completed' || toLocal(a.end_time).isBefore(now);
         }
         // cancelled
         return ['canceled', 'noshow'].includes(a.status);

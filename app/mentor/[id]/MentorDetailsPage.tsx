@@ -39,6 +39,9 @@ import moment from 'moment-timezone';
 import { isFreeCoffeeChat } from '../../services/constants';
 import { netToGross } from '../../services/priceHelper';
 
+import { Tabs } from 'antd';
+import MentorReviews from '../components/MentorReview';
+
 const { Content } = Layout;
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -66,6 +69,8 @@ export default function MentorDetailsPage() {
   const [isPaymentFailedModalVisible, setIsPaymentFailedModalVisible] = useState(false);
   const [userResume, setUserResume] = useState<string | null>(null);
   const [coffeeChatCount, setCoffeeChatCount] = useState<number>(0);
+
+  const mentorIdForReviews = mentor?.user_id;
 
   // 👇 resume file list 渲染逻辑统一处理
   const resumeFileList: UploadFile[] = resume
@@ -363,29 +368,65 @@ export default function MentorDetailsPage() {
                       </div>
                   )}
                 </div>
-                <Card className={styles.infoCard} title="Introduction" bordered>
-                  {mentor.introduction
-                      ? <Text>{mentor.introduction}</Text>
-                      : <Text type="secondary">This mentor has not provided an introduction yet.</Text>}
-                </Card>
-                <Card className={styles.infoCard} title="Services" bordered>
-                  <div className={styles.serviceTags}>
-                    {Array.isArray(mentor.services) && mentor.services.length > 0 ? (
-                        mentor.services.map((service: any, idx: number) => (
+                <Tabs
+                    defaultActiveKey="about"
+                    items={[
+                      {
+                        key: 'overview',
+                        label: 'Overview',
+                        children: (
+                            <>
+                              <Card
+                                  className={styles.infoCard}
+                                  title="Introduction"
+                                  bordered
+                                  style={{ marginBottom: 24 }}
+                              >
+                                {mentor.introduction ? (
+                                    <Text>{mentor.introduction}</Text>
+                                ) : (
+                                    <Text type="secondary">
+                                      This mentor has not provided an introduction yet.
+                                    </Text>
+                                )}
+                              </Card>
 
-                            <Tag key={idx} className={styles.serviceTag}>
-                              {service.type} - ${
-                              isFreeCoffeeChat(service.type)
-                                  ? 0
-                                  : netToGross(service.price)
-                            }
-                            </Tag>
-                        ))
-                    ) : (
-                        <Text type="secondary">This mentor has not listed any services.</Text>
-                    )}
-                  </div>
-                </Card>
+                              <Card className={styles.infoCard} title="Services" bordered>
+                                <div className={styles.serviceTags}>
+                                  {Array.isArray(mentor.services) && mentor.services.length > 0 ? (
+                                      mentor.services.map((service: any, idx: number) => (
+                                          <Tag key={idx} className={styles.serviceTag}>
+                                            {service.type} - $
+                                            {isFreeCoffeeChat(service.type)
+                                                ? 0
+                                                : netToGross(service.price)}
+                                          </Tag>
+                                      ))
+                                  ) : (
+                                      <Text type="secondary">
+                                        This mentor has not listed any services.
+                                      </Text>
+                                  )}
+                                </div>
+                              </Card>
+                            </>
+                        ),
+                      },
+                      {
+                        key: 'reviews',
+                        label: 'Reviews',
+                        children: (
+                            <Card className={styles.infoCard} title="Reviews" bordered>
+                              {mentorIdForReviews ? (
+                                  <MentorReviews mentorId={mentorIdForReviews} />
+                              ) : (
+                                  <Text type="secondary">No mentor selected.</Text>
+                              )}
+                            </Card>
+                        ),
+                      },
+                    ]}
+                />
 
               </div>
 
