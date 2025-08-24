@@ -148,9 +148,6 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
             else setAvatarPreview(URL.createObjectURL(file));
 
             setAvatarUploaded(true);
-            // 关键：把字段写回 Form，并清除校验错误
-            form.setFieldsValue({ avatar: url || 'uploaded' });
-            form.validateFields(['avatar']).catch(() => {});
             notification.success({ message: 'Profile image updated successfully' });
             setUploadImageVisible(false);
         } else {
@@ -190,7 +187,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
 
     const steps = [
         {
-            title: 'Name and contact',
+            title: 'Current Status',
             content: (
                 <>
                     <Form.Item
@@ -204,8 +201,6 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                     {/* ---------- Avatar section (required) ---------- */}
                     <Form.Item
                         label="Please upload your profile picture"
-                        name="avatar"
-                        rules={[{ required: true, message: 'Please upload your profile picture!' }]}
                         style={{ marginBottom: 8 }}
                     >
                         <div
@@ -222,17 +217,17 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                                 icon={<UserOutlined />}
                                 style={{ flex: '0 0 auto' }}
                             />
-
-                            {/* 直接把按钮放在 Avatar 右边 */}
-                            <Button
-                                icon={<UploadOutlined />}
-                                onClick={() => setUploadImageVisible(true)}
-                            >
-                                Upload
-                            </Button>
+                            <div style={{ lineHeight: 1.4, color: '#8c8c8c' }}>
+                                <div>Recommended size: 240 × 240 px</div>
+                                <div>JPG, PNG, GIF, Max size: 3MB</div>
+                            </div>
+                            <div style={{ marginLeft: 'auto' }}>
+                                <Button icon={<UploadOutlined />} onClick={() => setUploadImageVisible(true)}>
+                                    Upload
+                                </Button>
+                            </div>
                         </div>
                     </Form.Item>
-
 
                     <Form.Item
                         name="currentStatus"
@@ -612,20 +607,11 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
 
     return (
         <div className={styles.mentorSignup}>
-            <Steps
-                current={current}
-                onChange={handleStepClick}
-                className={`stepsClassName ${styles.steps}`}
-                direction="horizontal"        // 强制横向
-                labelPlacement="vertical"     // 文案放在点的下方，更省空间
-                responsive={false}            // 不随屏幕自动切换为竖向
-                size="small"                  // 更紧凑
-            >
+            <Steps current={current} className={`stepsClassName ${styles.steps}`} onChange={handleStepClick}>
                 {steps.map((item) => (
                     <Step key={item.title} title={item.title} />
                 ))}
             </Steps>
-
             <div className={styles.stepsContent}>
                 <div>
                     {current === 0 && (

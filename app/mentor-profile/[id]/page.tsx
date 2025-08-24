@@ -536,29 +536,6 @@ export default function MentorProfilePage() {
                     }
                   }}
                 />
-                  {/* 头像下方的“Change Avatar”按钮，仅本人可见 */}
-                  {isOwnProfile && (
-                      <div
-                          onClick={() => setUploadImageVisible(true)}
-                          style={{
-                              position: "absolute",
-                              right: 0,
-                              bottom: 0,
-                              width: 32,
-                              height: 32,
-                              borderRadius: "50%",
-                              backgroundColor: "#fff",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                              cursor: "pointer",
-                          }}
-                      >
-                          <EditOutlined style={{ fontSize: 16, color: "#000" }} />
-                      </div>
-                  )}
-
               </div>
               <div className={styles.profileText}>
                 {/* —— 在这里展示 username、title、company，并加上编辑按钮 —— */}

@@ -4,14 +4,12 @@ export interface Review {
     reviewer: string;
     creation_time: string;
     content: string;
-    rating?: number; // 1-5 scale, optional
 }
 
 export interface CreateReviewInput {
     reviewee: string;
     reviewer: string;
     content: string;
-    rating?: number; // 1-5 scale, optional
 }
 
 export interface DeleteReviewInput {

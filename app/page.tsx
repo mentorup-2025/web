@@ -422,7 +422,7 @@ export default function Home() {
                     <Button type="text" block>Login</Button>
                   </SignInButton>
                   <SignUpButton mode="modal">
-                    <Button type="primary" block>Become a Mentor/Mentee</Button>
+                    <Button type="primary" block>Sign Up</Button>
                   </SignUpButton>
                 </SignedOut>
                 <SignedIn>

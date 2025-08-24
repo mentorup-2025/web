@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
 
         // Parse request body
         const body: CreateReviewInput = await request.json();
-        const { reviewee, content, rating } = body;
+        const { reviewee, content } = body;
 
         // Validate input
         if (!reviewee || !content) {
@@ -29,11 +29,6 @@ export async function POST(request: NextRequest) {
             return respErr('Review content too long (max 1000 characters)');
         }
 
-        // Validate rating if provided
-        if (rating !== undefined && rating !== null && (rating < 1 || rating > 5 || !Number.isInteger(rating))) {
-            return respErr('Rating must be an integer between 1 and 5');
-        }
-
         // Prevent self-review
         if (reviewee === userId) {
             return respErr('Cannot review yourself');
@@ -43,8 +38,7 @@ export async function POST(request: NextRequest) {
         const review = await createReview({
             reviewee,
             reviewer: userId,
-            content: content.trim(),
-            rating
+            content: content.trim()
         });
 
         console.log('✅ Review created successfully:', {

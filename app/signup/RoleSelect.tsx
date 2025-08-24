@@ -23,7 +23,7 @@ export default function RoleSelect({ userId }: RoleSelectProps) {
         </h1>
         <br/><br/><br/>
         
-        <div className="flex flex-col md:flex-row gap-8 justify-center items-center">
+        <div className="flex gap-8 justify-center">
           {/* Mentor Card */}
           <div 
             className={`w-80 p-6 rounded-lg shadow-lg transition-shadow ${
