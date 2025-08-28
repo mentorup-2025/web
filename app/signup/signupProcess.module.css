@@ -1,268 +1,407 @@
+/* 行业选择部分样式 */
+.industriesSection {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 0;
+    margin-top: 20px;
+}
+
+.industriesSection h3 {
+    font-size: 18px;
+    text-align: center;
+    margin-bottom: 8px;
+    color: #1f1f1f;
+    font-weight: 500;
+}
+
+.industriesSection p {
+    text-align: center;
+    color: rgba(0, 0, 0, 0.45);
+    margin-bottom: 24px;
+    font-size: 14px;
+}
+
+.industryBubbles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    padding: 0;
+    margin: 0 auto;
+    max-width: 600px;
+}
+
+.industryBubble {
+    cursor: pointer;
+    padding: 10px 18px;
+    border-radius: 20px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1.5px solid #e6e6e6;
+    background-color: white;
+    font-weight: 500;
+    font-size: 14px;
+    text-align: center;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.industryBubble:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(146, 84, 222, 0.2);
+    border-color: #9254DE;
+    color: #9254DE;
+}
+
+.industryBubble.selected {
+    background-color: #9254DE;
+    color: white;
+    border-color: #9254DE;
+    box-shadow: 0 4px 16px rgba(146, 84, 222, 0.4);
+    font-weight: 600;
+}
+
+.industryBubble.selected:hover {
+    background-color: #7d3bc1;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(146, 84, 222, 0.5);
+}
+
+/* 桌面大屏幕样式 */
+@media (min-width: 1024px) {
+    .industryBubbles {
+        gap: 16px;
+        max-width: 700px;
+    }
+
+    .industryBubble {
+        padding: 12px 22px;
+        border-radius: 22px;
+        font-size: 15px;
+        height: 44px;
+    }
+
+    .industriesSection h3 {
+        font-size: 20px;
+    }
+
+    .industriesSection p {
+        font-size: 15px;
+        margin-bottom: 32px;
+    }
+}
+
+/* 平板中等屏幕 */
+@media (max-width: 768px) {
+    .industryBubbles {
+        gap: 10px;
+        max-width: 100%;
+    }
+
+    .industryBubble {
+        padding: 8px 14px;
+        border-radius: 18px;
+        font-size: 13px;
+        height: 36px;
+    }
+}
+
+/* 手机小屏幕 */
+@media (max-width: 480px) {
+    .industryBubbles {
+        gap: 8px;
+    }
+
+    .industryBubble {
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        height: 32px;
+    }
+
+    .industriesSection h3 {
+        font-size: 16px;
+    }
+
+    .industriesSection p {
+        font-size: 13px;
+        margin-bottom: 24px;
+    }
+}
+
+/* 其他现有样式保持不变 */
 .layout {
-  min-height: 100vh;
+    min-height: 100vh;
 }
 
 .mainLayout {
-  padding: 24px;
-  padding-top: 100px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: linear-gradient(175deg, 
-    #f9f0ff 0%, 
-    #f9f0ff 30%, 
-    transparent 30.1%, 
+    padding: 24px;
+    padding-top: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(175deg,
+    #f9f0ff 0%,
+    #f9f0ff 30%,
+    transparent 30.1%,
     transparent 100%
-  );
+    );
 }
 
 .content {
-  max-width: 800px;
-  width: 100%;
-  padding: 24px;
+    max-width: 800px;
+    width: 100%;
+    padding: 24px;
 }
 
 .userTypeSelection {
-  text-align: center;
-  margin-bottom: 32px;
+    text-align: center;
+    margin-bottom: 32px;
 }
 
 .userTypeSelection h2 {
-  margin-bottom: 16px;
-  color: #1f1f1f;
+    margin-bottom: 16px;
+    color: #1f1f1f;
 }
 
 .mentorSignup {
-  width: 100%;
+    width: 100%;
 }
 
 /* step progress bar  */
 .mentorSignup > div:first-child{
-  margin-top: 50px;
-  margin-bottom: 75px;
+    margin-top: 50px;
+    margin-bottom: 75px;
 }
 
 .steps {
-  margin-bottom: 32px;
+    margin-bottom: 32px;
 }
-
-
-
 
 /* Override Ant Design Steps styles */
 .steps :global(.ant-steps-item-active .ant-steps-item-icon) {
-  background-color: #9254DE !important;
-  border-color: #9254DE !important;
+    background-color: #9254DE !important;
+    border-color: #9254DE !important;
 }
 
 .steps :global(.ant-steps-item-finish .ant-steps-item-icon) {
-  border-color: #9254DE !important;
+    border-color: #9254DE !important;
 }
 
 .steps :global(.ant-steps-item-finish .ant-steps-item-icon .ant-steps-icon) {
-  color: #9254DE !important;
+    color: #9254DE !important;
 }
 
 .steps :global(.ant-steps-item-finish .ant-steps-item-tail::after) {
-  background-color: #9254DE !important;
+    background-color: #9254DE !important;
 }
 
 .steps :global(.ant-steps-item-process .ant-steps-item-icon) {
-  background-color: #9254DE !important;
-  border-color: #9254DE !important;
+    background-color: #9254DE !important;
+    border-color: #9254DE !important;
 }
 
 /* Change step layout to vertical */
 .steps :global(.ant-steps-item) {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
 }
 
 .steps :global(.ant-steps-item-title) {
-  margin-top: 8px !important;
-  margin-left: 0 !important;
-  padding-right: 0 !important;
+    margin-top: 8px !important;
+    margin-left: 0 !important;
+    padding-right: 0 !important;
 }
 
 .steps :global(.ant-steps-item-tail) {
-  display: none !important;
+    display: none !important;
 }
 
 .steps :global(.ant-steps-item-title)::after {
-  background-color: #9254DE;
-  top: -28px;
-} 
+    background-color: #9254DE;
+    top: -28px;
+}
 
 .stepsContent {
-  margin-top: 16px;
+    margin-top: 16px;
 }
 
 .stepsContent h2 {
-  font-size: 24px;
-  text-align: center;
-  font-weight: 400;
-  color: #1f1f1f;
-  margin-bottom: 50px;
+    font-size: 24px;
+    text-align: center;
+    font-weight: 400;
+    color: #1f1f1f;
+    margin-bottom: 50px;
 }
 
 .stepsContent h2 .blue {
-  color: #9254DE;
+    color: #9254DE;
 }
 .button {
-  background-color: #9254DE;
+    background-color: #9254DE;
 }
 .button:hover,
 .button:where(.css-dev-only-do-not-override-1d4w9r2).ant-btn-variant-solid:not(:disabled):not(.ant-btn-disabled):hover  {
-  background-color: #7729d6!important;
+    background-color: #7729d6!important;
 }
 
 .form {
-  max-width: 600px;
-  margin: 0 auto;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 .stepsAction {
-  margin-top: 24px;
-  text-align: center;
+    margin-top: 24px;
+    text-align: center;
 }
 
 .confirmationContent {
-  text-align: center;
-  padding: 32px;
+    text-align: center;
+    padding: 32px;
 }
 
 .confirmationContent h2 {
-  margin-bottom: 16px;
-  color: #1f1f1f;
+    margin-bottom: 16px;
+    color: #1f1f1f;
 }
 
 .confirmationContent p {
-  margin-bottom: 24px;
-  color: rgba(0, 0, 0, 0.45);
-  font-size: 16px;
-}
-
-.industriesSection {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  padding: 20px;
-}
-
-.industryBubbles {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  justify-content: center;
-  padding: 20px;
-}
-
-.industryBubble {
-  cursor: pointer;
-  padding: 12px 24px;
-  border-radius: 30px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 2px solid #e6e6e6;
-  background-color: white;
-  font-weight: 500;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  position: relative;
-  overflow: hidden;
-}
-
-.industryBubble:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border-color: #9254DE;
-  color: #9254DE;
-}
-
-.industryBubble.selected {
-  background-color: #9254DE;
-  color: white;
-  border-color: #9254DE;
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
-}
-
-.industryBubble.selected:hover {
-  background-color: #7729d6;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(24, 144, 255, 0.4);
+    margin-bottom: 24px;
+    color: rgba(0, 0, 0, 0.45);
+    font-size: 16px;
 }
 
 .selectedIndustries {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 24px;
-  padding: 16px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  min-height: 60px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+    padding: 16px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    min-height: 60px;
 }
 
 .selectedIndustries .ant-tag {
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-  background-color: #e6f7ff;
-  border-color: #91d5ff;
-  color: #1890ff;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    background-color: #e6f7ff;
+    border-color: #91d5ff;
+    color: #1890ff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .selectedIndustries .ant-tag-close-icon {
-  color: #1890ff;
-  font-size: 12px;
-  margin-left: 4px;
+    color: #1890ff;
+    font-size: 12px;
+    margin-left: 4px;
 }
 
 .serviceTypes {
-  margin-top: 16px;
-  padding: 16px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
+    margin-top: 16px;
+    padding: 16px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
 }
 
 .serviceTypes p {
-  margin-bottom: 12px;
-  color: #666;
-  font-size: 14px;
+    margin-bottom: 12px;
+    color: #666;
+    font-size: 14px;
 }
 
 .serviceTypes ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
 .serviceTypes li {
-  padding: 8px 0;
-  color: #333;
-  font-size: 14px;
-  border-bottom: 1px solid #eee;
+    padding: 8px 0;
+    color: #333;
+    font-size: 14px;
+    border-bottom: 1px solid #eee;
 }
 
 .serviceTypes li:last-child {
-  border-bottom: none;
+    border-bottom: none;
 }
 
 /* Responsive styles */
 @media (max-width: 768px) {
-  .mainLayout {
-    padding: 16px;
-    padding-top: 200px;
-  }
+    .mainLayout {
+        padding: 16px;
+        padding-top: 200px;
+    }
 
-  .content {
-    padding: 16px;
-  }
+    .content {
+        padding: 16px;
+    }
 
-  .steps {
-    padding: 0 16px;
-  }
-} 
+    .steps {
+        padding: 0 16px;
+    }
+}
+
+/* 手机小屏幕下的 Step 样式优化 */
+/* 手机小屏幕下，Steps 两端对齐并均分 */
+/* 手机端：两端对齐，圆点均分，标题只按单词换行 */
+@media (max-width: 768px) {
+    /* 让 1 在最左，5 在最右，中间均分 */
+    .steps :global(.ant-steps-horizontal) {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;  /* 标题在下 */
+        gap: 0;                   /* 由均分来控制间距 */
+    }
+
+    /* 每个 step 占等宽 “栅格”，圆点居中 */
+    .steps :global(.ant-steps-item) {
+        flex: 1 1 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 0;             /* 防止内容把格子撑开 */
+    }
+    .steps :global(.ant-steps-item-container) { width: 100%; }
+    .steps :global(.ant-steps-item-icon) {
+        margin: 0 auto;
+    }
+
+    /* 连接线正常显示并铺满格子（最后一个不需要线） */
+    .steps :global(.ant-steps-item-tail) {
+        display: block !important;
+        width: 100% !important;
+    }
+    .steps :global(.ant-steps-item:last-child .ant-steps-item-tail) {
+        display: none !important;
+    }
+
+    /* 标题：每行最多一个“词”，不在词中间断开 */
+    .steps :global(.ant-steps-item-title) {
+        margin-top: 6px;
+        max-width: 70px;          /* 关键：限制宽度，使一行仅能放下一个词 */
+        text-align: center;
+        white-space: normal;      /* 允许换行 */
+        word-break: keep-all;     /* 不在英文单词中间断开 */
+        overflow-wrap: normal;    /* 仅在空格处换行 */
+        line-height: 1.3;
+        font-size: 4px;
+    }
+
+    /* 圆点更紧凑一些（可按需调） */
+    .steps :global(.ant-steps-item-icon) {
+        width: 28px; height: 28px; line-height: 28px; font-size: 14px;
+    }
+}
+
