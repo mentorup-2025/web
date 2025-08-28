@@ -44,6 +44,18 @@ import { User } from '@/types';
 import styles from './MySessionsTab.module.css';
 import Link from 'next/link';
 
+// ✅ 允许 null，兼容后端返回
+type UserWithMaybeAvatar = User & {
+    avatar_url?: string | null;
+    profile_url?: string | null;
+    avatar?: string | null;
+};
+
+function getAvatarSrc(u?: UserWithMaybeAvatar): string | undefined {
+    const src = u?.profile_url ?? u?.avatar_url ?? u?.avatar ?? undefined;
+    // 把空字符串或 null 统一成 undefined，避免 Avatar 报错
+    return src ? src : undefined;
+}
 
 const { Title, Text } = Typography;
 
@@ -660,7 +672,7 @@ export default function MySessionsTab() {
                                 }
                             >
                                 <Space>
-                                    <Avatar src={otherUser?.profile_url || otherUser?.avatar_url}>
+                                    <Avatar src={getAvatarSrc(otherUser)}>
                                         {otherUser?.username?.[0]}
                                     </Avatar>
                                     <Link
@@ -744,8 +756,8 @@ export default function MySessionsTab() {
                         return <>
                             <Avatar
                                 size="small"
-                                style={{ marginRight:4 }}
-                                src={otherUser?.profile_url || otherUser?.avatar_url}
+                                style={{ marginRight: 4 }}
+                                src={getAvatarSrc(otherUser)}
                             >
                                 {otherUser?.username?.[0]}
                             </Avatar>
