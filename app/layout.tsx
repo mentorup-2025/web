@@ -26,7 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <GlobalPromoBanner />
 
             {/* 给主体加上与 Banner 同高的 padding-top（约 48px，可按需微调） */}
-            <main style={{ paddingTop: 48 }}>
+            <main>
                 <noscript>
                     <iframe
                         src="https://www.googletagmanager.com/ns.html?id=GTM-TMNDDXXB"
