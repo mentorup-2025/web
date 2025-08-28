@@ -1,4 +1,149 @@
-/* 全局或对应模块的 CSS/LESS 文件里 */
-.centered-range-picker .ant-picker-input > input {
+/* 容器：手机 100%；桌面限制宽度并居中 */
+.weeklyCardBody {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+
+    /* 桌面端：占容器 1/2 ~ 2/3，使用 clamp 更平滑 */
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* 992px 起，逐步收窄到 2/3；1200px 起再收窄到 1/2 上限 */
+@media (min-width: 992px) {
+    .weeklyCardBody {
+        width: clamp(520px, 66%, 880px); /* 最小 520px，目标 66%，最大 880px */
+    }
+}
+@media (min-width: 1200px) {
+    .weeklyCardBody {
+        width: clamp(560px, 50%, 920px); /* 更大屏时靠近 50% */
+    }
+}
+
+/* 每一天的一行（桌面） */
+.dayRow {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+/* 左侧：星期与加号——保证固定宽度，右侧对齐 */
+.dayHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 148px;      /* 固定列宽，确保右侧齐头 */
+    flex-shrink: 0;
+}
+
+/* 让“星期按钮”在桌面宽度一致 */
+.dayBtn {
+    width: 120px;      /* ← 一致宽度（Sun, Mon…都一样宽） */
+    min-width: 120px;
+    justify-content: center;
     text-align: center;
+    white-space: nowrap;
+}
+
+/* 右侧：当天的 slot 列 */
+.slotsCol {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* 单个时间段行 */
+.timeRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 时间选择器外层，便于放时区缩写 */
+.timePickerWrap {
+    position: relative;
+    width: 100%;
+}
+
+/* 时区缩写固定在右侧 */
+.tzAbbr {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: #000;
+    pointer-events: none;
+}
+
+/* 删除按钮 */
+.deleteBtn {
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border: none;
+    background: transparent;
+}
+
+/* —— 小屏（≤576px）：容器固定宽度、居中 —— */
+@media (max-width: 576px) {
+    .weeklyCardBody {
+        gap: 16px;
+        width: clamp(320px, 92vw, 420px); /* 固定区间，居中展示 */
+        margin: 0 auto;
+    }
+
+    .dayRow {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    /* 星期+加号在同一行，+ 靠最右 */
+    .dayHeader {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* 手机端：星期显示为纯文本（无边框/底色），加粗黑字 */
+    .dayBtn {
+        width: auto !important;
+        min-width: 0;
+        flex: 0 1 auto;
+        padding: 0;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        color: #000 !important;
+        font-weight: 700;      /* 加粗 */
+        line-height: 32px;     /* 与加号按钮高度对齐更好看 */
+    }
+
+    /* 加号按钮：小而整齐地在右侧 */
+    .plusBtn {
+        width: 16px !important;
+        height: 16px !important;
+        margin: 0 0 0 auto !important;  /* 将 + 顶到最右边 */
+        padding: 0 !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: none !important;
+        background: transparent !important;
+    }
+
+    .slotsCol,
+    .timeRow,
+    .timePickerWrap {
+        width: 100%;
+    }
 }

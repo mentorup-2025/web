@@ -35,6 +35,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
+import styles from './MySessionsTab.module.css';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -70,6 +71,8 @@ interface Appointment {
         id: string;
         username: string;
         avatar_url?: string;
+        profile_url?: string;
+        resume?: string;
     };
     proposal?: Proposal;
     link?: string; // Added for meeting link
@@ -316,6 +319,8 @@ export default function MySessionsTab() {
                             id:       otherId,
                             username: userMap[otherId]?.username || 'Anonymous',
                             mentor:   userMap[otherId]?.mentor    || false,
+                            resume:   userMap[otherId]?.resume    || null,
+                            profile_url: userMap[otherId]?.profile_url || null,
                         },
                         proposal,    // ← Must include this
                     };
@@ -607,91 +612,68 @@ export default function MySessionsTab() {
                             key={appt.id}
                             style={{ marginBottom: 16 }}
                             title={
-                                <Space align="center" style={{ position: 'relative', width: '100%' }}>
-                                    <CalendarOutlined />
-                                    <Text strong>{appt.date}</Text>
-                                    <ClockCircleOutlined style={{ marginLeft: 16 }} />
-                                    <Text strong>{appt.time} {getShortTimeZone()}</Text>
-
-                                    {appt.status !== 'canceled' && (
-                                        appt.proposal?.status === 'pending' ? (
-                                            <Text
-                                                style={{
-                                                    marginLeft: 54,
-                                                    fontWeight: 700,
-                                                    fontSize: 16,
-                                                    lineHeight: '24px',
-                                                    color: '#1890FF',
-                                                }}
-                                            >
-                                                Waiting for Confirmation
+                                <div className={styles.apptHeader}>
+                                    {/* 第一行：日期+时间 */}
+                                    <div className={styles.apptRow1}>
+                                        <Space align="center" size={16} wrap>
+                                            <CalendarOutlined />
+                                            <Text strong>{appt.date}</Text>
+                                            <ClockCircleOutlined />
+                                            <Text strong>
+                                                {appt.time} {getShortTimeZone()}
                                             </Text>
-                                        ) : (() => {
-                                            const start = parseLocal(appt.date, appt.time.split(' - ')[0]);
-                                            const now = dayjs();
-                                            const diffInHours = start.diff(now, 'hour');
-                                            // 如果小于等于 0，就不显示任何东西
-                                            if (diffInHours <= 0) {
-                                                return null;
-                                            }
-                                            // 小于 24 小时
-                                            if (diffInHours < 24) {
-                                                return (
-                                                    <Text
-                                                        style={{
-                                                            marginLeft: 54,
-                                                            fontWeight: 700,
-                                                            fontSize: 16,
-                                                            lineHeight: '24px',
-                                                            color: '#1890FF',
-                                                        }}
-                                                    >
-                                                        In {diffInHours} Hours
-                                                    </Text>
-                                                );
-                                            }
-                                            // >= 24 小时
-                                            const diffInDays = start.diff(now, 'day');
-                                            const hoursAfterDays = start.diff(now.add(diffInDays, 'day'), 'hour');
-                                            return (
-                                                <Text
-                                                    style={{
-                                                        marginLeft: 54,
-                                                        fontWeight: 700,
-                                                        fontSize: 16,
-                                                        lineHeight: '24px',
-                                                        color: '#1890FF',
-                                                    }}
-                                                >
-                                                    In {diffInDays} Days {hoursAfterDays} Hours
-                                                </Text>
-                                            );
-                                        })()
-                                    )}
+                                        </Space>
+                                    </div>
 
-                                    <Tag
-                                        style={{
-                                            position: 'absolute',
-                                            right: 0,
-                                            top: 2,
-                                            background: appt.status === 'canceled' ? '#FFF1F0' : '#E6F7FF',
-                                            border: appt.status === 'canceled'
-                                                ? '1px solid #FFA39E'
-                                                : '1px solid #91D5FF',
-                                            borderRadius: 2,
-                                            fontWeight: 400,
-                                            fontSize: 12,
-                                            lineHeight: '20px',
-                                            color: appt.status === 'canceled' ? '#FF4D4F' : '#1890FF',
-                                        }}
-                                    >
-                                        {appt.status === 'confirmed'
-                                            ? 'Upcoming'
-                                            : appt.status === 'reschedule_in_progress'
-                                                ? 'Reschedule In Progress'
-                                                : appt.status}
-                                    </Tag>
-                                </Space>
+                                    {/* 第二行：左边倒计时 / 右边状态标签 */}
+                                    <div className={styles.apptRow2}>
+                                        <div className={styles.apptCountdown}>
+                                            {appt.status !== 'canceled' && (
+                                                appt.proposal?.status === 'pending' ? (
+                                                    <Text className={styles.apptCountdownText}>
+                                                        Waiting for Confirmation
+                                                    </Text>
+                                                ) : (() => {
+                                                    const start = parseLocal(appt.date, appt.time.split(' - ')[0]);
+                                                    const now = dayjs();
+                                                    const diffInHours = start.diff(now, 'hour');
+                                                    if (diffInHours <= 0) return null;
+                                                    if (diffInHours < 24) {
+                                                        return (
+                                                            <Text className={styles.apptCountdownText}>
+                                                                In {diffInHours} Hours
+                                                            </Text>
+                                                        );
+                                                    }
+                                                    const diffInDays = start.diff(now, 'day');
+                                                    const hoursAfterDays = start.diff(now.add(diffInDays, 'day'), 'hour');
+                                                    return (
+                                                        <Text className={styles.apptCountdownText}>
+                                                            In {diffInDays} Days {hoursAfterDays} Hours
+                                                        </Text>
+                                                    );
+                                                })()
+                                            )}
+                                        </div>
+
+                                        <Tag
+                                            className={styles.apptStatusTag}
+                                            style={{
+                                                background: appt.status === 'canceled' ? '#FFF1F0' : '#E6F7FF',
+                                                border: appt.status === 'canceled'
+                                                    ? '1px solid #FFA39E'
+                                                    : '1px solid #91D5FF',
+                                                color: appt.status === 'canceled' ? '#FF4D4F' : '#1890FF',
+                                            }}
+                                        >
+                                            {appt.status === 'confirmed'
+                                                ? 'Upcoming'
+                                                : appt.status === 'reschedule_in_progress'
+                                                    ? 'Reschedule In Progress'
+                                                    : appt.status}
+                                        </Tag>
+                                    </div>
+                                </div>
                             }
                             actions={
                                 filter === 'past'
@@ -768,7 +750,11 @@ export default function MySessionsTab() {
                             {/* —— 移除：原先 inline pending 区块 —— */}
 
                             <Space>
-                                <Avatar>{appt.otherUser.username.charAt(0)}</Avatar>
+                                <Avatar
+                                    src={appt.otherUser.profile_url || appt.otherUser.avatar_url}
+                                >
+                                    {appt.otherUser.username?.charAt(0)}
+                                </Avatar>
                                 <Text strong>{appt.otherUser.username}</Text>
                                 <Text type="secondary" style={{ marginLeft: 8 }}>
                                     ({appt.service_type})
@@ -779,33 +765,26 @@ export default function MySessionsTab() {
                                 <p>{appt.description}</p>
                             </div>
 
-                            {appt.resume_url && (() => {
-                                // 1. 先取出最后一段 "1752650411087-jakes-resume.pdf"
-                                const fullName = appt.resume_url.split('/').pop() || '';
-                                // 2. 再去掉前面的时间戳部分，只保留 “jakes-resume.pdf”
-                                const displayName = fullName.includes('-')
-                                    ? fullName.split('-').slice(1).join('-')
-                                    : fullName;
-                                return (
-                                    <a
-                                        href={appt.resume_url}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        style={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            marginTop: 8,
-                                            color: '#1890FF',
-                                            textDecoration: 'none'
-                                        }}
-                                    >
-                                        <FileOutlined style={{ fontSize: 18, marginRight: 8 }} />
-                                        <span style={{ textDecoration: 'underline' }}>
-        {displayName}
-      </span>
-                                    </a>
-                                );
-                            })()}
+                            {/* 如果有 resume，则显示 */}
+                            {appt.otherUser.resume && (
+                                <a
+                                    href={appt.otherUser.resume}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        marginTop: 8,
+                                        color: '#1890FF',
+                                        textDecoration: 'none'
+                                    }}
+                                >
+                                    <FileOutlined style={{ fontSize: 18, marginRight: 8 }} />
+                                    <span style={{ textDecoration: 'underline' }}>
+      {appt.otherUser.username} Resume
+    </span>
+                                </a>
+                            )}
                         </Card>
                     ))
             )}
@@ -859,7 +838,11 @@ export default function MySessionsTab() {
                 {/* Mentee */}
                 <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center' }}>
                     <Text strong style={{ marginRight: 8 }}>Mentee:</Text>
-                    <Avatar size="small" style={{ marginRight: 4 }}>
+                    <Avatar
+                        size="small"
+                        style={{ marginRight: 4 }}
+                        src={confirmAppt?.otherUser.profile_url || confirmAppt?.otherUser.avatar_url}
+                    >
                         {confirmAppt?.otherUser.username.charAt(0)}
                     </Avatar>
                     <Text style={{ fontWeight: 400, color: '#000' }}>

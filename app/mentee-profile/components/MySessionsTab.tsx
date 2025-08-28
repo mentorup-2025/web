@@ -41,6 +41,9 @@ dayjs.extend(customParseFormat);
 import type { Appointment as APIAppointment } from '@/types/appointment'
 import type { RescheduleProposal } from '@/types/reschedule_proposal';
 import { User } from '@/types';
+import styles from './MySessionsTab.module.css';
+import Link from 'next/link';
+
 
 const { Title, Text } = Typography;
 
@@ -525,63 +528,58 @@ export default function MySessionsTab() {
                                 key={appt.id}
                                 style={{ marginBottom:16 }}
                                 title={
-                                    <Space align="center" style={{ position:'relative', width:1056, height:28 }}>
-                                        <CalendarOutlined/>
-                                        <Text style={{ fontWeight:700, fontSize:16, lineHeight:'24px' }}>{date}</Text>
-                                        <ClockCircleOutlined style={{ marginLeft:16 }}/>
-                                        <Text style={{ fontWeight:700, fontSize:16, lineHeight:'24px' }}>
-                                            {time} {getShortTimeZone()}
-                                        </Text>
-                                        {appt.status==='canceled' ? null
-                                            : proposal
-                                                ? <Text style={{ marginLeft:54,fontWeight:700,fontSize:16,color:'#1890FF' }}>
-                                                    Waiting for Confirmation
-                                                </Text>
-                                                : <Text style={{ marginLeft:54,fontWeight:700,fontSize:16,color:'#1890FF' }}>
-                                                    {(() => {
-                                                        const start = toLocal(appt.start_time);
-                                                        const now = dayjs(); // 本地时间
+                                    <div className={styles.apptHeader}>
+                                        {/* 第一行：日期 + 时间 */}
+                                        <div className={styles.apptRow1}>
+                                            <CalendarOutlined />
+                                            <Text strong>{date}</Text>
+                                            <ClockCircleOutlined />
+                                            <Text strong>
+                                                {time} {getShortTimeZone()}
+                                            </Text>
+                                        </div>
+
+                                        {/* 第二行：倒计时（左） + 状态Tag（右） */}
+                                        <div className={styles.apptRow2}>
+                                            <div>
+                                                {appt.status !== 'canceled' && (
+                                                    proposal ? (
+                                                        <Text className={styles.apptCountdownText}>Waiting for Confirmation</Text>
+                                                    ) : (() => {
+                                                        if (!start.isValid()) return null;
+                                                        const now = dayjs();
                                                         const diffInHours = start.diff(now, 'hour');
-                                                        const diffInDays = start.diff(now, 'day');
-                                                        if (diffInHours <= 0) {
-                                                            return null;
-                                                        }
+                                                        if (diffInHours <= 0) return null;
                                                         if (diffInHours < 24) {
-                                                            return `In ${diffInHours} Hours`;
-                                                        } else {
-                                                            const hours = start.diff(now.add(diffInDays, 'day'), 'hour');
-                                                            return `In ${diffInDays} Days ${hours} Hours`;
+                                                            return <Text className={styles.apptCountdownText}>In {diffInHours} Hours</Text>;
                                                         }
-                                                    })()}
-                                                </Text>
-                                        }
-                                        <Tag
-                                            style={{
-                                                position: 'absolute',
-                                                right: 0,
-                                                top: 2,
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                padding: '1px 8px',
-                                                gap: 10,
-                                                background: appt.status === 'canceled' ? '#FFF1F0' : '#E6F7FF',
-                                                border: appt.status === 'canceled'
-                                                    ? '1px solid #FFA39E'
-                                                    : '1px solid #91D5FF',
-                                                borderRadius: 2,
-                                                fontWeight: 400,
-                                                fontSize: 12,
-                                                lineHeight: '20px',
-                                                color: appt.status === 'canceled' ? '#FF4D4F' : '#1890FF',
-                                            }}
-                                        >
-                                            {appt.status === 'confirmed'
-                                                ? 'Upcoming'
-                                                : appt.status === 'reschedule_in_progress'
-                                                    ? 'Reschedule In Progress'
-                                                    : appt.status}
-                                        </Tag>
-                                    </Space>
+                                                        const diffInDays = start.diff(now, 'day');
+                                                        const hoursAfterDays = start.diff(now.add(diffInDays, 'day'), 'hour');
+                                                        return (
+                                                            <Text className={styles.apptCountdownText}>
+                                                                In {diffInDays} Days {hoursAfterDays} Hours
+                                                            </Text>
+                                                        );
+                                                    })()
+                                                )}
+                                            </div>
+
+                                            <Tag
+                                                className={styles.apptStatusTag}
+                                                style={{
+                                                    background: appt.status === 'canceled' ? '#FFF1F0' : '#E6F7FF',
+                                                    border: appt.status === 'canceled' ? '1px solid #FFA39E' : '1px solid #91D5FF',
+                                                    color: appt.status === 'canceled' ? '#FF4D4F' : '#1890FF',
+                                                }}
+                                            >
+                                                {appt.status === 'confirmed'
+                                                    ? 'Upcoming'
+                                                    : appt.status === 'reschedule_in_progress'
+                                                        ? 'Reschedule In Progress'
+                                                        : appt.status}
+                                            </Tag>
+                                        </div>
+                                    </div>
                                 }
                                 actions={
                                     filter === 'past'
@@ -662,35 +660,43 @@ export default function MySessionsTab() {
                                 }
                             >
                                 <Space>
-                                    <Avatar>{otherUser?.username?.[0]}</Avatar>
-                                    <Text strong>{otherUser?.username}</Text>
+                                    <Avatar src={otherUser?.profile_url || otherUser?.avatar_url}>
+                                        {otherUser?.username?.[0]}
+                                    </Avatar>
+                                    <Link
+                                        href={`/mentor/${appt.mentor_id}`}
+                                        style={{ fontWeight: 600, color: '#000', textDecoration: 'none' }}
+                                    >
+                                        {otherUser?.username}
+                                    </Link>
                                     <Text type="secondary" style={{ marginLeft: 8 }}>
                                         ({appt.service_type})
                                     </Text>
                                 </Space>
+                                {/* 第二行：resume 链接 */}
                                 {menteeResumeUrl && (() => {
                                     const fullName = menteeResumeUrl.split('/').pop() || '';
                                     const displayName = fullName.includes('-')
                                         ? fullName.split('-').slice(1).join('-')
                                         : fullName;
+
                                     return (
-                                        <a
-                                            href={menteeResumeUrl}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            style={{
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                marginTop: 8,
-                                                color: '#1890FF',
-                                                textDecoration: 'none'
-                                            }}
-                                        >
-                                            <FileOutlined style={{ fontSize: 18, marginRight: 8 }} />
-                                            <span style={{ textDecoration: 'underline' }}>
-                                                {displayName}
-                                            </span>
-                                        </a>
+                                        <div style={{ marginTop: 8 }}>
+                                            <a
+                                                href={menteeResumeUrl}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    color: '#1890FF',
+                                                    textDecoration: 'none',
+                                                }}
+                                            >
+                                                <FileOutlined style={{ fontSize: 18, marginRight: 8 }} />
+                                                <span style={{ textDecoration: 'underline' }}>{displayName}</span>
+                                            </a>
+                                        </div>
                                     );
                                 })()}
                             </Card>
@@ -736,7 +742,13 @@ export default function MySessionsTab() {
                         const otherUserId = confirmAppt.mentor_id === menteeId ? confirmAppt.mentee_id : confirmAppt.mentor_id;
                         const otherUser = userMap[otherUserId];
                         return <>
-                            <Avatar size="small" style={{ marginRight:4 }}>{otherUser?.username?.[0]}</Avatar>
+                            <Avatar
+                                size="small"
+                                style={{ marginRight:4 }}
+                                src={otherUser?.profile_url || otherUser?.avatar_url}
+                            >
+                                {otherUser?.username?.[0]}
+                            </Avatar>
                             <Text>{otherUser?.username}</Text>
                         </>;
                     })()}
