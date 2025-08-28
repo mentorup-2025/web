@@ -257,15 +257,18 @@ export default function MenteeSignu({ userId }: MenteeSignupProps) {
 
   return (
     <div className={styles.mentorSignup}>
-      <Steps 
-        current={current} 
-        className={`stepsClassName ${styles.steps}`}
-        onChange={handleStepClick}
-      >
-        {steps.map(item => (
-          <Step key={item.title} title={item.title} />
-        ))}
-      </Steps>
+        <Steps
+            current={current}
+            className={`stepsClassName ${styles.steps}`}
+            onChange={handleStepClick}
+            size="small"
+            direction="horizontal"
+            responsive={false}
+        >
+            {steps.map(item => (
+                <Step key={item.title} title={item.title} />
+            ))}
+        </Steps>
       <div className={styles.stepsContent}>
         <div>
           {current === 0 && <h2>Tell us what is your <span className={styles.blue}>Current Stage</span></h2>}

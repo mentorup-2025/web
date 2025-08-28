@@ -112,16 +112,12 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
     }, [formData.currentStatus, form.getFieldValue('currentStatus')]);
 
     const industries = [
-        'Technology',
-        'Finance',
-        'Healthcare',
-        'Education',
-        'Consulting',
-        'Marketing',
-        'Retail',
-        'Manufacturing',
-        'Government',
-        'Non-Profit',
+        'Technology', 'Consulting', 'Education',
+        'Healthcare', 'Biotech', 'Manufacturing',
+        'Finance', 'Energy', 'Startups',
+        'Retail', 'Government', 'Engineering',
+        'Automotive', 'Logistics',
+        'Telecommunications', 'Construction'
     ];
 
     const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
@@ -458,6 +454,9 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
             title: 'Industries',
             content: (
                 <div className={styles.industriesSection}>
+                    <h3>Select Industries You Are Interested In</h3>
+                    <p style={{ color: '#8c8c8c', marginBottom: '20px' }}>(Feel free to select multiple.)</p>
+
                     <div className={styles.industryBubbles}>
                         {industries.map((industry) => (
                             <Tag
@@ -481,7 +480,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
             ),
         },
         {
-            title: 'Confirmation',
+            title: 'Confirm',
             content: (
                 <div className={styles.confirmationContent}>
                     <p>
@@ -511,6 +510,12 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
 
     const next = async () => {
         try {
+            // 检查是否已上传头像（第一步时）
+            if (current === 0 && !avatarUploaded) {
+                notification.error({ message: 'Please upload your profile picture!' });
+                return;
+            }
+
             const values = await form.validateFields();
             const updated = { ...formData, ...values };
             setFormData(updated);
@@ -607,11 +612,16 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
 
     return (
         <div className={styles.mentorSignup}>
-            <Steps current={current} className={`stepsClassName ${styles.steps}`} onChange={handleStepClick}>
-                {steps.map((item) => (
-                    <Step key={item.title} title={item.title} />
-                ))}
-            </Steps>
+            <Steps
+                current={current}
+                className={`stepsClassName ${styles.steps}`}
+                onChange={handleStepClick}
+                size="small"
+                direction="horizontal"
+                responsive={false}
+                items={steps.map(s => ({ title: s.title }))}
+            />
+
             <div className={styles.stepsContent}>
                 <div>
                     {current === 0 && (
