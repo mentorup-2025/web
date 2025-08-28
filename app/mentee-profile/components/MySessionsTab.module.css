@@ -1,0 +1,48 @@
+/* 通用样式 */
+.apptHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 6px 0 8px;
+}
+
+.apptRow1,
+.apptRow2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* 倒计时蓝色高亮 */
+.apptCountdownText {
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 24px;
+    color: #1890ff;
+}
+
+.apptStatusTag {
+    border-radius: 2px;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 20px;
+    flex-shrink: 0;
+}
+
+/* —— 大屏：所有元素合并到一行 —— */
+@media (min-width: 1024px) {
+    .apptHeader {
+        flex-direction: row;   /* 整体变一行 */
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    /* 左右两个row合并成一行排列 */
+    .apptRow1,
+    .apptRow2 {
+        flex-direction: row;
+        align-items: center;
+        gap: 16px;
+        margin: 0;
+    }
+}

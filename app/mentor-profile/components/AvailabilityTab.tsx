@@ -479,101 +479,74 @@ export default function AvailabilityTab({ userId }: Props) {
                 title="Weekly Available Hours"
                 loading={loading}
                 style={{ marginBottom: 24 }}
-                bodyStyle={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                }}
+                bodyStyle={{ paddingBottom: 16 }}
             >
-                <Space direction="vertical" size="middle" style={{ width: 476 }}>
+                <div className={styles.weeklyCardBody}>
                     {dayNames.map((dayName, dayIndex) => {
                         const daySlots = slots.filter(s => s.day_of_week === dayIndex);
                         const isUnavailable = daySlots.length === 0;
 
                         return (
-                            <div
-                                key={dayIndex}
-                                style={{ display: 'flex', alignItems: 'center' }}
-                            >
-                                {/* 星期几按钮 */}
-                                <Button
-                                    size="small"
-                                    style={{
-                                        boxSizing: 'border-box',
-                                        display: 'flex',
-                                        flexDirection: 'row',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        padding: '1px 1px',
-                                        width: 120,
-                                        height: 32,
-                                        background: isUnavailable ? '#f5f5f5' : '#ffffff',
-                                        border: '1px solid #D9D9D9',
-                                        boxShadow: '0px 2px 0px rgba(0, 0, 0, 0.016)',
-                                        borderRadius: 2,
-                                        flex: 'none',
-                                        order: 0,
-                                        flexGrow: 0,
-                                    }}
-                                >
-                                    {dayName}
-                                </Button>
-
-                                {/* 新增一天的按钮 */}
-                                <Button
-                                    size="small"
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        width: 20,
-                                        height: 20,
-                                        padding: 0,
-                                        border: 'none',
-                                        borderRadius: 0,
-                                        margin: 8,
-                                        lineHeight: '11px',
-                                        fontSize: 10,
-                                    }}
-                                    onClick={() => {
-                                        const next = [
-                                            ...slots,
-                                            {
-                                                day_of_week: dayIndex,
-                                                start_time: '18:00',
-                                                end_time: '19:00',
-                                            },
-                                        ];
-                                        setSlots(next);
-                                    }}
-                                >
-                                    <img
-                                        src="/images/button/plus.png"
-                                        alt="Add"
+                            <div key={dayIndex} className={styles.dayRow}>
+                                {/* 左侧：星期 + 加号 */}
+                                <div className={styles.dayHeader}>
+                                    <Button
+                                        size="small"
+                                        className={styles.dayBtn}
                                         style={{
-                                            width: '100%',
-                                            height: '100%',
-                                            objectFit: 'contain',
+                                            boxSizing: 'border-box',
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            padding: '1px 1px',
+                                            height: 32,
+                                            background: isUnavailable ? '#f5f5f5' : '#ffffff',
+                                            border: '1px solid #D9D9D9',
+                                            boxShadow: '0 2px 0 rgba(0,0,0,0.016)',
+                                            borderRadius: 2,
                                         }}
-                                    />
-                                </Button>
+                                    >
+                                        {dayName}
+                                    </Button>
 
-                                {/* 显示当天的时间段列表 */}
-                                <div
-                                    key={dayIndex}
-                                    style={{
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        width: '100%',
-                                    }}
-                                >
+                                    <Button
+                                        size="small"
+                                        className={styles.plusBtn}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            width: 16,
+                                            height: 16,
+                                            padding: 0,
+                                            border: 'none',
+                                            borderRadius: 0,
+                                        }}
+                                        onClick={() => {
+                                            const next = [
+                                                ...slots,
+                                                { day_of_week: dayIndex, start_time: '18:00', end_time: '19:00' },
+                                            ];
+                                            setSlots(next);
+                                        }}
+                                    >
+                                        <img
+                                            src="/images/button/plus.png"
+                                            alt="Add"
+                                            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                                        />
+                                    </Button>
+                                </div>
+
+                                {/* 右侧：当天的所有时间段（手机下会换到下一行并 100% 宽） */}
+                                <div className={styles.slotsCol}>
                                     {isUnavailable ? (
                                         <span style={{ color: '#999', textAlign: 'center', width: '100%' }}>
-        Unavailable
-      </span>
+                Unavailable
+              </span>
                                     ) : (
-                                        daySlots.map((slot, idxInDay) => {
-                                            // 计算全局索引
+                                        daySlots.map((slot) => {
+                                            // 全局索引
                                             const globalIdx = slots.findIndex(
                                                 s =>
                                                     s.day_of_week === slot.day_of_week &&
@@ -582,20 +555,20 @@ export default function AvailabilityTab({ userId }: Props) {
                                             );
 
                                             return (
-                                                <React.Fragment key={globalIdx}>
-                                                    <Row gutter={8} align="middle" style={{ marginBottom: 4 }}>
-                                                        <Col>
+                                                <React.Fragment key={`${slot.day_of_week}-${slot.start_time}-${slot.end_time}`}>
+                                                    <div className={styles.timeRow}>
+                                                        <div className={styles.timePickerWrap}>
                                                             <TimeRangePicker
-                                                                className={styles['centered-range-picker']}
                                                                 allowClear={false}
                                                                 placeholder={['Start', 'End']}
                                                                 format={timeFormat}
                                                                 hourStep={1}
                                                                 minuteStep={60 as any}
+                                                                size="middle"
                                                                 style={{
                                                                     width: '100%',
                                                                     borderRadius: 2,
-                                                                    paddingRight: 40,
+                                                                    paddingRight: 48, // 给时区缩写留位置
                                                                 }}
                                                                 value={[
                                                                     dayjs(slot.start_time, timeFormat),
@@ -604,53 +577,29 @@ export default function AvailabilityTab({ userId }: Props) {
                                                                 onChange={values => {
                                                                     const [start, end] = values || [];
                                                                     updateSlot(globalIdx, {
-                                                                        start_time: start
-                                                                            ? start.format(timeFormat)
-                                                                            : slot.start_time,
-                                                                        end_time: end
-                                                                            ? end.format(timeFormat)
-                                                                            : slot.end_time,
+                                                                        start_time: start ? start.format(timeFormat) : slot.start_time,
+                                                                        end_time: end ? end.format(timeFormat) : slot.end_time,
                                                                     });
                                                                 }}
                                                             />
-                                                            <span
-                                                                style={{
-                                                                    position: 'absolute',
-                                                                    right: 12,
-                                                                    top: '50%',
-                                                                    transform: 'translateY(-50%)',
-                                                                    fontSize: 14,
-                                                                    color: '#000',
-                                                                    pointerEvents: 'none',
-                                                                }}
-                                                            >
-                  {tzAbbr}
-                </span>
-                                                        </Col>
-                                                        <Col>
-                                                            <Button
-                                                                type="text"
-                                                                onClick={() => handleRemoveRow(globalIdx)}
-                                                                style={{
-                                                                    width: 14,
-                                                                    height: 14,
-                                                                    padding: 0,
-                                                                    border: 'none',
-                                                                    background: 'transparent',
-                                                                }}
-                                                            >
-                                                                <img
-                                                                    src="/images/button/close.png"
-                                                                    alt="Remove"
-                                                                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                                                                />
-                                                            </Button>
-                                                        </Col>
-                                                    </Row>
+                                                            <span className={styles.tzAbbr}>{tzAbbr}</span>
+                                                        </div>
 
-                                                    {/* 如果有校验错误，则在这一行下面显示 */}
+                                                        <Button
+                                                            type="text"
+                                                            onClick={() => handleRemoveRow(globalIdx)}
+                                                            className={styles.deleteBtn}
+                                                        >
+                                                            <img
+                                                                src="/images/button/close.png"
+                                                                alt="Remove"
+                                                                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                                                            />
+                                                        </Button>
+                                                    </div>
+
                                                     {slotErrors[globalIdx] && (
-                                                        <div style={{ color: 'red', marginLeft: 140 }}>
+                                                        <div style={{ color: 'red' }}>
                                                             {slotErrors[globalIdx]}
                                                         </div>
                                                     )}
@@ -662,31 +611,25 @@ export default function AvailabilityTab({ userId }: Props) {
                             </div>
                         );
                     })}
-                    <Row gutter={16}>
-                        <Col>
-                            <Button
-                                style={{ borderRadius: 2 }}
-                                onClick={() => setSlots(originalSlots)}
-                            >
-                                Cancel
-                            </Button>
-                        </Col>
-                        <Col>
-                            <Button
-                                type="primary"
-                                style={{
-                                    borderRadius: 2,
-                                    backgroundColor: '#1890ff',
-                                    borderColor: '#1890ff',
-                                }}
-                                disabled={Object.keys(slotErrors).length > 0}
-                                onClick={() => handleSaveSlots()}
-                            >
-                                Save changes
-                            </Button>
-                        </Col>
-                    </Row>
-                </Space>
+
+                    {/* 按钮行：手机下自动换行，不会顶出容器 */}
+                    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                        <Button
+                            style={{ borderRadius: 2 }}
+                            onClick={() => setSlots(originalSlots)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="primary"
+                            style={{ borderRadius: 2, backgroundColor: '#1890ff', borderColor: '#1890ff' }}
+                            disabled={Object.keys(slotErrors).length > 0}
+                            onClick={() => handleSaveSlots()}
+                        >
+                            Save changes
+                        </Button>
+                    </div>
+                </div>
             </Card>
 
             {/* Block Dates：用 DatePicker.RangePicker 来选一个连续的日期区间 */}

@@ -183,6 +183,7 @@ export default function MentorProfilePage() {
   const [editIntroVisible, setEditIntroVisible] = useState(false);
   const [servicesModalVisible, setServicesModalVisible] = useState(false);
   const [uploadImageVisible, setUploadImageVisible] = useState(false);
+  const mentor = mentorData?.mentor ?? null;
 
   const initialHash = typeof window !== "undefined"
       ? (window.location.hash.slice(1) as TabKey)
@@ -550,13 +551,10 @@ export default function MentorProfilePage() {
                 </Space>
                 <Text
                     className={styles.title}
-                    type={!mentorData.mentor.title && !mentorData.mentor.company ? "secondary" : undefined}
+                    type={(!mentor?.title && !mentor?.company) ? "secondary" : undefined}
                     style={{ display: "block", marginTop: 4 }}
                 >
-                  {formatTitleCompany(
-                      mentorData.mentor.title,
-                      mentorData.mentor.company
-                  )}
+                  {formatTitleCompany(mentor?.title, mentor?.company)}
                 </Text>
                 <Space className={styles.socialLinks}>
                   {mentorData.linkedin && (
