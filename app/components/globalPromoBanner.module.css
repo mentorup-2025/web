@@ -1,0 +1,60 @@
+.banner {
+    position: sticky;       /* 或 fixed: 顶部悬浮 */
+    top: 0;
+    z-index: 1000;          /* 保证在导航之上/之下自行调 */
+    background: #1677ff;    /* Ant Design 蓝 / 自定义蓝 */
+    color: #fff;
+    width: 100%;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+
+.content {
+    max-width: 1200px;      /* 你的内容宽度 */
+    margin: 0 auto;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.text {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.code {
+    font-weight: 700;       /* code 加粗 */
+}
+
+.link {
+    color: #fff;
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+.link:hover {
+    opacity: 0.9;
+    text-decoration: none;
+}
+
+.close {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    color: #fff;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+/* 小屏优化 */
+@media (max-width: 768px) {
+    .content {
+        padding: 8px 12px;
+    }
+    .text {
+        font-size: 13px;
+    }
+}
