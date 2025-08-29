@@ -107,10 +107,9 @@
 
     /* 星期+加号在同一行，+ 靠最右 */
     .dayHeader {
-        width: 100%;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 8px;   /* 控制 dayBtn 和 plusBtn 的间距 */
     }
 
     /* 手机端：星期显示为纯文本（无边框/底色），加粗黑字 */
@@ -130,20 +129,25 @@
 
     /* 加号按钮：小而整齐地在右侧 */
     .plusBtn {
-        width: 16px !important;
-        height: 16px !important;
-        margin: 0 0 0 auto !important;  /* 将 + 顶到最右边 */
-        padding: 0 !important;
+        width: 16px;
+        height: 16px;
+        padding: 0;
+        margin-left: 4px;   /* 🔹调节和 dayBtn 的距离 */
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        border: none !important;
-        background: transparent !important;
+        border: none;
+        background: transparent;
     }
 
     .slotsCol,
     .timeRow,
     .timePickerWrap {
         width: 100%;
+    }
+
+    .timePickerWrap {
+        width: 100%;
+        max-width: 260px;  /* 🔹限制最大宽度 */
     }
 }

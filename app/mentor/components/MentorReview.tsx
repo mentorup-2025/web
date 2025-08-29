@@ -1,19 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-    Card,
-    Typography,
-    Tag,
-    Row,
-    Col,
-    Avatar,
-    Space,
-    Button,
-    Modal,
-    Input,
-    Radio,
-    message,
+    Card, Typography, Row, Col, Avatar, Space,
+    Button, Modal, Input, Radio, message,
 } from 'antd';
 import { MessageOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -23,131 +13,161 @@ const { Text, Title } = Typography;
 
 type Review = {
     id: string;
-    name: string;
-    rating: number;
-    date: string; // ISO
+    reviewee?: string;
+    reviewer: string;         // 可能是 user_id 或 username
     content: string;
+    rating: number | null;
+    creation_time: string;    // ISO
 };
 
-const TAGS = [
-    'Interview Prep',
-    'System Design',
-    'Career Advice',
-    'Resume Review',
-    'Coding Practice',
-    'Behavioral',
-    'Mock Interview',
-    'Algorithms',
-    'Work-Life Balance',
-];
+// 供渲染用的扩展类型：补上映射后的用户名与头像
+type DisplayReview = Review & {
+    reviewer_username?: string;
+    reviewer_avatar?: string | null;
+};
 
-const DUMMY_REVIEWS: Review[] = [
-    {
-        id: 'r1',
-        name: 'Alice Chen',
-        rating: 5.0,
-        date: '2025-08-01',
-        content:
-            'Alice was incredibly helpful in walking me through behavioral interview prep. She gave very specific examples of STAR method answers and pointed out where my stories lacked impact.',
-    },
-    {
-        id: 'r2',
-        name: 'Michael Lee',
-        rating: 4.7,
-        date: '2025-08-03',
-        content:
-            'Alice helped me debug my approach to dynamic programming problems. He patiently explained the “state, choice, definition, transition” framework and it finally clicked.',
-    },
-    {
-        id: 'r3',
-        name: 'Sofia Rodriguez',
-        rating: 4.9,
-        date: '2025-08-05',
-        content:
-            'We did a mock system design interview on designing a URL shortener. Sofia gave clear feedback on scalability tradeoffs, database choices, and how to structure my answer step by step.',
-    },
-    {
-        id: 'r4',
-        name: 'David Kim',
-        rating: 4.8,
-        date: '2025-08-07',
-        content:
-            'David reviewed my resume and suggested quantifying my project impacts (e.g., “improved latency by 30%”). Those small tweaks made my resume stand out much more.',
-    },
-    {
-        id: 'r5',
-        name: 'Emily Zhang',
-        rating: 4.6,
-        date: '2025-08-10',
-        content:
-            'Alice gave me a mock coding interview in Java. She emphasized writing clean code, naming variables clearly, and thinking out loud. It really simulated a real interview environment.',
-    },
-    {
-        id: 'r6',
-        name: 'James Patel',
-        rating: 4.9,
-        date: '2025-08-12',
-        content:
-            'Alice shared his experience transitioning from a startup to a big tech company. His career advice was practical, especially about building depth in one area before rotating roles.',
-    },
-];
-
-// emoji 评分
-const EMOJIS = [
-    { value: 1, label: '😡' },
-    { value: 2, label: '😟' },
-    { value: 3, label: '😐' },
-    { value: 4, label: '😊' },
-    { value: 5, label: '😄' },
-];
+// 判断 reviewer 是否像 user_id（按需调整规则）
+const looksLikeUserId = (s: string) => s.length > 20 || s.startsWith('user_') || s.includes('-');
 
 export default function MentorReviews({ mentorId }: { mentorId?: string }) {
     const { user, isSignedIn } = useUser();
-    const menteeId = user?.id; // reviewer
 
-    const [activeTag, setActiveTag] = useState<string | null>(null);
+    // 当前提交者信息（用于乐观更新）
+    const currentUsername =
+        user?.username || user?.fullName || (user?.id ? `user_${user.id.slice(0, 6)}` : 'anonymous');
+    const currentAvatar = user?.imageUrl ?? null;
+
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
     const [isThanksOpen, setIsThanksOpen] = useState(false);
     const [feedbackRating, setFeedbackRating] = useState<number | null>(null);
     const [feedbackComment, setFeedbackComment] = useState('');
     const [feedbackLoading, setFeedbackLoading] = useState(false);
 
-    const ratingAvg = 4.8;
-    const total = 132;
+    const [reviews, setReviews] = useState<Review[]>([]);
+    const [displayList, setDisplayList] = useState<DisplayReview[]>([]);
+    const [loadingList, setLoadingList] = useState(false);
 
-    const filtered = useMemo(() => {
-        if (!activeTag) return DUMMY_REVIEWS;
-        // demo：如需按标签过滤，请给每条 review 增加 tags 字段后在这里真正过滤
-        return DUMMY_REVIEWS.slice(0, 6);
-    }, [activeTag]);
+    // 拉取评论列表
+    useEffect(() => {
+        if (!mentorId) return;
+        (async () => {
+            try {
+                setLoadingList(true);
+                const res = await fetch(`/api/reviews/list_by_reviewee?revieweeId=${mentorId}`);
+                const json = await res.json();
+                if (!res.ok) throw new Error(json?.message || 'Failed to load reviews');
+                const list: Review[] = Array.isArray(json?.data) ? json.data : [];
+                setReviews(list);
+            } catch (e: any) {
+                message.error(e?.message || 'Failed to load reviews');
+            } finally {
+                setLoadingList(false);
+            }
+        })();
+    }, [mentorId]);
+
+    // 把 reviewer（可能是 user_id）映射为 {username, profile_url}
+    useEffect(() => {
+        let cancelled = false;
+
+        (async () => {
+            if (reviews.length === 0) {
+                setDisplayList([]);
+                return;
+            }
+
+            const idsToFetch = Array.from(
+                new Set(
+                    reviews
+                        .filter(r => looksLikeUserId(r.reviewer))
+                        .map(r => r.reviewer)
+                )
+            );
+
+            if (idsToFetch.length === 0) {
+                if (!cancelled) {
+                    setDisplayList(
+                        reviews.map(r => ({
+                            ...r,
+                            reviewer_username: r.reviewer,
+                            reviewer_avatar: null,
+                        }))
+                    );
+                }
+                return;
+            }
+
+            const results = await Promise.allSettled(
+                idsToFetch.map(async (uid) => {
+                    const res = await fetch(`/api/user/${uid}`);
+                    const json = await res.json().catch(() => ({}));
+                    if (!res.ok) throw new Error(json?.message || 'fetch user failed');
+                    const u = json?.data ?? json;
+                    return { uid, username: u?.username ?? uid, profile_url: u?.profile_url ?? null };
+                })
+            );
+
+            const mapById = new Map<string, { username: string; profile_url: string | null }>();
+            results.forEach((p, i) => {
+                const uid = idsToFetch[i];
+                if (p.status === 'fulfilled') {
+                    mapById.set(uid, { username: p.value.username, profile_url: p.value.profile_url });
+                } else {
+                    mapById.set(uid, { username: uid, profile_url: null });
+                }
+            });
+
+            if (!cancelled) {
+                setDisplayList(
+                    reviews.map(r => {
+                        if (looksLikeUserId(r.reviewer)) {
+                            const hit = mapById.get(r.reviewer);
+                            return {
+                                ...r,
+                                reviewer_username: hit?.username ?? r.reviewer,
+                                reviewer_avatar: hit?.profile_url ?? null,
+                            };
+                        }
+                        return { ...r, reviewer_username: r.reviewer, reviewer_avatar: null };
+                    })
+                );
+            }
+        })();
+
+        return () => { cancelled = true; };
+    }, [reviews]);
+
+    // 顶部均分与数量
+    const { ratingAvg, total } = useMemo(() => {
+        const valid = displayList.map(r => r.rating).filter((x): x is number => typeof x === 'number');
+        const sum = valid.reduce((a, b) => a + b, 0);
+        const avg = valid.length ? sum / valid.length : 0;
+        return { ratingAvg: Number(avg.toFixed(1)), total: displayList.length };
+    }, [displayList]);
 
     const openWrite = () => {
-        if (!mentorId) {
-            message.warning('No mentor selected.');
-            return;
-        }
-        if (!isSignedIn) {
-            message.info('Please sign in to write a review.');
-            return;
-        }
+        if (!mentorId) return message.warning('No mentor selected.');
+        if (!isSignedIn) return message.info('Please sign in to write a review.');
         setFeedbackComment('');
         setFeedbackRating(null);
         setIsFeedbackOpen(true);
     };
 
     const submitReview = async () => {
-        if (!mentorId || !menteeId) return;
+        if (!mentorId) return;
+        if (!feedbackComment.trim()) return message.warning('Please write a short comment.');
+        if (feedbackRating == null) return message.warning('Please select a rating.');
+
         try {
             setFeedbackLoading(true);
-            // 如果你的后端也接收 rating，可把 rating 一起发过去
             const res = await fetch('/api/reviews/insert', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    reviewee: mentorId,           // 被评对象：导师
-                    reviewer: menteeId,           // 评论人：当前用户
+                    reviewee: mentorId,
+                    reviewer: currentUsername,         // 传 username
                     content: feedbackComment.trim(),
-                    // rating: feedbackRating,    // ← 后端支持再放开
+                    rating: feedbackRating,
                 }),
             });
             const data = await res.json().catch(() => ({} as any));
@@ -156,8 +176,25 @@ export default function MentorReviews({ mentorId }: { mentorId?: string }) {
             setIsFeedbackOpen(false);
             setIsThanksOpen(true);
             setFeedbackComment('');
-            // 可选：这里把新评论插入本地列表，立即显示
-            // setLocalReviews(prev => [{ id: nanoid(), name: user?.fullName ?? 'You', rating: feedbackRating ?? 5, date: dayjs().format('YYYY-MM-DD'), content: feedbackComment.trim() }, ...prev]);
+            setFeedbackRating(null);
+
+            // 乐观更新：把新评论插入到显示列表顶部
+            const nowISO = new Date().toISOString();
+            setDisplayList(prev => [
+                {
+                    id: data?.data?.id ?? `tmp_${Date.now()}`,
+                    reviewer: currentUsername,               // 原始字段
+                    reviewer_username: currentUsername,      // 显示名
+                    reviewer_avatar: currentAvatar,          // 头像（用 Clerk 当前头像）
+                    content: feedbackComment.trim(),
+                    rating: feedbackRating,
+                    creation_time: data?.data?.creation_time ?? nowISO,
+                },
+                ...prev,
+            ]);
+
+            // 如果你希望也同步更新原始 reviews，可按需 setReviews
+            // setReviews(prev => [...prev]); // 可选
         } catch (e: any) {
             message.error(e?.message || 'Failed to submit review');
         } finally {
@@ -165,9 +202,11 @@ export default function MentorReviews({ mentorId }: { mentorId?: string }) {
         }
     };
 
+    const isEmpty = !loadingList && total === 0;
+
     return (
         <div style={{ width: '100%' }}>
-            {/* 顶部统计 + Write a review */}
+            {/* 顶部：当有数据时显示统计；无数据时只保留 Write a review 按钮 */}
             <div
                 style={{
                     display: 'flex',
@@ -177,13 +216,17 @@ export default function MentorReviews({ mentorId }: { mentorId?: string }) {
                     marginBottom: 16,
                 }}
             >
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                    <Text style={{ fontSize: 28, fontWeight: 700 }}>{ratingAvg}</Text>
-                    <Text style={{ fontSize: 28 }}>/5</Text>
-                    <Text type="secondary" style={{ marginLeft: 8 }}>
-                        ({total} reviews)
-                    </Text>
-                </div>
+                {!isEmpty ? (
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                        <Text style={{ fontSize: 28, fontWeight: 700 }}>{ratingAvg}</Text>
+                        <Text style={{ fontSize: 28 }}>/5</Text>
+                        {total >= 5 && (
+                            <Text type="secondary" style={{ marginLeft: 8 }}>
+                                ({total} reviews{loadingList ? ', loading…' : ''})
+                            </Text>
+                        )}
+                    </div>
+                ) : <div />}
 
                 <Button
                     type="link"
@@ -195,75 +238,82 @@ export default function MentorReviews({ mentorId }: { mentorId?: string }) {
                 </Button>
             </div>
 
-            {/* 过滤标签 */}
-            <div
-                style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 16,
-                    marginBottom: 16,
-                }}
-            >
-                {TAGS.map((t, i) => (
-                    <Tag
-                        key={i}
-                        style={{
-                            padding: '6px 14px',
-                            fontSize: 14,
-                            background: '#fff',
-                            borderColor: '#d9d9d9',
-                            cursor: 'pointer',
-                        }}
-                        color={activeTag === t ? 'blue' : undefined}
-                        onClick={() => setActiveTag(activeTag === t ? null : t)}
-                    >
-                        {t}
-                    </Tag>
-                ))}
-            </div>
+            {/* 当没有 review：不展示标签和卡片，只提示“没有 review” */}
+            {isEmpty ? (
+                <Card
+                    style={{
+                        borderRadius: 8,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                    }}
+                    bodyStyle={{ padding: 24, display: 'flex', justifyContent: 'center' }}
+                >
+                    <Text type="secondary">No reviews yet</Text>
+                    {/* 如果你想要中文：<Text type="secondary">还没有任何评论</Text> */}
+                </Card>
+            ) : (
+                <>
+                    {/* 两列卡片 */}
+                    <Row gutter={[24, 24]}>
+                        {displayList.map((r) => (
+                            <Col key={r.id} xs={24} md={12}>
+                                <Card
+                                    bodyStyle={{ padding: 16 }}
+                                    style={{
+                                        borderRadius: 8,
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                                        height: 220, // 固定高度
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                    }}
+                                >
+                                    {/* 头部：头像 用户名 评分 日期 */}
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            marginBottom: 12,
+                                        }}
+                                    >
+                                        <Space>
+                                            <Avatar size={28} src={r.reviewer_avatar ?? undefined} style={{ background: '#eee' }}>
+                                                {!r.reviewer_avatar && (r.reviewer_username?.[0] ?? '?')}
+                                            </Avatar>
+                                            <Text strong>{r.reviewer_username ?? r.reviewer}</Text>
+                                            {typeof r.rating === 'number' && (
+                                                <>
+                                                    <Text strong style={{ marginLeft: 4 }}>{r.rating.toFixed(1)}</Text>
+                                                    <Text type="secondary">/5</Text>
+                                                </>
+                                            )}
+                                        </Space>
 
-            {/* 两列卡片 */}
-            <Row gutter={[24, 24]}>
-                {filtered.map((r) => (
-                    <Col key={r.id} xs={24} md={12}>
-                        <Card
-                            bodyStyle={{ padding: 16 }}
-                            style={{
-                                borderRadius: 8,
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                            }}
-                        >
-                            {/* 头部：头像 名称 评分 日期 */}
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    marginBottom: 12,
-                                }}
-                            >
-                                <Space>
-                                    <Avatar size={28} style={{ background: '#eee' }} />
-                                    <Text strong>{r.name}</Text>
-                                    <Text strong style={{ marginLeft: 4 }}>
-                                        {r.rating.toFixed(1)}
+                                        <Text type="secondary">
+                                            {dayjs(r.creation_time).format('MMM D, YYYY')}
+                                        </Text>
+                                    </div>
+
+                                    {/* 内容（若需要 4 行截断，可加 line-clamp 样式） */}
+                                    <Text
+                                        style={{
+                                            color: 'rgba(0,0,0,0.65)',
+                                            whiteSpace: 'pre-wrap',
+                                            overflow: 'hidden',
+                                            display: '-webkit-box',
+                                            WebkitLineClamp: 4,
+                                            WebkitBoxOrient: 'vertical',
+                                            lineHeight: '1.5em',
+                                            flex: 1,
+                                        }}
+                                    >
+                                        {r.content}
                                     </Text>
-                                    <Text type="secondary">/5</Text>
-                                </Space>
-
-                                <Text type="secondary">
-                                    {dayjs(r.date).format('MMM Do, YYYY')}
-                                </Text>
-                            </div>
-
-                            {/* 内容 */}
-                            <Text style={{ color: 'rgba(0,0,0,0.65)', whiteSpace: 'pre-wrap' }}>
-                                {r.content}
-                            </Text>
-                        </Card>
-                    </Col>
-                ))}
-            </Row>
+                                </Card>
+                            </Col>
+                        ))}
+                    </Row>
+                </>
+            )}
 
             {/* —— Write a review 弹窗 —— */}
             <Modal
@@ -271,14 +321,12 @@ export default function MentorReviews({ mentorId }: { mentorId?: string }) {
                 open={isFeedbackOpen}
                 onCancel={() => setIsFeedbackOpen(false)}
                 footer={[
-                    <Button key="back" onClick={() => setIsFeedbackOpen(false)}>
-                        Back
-                    </Button>,
+                    <Button key="back" onClick={() => setIsFeedbackOpen(false)}>Back</Button>,
                     <Button
                         key="submit"
                         type="primary"
                         loading={feedbackLoading}
-                        disabled={!feedbackComment.trim()}
+                        disabled={!feedbackComment.trim() || feedbackRating == null}
                         onClick={submitReview}
                     >
                         Submit
@@ -288,14 +336,11 @@ export default function MentorReviews({ mentorId }: { mentorId?: string }) {
                 <div style={{ marginBottom: 16 }}>
                     <Text strong>1. How satisfied are you with this mentorship session?</Text>
                     <div style={{ marginTop: 12 }}>
-                        <Radio.Group
-                            value={feedbackRating ?? undefined}
-                            onChange={(e) => setFeedbackRating(e.target.value)}
-                        >
+                        <Radio.Group value={feedbackRating ?? undefined} onChange={(e) => setFeedbackRating(e.target.value)}>
                             <Space size="large">
-                                {EMOJIS.map((e) => (
-                                    <Radio key={e.value} value={e.value} aria-label={`rating-${e.value}`}>
-                                        <span style={{ fontSize: 24, lineHeight: 1 }}>{e.label}</span>
+                                {[1,2,3,4,5].map((v) => (
+                                    <Radio key={v} value={v} aria-label={`rating-${v}`}>
+                                        <span style={{ fontSize: 24, lineHeight: 1 }}>{['😡','😟','😐','😊','😄'][v-1]}</span>
                                     </Radio>
                                 ))}
                             </Space>
@@ -318,18 +363,8 @@ export default function MentorReviews({ mentorId }: { mentorId?: string }) {
             <Modal
                 open={isThanksOpen}
                 footer={[
-                    <Button key="back" onClick={() => setIsThanksOpen(false)}>
-                        Back to Mentor
-                    </Button>,
-                    <Button
-                        key="check"
-                        type="primary"
-                        onClick={() => {
-                            setIsThanksOpen(false);
-                            // 可选：跳转到“我的评论”页或刷新
-                            // router.push('/my/reviews')
-                        }}
-                    >
+                    <Button key="back" onClick={() => setIsThanksOpen(false)}>Back to Mentor</Button>,
+                    <Button key="check" type="primary" onClick={() => setIsThanksOpen(false)}>
                         Check my review
                     </Button>,
                 ]}

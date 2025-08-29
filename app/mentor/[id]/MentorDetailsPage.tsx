@@ -653,7 +653,7 @@ export default function MentorDetailsPage() {
                                   start_time,
                                   end_time,
                                   service_type: supportType,
-                                  description,
+                                  description: description.trim(),
                                   price: 0,
                                 }),
                               });
@@ -747,7 +747,7 @@ export default function MentorDetailsPage() {
                                   start_time,
                                   end_time,
                                   service_type: supportType,
-                                  description,
+                                  description: description.trim(),
                                   price: calculatedPrice,
                                 }),
                               });
