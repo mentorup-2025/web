@@ -1,315 +1,321 @@
 .layout {
-  min-height: 100vh;
+    min-height: 100vh;
 }
 
 .header {
-  background: #fff;
-  padding: 0 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  position: fixed;
-  width: 100%;
-  z-index: 1;
-  height: 64px;
+    background: #fff;
+    padding: 0 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    position: fixed;
+    width: 100%;
+    z-index: 1;
+    height: 64px;
 }
 
 .headerContent {
-  max-width: 2400px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 100%;
+    max-width: 2400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
 }
 
 .headerLeft {
-  display: flex;
-  align-items: center;
-  flex: 1;
+    display: flex;
+    align-items: center;
+    flex: 1;
 }
 
 .logo {
-  font-size: 24px;
-  font-weight: bold;
-  color: #1890ff; /* Ant Design's primary blue color, you can adjust this */
-  margin: 0;
-  padding: 0;
+    font-size: 24px;
+    font-weight: bold;
+    color: #1890ff;
+    margin: 0;
+    padding: 0;
 }
 
 .searchBar {
-  margin-left: 30px;
-  width: 400px;
+    margin-left: 30px;
+    width: 400px;
 }
 
 .headerRight {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-left: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-left: 24px;
 }
 
 .userAvatar {
-  cursor: pointer;
+    cursor: pointer;
 }
 
 .mainLayout {
-  margin-top: 64px;
-  padding: 24px;
-  display: flex;
-  /* max-width: 2400px;
-  margin-left: auto;
-  margin-right: auto; */
+    margin-top: 64px;
+    padding: 24px;
+    display: flex;
 }
 
 .sider {
-  background: #fff;
-  padding: 24px;
-  margin-right: 24px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  flex: 0 0 280px !important;
-  max-width: 280px !important;
-  min-width: 280px !important;
+    background: #fff;
+    padding: 24px;
+    margin-right: 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    flex: 0 0 280px !important;
+    max-width: 280px !important;
+    min-width: 280px !important;
 }
 
 .content {
-  background: #fff;
-  padding: 24px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  flex: 1;
+    background: #fff;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    flex: 1;
 }
 
 .checkboxGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .mentorGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
 }
 
 .mentorCard {
-  border-radius: 8px;
-  overflow: hidden;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
 }
 
 .mentorCard:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
 }
 
+/* 修改头像容器为正方形并撑满卡片宽度 */
 .avatarContainer {
-  background-color: #f5f5f5;
-  padding: 24px 0;
-  margin: -24px -24px 16px -24px;
-  text-align: center;
+    background-color: #f5f5f5;
+    padding: 0;
+    margin: -24px -24px 16px -24px;
+    text-align: center;
+    height: 300px; /* 正方形高度等于卡片宽度 */
+    overflow: hidden;
+    position: relative;
 }
 
 .avatar {
-  display: inline-block;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0 !important;
 }
 
 .mentorInfo {
-  text-align: center;
-  margin-bottom: 16px;
+    text-align: center;
+    margin-bottom: 16px;
+    padding: 0 16px;
 }
 
 .mentorInfo h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
 }
 
 .mentorInfo p {
-  margin: 4px 0;
-  color: rgba(0, 0, 0, 0.45);
+    margin: 4px 0;
+    color: rgba(0, 0, 0, 0.45);
 }
 
 .mentorTags {
-  margin: 16px 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-content: baseline;
-  gap: 2px;
-  min-height: 8cqb;
-  overflow: hidden;
-  position: relative;
-  
+    margin: 16px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+    padding: 0 16px;
 }
 
 .mentorTag {
-  height: fit-content;
+    height: fit-content;
 }
-/* 
-Optional: Add a fade-out effect at the bottom for better UX
-.mentorTags::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 1.2em;
-  background: linear-gradient(to bottom, transparent, white 80%);
-  pointer-events: none;
-} */
 
 .cardFooter {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    padding: 0 16px 16px;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 16px;
 }
 
 .mentorPrice {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1f1f1f;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f1f1f;
 }
 
 .scheduleButton {
-  background: #1f1f1f !important;
-  border-color: #1f1f1f !important;
+    background: #1f1f1f !important;
+    border-color: #1f1f1f !important;
 }
 
 .scheduleButton:hover {
-  background: #333 !important;
-  border-color: #333 !important;
+    background: #333 !important;
+    border-color: #333 !important;
 }
 
 /* Responsive styles */
 @media (max-width: 1024px) {
-  .searchBar {
-    width: 300px;
-  }
+    .searchBar {
+        width: 300px;
+    }
 }
 
 @media (max-width: 768px) {
-  .mainLayout {
-    flex-direction: column;
-  }
+    .mainLayout {
+        flex-direction: column;
+    }
 
-  .sider {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin-right: 0;
-    margin-bottom: 24px;
-  }
+    .sider {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-right: 0;
+        margin-bottom: 24px;
+    }
 
-  .headerContent {
-    padding: 12px 0;
-  }
+    .headerContent {
+        padding: 12px 0;
+    }
 
-  .headerLeft {
-    flex-direction: column;
-    align-items: stretch;
-  }
+    .headerLeft {
+        flex-direction: column;
+        align-items: stretch;
+    }
 
-  .searchBar {
-    width: 100%;
-    margin: 12px 0;
-  }
+    .searchBar {
+        width: 100%;
+        margin: 12px 0;
+    }
 
-  .headerRight {
-    margin-left: 0;
-  }
+    .headerRight {
+        margin-left: 0;
+    }
 }
 
-/* Add these new styles to your existing CSS file */
-
 .filtersContainer {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 .mainFilters {
-  flex: 1;
+    flex: 1;
 }
 
 .moreFiltersButton {
-  padding: 8px 0;
-  margin: 0 12px; /* Align with Collapse panels */
+    padding: 8px 0;
+    margin: 0 12px;
 }
 
 .moreFiltersButton button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  color: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: rgba(0, 0, 0, 0.45);
 }
 
 .additionalFilters {
-  animation: slideDown 0.3s ease-out;
+    animation: slideDown 0.3s ease-out;
 }
 
 @keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-} 
-
-.mentor-intro-ellipsis {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 1.15rem; /* or your preferred size */
-  min-height: 3.6em;  /* ensures space for 3 lines, adjust as needed */
-  line-height: 1.2;   /* adjust to match your design */
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+.mentor-intro-ellipsis {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 1.15rem;
+    min-height: 3.6em;
+    line-height: 1.2;
+}
 
 @media (max-width: 480px) {
-  .mentorGrid {
-    grid-template-columns: 1fr; /* 一列展示 */
-    gap: 16px;
-  }
+    .mentorGrid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
 
-  .mentorCard {
-    padding: 16px;
-  }
+    .mentorCard {
+        padding: 16px;
+    }
 
-  .mentorInfo h3 {
-    font-size: 14px;
-  }
+    .mentorInfo h3 {
+        font-size: 14px;
+    }
 
-  .mentorInfo p {
-    font-size: 13px;
-  }
+    .mentorInfo p {
+        font-size: 13px;
+    }
 
-  .scheduleButton {
-    font-size: 14px;
-    padding: 6px 12px;
-  }
+    .scheduleButton {
+        font-size: 14px;
+        padding: 6px 12px;
+    }
 
-  .avatarContainer {
-    padding: 16px 0;
-  }
+    /* 移动端保持正方形比例 */
+    .avatarContainer {
+        height: 280px; /* 移动端稍小的高度 */
+        margin: -16px -16px 12px -16px;
+    }
 
-  .mentor-intro-ellipsis {
-    font-size: 1rem;
-    min-height: 3em;
-  }
+    .mentorInfo {
+        padding: 0 12px;
+    }
+
+    .mentorTags {
+        padding: 0 12px;
+    }
+
+    .cardFooter {
+        padding: 0 12px 12px;
+        padding-top: 12px;
+    }
+
+    .mentor-intro-ellipsis {
+        font-size: 1rem;
+        min-height: 3em;
+    }
+}
+
+/* 确保卡片宽度和头像高度一致 */
+@media (min-width: 481px) {
+    .mentorCard {
+        width: 300px; /* 与 grid-template-columns 的 minmax 保持一致 */
+    }
+
+    .avatarContainer {
+        height: 300px; /* 正方形高度等于卡片宽度 */
+    }
 }
