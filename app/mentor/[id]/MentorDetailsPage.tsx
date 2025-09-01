@@ -799,23 +799,57 @@ export default function MentorDetailsPage() {
 
         </Modal>
 
-        <Modal
-            open={isSuccessModalVisible}
-            footer={null}
-            onCancel={() => setIsSuccessModalVisible(false)}
-        >
-          <Title level={4}>Session Scheduled - Pending Mentor Confirmation</Title>
-          <p>Check your email for session details.</p>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
-            <Button onClick={() => setIsSuccessModalVisible(false)}>Stay On This Page</Button>
-            <Button
-                type="primary"
-                onClick={() => window.location.href = `/mentee-profile/${user?.id}#sessions`}
-            >
-              View All My Booked Sessions
-            </Button>
-          </div>
-        </Modal>
+        {/*<Modal*/}
+        {/*    open={isSuccessModalVisible}*/}
+        {/*    footer={null}*/}
+        {/*    onCancel={() => setIsSuccessModalVisible(false)}*/}
+        {/*>*/}
+        {/*  <Title level={4}>Session Scheduled - Pending Mentor Confirmation</Title>*/}
+        {/*  <p>Check your email for session details.</p>*/}
+        {/*  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>*/}
+        {/*    <Button onClick={() => setIsSuccessModalVisible(false)}>Stay On This Page</Button>*/}
+        {/*    <Button*/}
+        {/*        type="primary"*/}
+        {/*        onClick={() => window.location.href = `/mentee-profile/${user?.id}#sessions`}*/}
+        {/*    >*/}
+        {/*      View All My Booked Sessions*/}
+        {/*    </Button>*/}
+        {/*  </div>*/}
+        {/*</Modal>*/}
+
+          {/* Success (after Stripe or free booking) */}
+          <Modal
+              open={isSuccessModalVisible}
+              footer={null}
+              onCancel={() => setIsSuccessModalVisible(false)}
+              width={560}
+          >
+              <div style={{ padding: '8px 4px' }}>
+                  <Title level={4} style={{ marginBottom: 12 }}>
+                      Request Sent to Mentor
+                  </Title>
+
+                  <p style={{ marginBottom: 8 }}>
+                      Thank you for scheduling your session!
+                  </p>
+
+                  <p style={{ marginBottom: 0 }}>
+                      Your request has been sent to the mentor. <strong>You’ll receive the meeting link by email once the mentor confirms.</strong>
+                  </p>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
+                      <Button onClick={() => setIsSuccessModalVisible(false)}>
+                          Stay On This Page
+                      </Button>
+                      <Button
+                          type="primary"
+                          onClick={() => router.push(`/mentee-profile/${user?.id}#sessions`)}
+                      >
+                          View All My Booked Sessions
+                      </Button>
+                  </div>
+              </div>
+          </Modal>
 
         <Modal
             open={isWeChatModalVisible}
