@@ -76,12 +76,22 @@
     flex: 1;
 }
 
+/* 顶部操作区（移动端 Filters 按钮 + 排序） */
+.topActions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+/* ===== Filters（Panel 内通用样式） ===== */
 .checkboxGroup {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
+/* ===== Mentor Grid / Card ===== */
 .mentorGrid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -99,23 +109,49 @@
     transform: translateY(-2px);
 }
 
-/* 修改头像容器为正方形并撑满卡片宽度 */
+/* 头像容器：正方形比例（桌面端） */
 .avatarContainer {
-    background-color: #f5f5f5;
-    padding: 0;
-    margin: -24px -24px 16px -24px;
-    text-align: center;
-    height: 300px; /* 正方形高度等于卡片宽度 */
+    width: 100%;
+    aspect-ratio: 1 / 1;
     overflow: hidden;
-    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f5f5f5;
+    margin: -24px -24px 16px -24px;
+}
+
+.avatarWrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .avatar {
-    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 0 !important;
+}
+
+.avatarPlaceholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background-color: #f0f0f0;
+    color: #999;
+    font-size: 48px;
+}
+
+/* 确保Ant Design Image组件内部的img元素也填满容器 */
+.avatarWrapper :global(.ant-image),
+.avatarWrapper :global(.ant-image-img) {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
 }
 
 .mentorInfo {
@@ -159,9 +195,9 @@
 }
 
 .mentorPrice {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 600;
-    color: #1f1f1f;
+    /*color: #1f1f1f;*/
 }
 
 .scheduleButton {
@@ -174,44 +210,7 @@
     border-color: #333 !important;
 }
 
-/* Responsive styles */
-@media (max-width: 1024px) {
-    .searchBar {
-        width: 300px;
-    }
-}
-
-@media (max-width: 768px) {
-    .mainLayout {
-        flex-direction: column;
-    }
-
-    .sider {
-        width: 100% !important;
-        max-width: 100% !important;
-        margin-right: 0;
-        margin-bottom: 24px;
-    }
-
-    .headerContent {
-        padding: 12px 0;
-    }
-
-    .headerLeft {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .searchBar {
-        width: 100%;
-        margin: 12px 0;
-    }
-
-    .headerRight {
-        margin-left: 0;
-    }
-}
-
+/* ===== 杂项 ===== */
 .filtersContainer {
     display: flex;
     flex-direction: column;
@@ -261,14 +260,85 @@
     line-height: 1.2;
 }
 
+/* ===== 响应式（平板 & 桌面） ===== */
+@media (max-width: 1024px) {
+    .searchBar {
+        width: 300px;
+    }
+}
+
+@media (max-width: 768px) {
+    .mainLayout {
+        flex-direction: column;
+    }
+
+    .sider {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-right: 0;
+        margin-bottom: 24px;
+    }
+
+    .headerContent {
+        padding: 12px 0;
+    }
+
+    .headerLeft {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .searchBar {
+        width: 100%;
+        margin: 12px 0;
+    }
+
+    .headerRight {
+        margin-left: 0;
+    }
+}
+
+/* 移动端 */
 @media (max-width: 480px) {
+    /* 网格改为两列 */
     .mentorGrid {
-        grid-template-columns: 1fr;
-        gap: 16px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
     }
 
     .mentorCard {
-        padding: 16px;
+        padding: 12px;
+    }
+
+    .filtersButtonMobile {
+        flex: 1;                /* ✅ 宽度占比相等，能跟排序按钮并排 */
+        min-width: 0;           /* 避免超出 */
+        text-align: center;
+        margin-bottom: 16px;
+    }
+
+    /* 顶部操作区更紧凑 */
+    .topActions {
+        display: flex;
+        flex-wrap: nowrap;       /* 不换行 */
+        justify-content: space-between; /* 三个按钮平分空间 */
+    }
+
+    .topActions button {
+        flex: 1;                 /* 每个按钮等宽 */
+        min-width: 0;            /* 防止按钮超出 */
+    }
+
+    /* 头像高度降低以适配双列 */
+    .avatarContainer {
+        aspect-ratio: 1 / 1;   /* ✅ 高宽比固定为 1:1 */
+        height: auto;          /* 高度自动 */
+        margin: -12px -12px 8px -12px;
+    }
+
+    .mentorInfo {
+        padding: 0 8px;
+        margin-bottom: 12px;
     }
 
     .mentorInfo h3 {
@@ -276,46 +346,39 @@
     }
 
     .mentorInfo p {
-        font-size: 13px;
-    }
-
-    .scheduleButton {
-        font-size: 14px;
-        padding: 6px 12px;
-    }
-
-    /* 移动端保持正方形比例 */
-    .avatarContainer {
-        height: 280px; /* 移动端稍小的高度 */
-        margin: -16px -16px 12px -16px;
-    }
-
-    .mentorInfo {
-        padding: 0 12px;
+        font-size: 12px;
     }
 
     .mentorTags {
-        padding: 0 12px;
+        padding: 0 8px;
+        margin: 12px 0;
     }
 
     .cardFooter {
-        padding: 0 12px 12px;
-        padding-top: 12px;
+        flex-direction: column;      /* 竖排 */
+        align-items: stretch;        /* 宽度占满 */
+        gap: 8px;                    /* 价格和按钮之间留间距 */
+        padding: 0 8px 12px;
+        padding-top: 10px;
+    }
+
+    .scheduleButton {
+        width: 130%;                 /* 按钮占满一行 */
+        font-size: 13px;
+        padding: 6px 10px;
     }
 
     .mentor-intro-ellipsis {
         font-size: 1rem;
         min-height: 3em;
     }
+
+    .mentorPrice {
+        font-size: 16px;
+        text-align: left;          /* 价格居中 */
+    }
 }
 
-/* 确保卡片宽度和头像高度一致 */
 @media (min-width: 481px) {
-    .mentorCard {
-        width: 300px; /* 与 grid-template-columns 的 minmax 保持一致 */
-    }
-
-    .avatarContainer {
-        height: 300px; /* 正方形高度等于卡片宽度 */
-    }
+    .mentorCard { /* no fixed width to allow grid to flow */ }
 }
