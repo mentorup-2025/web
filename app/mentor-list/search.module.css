@@ -32,7 +32,7 @@
 /* =================== Sider & Content =================== */
 .sider {
     background: #fff;
-    padding: 8px 0;
+    padding: 18px 0;
     /*margin-right: 24px;*/
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,.06);
@@ -43,7 +43,10 @@
 
 .content {
     background: #fff;
-    padding: 24px;
+    padding-top: 24px;    /* 保持顶部原有内边距 */
+    padding-right: 68px;  /* 只增加右侧内边距 */
+    padding-bottom: 24px; /* 保持底部原有内边距 */
+    padding-left: 68px;   /* 保持左侧原有内边距 */
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,.06);
     flex: 1;
@@ -117,8 +120,10 @@
 /* =================== Mentor Grid / Card =================== */
 .mentorGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(auto-fill, minmax(204px, 1fr));
+    /*gap: 24px;*/
+    row-gap: 32px;    /* 垂直间距 */
+    column-gap: 40px; /* 水平间距 */
     align-items: stretch;
 }
 
@@ -206,6 +211,27 @@
 /* 价格蓝色、按钮蓝色 */
 .mentorPrice { font-size: 18px; font-weight: 700; color: #1890ff; }
 
+/* 调整排序按钮的大小 */
+.topActions :global(.ant-btn) {
+    height: 40px; /* 调整按钮高度 */
+    padding: 0 16px; /* 调整按钮内边距 */
+    font-size: 14px; /* 调整字体大小 */
+    border-radius: 14px;
+}
+
+/* 或者单独针对排序按钮 */
+.topActions :global(.ant-btn.ant-btn-default) {
+    height: 40px;
+    padding: 0 16px;
+    font-size: 14px;
+    border-radius: 14px;
+}
+
+/* 调整图标大小 */
+.topActions :global(.ant-btn .anticon) {
+    font-size: 14px; /* 调整图标大小 */
+}
+
 .scheduleButton {
     background: #1890ff !important;
     border-color: #1890ff !important;
@@ -249,6 +275,14 @@
     /* 底部：紧凑 */
     .cardFooter { padding-top: 4px; }
 
+    .content {
+        background: #fff;
+        padding: 24px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        flex: 1;
+    }
+
     .mentorPrice {
         font-size: 12px;
         font-weight: 700;
@@ -273,20 +307,33 @@
         display: flex;
         align-items: center;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 12px;
         margin-bottom: 4px;
-    }
-
-    /* 确保所有按钮高度一致并对齐 */
-    .topActions :global(.ant-btn) {
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
 
     /* 特别调整 Filters 按钮的位置 */
     .topActions :global(.ant-btn):first-child {
         align-self: flex-start; /* 如果需要更精确的控制，可以改为具体的像素值 */
+    }
+
+    /* 调整排序按钮的大小 */
+    .topActions :global(.ant-btn) {
+        height: 32px; /* 调整按钮高度 */
+        padding: 0 12px; /* 调整按钮内边距 */
+        font-size: 14px; /* 调整字体大小 */
+        /*border-radius: 14px;*/
+    }
+
+    /* 或者单独针对排序按钮 */
+    .topActions :global(.ant-btn.ant-btn-default) {
+        height: 32px;
+        padding: 0 12px;
+        font-size: 14px;
+        border-radius: 12px;
+    }
+
+    /* 调整图标大小 */
+    .topActions :global(.ant-btn .anticon) {
+        font-size: 14px; /* 调整图标大小 */
     }
 }
