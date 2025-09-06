@@ -12,7 +12,8 @@ export async function createReview(input: CreateReviewInput): Promise<Review> {
         .insert({
             reviewee: input.reviewee,
             reviewer: input.reviewer,
-            content: input.content
+            content: input.content,
+            rating: input.rating
         })
         .select()
         .single();

@@ -823,6 +823,8 @@ export default function MentorDetailsPage() {
               footer={null}
               onCancel={() => setIsSuccessModalVisible(false)}
               width={560}
+              getContainer={() => document.body}
+              zIndex={11000}
           >
               <div style={{ padding: '8px 4px' }}>
                   <Title level={4} style={{ marginBottom: 12 }}>
