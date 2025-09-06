@@ -1,5 +1,5 @@
 'use client';
-import { Card, Avatar, Tag, Button, Empty, Image } from 'antd';
+import { Card, Avatar, Tag, Button, Empty } from 'antd';
 import Link from 'next/link';
 import { UserOutlined } from '@ant-design/icons';
 import styles from '../search.module.css';
@@ -39,24 +39,19 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
 
     useEffect(() => {
         let filtered = mentors.filter(mentor => {
-            // Job Title
             if (filters.jobTitle && !mentor.mentor.title?.toLowerCase().includes(filters.jobTitle.toLowerCase())) {
                 return false;
             }
-            // Industry
             if (filters.industries?.length) {
                 const ok = mentor.industries?.some(i => filters.industries!.includes(i));
                 if (!ok) return false;
             }
-            // Company
             if (filters.company?.length) {
                 if (!filters.company.includes(mentor.mentor.company)) return false;
             }
-            // YOE
             const yoe = Number(mentor.mentor.years_of_experience ?? 0);
             if (filters.minExperience != null && yoe < Number(filters.minExperience)) return false;
             if (filters.maxExperience != null && yoe > Number(filters.maxExperience)) return false;
-            // Price
             if (filters.minPrice != null || filters.maxPrice != null) {
                 const minP = filters.minPrice != null ? Number(filters.minPrice) : -Infinity;
                 const maxP = filters.maxPrice != null ? Number(filters.maxPrice) : Infinity;
@@ -64,7 +59,6 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                 const hit = entries.some(e => e.price >= minP && e.price <= maxP);
                 if (!hit) return false;
             }
-            // Service Type
             if (filters.serviceTypes?.length) {
                 const entries = extractServiceEntries(mentor.mentor.services);
                 const types = entries.map(e => e.type);
@@ -73,7 +67,6 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
             return true;
         });
 
-        // 添加排序逻辑
         if (filters.sort) {
             filtered = [...filtered].sort((a, b) => {
                 switch (filters.sort) {
@@ -103,9 +96,9 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
             <div className={styles.noResults}>
                 <Empty description={
                     <span>
-            No mentors found matching your criteria. <br />
-            Please try adjusting your filters.
-          </span>
+                        No mentors found matching your criteria. <br />
+                        Please try adjusting your filters.
+                    </span>
                 } />
             </div>
         );
@@ -118,24 +111,26 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                 const firstPaid = entries.find(e => !isFreeCoffeeChat((e.type ?? '') as string));
                 const hourly = firstPaid ? netToGross(firstPaid.price) : null;
                 return (
-                    <Card key={user.user_id} className={styles.mentorCard}>
-                        <div className={styles.avatarContainer}>
-                            {user.profile_url ? (
-                                <div className={styles.avatarWrapper}>
-                                    <Image
+                    <Card
+                        key={user.user_id}
+                        className={styles.mentorCard}
+                        cover={
+                            user.profile_url ? (
+                                <div className={styles.coverBox}>
+                                    <img
                                         src={user.profile_url}
                                         alt={user.username}
-                                        className={styles.avatar}
-                                        preview={false}
-                                        fallback="/default-avatar.png"
+                                        className={styles.coverImg}
+                                        onError={(e) => { (e.target as HTMLImageElement).src = '/default-avatar.png'; }}
                                     />
                                 </div>
                             ) : (
-                                <div className={styles.avatarPlaceholder}>
+                                <div className={styles.coverFallback}>
                                     <UserOutlined />
                                 </div>
-                            )}
-                        </div>
+                            )
+                        }
+                    >
                         <div className={styles.mentorInfo}>
                             <h3>{user.username}</h3>
                             <p>{user.mentor.title} at {user.mentor.company}</p>

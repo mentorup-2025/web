@@ -1,11 +1,9 @@
-.layout {
-    min-height: 100vh;
-}
+.layout { min-height: 100vh; }
 
 .header {
     background: #fff;
     padding: 0 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
     position: fixed;
     width: 100%;
     z-index: 1;
@@ -21,48 +19,21 @@
     height: 100%;
 }
 
-.headerLeft {
-    display: flex;
-    align-items: center;
-    flex: 1;
-}
+.headerLeft { display: flex; align-items: center; flex: 1; }
+.logo { font-size: 24px; font-weight: bold; color: #1890ff; margin: 0; padding: 0; }
+.searchBar { margin-left: 30px; width: 400px; }
 
-.logo {
-    font-size: 24px;
-    font-weight: bold;
-    color: #1890ff;
-    margin: 0;
-    padding: 0;
-}
+.headerRight { display: flex; align-items: center; gap: 16px; margin-left: 24px; }
+.userAvatar { cursor: pointer; }
 
-.searchBar {
-    margin-left: 30px;
-    width: 400px;
-}
-
-.headerRight {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-left: 24px;
-}
-
-.userAvatar {
-    cursor: pointer;
-}
-
-.mainLayout {
-    margin-top: 64px;
-    padding: 24px;
-    display: flex;
-}
+.mainLayout { margin-top: 64px; padding: 24px; display: flex; }
 
 .sider {
     background: #fff;
     padding: 24px;
     margin-right: 24px;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
     flex: 0 0 280px !important;
     max-width: 280px !important;
     min-width: 280px !important;
@@ -72,311 +43,164 @@
     background: #fff;
     padding: 24px;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
     flex: 1;
 }
 
-/* 顶部操作区（移动端 Filters 按钮 + 排序） */
-.topActions {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    margin-bottom: 8px;
-}
+/* 顶部操作区 */
+.topActions { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; }
 
 /* ===== Filters（Panel 内通用样式） ===== */
-.checkboxGroup {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
+.checkboxGroup { display: flex; flex-direction: column; gap: 8px; }
 
 /* ===== Mentor Grid / Card ===== */
 .mentorGrid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 24px;
+    align-items: stretch;          /* 让每个格子等高 */
 }
 
 .mentorCard {
+    display: flex;
+    flex-direction: column;
     border-radius: 8px;
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: all .3s ease;
+    height: 100%;                  /* 拉满网格高度 */
 }
 
 .mentorCard:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 24px rgba(0,0,0,.15);
     transform: translateY(-2px);
 }
 
-/* 头像容器：正方形比例（桌面端） */
-.avatarContainer {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    overflow: hidden;
+/* --- Card cover 顶部头像 --- */
+.coverBox { width: 100%; aspect-ratio: 1 / 1; overflow: hidden; }
+.coverImg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.coverFallback {
+    width: 100%; aspect-ratio: 1 / 1;
+    display: flex; align-items: center; justify-content: center;
+    background: #f0f0f0; color: #999; font-size: 48px;
+}
+
+/* 让 body 承担伸缩，并把 footer 推到底 */
+.mentorCard :global(.ant-card-body) {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #f5f5f5;
-    margin: -24px -24px 16px -24px;
-}
-
-.avatarWrapper {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.avatar {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.avatarPlaceholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    background-color: #f0f0f0;
-    color: #999;
-    font-size: 48px;
-}
-
-/* 确保Ant Design Image组件内部的img元素也填满容器 */
-.avatarWrapper :global(.ant-image),
-.avatarWrapper :global(.ant-image-img) {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;                       /* body 占满剩余空间 */
 }
 
 .mentorInfo {
     text-align: center;
     margin-bottom: 16px;
     padding: 0 16px;
+    flex-shrink: 0;
 }
 
-.mentorInfo h3 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-}
-
-.mentorInfo p {
-    margin: 4px 0;
-    color: rgba(0, 0, 0, 0.45);
-}
+.mentorInfo h3 { margin: 0; font-size: 16px; font-weight: 600; }
+.mentorInfo p { margin: 4px 0; color: rgba(0,0,0,.45); }
 
 .mentorTags {
     margin: 16px 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    justify-content: center;
+    display: flex; flex-wrap: wrap; gap: 4px; justify-content: center;
     padding: 0 16px;
+    flex-shrink: 0;
 }
+.mentorTag { height: fit-content; }
 
-.mentorTag {
-    height: fit-content;
-}
-
+/* footer 固定到 body 底部 */
 .cardFooter {
+    margin-top: auto;              /* 关键：推到底部 */
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 16px;
-    padding: 0 16px 16px;
+    padding: 16px;                 /* 统一 padding */
     border-top: 1px solid #f0f0f0;
-    padding-top: 16px;
 }
 
-.mentorPrice {
-    font-size: 18px;
-    font-weight: 600;
-    /*color: #1f1f1f;*/
-}
+.mentorPrice { font-size: 18px; font-weight: 600; }
 
 .scheduleButton {
     background: #1f1f1f !important;
     border-color: #1f1f1f !important;
 }
-
 .scheduleButton:hover {
     background: #333 !important;
     border-color: #333 !important;
 }
 
 /* ===== 杂项 ===== */
-.filtersContainer {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
+.filtersContainer { display: flex; flex-direction: column; height: 100%; }
+.mainFilters { flex: 1; }
 
-.mainFilters {
-    flex: 1;
-}
-
-.moreFiltersButton {
-    padding: 8px 0;
-    margin: 0 12px;
-}
-
+.moreFiltersButton { padding: 8px 0; margin: 0 12px; }
 .moreFiltersButton button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    color: rgba(0, 0, 0, 0.45);
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; color: rgba(0,0,0,.45);
 }
 
-.additionalFilters {
-    animation: slideDown 0.3s ease-out;
-}
-
+.additionalFilters { animation: slideDown .3s ease-out; }
 @keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 .mentor-intro-ellipsis {
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 1.15rem;
-    min-height: 3.6em;
-    line-height: 1.2;
+    overflow: hidden; text-overflow: ellipsis;
+    font-size: 1.15rem; min-height: 3.6em; line-height: 1.2;
 }
 
-/* ===== 响应式（平板 & 桌面） ===== */
-@media (max-width: 1024px) {
-    .searchBar {
-        width: 300px;
-    }
-}
+/* ===== 响应式 ===== */
+@media (max-width: 1024px) { .searchBar { width: 300px; } }
 
 @media (max-width: 768px) {
-    .mainLayout {
-        flex-direction: column;
-    }
-
+    .mainLayout { flex-direction: column; }
     .sider {
-        width: 100% !important;
-        max-width: 100% !important;
-        margin-right: 0;
-        margin-bottom: 24px;
+        width: 100% !important; max-width: 100% !important;
+        margin-right: 0; margin-bottom: 24px;
     }
-
-    .headerContent {
-        padding: 12px 0;
-    }
-
-    .headerLeft {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .searchBar {
-        width: 100%;
-        margin: 12px 0;
-    }
-
-    .headerRight {
-        margin-left: 0;
-    }
+    .headerContent { padding: 12px 0; }
+    .headerLeft { flex-direction: column; align-items: stretch; }
+    .searchBar { width: 100%; margin: 12px 0; }
+    .headerRight { margin-left: 0; }
 }
 
 /* 移动端 */
 @media (max-width: 480px) {
-    /* 网格改为两列 */
-    .mentorGrid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
-    }
+    .mentorGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .mentorCard { padding: 12px; }
 
-    .mentorCard {
+    .filtersButtonMobile { flex: 1; min-width: 0; text-align: center; margin-bottom: 16px; }
+
+    .topActions { display: flex; flex-wrap: nowrap; justify-content: space-between; }
+    .topActions button { flex: 1; min-width: 0; }
+
+    .mentorInfo { padding: 0 8px; margin-bottom: 12px; }
+    .mentorInfo h3 { font-size: 14px; }
+    .mentorInfo p { font-size: 12px; }
+
+    .mentorTags { padding: 0 8px; margin: 12px 0; }
+
+    .cardFooter {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
         padding: 12px;
     }
 
-    .filtersButtonMobile {
-        flex: 1;                /* ✅ 宽度占比相等，能跟排序按钮并排 */
-        min-width: 0;           /* 避免超出 */
-        text-align: center;
-        margin-bottom: 16px;
-    }
-
-    /* 顶部操作区更紧凑 */
-    .topActions {
-        display: flex;
-        flex-wrap: nowrap;       /* 不换行 */
-        justify-content: space-between; /* 三个按钮平分空间 */
-    }
-
-    .topActions button {
-        flex: 1;                 /* 每个按钮等宽 */
-        min-width: 0;            /* 防止按钮超出 */
-    }
-
-    /* 头像高度降低以适配双列 */
-    .avatarContainer {
-        aspect-ratio: 1 / 1;   /* ✅ 高宽比固定为 1:1 */
-        height: auto;          /* 高度自动 */
-        margin: -12px -12px 8px -12px;
-    }
-
-    .mentorInfo {
-        padding: 0 8px;
-        margin-bottom: 12px;
-    }
-
-    .mentorInfo h3 {
-        font-size: 14px;
-    }
-
-    .mentorInfo p {
-        font-size: 12px;
-    }
-
-    .mentorTags {
-        padding: 0 8px;
-        margin: 12px 0;
-    }
-
-    .cardFooter {
-        flex-direction: column;      /* 竖排 */
-        align-items: stretch;        /* 宽度占满 */
-        gap: 8px;                    /* 价格和按钮之间留间距 */
-        padding: 0 8px 12px;
-        padding-top: 10px;
-    }
-
     .scheduleButton {
-        width: 130%;                 /* 按钮占满一行 */
+        width: 100%;              /* 占满一行，避免 130% 溢出 */
         font-size: 13px;
         padding: 6px 10px;
     }
 
-    .mentor-intro-ellipsis {
-        font-size: 1rem;
-        min-height: 3em;
-    }
-
-    .mentorPrice {
-        font-size: 16px;
-        text-align: left;          /* 价格居中 */
-    }
+    .mentor-intro-ellipsis { font-size: 1rem; min-height: 3em; }
+    .mentorPrice { font-size: 16px; text-align: left; }
 }
 
 @media (min-width: 481px) {
