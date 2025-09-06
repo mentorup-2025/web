@@ -1,13 +1,12 @@
 "use client";
-
-import { Layout } from "antd";
+import { Layout, Button, Drawer, Space } from "antd"; // ⬅️ 新增 Drawer, Button, Space
+import { useState, useMemo, useEffect } from "react";  // ⬅️ 新增 useEffect
 import styles from "./search.module.css";
 import Navbar from "../components/Navbar";
 import SearchFilters from "./components/SearchFilters";
 import MentorGrid from "./components/MentorGrid";
-import { useState, useMemo } from "react";
 import { Mentor, SearchFiltersType } from "../../types";
-import TopFilters from "./components/TopFilters";
+import TopSort from "./components/TopSort";
 
 const { Content } = Layout;
 
@@ -20,69 +19,43 @@ export default function ClientSearchPage({ initialMentors }: ClientSearchPagePro
     const [mentors] = useState<Mentor[]>(initialMentors);
     const [loading] = useState(false);
 
+    // ====== 关键：检测是否为移动端 ======
+    const [isMobile, setIsMobile] = useState(false);
+    useEffect(() => {
+        const mq = window.matchMedia("(max-width: 480px)");
+        const update = () => setIsMobile(mq.matches);
+        update();
+        mq.addEventListener?.("change", update);
+        return () => mq.removeEventListener?.("change", update);
+    }, []);
+
+    // ====== 关键：控制 Drawer ======
+    const [filtersOpen, setFiltersOpen] = useState(false);
+
     const handleFiltersChange = (newFilters: SearchFiltersType) => {
-        // 基于传入的合并结果做清洗
-        const cleaned: SearchFiltersType = { ...newFilters };
-
-        const has = (obj: any, k: keyof SearchFiltersType) =>
-            Object.prototype.hasOwnProperty.call(obj, k) && obj[k] !== undefined;
-
-        const hasPrice =
-            has(newFilters, 'minPrice') || has(newFilters, 'maxPrice');
-        const hasYoe =
-            has(newFilters, 'minExperience') || has(newFilters, 'maxExperience');
-
-        // 哪一组是“这次点击真正改变的”
-        const priceChanged =
-            newFilters.minPrice !== filters.minPrice ||
-            newFilters.maxPrice !== filters.maxPrice;
-
-        const yoeChanged =
-            newFilters.minExperience !== filters.minExperience ||
-            newFilters.maxExperience !== filters.maxExperience;
-
-        if (hasPrice && hasYoe) {
-            // 同时存在时，优先保留“变化的那一组”
-            if (yoeChanged && !priceChanged) {
-                delete cleaned.minPrice;
-                delete cleaned.maxPrice;
-            } else if (priceChanged && !yoeChanged) {
-                delete cleaned.minExperience;
-                delete cleaned.maxExperience;
-            } else {
-                // 都变 or 都没变：默认优先 YOE（也可按你需求改成优先 Price）
-                delete cleaned.minPrice;
-                delete cleaned.maxPrice;
-            }
-        } else if (hasPrice) {
-            delete cleaned.minExperience;
-            delete cleaned.maxExperience;
-        } else if (hasYoe) {
-            delete cleaned.minPrice;
-            delete cleaned.maxPrice;
-        }
-
-        setFilters(cleaned);
+        setFilters(newFilters);
     };
-
-
-    // TopFilters 的互斥 patch
     const handleTopFiltersPatch = (patch: Partial<SearchFiltersType>) => {
-        handleFiltersChange({ ...filters, ...patch });
+        setFilters({ ...filters, ...patch });
     };
 
-    // 供 TopFilters 计算范围（动态根据数据）
-    const allYoes = useMemo(() => mentors.map(m => Number(m.mentor.years_of_experience ?? 0)), [mentors]);
+    // 供侧边栏筛选器计算范围
+    const allYoes = useMemo(
+        () => mentors.map(m => Number(m.mentor.years_of_experience ?? 0)),
+        [mentors]
+    );
     const minYoe = allYoes.length ? Math.min(...allYoes) : 0;
     const maxYoe = allYoes.length ? Math.max(...allYoes) : 20;
 
     const allPrices = useMemo(
         () =>
-            mentors.flatMap(m =>
-                Object.values(m.mentor.services ?? {}).map(s =>
-                    typeof s === "number" ? Number(s) : Number((s as any)?.price)
+            mentors
+                .flatMap(m =>
+                    Object.values(m.mentor.services ?? {}).map(s =>
+                        typeof s === "number" ? Number(s) : Number((s as any)?.price)
+                    )
                 )
-            ).filter(v => Number.isFinite(v)),
+                .filter(v => Number.isFinite(v)),
         [mentors]
     );
     const minPrice = allPrices.length ? Math.min(...allPrices) : 0;
@@ -115,36 +88,82 @@ export default function ClientSearchPage({ initialMentors }: ClientSearchPagePro
         [mentors]
     );
 
+    // 统计当前已选筛选项个数（可选）
+    const activeFilterCount = useMemo(() => {
+        let c = 0;
+        if (filters.jobTitle) c++;
+        if (filters.industries?.length) c += filters.industries.length;
+        if (filters.company?.length) c += filters.company.length;
+        if (filters.serviceTypes?.length) c += filters.serviceTypes.length;
+        if (filters.minPrice != null || filters.maxPrice != null) c++;
+        if (filters.minExperience != null || filters.maxExperience != null) c++;
+        return c;
+    }, [filters]);
+
     return (
         <Layout className={styles.layout}>
             <Navbar />
             <Layout className={styles.mainLayout}>
-                <SearchFilters
-                    value={filters}
-                    onFiltersChange={handleFiltersChange}
-                    jobTitles={uniqueJobTitles}
-                    industries={uniqueIndustries}
-                    serviceTypes={uniqueServiceTypes}
-                    minPrice={minPrice}
-                    maxPrice={maxPrice}
-                    uniqueCompanies={uniqueCompanies}
-                    minYoe={minYoe}
-                    maxYoe={maxYoe}
-                />
-
-                <Content className={styles.content}>
-                    <TopFilters
+                {/* 桌面端：保留左侧 Sider */}
+                {!isMobile && (
+                    <SearchFilters
+                        value={filters}
+                        onFiltersChange={handleFiltersChange}
+                        jobTitles={uniqueJobTitles}
+                        industries={uniqueIndustries}
+                        serviceTypes={uniqueServiceTypes}
                         minPrice={minPrice}
                         maxPrice={maxPrice}
+                        uniqueCompanies={uniqueCompanies}
                         minYoe={minYoe}
                         maxYoe={maxYoe}
-                        onChange={handleTopFiltersPatch}
-                        currentFilters={filters} // 新增：传递当前 filters
                     />
+                )}
+
+                <Content className={styles.content}>
+                    {/* 顶部操作区：移动端显示 Filters 按钮 + 排序 */}
+                    <div className={styles.topActions}>
+                        {isMobile && (
+                            <Button className={styles.filtersButtonMobile} onClick={() => setFiltersOpen(true)}>
+                                Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}
+                            </Button>
+                        )}
+                        <TopSort onChange={handleTopFiltersPatch} currentFilters={filters} />
+                    </div>
 
                     <MentorGrid filters={filters} mentors={mentors} loading={loading} />
                 </Content>
             </Layout>
+
+            {/* 移动端 Drawer：把原来的 SearchFilters 塞进来 */}
+            {isMobile && (
+                <Drawer
+                    title="Mentor Filters"
+                    placement="left"
+                    open={filtersOpen}
+                    onClose={() => setFiltersOpen(false)}
+                    width={320}
+                    destroyOnClose
+                >
+                    <SearchFilters
+                        value={filters}
+                        onFiltersChange={handleFiltersChange}
+                        jobTitles={uniqueJobTitles}
+                        industries={uniqueIndustries}
+                        serviceTypes={uniqueServiceTypes}
+                        minPrice={minPrice}
+                        maxPrice={maxPrice}
+                        uniqueCompanies={uniqueCompanies}
+                        minYoe={minYoe}
+                        maxYoe={maxYoe}
+                    />
+                    <Space style={{ width: "100%", marginTop: 8, justifyContent: "end" }}>
+                        <Button type="primary" onClick={() => setFiltersOpen(false)}>
+                            Save
+                        </Button>
+                    </Space>
+                </Drawer>
+            )}
         </Layout>
     );
 }

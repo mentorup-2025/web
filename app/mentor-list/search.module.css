@@ -1,11 +1,10 @@
-.layout {
-    min-height: 100vh;
-}
+/* =================== Layout & Shell =================== */
+.layout { min-height: 100vh; }
 
 .header {
     background: #fff;
     padding: 0 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
     position: fixed;
     width: 100%;
     z-index: 1;
@@ -21,48 +20,22 @@
     height: 100%;
 }
 
-.headerLeft {
-    display: flex;
-    align-items: center;
-    flex: 1;
-}
+.headerLeft { display: flex; align-items: center; flex: 1; }
+.logo { font-size: 24px; font-weight: bold; color: #1890ff; margin: 0; padding: 0; }
+.searchBar { margin-left: 30px; width: 400px; }
 
-.logo {
-    font-size: 24px;
-    font-weight: bold;
-    color: #1890ff;
-    margin: 0;
-    padding: 0;
-}
+.headerRight { display: flex; align-items: center; gap: 16px; margin-left: 24px; }
+.userAvatar { cursor: pointer; }
 
-.searchBar {
-    margin-left: 30px;
-    width: 400px;
-}
+.mainLayout { margin-top: 64px; display: flex; }
 
-.headerRight {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-left: 24px;
-}
-
-.userAvatar {
-    cursor: pointer;
-}
-
-.mainLayout {
-    margin-top: 64px;
-    padding: 24px;
-    display: flex;
-}
-
+/* =================== Sider & Content =================== */
 .sider {
     background: #fff;
-    padding: 24px;
-    margin-right: 24px;
+    padding: 18px 0;
+    /*margin-right: 24px;*/
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
     flex: 0 0 280px !important;
     max-width: 280px !important;
     min-width: 280px !important;
@@ -70,252 +43,297 @@
 
 .content {
     background: #fff;
-    padding: 24px;
+    padding-top: 24px;    /* 保持顶部原有内边距 */
+    padding-right: 68px;  /* 只增加右侧内边距 */
+    padding-bottom: 24px; /* 保持底部原有内边距 */
+    padding-left: 68px;   /* 保持左侧原有内边距 */
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
     flex: 1;
 }
 
-.checkboxGroup {
+/* 顶部操作区 */
+.topActions { display: flex; gap: 12px; align-items: center; margin-bottom: 4px; }
+
+/* =================== 左侧筛选（样式重做） =================== */
+
+/* 去掉 Collapse 默认背景与边框 */
+.siderCollapse :global(.ant-collapse) { background: transparent; border: 0; }
+.siderCollapse :global(.ant-collapse-item) { border: 0; }
+.siderCollapse :global(.ant-collapse-content) { border: 0; background: transparent; }
+
+/* 分组标题：左图标 + 文本，右侧保留箭头 */
+.siderCollapse :global(.ant-collapse-header) { padding: 10px 16px; }
+.filterHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 16px;
+}
+.filterHeaderIcon { font-size: 16px; color: rgba(0,0,0,.75); }
+.filterHeaderText { line-height: 1; }
+
+/* 组内内容更紧凑 */
+.siderCollapse :global(.ant-collapse-content-box) { padding: 4px 0; }
+
+/* 复选框列表：竖排、整行 hover、高亮 */
+.checkboxGroupCol {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    padding: 6px 0;
+}
+.filterItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.filterItem:hover { background: #f5f9ff; }
+
+/* 被勾选时整行浅蓝高亮（现代浏览器支持） */
+.filterItem:has(.ant-checkbox-checked) { background: #eaf3ff; }
+
+/* 文字 */
+.filterLabel { font-size: 14px; color: rgba(0,0,0,.88); }
+
+/* 缩小复选框并设主题蓝 */
+.filterCheckbox :global(.ant-checkbox-inner) { width: 16px; height: 16px; }
+.filterCheckbox :global(.ant-checkbox-checked .ant-checkbox-inner) {
+    background-color: #1677ff;
+    border-color: #1677ff;
+}
+.filterCheckbox :global(.ant-checkbox-checked::after) {
+    border-color: #1677ff;
 }
 
+/* Slider 紧凑 + 主题蓝 */
+.sliderWrap { padding: 8px 16px 12px 16px; }
+.sliderWrap :global(.ant-slider) { margin: 8px 6px 0; }
+.sliderWrap :global(.ant-slider-track) { background-color: #1677ff; }
+.sliderWrap :global(.ant-slider-handle) { border-color: #1677ff; }
+.sliderWrap :global(.ant-slider-handle::after) { box-shadow: 0 0 0 2px #1677ff1a; }
+.sliderWrap :global(.ant-slider-mark-text) { font-size: 12px; color: rgba(0,0,0,.6); }
+
+/* =================== Mentor Grid / Card =================== */
 .mentorGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(auto-fill, minmax(204px, 1fr));
+    /*gap: 24px;*/
+    row-gap: 32px;    /* 垂直间距 */
+    column-gap: 40px; /* 水平间距 */
+    align-items: stretch;
 }
 
 .mentorCard {
-    border-radius: 8px;
-    overflow: hidden;
-    transition: all 0.3s ease;
-}
-
-.mentorCard:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
-}
-
-/* 修改头像容器为正方形并撑满卡片宽度 */
-.avatarContainer {
-    background-color: #f5f5f5;
-    padding: 0;
-    margin: -24px -24px 16px -24px;
-    text-align: center;
-    height: 300px; /* 正方形高度等于卡片宽度 */
-    overflow: hidden;
-    position: relative;
-}
-
-.avatar {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 0 !important;
-}
-
-.mentorInfo {
-    text-align: center;
-    margin-bottom: 16px;
-    padding: 0 16px;
-}
-
-.mentorInfo h3 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-}
-
-.mentorInfo p {
-    margin: 4px 0;
-    color: rgba(0, 0, 0, 0.45);
-}
-
-.mentorTags {
-    margin: 16px 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    justify-content: center;
-    padding: 0 16px;
-}
-
-.mentorTag {
-    height: fit-content;
-}
-
-.cardFooter {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 16px;
-    padding: 0 16px 16px;
-    border-top: 1px solid #f0f0f0;
-    padding-top: 16px;
-}
-
-.mentorPrice {
-    font-size: 16px;
-    font-weight: 600;
-    color: #1f1f1f;
-}
-
-.scheduleButton {
-    background: #1f1f1f !important;
-    border-color: #1f1f1f !important;
-}
-
-.scheduleButton:hover {
-    background: #333 !important;
-    border-color: #333 !important;
-}
-
-/* Responsive styles */
-@media (max-width: 1024px) {
-    .searchBar {
-        width: 300px;
-    }
-}
-
-@media (max-width: 768px) {
-    .mainLayout {
-        flex-direction: column;
-    }
-
-    .sider {
-        width: 100% !important;
-        max-width: 100% !important;
-        margin-right: 0;
-        margin-bottom: 24px;
-    }
-
-    .headerContent {
-        padding: 12px 0;
-    }
-
-    .headerLeft {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .searchBar {
-        width: 100%;
-        margin: 12px 0;
-    }
-
-    .headerRight {
-        margin-left: 0;
-    }
-}
-
-.filtersContainer {
     display: flex;
     flex-direction: column;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: box-shadow .2s ease, transform .2s ease;
     height: 100%;
 }
 
-.mainFilters {
+.mentorCard:hover { box-shadow: 0 8px 24px rgba(0,0,0,.12); transform: translateY(-1px); }
+
+/* --- 封面：1:1 正方形 --- */
+.coverBox { width: 100%; aspect-ratio: 1 / 1; overflow: hidden; }
+.coverImg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.coverFallback {
+    width: 100%; aspect-ratio: 1 / 1;
+    display: flex; align-items: center; justify-content: center;
+    background: #f0f0f0; color: #999; font-size: 48px;
+}
+
+/* Card Body：更紧凑的内边距与间距 */
+.mentorCard :global(.ant-card-body) {
+    display: flex;
+    flex-direction: column;
+    padding: 14px 16px;
+    gap: 10px;
     flex: 1;
 }
 
-.moreFiltersButton {
-    padding: 8px 0;
-    margin: 0 12px;
-}
+/* ===== 信息区 ===== */
+.mentorInfo { margin: 0; padding: 0; }
+.name { margin: 0 0 6px 0; font-size: 16px; font-weight: 700; }
 
-.moreFiltersButton button {
+/* 职位 / 公司 / YOE 三行 */
+.metaList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-auto-rows: min-content;
+    row-gap: 6px;
+}
+.metaItem {
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 8px;
-    color: rgba(0, 0, 0, 0.45);
+    color: rgba(0,0,0,.65);
+    font-size: 13px;
+    line-height: 1.1;
+}
+.metaIcon { color: rgba(0,0,0,.45); }
+
+/* 标签：全部显示，自动换行，紧凑 */
+.mentorTagsRow {
+    margin-top: 6px;
+    margin-bottom: 2px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.mentorTag {
+    background: #f5f5f5;
+    border: 1px solid #eaeaea;
+    color: rgba(0,0,0,.65);
+    height: 24px;
+    line-height: 22px;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-size: 12px;
 }
 
-.additionalFilters {
-    animation: slideDown 0.3s ease-out;
+/* footer：细分隔线，左右对齐 */
+.cardFooter {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 10px;
+    /*border-top: 1px solid #ededed;*/
 }
 
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+/* 价格蓝色、按钮蓝色 */
+.mentorPrice { font-size: 18px; font-weight: 700; color: #1890ff; }
+
+/* 调整排序按钮的大小 */
+.topActions :global(.ant-btn) {
+    height: 40px; /* 调整按钮高度 */
+    padding: 0 16px; /* 调整按钮内边距 */
+    font-size: 14px; /* 调整字体大小 */
+    border-radius: 14px;
 }
 
-.mentor-intro-ellipsis {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 1.15rem;
-    min-height: 3.6em;
-    line-height: 1.2;
+/* 或者单独针对排序按钮 */
+.topActions :global(.ant-btn.ant-btn-default) {
+    height: 40px;
+    padding: 0 16px;
+    font-size: 14px;
+    border-radius: 14px;
 }
 
+/* 调整图标大小 */
+.topActions :global(.ant-btn .anticon) {
+    font-size: 14px; /* 调整图标大小 */
+}
+
+.scheduleButton {
+    background: #1890ff !important;
+    border-color: #1890ff !important;
+    border-radius: 6px;
+    padding: 0 12px;
+    height: 32px;
+    line-height: 32px;
+    white-space: nowrap;
+}
+.scheduleButton:hover { background: #40a9ff !important; border-color: #40a9ff !important; }
+
+/* =================== Mobile =================== */
 @media (max-width: 480px) {
-    .mentorGrid {
-        grid-template-columns: 1fr;
-        gap: 16px;
+    .sider { padding: 4px 0; border-radius: 6px; }
+    .filterHeader { font-size: 15px; }
+    .filterItem { padding: 6px 10px 6px 14px; }
+    .filterLabel { font-size: 13px; }
+
+    .mentorGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .mentorCard { border-radius: 4px; }
+    .mentorCard :global(.ant-card-body) { padding: 0px 10px 8px; gap: 6px; }
+
+    .name { font-size: 14px; margin-bottom: 4px; }
+    .metaList { row-gap: 4px; margin-top: 4px; }
+    .metaItem { font-size: 11.5px; gap: 4px; }
+    .metaIcon { font-size: 12px; }
+
+    /* 标签更小 */
+    .mentorTagsRow { margin-top: 6px; gap: 4px; }
+    .mentorTag {
+        background: #f5f5f5;
+        border: 1px solid #eaeaea;
+        color: rgba(0,0,0,.65);
+        height: 20px;
+        line-height: 18px;
+        padding: 0 3px;
+        border-radius: 4px;
+        font-size: 11px;
     }
 
-    .mentorCard {
-        padding: 16px;
+    /* 底部：紧凑 */
+    .cardFooter { padding-top: 4px; }
+
+    .content {
+        background: #fff;
+        padding: 24px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        flex: 1;
     }
 
-    .mentorInfo h3 {
-        font-size: 14px;
+    .mentorPrice {
+        font-size: 12px;
+        font-weight: 700;
+        color: #1890ff;
+        white-space: nowrap;
     }
 
-    .mentorInfo p {
-        font-size: 13px;
-    }
-
+    /* Schedule 按钮更小 */
     .scheduleButton {
+        background: #1890ff !important;
+        border-color: #1890ff !important;
+        border-radius: 2px;
+        padding: 0 4px;
+        height: 22px;
+        line-height: 20px;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+    .scheduleButton:hover { background: #40a9ff !important; border-color: #40a9ff !important; }
+
+    .topActions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 4px;
+    }
+
+    /* 特别调整 Filters 按钮的位置 */
+    .topActions :global(.ant-btn):first-child {
+        align-self: flex-start; /* 如果需要更精确的控制，可以改为具体的像素值 */
+    }
+
+    /* 调整排序按钮的大小 */
+    .topActions :global(.ant-btn) {
+        height: 32px; /* 调整按钮高度 */
+        padding: 0 12px; /* 调整按钮内边距 */
+        font-size: 14px; /* 调整字体大小 */
+        /*border-radius: 14px;*/
+    }
+
+    /* 或者单独针对排序按钮 */
+    .topActions :global(.ant-btn.ant-btn-default) {
+        height: 32px;
+        padding: 0 12px;
         font-size: 14px;
-        padding: 6px 12px;
+        border-radius: 12px;
     }
 
-    /* 移动端保持正方形比例 */
-    .avatarContainer {
-        height: 280px; /* 移动端稍小的高度 */
-        margin: -16px -16px 12px -16px;
-    }
-
-    .mentorInfo {
-        padding: 0 12px;
-    }
-
-    .mentorTags {
-        padding: 0 12px;
-    }
-
-    .cardFooter {
-        padding: 0 12px 12px;
-        padding-top: 12px;
-    }
-
-    .mentor-intro-ellipsis {
-        font-size: 1rem;
-        min-height: 3em;
-    }
-}
-
-/* 确保卡片宽度和头像高度一致 */
-@media (min-width: 481px) {
-    .mentorCard {
-        width: 300px; /* 与 grid-template-columns 的 minmax 保持一致 */
-    }
-
-    .avatarContainer {
-        height: 300px; /* 正方形高度等于卡片宽度 */
+    /* 调整图标大小 */
+    .topActions :global(.ant-btn .anticon) {
+        font-size: 14px; /* 调整图标大小 */
     }
 }

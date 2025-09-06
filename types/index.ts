@@ -30,6 +30,8 @@ export interface Mentor {
   };
 }
 
+export type SortOption = 'price-asc' | 'price-desc' | 'yoe-asc' | 'yoe-desc' | null;
+
 export interface SearchFiltersType {
   jobTitle?: string;
   industries?: string[];
@@ -39,4 +41,5 @@ export interface SearchFiltersType {
   maxPrice?: number;
   serviceTypes?: string[];
   company?: string[];
+  sort?: SortOption;
 }

@@ -1,8 +1,7 @@
 'use client';
-
-import { Card, Avatar, Tag, Button, Empty, Image } from 'antd';
+import { Card, Tag, Button, Empty } from 'antd';
 import Link from 'next/link';
-import { UserOutlined } from '@ant-design/icons';
+import { UserOutlined, SolutionOutlined, BankOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import styles from '../search.module.css';
 import { useEffect, useState } from 'react';
 import { Mentor, SearchFiltersType } from '../../../types';
@@ -28,33 +27,31 @@ function extractServiceEntries(services: Record<string, any> | undefined) {
     return list.filter(e => Number.isFinite(e.price));
 }
 
+// 获取导师价格（首个非 Free Coffee Chat）
+const getMentorPrice = (mentor: Mentor): number => {
+    const entries = extractServiceEntries(mentor.mentor.services);
+    const firstPaid = entries.find(e => !isFreeCoffeeChat((e.type ?? '') as string));
+    return firstPaid ? firstPaid.price : 0;
+};
+
 export default function MentorGrid({ filters, mentors, loading }: MentorGridProps) {
     const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
 
     useEffect(() => {
-        const filtered = mentors.filter(mentor => {
-            // Job Title
+        let filtered = mentors.filter(mentor => {
             if (filters.jobTitle && !mentor.mentor.title?.toLowerCase().includes(filters.jobTitle.toLowerCase())) {
                 return false;
             }
-
-            // Industry
             if (filters.industries?.length) {
                 const ok = mentor.industries?.some(i => filters.industries!.includes(i));
                 if (!ok) return false;
             }
-
-            // Company
             if (filters.company?.length) {
                 if (!filters.company.includes(mentor.mentor.company)) return false;
             }
-
-            // YOE
             const yoe = Number(mentor.mentor.years_of_experience ?? 0);
             if (filters.minExperience != null && yoe < Number(filters.minExperience)) return false;
             if (filters.maxExperience != null && yoe > Number(filters.maxExperience)) return false;
-
-            // Price
             if (filters.minPrice != null || filters.maxPrice != null) {
                 const minP = filters.minPrice != null ? Number(filters.minPrice) : -Infinity;
                 const maxP = filters.maxPrice != null ? Number(filters.maxPrice) : Infinity;
@@ -62,35 +59,40 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                 const hit = entries.some(e => e.price >= minP && e.price <= maxP);
                 if (!hit) return false;
             }
-
-            // Service Type
             if (filters.serviceTypes?.length) {
                 const entries = extractServiceEntries(mentor.mentor.services);
                 const types = entries.map(e => e.type);
                 if (!types.some(t => filters.serviceTypes!.includes(t))) return false;
             }
-
             return true;
         });
+
+        if (filters.sort) {
+            filtered = [...filtered].sort((a, b) => {
+                switch (filters.sort) {
+                    case 'price-asc':
+                        return getMentorPrice(a) - getMentorPrice(b);
+                    case 'price-desc':
+                        return getMentorPrice(b) - getMentorPrice(a);
+                    case 'yoe-asc':
+                        return (a.mentor.years_of_experience || 0) - (b.mentor.years_of_experience || 0);
+                    case 'yoe-desc':
+                        return (b.mentor.years_of_experience || 0) - (a.mentor.years_of_experience || 0);
+                    default:
+                        return 0;
+                }
+            });
+        }
 
         setFilteredMentors(filtered);
     }, [mentors, filters]);
 
-    if (loading) {
-        return <div>Loading...</div>;
-    }
+    if (loading) return <div>Loading...</div>;
 
     if (filteredMentors.length === 0) {
         return (
             <div className={styles.noResults}>
-                <Empty
-                    description={
-                        <span>
-              No mentors found matching your criteria. <br />
-              Please try adjusting your filters.
-            </span>
-                    }
-                />
+                <Empty description={<span>No mentors found matching your criteria.<br/>Please try adjusting your filters.</span>} />
             </div>
         );
     }
@@ -103,52 +105,58 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                 const hourly = firstPaid ? netToGross(firstPaid.price) : null;
 
                 return (
-                    <Card key={user.user_id} className={styles.mentorCard}>
-                        <div className={styles.avatarContainer}>
-                            {user.profile_url ? (
-                                <Image
-                                    src={user.profile_url}
-                                    alt={user.username}
-                                    className={styles.avatar}
-                                    preview={false}
-                                    fallback="/default-avatar.png" // 可选：添加默认头像
-                                />
+                    <Card
+                        key={user.user_id}
+                        className={styles.mentorCard}
+                        cover={
+                            user.profile_url ? (
+                                <div className={styles.coverBox}>
+                                    <img
+                                        src={user.profile_url}
+                                        alt={user.username}
+                                        className={styles.coverImg}
+                                        onError={(e) => { (e.target as HTMLImageElement).src = '/default-avatar.png'; }}
+                                    />
+                                </div>
                             ) : (
-                                <div className={styles.avatar} style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    backgroundColor: '#f0f0f0',
-                                    color: '#999',
-                                    fontSize: '48px'
-                                }}>
+                                <div className={styles.coverFallback}>
                                     <UserOutlined />
                                 </div>
-                            )}
-                        </div>
-
+                            )
+                        }
+                    >
                         <div className={styles.mentorInfo}>
-                            <h3>{user.username}</h3>
-                            <p>{user.mentor.title} at {user.mentor.company}</p>
-                            <p>{user.mentor.years_of_experience} YOE</p>
+                            <h3 className={styles.name}>{user.username}</h3>
+
+                            <ul className={styles.metaList}>
+                                <li className={styles.metaItem}>
+                                    <SolutionOutlined className={styles.metaIcon} />
+                                    <span>{user.mentor.title || '—'}</span>
+                                </li>
+                                <li className={styles.metaItem}>
+                                    <BankOutlined className={styles.metaIcon} />
+                                    <span>{user.mentor.company || '—'}</span>
+                                </li>
+                                <li className={styles.metaItem}>
+                                    <ClockCircleOutlined className={styles.metaIcon} />
+                                    <span>{(user.mentor.years_of_experience ?? 0)} YOE</span>
+                                </li>
+                            </ul>
                         </div>
 
-                        <div className={styles.mentorTags}>
-                            {user.industries.slice(0, 3).map(industry => (
+                        {/* 标签：全部显示，自动换行 */}
+                        <div className={styles.mentorTagsRow}>
+                            {user.industries.map(industry => (
                                 <Tag className={styles.mentorTag} key={industry}>{industry}</Tag>
                             ))}
-                            {user.industries.length > 3 && (
-                                <Tag>+{user.industries.length - 3}</Tag>
-                            )}
                         </div>
 
                         <div className={styles.cardFooter}>
-                            <div className="text-blue-600 text-lg font-semibold">
-                                {hourly != null ? `$${hourly}/hour` : 'Free'}
+                            <div className={styles.mentorPrice}>
+                                {hourly != null ? `$${hourly}/hr` : 'Free'}
                             </div>
-
                             <Link href={`/mentor/${user.user_id}`}>
-                                <Button type="primary" className={styles.scheduleButton}>
+                                <Button type="primary" size="middle" className={styles.scheduleButton}>
                                     Schedule
                                 </Button>
                             </Link>
