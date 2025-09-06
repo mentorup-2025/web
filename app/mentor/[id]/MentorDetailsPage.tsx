@@ -467,6 +467,8 @@ export default function MentorDetailsPage() {
               setIsBookingModalVisible(false);
               setStep(1);
             }}
+            zIndex={11000}
+            getContainer={() => document.body}
         >
           {step === 1 && selectedSlot && (
               <div>
@@ -803,6 +805,8 @@ export default function MentorDetailsPage() {
             open={isSuccessModalVisible}
             footer={null}
             onCancel={() => setIsSuccessModalVisible(false)}
+            getContainer={() => document.body}
+            zIndex={11000}
         >
           <Title level={4}>Session Scheduled - Pending Mentor Confirmation</Title>
           <p>Check your email for session details.</p>
@@ -872,6 +876,8 @@ export default function MentorDetailsPage() {
             open={isPaymentFailedModalVisible}
             footer={null}
             onCancel={() => setIsPaymentFailedModalVisible(false)}
+            getContainer={() => document.body}
+            zIndex={11000}
         >
           <Title level={4}>Payment Failed</Title>
           <p>Please finish your payment to continue.</p>
