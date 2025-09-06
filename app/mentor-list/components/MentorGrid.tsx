@@ -1,7 +1,7 @@
 'use client';
-import { Card, Avatar, Tag, Button, Empty } from 'antd';
+import { Card, Tag, Button, Empty } from 'antd';
 import Link from 'next/link';
-import { UserOutlined } from '@ant-design/icons';
+import { UserOutlined, SolutionOutlined, BankOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import styles from '../search.module.css';
 import { useEffect, useState } from 'react';
 import { Mentor, SearchFiltersType } from '../../../types';
@@ -27,7 +27,7 @@ function extractServiceEntries(services: Record<string, any> | undefined) {
     return list.filter(e => Number.isFinite(e.price));
 }
 
-// 辅助函数：获取导师价格
+// 获取导师价格（首个非 Free Coffee Chat）
 const getMentorPrice = (mentor: Mentor): number => {
     const entries = extractServiceEntries(mentor.mentor.services);
     const firstPaid = entries.find(e => !isFreeCoffeeChat((e.type ?? '') as string));
@@ -87,19 +87,12 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
         setFilteredMentors(filtered);
     }, [mentors, filters]);
 
-    if (loading) {
-        return <div>Loading...</div>;
-    }
+    if (loading) return <div>Loading...</div>;
 
     if (filteredMentors.length === 0) {
         return (
             <div className={styles.noResults}>
-                <Empty description={
-                    <span>
-                        No mentors found matching your criteria. <br />
-                        Please try adjusting your filters.
-                    </span>
-                } />
+                <Empty description={<span>No mentors found matching your criteria.<br/>Please try adjusting your filters.</span>} />
             </div>
         );
     }
@@ -110,6 +103,7 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                 const entries = extractServiceEntries(user.mentor.services);
                 const firstPaid = entries.find(e => !isFreeCoffeeChat((e.type ?? '') as string));
                 const hourly = firstPaid ? netToGross(firstPaid.price) : null;
+
                 return (
                     <Card
                         key={user.user_id}
@@ -132,24 +126,37 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                         }
                     >
                         <div className={styles.mentorInfo}>
-                            <h3>{user.username}</h3>
-                            <p>{user.mentor.title} at {user.mentor.company}</p>
-                            <p>{user.mentor.years_of_experience} YOE</p>
+                            <h3 className={styles.name}>{user.username}</h3>
+
+                            <ul className={styles.metaList}>
+                                <li className={styles.metaItem}>
+                                    <SolutionOutlined className={styles.metaIcon} />
+                                    <span>{user.mentor.title || '—'}</span>
+                                </li>
+                                <li className={styles.metaItem}>
+                                    <BankOutlined className={styles.metaIcon} />
+                                    <span>{user.mentor.company || '—'}</span>
+                                </li>
+                                <li className={styles.metaItem}>
+                                    <ClockCircleOutlined className={styles.metaIcon} />
+                                    <span>{(user.mentor.years_of_experience ?? 0)} YOE</span>
+                                </li>
+                            </ul>
                         </div>
-                        <div className={styles.mentorTags}>
-                            {user.industries.slice(0, 3).map(industry => (
+
+                        {/* 标签：全部显示，自动换行 */}
+                        <div className={styles.mentorTagsRow}>
+                            {user.industries.map(industry => (
                                 <Tag className={styles.mentorTag} key={industry}>{industry}</Tag>
                             ))}
-                            {user.industries.length > 3 && (
-                                <Tag>+{user.industries.length - 3}</Tag>
-                            )}
                         </div>
+
                         <div className={styles.cardFooter}>
-                            <div className={`${styles.mentorPrice} text-blue-600 text-lg font-semibold`}>
-                                {hourly != null ? `$${hourly}/hour` : 'Free'}
+                            <div className={styles.mentorPrice}>
+                                {hourly != null ? `$${hourly}/hr` : 'Free'}
                             </div>
                             <Link href={`/mentor/${user.user_id}`}>
-                                <Button type="primary" className={styles.scheduleButton}>
+                                <Button type="primary" size="middle" className={styles.scheduleButton}>
                                     Schedule
                                 </Button>
                             </Link>

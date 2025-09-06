@@ -1,3 +1,4 @@
+/* =================== Layout & Shell =================== */
 .layout { min-height: 100vh; }
 
 .header {
@@ -26,12 +27,13 @@
 .headerRight { display: flex; align-items: center; gap: 16px; margin-left: 24px; }
 .userAvatar { cursor: pointer; }
 
-.mainLayout { margin-top: 64px; padding: 24px; display: flex; }
+.mainLayout { margin-top: 64px; display: flex; }
 
+/* =================== Sider & Content =================== */
 .sider {
     background: #fff;
-    padding: 24px;
-    margin-right: 24px;
+    padding: 8px 0;
+    /*margin-right: 24px;*/
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,.06);
     flex: 0 0 280px !important;
@@ -48,34 +50,90 @@
 }
 
 /* 顶部操作区 */
-.topActions { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; }
+.topActions { display: flex; gap: 12px; align-items: center; margin-bottom: 4px; }
 
-/* ===== Filters（Panel 内通用样式） ===== */
-.checkboxGroup { display: flex; flex-direction: column; gap: 8px; }
+/* =================== 左侧筛选（样式重做） =================== */
 
-/* ===== Mentor Grid / Card ===== */
+/* 去掉 Collapse 默认背景与边框 */
+.siderCollapse :global(.ant-collapse) { background: transparent; border: 0; }
+.siderCollapse :global(.ant-collapse-item) { border: 0; }
+.siderCollapse :global(.ant-collapse-content) { border: 0; background: transparent; }
+
+/* 分组标题：左图标 + 文本，右侧保留箭头 */
+.siderCollapse :global(.ant-collapse-header) { padding: 10px 16px; }
+.filterHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 16px;
+}
+.filterHeaderIcon { font-size: 16px; color: rgba(0,0,0,.75); }
+.filterHeaderText { line-height: 1; }
+
+/* 组内内容更紧凑 */
+.siderCollapse :global(.ant-collapse-content-box) { padding: 4px 0; }
+
+/* 复选框列表：竖排、整行 hover、高亮 */
+.checkboxGroupCol {
+    display: flex;
+    flex-direction: column;
+    padding: 6px 0;
+}
+.filterItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.filterItem:hover { background: #f5f9ff; }
+
+/* 被勾选时整行浅蓝高亮（现代浏览器支持） */
+.filterItem:has(.ant-checkbox-checked) { background: #eaf3ff; }
+
+/* 文字 */
+.filterLabel { font-size: 14px; color: rgba(0,0,0,.88); }
+
+/* 缩小复选框并设主题蓝 */
+.filterCheckbox :global(.ant-checkbox-inner) { width: 16px; height: 16px; }
+.filterCheckbox :global(.ant-checkbox-checked .ant-checkbox-inner) {
+    background-color: #1677ff;
+    border-color: #1677ff;
+}
+.filterCheckbox :global(.ant-checkbox-checked::after) {
+    border-color: #1677ff;
+}
+
+/* Slider 紧凑 + 主题蓝 */
+.sliderWrap { padding: 8px 16px 12px 16px; }
+.sliderWrap :global(.ant-slider) { margin: 8px 6px 0; }
+.sliderWrap :global(.ant-slider-track) { background-color: #1677ff; }
+.sliderWrap :global(.ant-slider-handle) { border-color: #1677ff; }
+.sliderWrap :global(.ant-slider-handle::after) { box-shadow: 0 0 0 2px #1677ff1a; }
+.sliderWrap :global(.ant-slider-mark-text) { font-size: 12px; color: rgba(0,0,0,.6); }
+
+/* =================== Mentor Grid / Card =================== */
 .mentorGrid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 24px;
-    align-items: stretch;          /* 让每个格子等高 */
+    align-items: stretch;
 }
 
 .mentorCard {
     display: flex;
     flex-direction: column;
-    border-radius: 8px;
+    border-radius: 10px;
     overflow: hidden;
-    transition: all .3s ease;
-    height: 100%;                  /* 拉满网格高度 */
+    transition: box-shadow .2s ease, transform .2s ease;
+    height: 100%;
 }
 
-.mentorCard:hover {
-    box-shadow: 0 8px 24px rgba(0,0,0,.15);
-    transform: translateY(-2px);
-}
+.mentorCard:hover { box-shadow: 0 8px 24px rgba(0,0,0,.12); transform: translateY(-1px); }
 
-/* --- Card cover 顶部头像 --- */
+/* --- 封面：1:1 正方形 --- */
 .coverBox { width: 100%; aspect-ratio: 1 / 1; overflow: hidden; }
 .coverImg { width: 100%; height: 100%; object-fit: cover; display: block; }
 .coverFallback {
@@ -84,125 +142,151 @@
     background: #f0f0f0; color: #999; font-size: 48px;
 }
 
-/* 让 body 承担伸缩，并把 footer 推到底 */
+/* Card Body：更紧凑的内边距与间距 */
 .mentorCard :global(.ant-card-body) {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    flex: 1;                       /* body 占满剩余空间 */
+    padding: 14px 16px;
+    gap: 10px;
+    flex: 1;
 }
 
-.mentorInfo {
-    text-align: center;
-    margin-bottom: 16px;
-    padding: 0 16px;
-    flex-shrink: 0;
+/* ===== 信息区 ===== */
+.mentorInfo { margin: 0; padding: 0; }
+.name { margin: 0 0 6px 0; font-size: 16px; font-weight: 700; }
+
+/* 职位 / 公司 / YOE 三行 */
+.metaList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-auto-rows: min-content;
+    row-gap: 6px;
+}
+.metaItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(0,0,0,.65);
+    font-size: 13px;
+    line-height: 1.1;
+}
+.metaIcon { color: rgba(0,0,0,.45); }
+
+/* 标签：全部显示，自动换行，紧凑 */
+.mentorTagsRow {
+    margin-top: 6px;
+    margin-bottom: 2px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.mentorTag {
+    background: #f5f5f5;
+    border: 1px solid #eaeaea;
+    color: rgba(0,0,0,.65);
+    height: 24px;
+    line-height: 22px;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-size: 12px;
 }
 
-.mentorInfo h3 { margin: 0; font-size: 16px; font-weight: 600; }
-.mentorInfo p { margin: 4px 0; color: rgba(0,0,0,.45); }
-
-.mentorTags {
-    margin: 16px 0;
-    display: flex; flex-wrap: wrap; gap: 4px; justify-content: center;
-    padding: 0 16px;
-    flex-shrink: 0;
-}
-.mentorTag { height: fit-content; }
-
-/* footer 固定到 body 底部 */
+/* footer：细分隔线，左右对齐 */
 .cardFooter {
-    margin-top: auto;              /* 关键：推到底部 */
+    margin-top: auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px;                 /* 统一 padding */
-    border-top: 1px solid #f0f0f0;
+    padding-top: 10px;
+    /*border-top: 1px solid #ededed;*/
 }
 
-.mentorPrice { font-size: 18px; font-weight: 600; }
+/* 价格蓝色、按钮蓝色 */
+.mentorPrice { font-size: 18px; font-weight: 700; color: #1890ff; }
 
 .scheduleButton {
-    background: #1f1f1f !important;
-    border-color: #1f1f1f !important;
+    background: #1890ff !important;
+    border-color: #1890ff !important;
+    border-radius: 6px;
+    padding: 0 12px;
+    height: 32px;
+    line-height: 32px;
+    white-space: nowrap;
 }
-.scheduleButton:hover {
-    background: #333 !important;
-    border-color: #333 !important;
-}
+.scheduleButton:hover { background: #40a9ff !important; border-color: #40a9ff !important; }
 
-/* ===== 杂项 ===== */
-.filtersContainer { display: flex; flex-direction: column; height: 100%; }
-.mainFilters { flex: 1; }
-
-.moreFiltersButton { padding: 8px 0; margin: 0 12px; }
-.moreFiltersButton button {
-    display: flex; align-items: center; justify-content: center;
-    gap: 8px; color: rgba(0,0,0,.45);
-}
-
-.additionalFilters { animation: slideDown .3s ease-out; }
-@keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-.mentor-intro-ellipsis {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden; text-overflow: ellipsis;
-    font-size: 1.15rem; min-height: 3.6em; line-height: 1.2;
-}
-
-/* ===== 响应式 ===== */
-@media (max-width: 1024px) { .searchBar { width: 300px; } }
-
-@media (max-width: 768px) {
-    .mainLayout { flex-direction: column; }
-    .sider {
-        width: 100% !important; max-width: 100% !important;
-        margin-right: 0; margin-bottom: 24px;
-    }
-    .headerContent { padding: 12px 0; }
-    .headerLeft { flex-direction: column; align-items: stretch; }
-    .searchBar { width: 100%; margin: 12px 0; }
-    .headerRight { margin-left: 0; }
-}
-
-/* 移动端 */
+/* =================== Mobile =================== */
 @media (max-width: 480px) {
+    .sider { padding: 4px 0; border-radius: 6px; }
+    .filterHeader { font-size: 15px; }
+    .filterItem { padding: 6px 10px 6px 14px; }
+    .filterLabel { font-size: 13px; }
+
     .mentorGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-    .mentorCard { padding: 12px; }
+    .mentorCard { border-radius: 4px; }
+    .mentorCard :global(.ant-card-body) { padding: 0px 10px 8px; gap: 6px; }
 
-    .filtersButtonMobile { flex: 1; min-width: 0; text-align: center; margin-bottom: 16px; }
+    .name { font-size: 14px; margin-bottom: 4px; }
+    .metaList { row-gap: 4px; margin-top: 4px; }
+    .metaItem { font-size: 11.5px; gap: 4px; }
+    .metaIcon { font-size: 12px; }
 
-    .topActions { display: flex; flex-wrap: nowrap; justify-content: space-between; }
-    .topActions button { flex: 1; min-width: 0; }
-
-    .mentorInfo { padding: 0 8px; margin-bottom: 12px; }
-    .mentorInfo h3 { font-size: 14px; }
-    .mentorInfo p { font-size: 12px; }
-
-    .mentorTags { padding: 0 8px; margin: 12px 0; }
-
-    .cardFooter {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
-        padding: 12px;
+    /* 标签更小 */
+    .mentorTagsRow { margin-top: 6px; gap: 4px; }
+    .mentorTag {
+        background: #f5f5f5;
+        border: 1px solid #eaeaea;
+        color: rgba(0,0,0,.65);
+        height: 20px;
+        line-height: 18px;
+        padding: 0 3px;
+        border-radius: 4px;
+        font-size: 11px;
     }
 
+    /* 底部：紧凑 */
+    .cardFooter { padding-top: 4px; }
+
+    .mentorPrice {
+        font-size: 12px;
+        font-weight: 700;
+        color: #1890ff;
+        white-space: nowrap;
+    }
+
+    /* Schedule 按钮更小 */
     .scheduleButton {
-        width: 100%;              /* 占满一行，避免 130% 溢出 */
-        font-size: 13px;
-        padding: 6px 10px;
+        background: #1890ff !important;
+        border-color: #1890ff !important;
+        border-radius: 2px;
+        padding: 0 4px;
+        height: 22px;
+        line-height: 20px;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+    .scheduleButton:hover { background: #40a9ff !important; border-color: #40a9ff !important; }
+
+    .topActions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 4px;
     }
 
-    .mentor-intro-ellipsis { font-size: 1rem; min-height: 3em; }
-    .mentorPrice { font-size: 16px; text-align: left; }
-}
+    /* 确保所有按钮高度一致并对齐 */
+    .topActions :global(.ant-btn) {
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 
-@media (min-width: 481px) {
-    .mentorCard { /* no fixed width to allow grid to flow */ }
+    /* 特别调整 Filters 按钮的位置 */
+    .topActions :global(.ant-btn):first-child {
+        align-self: flex-start; /* 如果需要更精确的控制，可以改为具体的像素值 */
+    }
 }
