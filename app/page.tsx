@@ -673,6 +673,16 @@ export default function Home() {
 
                 </div>
             </footer>
+            {/* ✅ 全局样式：防止滚动 */}
+            <style jsx global>{`
+        html, body, #__next {
+          max-width: 100%;
+          overflow-x: hidden;
+        }
+        main, header, footer {
+          overflow-x: hidden;
+        }
+      `}</style>
         </>
     )
 }
