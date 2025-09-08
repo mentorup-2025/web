@@ -5,12 +5,10 @@ export enum Role {
 }
 
 // 兼容两种后端形态：number 或 { price, type }
-type ServiceValue =
-    | number
-    | {
-    type?: string | null;
-    price?: number | null;
-};
+interface Service {
+    type: string;
+    price: number;
+}
 
 // mentor list page types
 export interface Mentor {
@@ -31,7 +29,7 @@ export interface Mentor {
         years_of_experience?: number | null;
 
         // 价格与服务（允许是 number 或 {price,type}；整体可选/可空）
-        services?: Record<string, ServiceValue> | null;
+        services?: Record<string, Service> | null;
 
         // 排名：用于默认排序；可能为 null（表示未设置）
         default_ranking?: number | null;
