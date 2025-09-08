@@ -220,3 +220,81 @@
         border-top: 1px solid #f0f0f0;
     }
 }
+
+/* 半屏固定的移动端弹层外观 */
+@media (max-width: 768px) {
+    .rightSection {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+
+        /* 半屏高度 */
+        height: 50vh;
+        width: 100%;
+
+        /* 外观样式 */
+        background: #fff;
+        border-top-left-radius: 16px;
+        border-top-right-radius: 16px;
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
+
+        /* 内容滚动 */
+        overflow: auto;
+
+        /* 内边距可按需调整 */
+        padding: 12px 16px;
+
+        /* 置顶显示（避免被其他元素遮挡） */
+        z-index: 1500;
+    }
+
+    /* 让主体区域不被固定弹层遮住的占位块 */
+    .mobileSpacer {
+        display: block;
+        height: 50vh; /* 与弹层同高 */
+    }
+
+    /* 右侧标题在移动端顶部显示更紧凑些（可选） */
+    .availabilityHeader {
+        margin-top: 4px;
+        margin-bottom: 8px;
+        font-size: 16px;
+    }
+}
+
+/* 桌面端隐藏 spacer，保持现有布局 */
+@media (min-width: 769px) {
+    .mobileSpacer {
+        display: none;
+    }
+}
+
+/* 小屏隐藏右侧栏标题 */
+@media (max-width: 767px) {
+    .availabilityHeader {
+        display: none !important;
+    }
+}
+
+
+@media (max-width: 768px) {
+    /* 左侧整体高度 = 视口 - 顶部 padding(你 Content 设置了 88px) - 底部半屏(50vh) */
+    .leftSection {
+        max-height: calc(100vh - 88px - 50vh);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 12px; /* 滚动到底不紧贴 */
+    }
+
+    /* Tabs 内容本身不要再套额外 max-height，避免双层滚动 */
+    .leftSection :global(.ant-tabs-content-holder) {
+        max-height: none;
+        overflow: visible;
+    }
+
+    /* 给页面内容预留出被底部弹层遮住的空间（若不插占位 DOM，可直接用容器 padding） */
+    .container {
+        padding-bottom: calc(50vh + 16px); /* 底部空白，避免最后一屏被盖住 */
+    }
+}
