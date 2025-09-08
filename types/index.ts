@@ -27,6 +27,7 @@ export interface Mentor {
     };
     user_id: string;
     created_at: string;
+    default_ranking: number
   };
 }
 

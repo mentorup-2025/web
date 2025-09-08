@@ -134,4 +134,4 @@ export async function updateUser(userId: string, input: UpdateUserInput): Promis
         console.error('Error in updateUser:', error);
         throw error;
     }
-} 
+}

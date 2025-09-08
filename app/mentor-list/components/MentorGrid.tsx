@@ -1,7 +1,7 @@
 'use client';
 import { Card, Tag, Button, Empty } from 'antd';
 import Link from 'next/link';
-import { UserOutlined, SolutionOutlined, BankOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { UserOutlined, IdcardOutlined, AppstoreOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import styles from '../search.module.css';
 import { useEffect, useState } from 'react';
 import { Mentor, SearchFiltersType } from '../../../types';
@@ -14,8 +14,8 @@ interface MentorGridProps {
     loading: boolean;
 }
 
-// 统一解析 mentor.mentor.services：兼容 number 或 {price,type}
-function extractServiceEntries(services: Record<string, any> | undefined) {
+/** 统一解析 mentor.mentor.services：兼容 number 或 {price,type}；允许 null/undefined */
+function extractServiceEntries(services?: Record<string, any> | null) {
     const list = Object.entries(services ?? {}).map(([key, v]) => {
         if (typeof v === 'number') {
             return { type: key, price: Number(v) };
@@ -27,9 +27,13 @@ function extractServiceEntries(services: Record<string, any> | undefined) {
     return list.filter(e => Number.isFinite(e.price));
 }
 
-// 获取导师价格（首个非 Free Coffee Chat）
-const getMentorPrice = (mentor: Mentor): number => {
-    const entries = extractServiceEntries(mentor.mentor.services);
+/** 有些后端会把 mentors 作为数组返回，这里统一取单对象 */
+const asMentorObj = (u: any) => (Array.isArray(u?.mentor) ? u.mentor[0] : u?.mentor) ?? null;
+
+/** 获取导师价格（首个非 Free Coffee Chat） */
+const getMentorPrice = (u: Mentor): number => {
+    const m = asMentorObj(u);
+    const entries = extractServiceEntries(m?.services);
     const firstPaid = entries.find(e => !isFreeCoffeeChat((e.type ?? '') as string));
     return firstPaid ? firstPaid.price : 0;
 };
@@ -38,50 +42,74 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
     const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
 
     useEffect(() => {
-        let filtered = mentors.filter(mentor => {
-            if (filters.jobTitle && !mentor.mentor.title?.toLowerCase().includes(filters.jobTitle.toLowerCase())) {
+        let filtered = mentors.filter(u => {
+            const m = asMentorObj(u);
+
+            if (filters.jobTitle && !m?.title?.toLowerCase().includes(filters.jobTitle.toLowerCase())) {
                 return false;
             }
+
             if (filters.industries?.length) {
-                const ok = mentor.industries?.some(i => filters.industries!.includes(i));
-                if (!ok) return false;
+                const inds = Array.isArray(u.industries) ? u.industries : [];
+                if (!inds.some(i => filters.industries!.includes(i))) return false;
             }
-            if (filters.company?.length) {
-                if (!filters.company.includes(mentor.mentor.company)) return false;
+
+            if (filters.company?.length && !filters.company.includes(m?.company ?? '')) {
+                return false;
             }
-            const yoe = Number(mentor.mentor.years_of_experience ?? 0);
+
+            const yoe = Number(m?.years_of_experience ?? 0);
             if (filters.minExperience != null && yoe < Number(filters.minExperience)) return false;
             if (filters.maxExperience != null && yoe > Number(filters.maxExperience)) return false;
+
             if (filters.minPrice != null || filters.maxPrice != null) {
                 const minP = filters.minPrice != null ? Number(filters.minPrice) : -Infinity;
                 const maxP = filters.maxPrice != null ? Number(filters.maxPrice) : Infinity;
-                const entries = extractServiceEntries(mentor.mentor.services);
-                const hit = entries.some(e => e.price >= minP && e.price <= maxP);
-                if (!hit) return false;
+                const entries = extractServiceEntries(m?.services);
+                if (!entries.some(e => e.price >= minP && e.price <= maxP)) return false;
             }
+
             if (filters.serviceTypes?.length) {
-                const entries = extractServiceEntries(mentor.mentor.services);
+                const entries = extractServiceEntries(m?.services);
                 const types = entries.map(e => e.type);
                 if (!types.some(t => filters.serviceTypes!.includes(t))) return false;
             }
+
             return true;
         });
+
+        const rankOf = (u: Mentor) => (asMentorObj(u)?.default_ranking ?? Number.POSITIVE_INFINITY); // NULLS LAST
+
+        const tie = (a: Mentor, b: Mentor) => {
+            // 次级排序：价格升序 -> 经验降序 -> 用户名
+            const pa = getMentorPrice(a), pb = getMentorPrice(b);
+            if (pa !== pb) return pa - pb;
+
+            const ya = asMentorObj(a)?.years_of_experience ?? 0;
+            const yb = asMentorObj(b)?.years_of_experience ?? 0;
+            if (ya !== yb) return yb - ya;
+
+            return (a.username || '').localeCompare(b.username || '');
+        };
 
         if (filters.sort) {
             filtered = [...filtered].sort((a, b) => {
                 switch (filters.sort) {
                     case 'price-asc':
-                        return getMentorPrice(a) - getMentorPrice(b);
+                        return getMentorPrice(a) - getMentorPrice(b) || rankOf(a) - rankOf(b);
                     case 'price-desc':
-                        return getMentorPrice(b) - getMentorPrice(a);
+                        return getMentorPrice(b) - getMentorPrice(a) || rankOf(a) - rankOf(b);
                     case 'yoe-asc':
-                        return (a.mentor.years_of_experience || 0) - (b.mentor.years_of_experience || 0);
+                        return (asMentorObj(a)?.years_of_experience ?? 0) - (asMentorObj(b)?.years_of_experience ?? 0) || rankOf(a) - rankOf(b);
                     case 'yoe-desc':
-                        return (b.mentor.years_of_experience || 0) - (a.mentor.years_of_experience || 0);
+                        return (asMentorObj(b)?.years_of_experience ?? 0) - (asMentorObj(a)?.years_of_experience ?? 0) || rankOf(a) - rankOf(b);
                     default:
-                        return 0;
+                        return rankOf(a) - rankOf(b) || tie(a, b);
                 }
             });
+        } else {
+            // 无显式排序：按 default_ranking 升序（NULLS LAST），再用 tiebreaker 保稳定
+            filtered = [...filtered].sort((a, b) => rankOf(a) - rankOf(b) || tie(a, b));
         }
 
         setFilteredMentors(filtered);
@@ -92,7 +120,7 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
     if (filteredMentors.length === 0) {
         return (
             <div className={styles.noResults}>
-                <Empty description={<span>No mentors found matching your criteria.<br/>Please try adjusting your filters.</span>} />
+                <Empty description={<span>No mentors found matching your criteria.<br />Please try adjusting your filters.</span>} />
             </div>
         );
     }
@@ -100,7 +128,10 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
     return (
         <div className={styles.mentorGrid}>
             {filteredMentors.map(user => {
-                const entries = extractServiceEntries(user.mentor.services);
+                const m = asMentorObj(user);
+                const industries = Array.isArray(user.industries) ? user.industries : [];
+
+                const entries = extractServiceEntries(m?.services);
                 const firstPaid = entries.find(e => !isFreeCoffeeChat((e.type ?? '') as string));
                 const hourly = firstPaid ? netToGross(firstPaid.price) : null;
 
@@ -130,23 +161,23 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
 
                             <ul className={styles.metaList}>
                                 <li className={styles.metaItem}>
-                                    <SolutionOutlined className={styles.metaIcon} />
-                                    <span>{user.mentor.title || '—'}</span>
+                                    <IdcardOutlined className={styles.metaIcon} />
+                                    <span>{m?.title || '—'}</span>
                                 </li>
                                 <li className={styles.metaItem}>
-                                    <BankOutlined className={styles.metaIcon} />
-                                    <span>{user.mentor.company || '—'}</span>
+                                    <AppstoreOutlined className={styles.metaIcon} />
+                                    <span>{m?.company || '—'}</span>
                                 </li>
                                 <li className={styles.metaItem}>
                                     <ClockCircleOutlined className={styles.metaIcon} />
-                                    <span>{(user.mentor.years_of_experience ?? 0)} YOE</span>
+                                    <span>{(m?.years_of_experience ?? 0)} YOE</span>
                                 </li>
                             </ul>
                         </div>
 
                         {/* 标签：全部显示，自动换行 */}
                         <div className={styles.mentorTagsRow}>
-                            {user.industries.map(industry => (
+                            {industries.map(industry => (
                                 <Tag className={styles.mentorTag} key={industry}>{industry}</Tag>
                             ))}
                         </div>
