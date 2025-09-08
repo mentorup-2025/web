@@ -18,7 +18,9 @@ export interface Mentor {
     username: string;
     profile_url?: string | null;
     email?: string | null;
-    industries: string[]; // 若后端可能传 null，前端最好兜底为 []
+    // 若后端可能传 null，渲染前用：const industries = Array.isArray(user.industries) ? user.industries : [];
+    industries: string[];
+
     mentor: {
         user_id: string;
 
