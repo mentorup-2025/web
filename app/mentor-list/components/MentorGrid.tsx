@@ -1,7 +1,7 @@
 'use client';
 import { Card, Tag, Button, Empty } from 'antd';
 import Link from 'next/link';
-import { UserOutlined, SolutionOutlined, BankOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { UserOutlined, IdcardOutlined, AppstoreOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import styles from '../search.module.css';
 import { useEffect, useState } from 'react';
 import { Mentor, SearchFiltersType } from '../../../types';
@@ -15,7 +15,7 @@ interface MentorGridProps {
 }
 
 // 统一解析 mentor.mentor.services：兼容 number 或 {price,type}
-function extractServiceEntries(services: Record<string, any> | undefined) {
+function extractServiceEntries(services?: Record<string, any> | null) {
     const list = Object.entries(services ?? {}).map(([key, v]) => {
         if (typeof v === 'number') {
             return { type: key, price: Number(v) };
@@ -26,6 +26,7 @@ function extractServiceEntries(services: Record<string, any> | undefined) {
     });
     return list.filter(e => Number.isFinite(e.price));
 }
+
 
 // 获取导师价格（首个非 Free Coffee Chat）
 const getMentorPrice = (mentor: Mentor): number => {
@@ -47,7 +48,7 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                 if (!ok) return false;
             }
             if (filters.company?.length) {
-                if (!filters.company.includes(mentor.mentor.company)) return false;
+                if (!filters.company.includes(mentor.mentor.company ?? '')) return false;
             }
             const yoe = Number(mentor.mentor.years_of_experience ?? 0);
             if (filters.minExperience != null && yoe < Number(filters.minExperience)) return false;
@@ -55,37 +56,59 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
             if (filters.minPrice != null || filters.maxPrice != null) {
                 const minP = filters.minPrice != null ? Number(filters.minPrice) : -Infinity;
                 const maxP = filters.maxPrice != null ? Number(filters.maxPrice) : Infinity;
-                const entries = extractServiceEntries(mentor.mentor.services);
+                const entries = extractServiceEntries(mentor.mentor.services ?? {});
                 const hit = entries.some(e => e.price >= minP && e.price <= maxP);
                 if (!hit) return false;
             }
             if (filters.serviceTypes?.length) {
-                const entries = extractServiceEntries(mentor.mentor.services);
+                const entries = extractServiceEntries(mentor.mentor.services ?? {});
                 const types = entries.map(e => e.type);
                 if (!types.some(t => filters.serviceTypes!.includes(t))) return false;
             }
             return true;
         });
 
+        const rankOf = (m: Mentor) =>
+            m.mentor.default_ranking ?? Number.POSITIVE_INFINITY; // NULLS LAST
+
+        const secondaryTieBreaker = (a: Mentor, b: Mentor) => {
+            // 可按需调整：先价格升，再经验降，再名字
+            const priceA = getMentorPrice(a);
+            const priceB = getMentorPrice(b);
+            if (priceA !== priceB) return priceA - priceB;
+
+            const yoeA = a.mentor.years_of_experience ?? 0;
+            const yoeB = b.mentor.years_of_experience ?? 0;
+            if (yoeA !== yoeB) return yoeB - yoeA;
+
+            return (a.username || '').localeCompare(b.username || '');
+        };
+
         if (filters.sort) {
             filtered = [...filtered].sort((a, b) => {
                 switch (filters.sort) {
                     case 'price-asc':
-                        return getMentorPrice(a) - getMentorPrice(b);
+                        return getMentorPrice(a) - getMentorPrice(b) || rankOf(a) - rankOf(b);
                     case 'price-desc':
-                        return getMentorPrice(b) - getMentorPrice(a);
+                        return getMentorPrice(b) - getMentorPrice(a) || rankOf(a) - rankOf(b);
                     case 'yoe-asc':
-                        return (a.mentor.years_of_experience || 0) - (b.mentor.years_of_experience || 0);
+                        return (a.mentor.years_of_experience || 0) - (b.mentor.years_of_experience || 0) || rankOf(a) - rankOf(b);
                     case 'yoe-desc':
-                        return (b.mentor.years_of_experience || 0) - (a.mentor.years_of_experience || 0);
+                        return (b.mentor.years_of_experience || 0) - (a.mentor.years_of_experience || 0) || rankOf(a) - rankOf(b);
                     default:
-                        return 0;
+                        return rankOf(a) - rankOf(b) || secondaryTieBreaker(a, b);
                 }
             });
+        } else {
+            // 关键：无显式排序时，按 default_ranking 升序（NULLS LAST），再用 tiebreaker 保稳定
+            filtered = [...filtered].sort((a, b) =>
+                rankOf(a) - rankOf(b) || secondaryTieBreaker(a, b)
+            );
         }
 
         setFilteredMentors(filtered);
     }, [mentors, filters]);
+
 
     if (loading) return <div>Loading...</div>;
 
@@ -130,11 +153,11 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
 
                             <ul className={styles.metaList}>
                                 <li className={styles.metaItem}>
-                                    <SolutionOutlined className={styles.metaIcon} />
+                                    <IdcardOutlined className={styles.metaIcon} />
                                     <span>{user.mentor.title || '—'}</span>
                                 </li>
                                 <li className={styles.metaItem}>
-                                    <BankOutlined className={styles.metaIcon} />
+                                    <AppstoreOutlined className={styles.metaIcon} />
                                     <span>{user.mentor.company || '—'}</span>
                                 </li>
                                 <li className={styles.metaItem}>
