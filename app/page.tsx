@@ -27,7 +27,7 @@ const translations = {
     'Our Mentors': 'Our Mentors',
     'Become a Mentor': 'Become a Mentor',
     'Log In': 'Log In',
-    'Learn from the Best.': 'Learn from the Best.',
+    '1-on-1 Mentorship with': '1-on-1 Mentorship with: ',
     'A Marketplace for Career Insights': 'A Marketplace for Career Insights',
     '& Mentorship in STEM.': '& Mentorship in STEM.',
     'Connect with experienced professionals and accelerate your career.':
@@ -67,9 +67,12 @@ const translations = {
     'Meet all mentors': 'Meet all mentors',
     'Affordable Mentorship, Proven Job Outcomes':
       'Affordable Mentorship, Proven Job Outcomes',
-    'Per Mentor Session': 'Per Mentor Session',
-    'See Interview Invitations': 'See Interview Invitations',
+    'Per Mentor Session': 'Price per Session',
+    'Per Mentor Session description': 'Book a mentor at a low price $50–$80/session (save more—get a mentor for only $30)',
+    'See Interview Invitations': 'Satisfaction rate',
+    'See Interview Invitations description': 'Book a mentor at a low price $50–$80/session (save more — get a mentor for only $30)',
     'Job Offers': 'Job Offers',
+    'Job Offers description': 'Landed on offers after mentorship (Industry average: 20–30%)',
     'Trusted by 1,300+ Students': 'Trusted by 1,300+ Students',
     'Got Questions?': 'Got Questions?',
     'How do I apply to become a mentor?': 'How do I apply to become a mentor?',
@@ -107,7 +110,19 @@ const translations = {
     testimonial1:
       "I didn't have any network and all my LinkedIn messages went to blackholes. Coach from MentorUp helped me refine my resume, run mock interviews, and map out my career path. I just accepted my dream offer – I couldn't be happier!",
     testimonial2:
-      'After being laid off, months of rejections left me discouraged. A handful of sessions and mock interviews with MentorUp mentors helped me identify and address my weak points. I now secured my dream position—MentorUp made all the difference.'
+      'After being laid off, months of rejections left me discouraged. A handful of sessions and mock interviews with MentorUp mentors helped me identify and address my weak points. I now secured my dream position—MentorUp made all the difference.',
+      roles: [
+        "Software Engineer",
+        "Data Scientist",
+        "Machine Learning Engineer",
+        "Product Manager",
+        "Data Engineer",
+        "Data Analyst",
+        "Financial Analyst",
+        "Quant Analyst",
+        "Consultant",
+        "UI/UX Designer"
+      ]
   },
   zh: {
     pageTitle: 'MentorUp - 向最优秀的人学习',
@@ -115,7 +130,7 @@ const translations = {
     'Our Mentors': '我们的导师',
     'Become a Mentor': '成为导师',
     'Log In': '登录',
-    'Learn from the Best.': '向最优秀的人学习。',
+    '1-on-1 Mentorship with': '一对一职业辅导',
     'A Marketplace for Career Insights': '职业洞察的市场平台',
     '& Mentorship in STEM.': '及STEM领域的导师指导。',
     'Connect with experienced professionals and accelerate your career.':
@@ -151,9 +166,12 @@ const translations = {
     'Meet all mentors': '查看全部导师',
     'Affordable Mentorship, Proven Job Outcomes':
       '实惠的导师指导，显著的职业成果',
-    'Per Mentor Session': '每次导师会面',
-    'See Interview Invitations': '获得面试邀请',
+    'Per Mentor Session': '每次导师会话的平均价格',
+    'Per Mentor Session description': '每次导师会话的平均价格',
+    'See Interview Invitations': '满意度',
+    'See Interview Invitations description': '以低价预约导师每节课50-80美元（更多优惠——只需30美元即可预约导师）',
     'Job Offers': '获得工作机会',
+    'Job Offers description': '接受导师指导后获得工作机会的比例（行业平均水平：20-30%）',
     'Trusted by 1,300+ Students': '1300+学员的信赖之选',
     'Got Questions?': '常见问题',
     'How do I apply to become a mentor?': '如何申请成为导师？',
@@ -189,7 +207,19 @@ const translations = {
     testimonial1:
       '我没有任何人脉，领英消息都石沉大海。MentorUp的教练帮我优化简历、模拟面试、规划职业路径。现在我已拿到理想offer，太开心了！',
     testimonial2:
-      '被裁员后，数月的拒信让我很沮丧。几次导师会面和模拟面试帮我找准弱点并提升。现在我已拿到理想职位——MentorUp真的改变了我。'
+      '被裁员后，数月的拒信让我很沮丧。几次导师会面和模拟面试帮我找准弱点并提升。现在我已拿到理想职位——MentorUp真的改变了我。',
+      roles: [
+        "软件工程师",
+        "数据科学家",
+        "机器学习工程师",
+        "产品经理",
+        "数据工程师",
+        "数据分析师",
+        "金融分析师",
+        "量化分析师",
+        "顾问",
+        "UI/UX 设计师"
+      ]
   }
 };
 
@@ -205,6 +235,8 @@ export default function Home() {
 
   const { isMentor, loading: isMentorLoading } = useMentorStatus();
 
+  const typingRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const checkMentorStatus = async () => {
       if (user?.id) {
@@ -219,6 +251,57 @@ export default function Home() {
 
     checkMentorStatus();
   }, [user?.id]);
+
+  // Hero section Typing effect logic
+  useEffect(() => {
+    const roles = translations[language].roles;
+  
+    let roleIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let timeoutId: NodeJS.Timeout;
+  
+    const typingSpeed = 100;
+    const eraseSpeed = 50;
+    const delayAfterTyping = 1200; // pause after a word is fully typed
+    const delayAfterErasing = 500; // pause after erase before typing next
+  
+    function type() {
+      const typingElement = typingRef.current;
+      if (!typingElement) return;
+  
+      const currentRole = roles[roleIndex];
+  
+      if (!isDeleting && charIndex <= currentRole.length) {
+        // Typing forward
+        typingElement.textContent = currentRole.substring(0, charIndex);
+        charIndex++;
+        timeoutId = setTimeout(type, typingSpeed);
+      } else if (isDeleting && charIndex >= 0) {
+        // Erasing backward
+        typingElement.textContent = currentRole.substring(0, charIndex);
+        charIndex--;
+        timeoutId = setTimeout(type, eraseSpeed);
+      } else {
+        // Finished typing or erasing
+        if (!isDeleting) {
+          isDeleting = true;
+          timeoutId = setTimeout(type, delayAfterTyping); // wait before erasing
+        } else {
+          isDeleting = false;
+          roleIndex = (roleIndex + 1) % roles.length;
+          timeoutId = setTimeout(type, delayAfterErasing); // wait before typing next
+        }
+      }
+    }
+  
+    type();
+  
+    return () => {
+      // ✅ cleanup any running timeouts when language changes or unmounts
+      clearTimeout(timeoutId);
+    };
+  }, [language]);
 
   // Custom translation function that mimics useTranslation from next-i18next
   const t = (key: string) => {
@@ -325,7 +408,7 @@ export default function Home() {
   // MentorSlider component (updated for 5-in-a-row slider)
   function MentorSlider({ mentors }: { mentors: any[] }) {
     const [startIndex, setStartIndex] = useState(0);
-    const visibleCount = 5;
+    const visibleCount = 3;
     const total = mentors.length;
     useEffect(() => {
       if (total <= visibleCount) return;
@@ -581,27 +664,37 @@ export default function Home() {
           className={`relative flex flex-col justify-between h-screen overflow-hidden bg-white ${styles.heroContainer}`}
         >
           <div
-            className={`flex flex-col justify-center items-center flex-1 px-4 md:px-0 text-center z-10`}
+            className={`flex flex-col justify-center items-center flex-1 text-center z-10`}
           >
-            <h1 className='text-blue-600 text-4xl md:text-6xl font-bold mb-4'>
-              {t('Learn from the Best.')}
-            </h1>
-            <h2 className='text-black text-2xl md:text-4xl font-bold'>
-              {t('A Marketplace for Career Insights')}
+            
+            <h2 className="text-black text-2xl md:text-4xl font-bold">
+              {t("A Marketplace for Career Insights")}
             </h2>
-            <h2 className='text-black text-2xl md:text-4xl font-bold mb-4'>
-              {t('& Mentorship in STEM.')}
+            <h2 className="text-black text-2xl md:text-4xl font-bold mb-4">
+              {t("& Mentorship in STEM.")}
             </h2>
-            <p className='text-gray-600 text-lg md:text-xl mb-6 max-w-2xl'>
+
+            {/* ✅ New typing effect block */}
+            <div className="mt-6">
+                <h1 className="text-blue-600 text-4xl md:text-6xl font-bold mb-4">
+                {t("1-on-1 Mentorship with")}
+                </h1>
+              <div
+                ref={typingRef}
+                className="text-2xl md:text-3xl font-bold text-gray-800 border-r-2 border-gray-800 inline-block mt-2 min-h-[2.5rem]"
+              ></div>
+            </div>
+
+            <p className="text-gray-600 text-lg md:text-xl mb-6 max-w-2xl">
               {t(
-                'Connect with experienced professionals and accelerate your career.'
+                "Connect with experienced professionals and accelerate your career."
               )}
             </p>
             <Link
-              className='px-6 py-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition'
-              href='/mentor-list'
+              className="px-6 py-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition"
+              href="/mentor-list"
             >
-              {t('Meet Our Mentors')}
+              {t("Meet Our Mentors")}
             </Link>
           </div>
         </section>
@@ -614,7 +707,7 @@ export default function Home() {
         {/* --- Start max-width wrapper --- */}
         <div className='w-full max-w-6xl mx-auto px-4'>
           {/* 1. HERO SECTION WITH VIDEO PLACEHOLDER */}
-          <section className='w-full items-center justify-between py-12 gap-8'>
+          {/* <section className='w-full items-center justify-between py-12 gap-8'>
             <div className='px-4'>
               <h2 className='text-2xl md:text-3xl font-bold text-black mb-2'>
                 {t('Transform Your Potential With Personalized Support')}
@@ -627,7 +720,6 @@ export default function Home() {
               <div
                 className={`flex-1 flex items-center justify-center ${styles.videoContent}`}
               >
-                {/* Video placeholder */}
                 <div className='w-full h-full  bg-gray-200 rounded-lg flex items-center justify-center'>
                   <svg
                     width='48'
@@ -663,7 +755,7 @@ export default function Home() {
                 </ul>
               </div>
             </div>
-          </section>
+          </section> */}
 
           {/* 2. MEET OUR MENTORS SLIDER SECTION */}
           <section className='w-full py-12'>
@@ -688,33 +780,29 @@ export default function Home() {
             </h2>
             <div className='flex flex-col md:flex-row items-center justify-center gap-6 px-4'>
               <div className='bg-blue-500 text-white rounded-lg p-8 flex-1 min-w-[220px] text-center'>
-                <div className='text-3xl font-bold mb-2'>$50</div>
+                <div className='text-5xl font-bold mb-2'>$77</div>
                 <div className='font-semibold mb-2'>
                   {t('Per Mentor Session')}
                 </div>
                 <div className={`text-xs ${styles.MentorshipDescription}`}>
-                  Book a mentor at a low price
-                  <br />
-                  $50–$80/session (save more—get a mentor for only $30)
+                {t('Per Mentor Session description')}
                 </div>
               </div>
 
               <div className='bg-blue-200 text-blue-900 rounded-lg p-8 flex-1 min-w-[220px] text-center'>
-                <div className='text-3xl font-bold mb-2'>95%</div>
+                <div className='text-5xl font-bold mb-2'>99%</div>
                 <div className='font-semibold mb-2'>
                   {t('See Interview Invitations')}
                 </div>
                 <div className={`text-xs ${styles.MentorshipDescription}`}>
-                  Our mentees polish their resume with expert help; 95% receive
-                  job interview requests.
+                {t('See Interview Invitations description')}
                 </div>
               </div>
               <div className='bg-blue-900 text-white rounded-lg p-8 flex-1 min-w-[220px] text-center'>
-                <div className='text-3xl font-bold mb-2'>80%</div>
+                <div className='text-5xl font-bold mb-2'>80%</div>
                 <div className='font-semibold mb-2'>{t('Job Offers')}</div>
                 <div className={`text-xs ${styles.MentorshipDescription}`}>
-                  80% of mentees landed offers after company inquiry and our
-                  mock interviews to help you land that role.
+                {t('Job Offers description')}
                 </div>
               </div>
             </div>
@@ -737,7 +825,7 @@ export default function Home() {
                 </div>
                 <div className='flex items-center mt-4'>
                   <img
-                    src='/images/placeholder-avatar.png'
+                    src='/images/home_student_avatar_1.png'
                     alt='Yuki'
                     className='w-10 h-10 rounded-full mr-3 border border-gray-200'
                   />
@@ -758,7 +846,7 @@ export default function Home() {
                 </div>
                 <div className='flex items-center mt-4'>
                   <img
-                    src='/images/placeholder-avatar.png'
+                    src='/images/home_student_avatar_2.png'
                     alt='James'
                     className='w-10 h-10 rounded-full mr-3 border border-gray-200'
                   />
