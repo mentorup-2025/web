@@ -418,8 +418,7 @@ export default function Home() {
           return (
             <div
               key={mentor.user_id + idx}
-              className="bg-white border rounded-lg shadow p-6 flex flex-col items-center w-60 transition-all duration-500"
-            >
+              className="bg-white border rounded-lg shadow p-6 flex flex-col items-center w-72 transition-all duration-500">
               <img
                 src={img}
                 alt={name}
@@ -434,7 +433,7 @@ export default function Home() {
               <div
                 className={`text-gray-700 text-sm text-center ${styles.mentorDescription}`}
               >
-                {desc.length > 50 ? desc.slice(0, 50) + "..." : desc}
+                {desc.length > 50 ? desc.slice(0, 150) + "..." : desc}
               </div>
             </div>
           );
@@ -453,7 +452,7 @@ export default function Home() {
       <Head>
         <title>{t('pageTitle')}</title>
         <meta name='viewport' content='width=device-width, initial-scale=1' />
-        <meta name='description' content={t('pageDescription')} />
+        <meta name='description' content={t('pageDescription') as string} />
       </Head>
 
       <main className='min-h-screen bg-gradient-to-b flex flex-col items-center justify-center p-6'>
