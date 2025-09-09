@@ -15,7 +15,6 @@ export default async function SearchPage() {
 
   // Add timestamp to validate if page is cached
   const timestamp = new Date().toISOString();
-  console.log('Page rendered at:', timestamp);
 
   return (
     <div>

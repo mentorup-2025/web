@@ -18,6 +18,7 @@ import { Switch } from 'antd';
 import MarqueeSection from './MarqueeSection';
 import styles from './styles/features.module.css';
 import { useMentorStatus } from './hooks/useMentorStatus';
+import { Mentor } from "../types";
 
 // Translation object with all your content
 const translations = {
@@ -229,6 +230,8 @@ export default function Home() {
   const router = useRouter();
   const { user, isSignedIn } = useUser();
 
+  const [mentors, setMentors] = useState<Mentor[]>([]);
+
   const { signOut } = useClerk();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -236,6 +239,29 @@ export default function Home() {
   const { isMentor, loading: isMentorLoading } = useMentorStatus();
 
   const typingRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    async function fetchMentors() {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_APP_URL}/api/mentor/list`,
+          {
+            cache: "no-store",
+            next: { tags: ["mentorlist"] }
+          }
+        );
+        const data = await res.json();
+        const filteredMentors = data.data.filter(
+         (m: Mentor) => m.mentor?.default_ranking !== 1000
+        );
+        setMentors(filteredMentors || []);
+      } catch (err) {
+        console.error("Error fetching mentors:", err);
+      } 
+    }
+
+    fetchMentors();
+  }, []);
 
   useEffect(() => {
     const checkMentorStatus = async () => {
@@ -312,62 +338,7 @@ export default function Home() {
     );
   };
 
-  // Mentor slider data (moved inside Home for t access)
-  const mentors = [
-    {
-      name: t('Kevin Zhang'),
-      title: t('Senior Software Engineer at Google'),
-      experience: t('8 years'),
-      price: '$30/hr',
-      desc: t('Back-end development (Java/K8s), previously at Amazon'),
-      img: '/images/placeholder-avatar.png'
-    },
-    {
-      name: t('Linda Chen'),
-      title: t('Product Designer at Airbnb'),
-      experience: t('6 years'),
-      price: '$30/hr',
-      desc: t('UI/UX design; CMU grad, interned at IDEO'),
-      img: '/images/placeholder-avatar.png'
-    },
-    {
-      name: t('Eric Tan'),
-      title: t('Data Engineer at Netflix'),
-      experience: t('10 years'),
-      price: '$30/hr',
-      desc: t(
-        'Infrastructure engineering; helped scale systems for millions of users'
-      ),
-      img: '/images/placeholder-avatar.png'
-    },
-    {
-      name: t('Kevin Zhang'),
-      title: t('Senior Software Engineer at Google'),
-      experience: t('8 years'),
-      price: '$30/hr',
-      desc: t('Back-end development (Java/K8s), previously at Amazon'),
-      img: '/images/placeholder-avatar.png'
-    },
-    {
-      name: t('Linda Chen'),
-      title: t('Product Designer at Airbnb'),
-      experience: t('6 years'),
-      price: '$30/hr',
-      desc: t('UI/UX design; CMU grad, interned at IDEO'),
-      img: '/images/placeholder-avatar.png'
-    },
-    {
-      name: t('Eric Tan'),
-      title: t('Data Engineer at Netflix'),
-      experience: t('10 years'),
-      price: '$30/hr',
-      desc: t(
-        'Infrastructure engineering; helped scale systems for millions of users'
-      ),
-      img: '/images/placeholder-avatar.png'
-    }
-  ];
-
+  
   // FAQ data (moved inside Home for t access)
   const faqs = [
     {
@@ -410,6 +381,7 @@ export default function Home() {
     const [startIndex, setStartIndex] = useState(0);
     const visibleCount = 3;
     const total = mentors.length;
+  
     useEffect(() => {
       if (total <= visibleCount) return;
       const timer = setInterval(() => {
@@ -417,43 +389,60 @@ export default function Home() {
       }, 3500);
       return () => clearInterval(timer);
     }, [total]);
+  
     // Compute the visible mentors (wrap around if needed)
     const visibleMentors = [];
     for (let i = 0; i < Math.min(visibleCount, total); i++) {
       visibleMentors.push(mentors[(startIndex + i) % total]);
     }
+  
     return (
-      <div className='flex justify-center items-center gap-6 w-full'>
-        {visibleMentors.map((mentor, idx) => (
-          <div
-            key={mentor.name + idx}
-            className='bg-white border rounded-lg shadow p-6 flex flex-col items-center w-60 transition-all duration-500'
-          >
-            <img
-              src={mentor.img}
-              alt={mentor.name}
-              className='w-24 h-24 rounded-full object-cover mb-4'
-            />
-            <div className='font-bold text-lg mb-1'>{mentor.name}</div>
-            <div className={`text-gray-600 mb-1 ${styles.mentorTitle}`}>
-              {mentor.title}
-            </div>
-            <div className='text-gray-500 text-sm mb-1'>
-              {mentor.experience}
-            </div>
-            <div className='text-blue-500 font-semibold mb-2'>
-              {mentor.price}
-            </div>
+      <div className="flex justify-center items-center gap-6 w-full">
+        {visibleMentors.map((mentor, idx) => {
+          // Map new data structure → UI props
+          const name = mentor.username;
+          const title = `${mentor.mentor?.title || ""} ${mentor.mentor?.company ? "at " + mentor.mentor.company : ""}`;
+          const experience = mentor.mentor?.years_of_experience
+            ? `${mentor.mentor.years_of_experience} years`
+            : "";
+          const price =
+            mentor.mentor?.services?.length > 0
+              ? `$${mentor.mentor.services[mentor.mentor?.services?.length-1].price}/hr`
+              : "";
+          const desc = mentor.introduction || "";
+          const img =
+            mentor.avatar_url ||
+            mentor.profile_url ||
+            "/images/placeholder-avatar.png";
+  
+          return (
             <div
-              className={`text-gray-700 text-sm text-center  ${styles.mentorDescription}`}
+              key={mentor.user_id + idx}
+              className="bg-white border rounded-lg shadow p-6 flex flex-col items-center w-60 transition-all duration-500"
             >
-              {mentor.desc}
+              <img
+                src={img}
+                alt={name}
+                className="w-24 h-24 rounded-full object-cover mb-4"
+              />
+              <div className="font-bold text-lg mb-1">{name}</div>
+              <div className={`text-gray-600 mb-1 ${styles.mentorTitle}`}>
+                {title}
+              </div>
+              <div className="text-gray-500 text-sm mb-1">{experience}</div>
+              <div className="text-blue-500 font-semibold mb-2">{price}</div>
+              <div
+                className={`text-gray-700 text-sm text-center ${styles.mentorDescription}`}
+              >
+                {desc.length > 50 ? desc.slice(0, 50) + "..." : desc}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   }
+  
 
   const handleBecomeMentor = () => {
     router.push('/signup/mentor/' + user?.id);
