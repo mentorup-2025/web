@@ -55,7 +55,7 @@ export default function MenteeSignu({ userId }: MenteeSignupProps) {
             label="WeChat ID"
             rules={[
               { required: true, message: 'Please input your WeChat ID!' },
-              { 
+              {
                 pattern: /^[a-zA-Z0-9_-]{6,20}$/,
                 message: 'WeChat ID must be 6-20 characters long and can only contain letters, numbers, underscores, and hyphens'
               }
@@ -135,7 +135,7 @@ export default function MenteeSignu({ userId }: MenteeSignupProps) {
           </Form.Item>
         </>
       ),
-    }, 
+    },
     {
       title: 'Industries',
       content: (
@@ -171,8 +171,8 @@ export default function MenteeSignu({ userId }: MenteeSignupProps) {
           <p className={styles.smallText}>
             Please contact <a href="mailto:contactus@mentorup.info">contactus@mentorup.info</a> for any questions!
           </p>
-          <Button 
-            type="primary" 
+          <Button
+            type="primary"
             size="large"
             onClick={() => router.push('/mentor-list')}
           >
@@ -205,47 +205,47 @@ export default function MenteeSignu({ userId }: MenteeSignupProps) {
     form.setFieldsValue(formData);
   };
 
-  const onFinish = async (allValues: any) => {
-    try {
-      // Update user profile with displayName, WeChat, LinkedIn, and industries
-      const userUpdateData = {
-        userId,
-        username: allValues.displayName,
-        wechat: allValues.wechat.trim(),
-        linkedin: allValues.linkedin.trim(),
-        industries: selectedIndustries,
-        job_target: {
-          title: allValues.targetRole,
-          level: allValues.targetLevel
+    const onFinish = async (allValues: any) => {
+        try {
+            const userUpdateData = {
+                userId,
+                username: allValues.displayName?.trim() || '',  // 加兜底
+                wechat: allValues.wechat?.trim() || '',
+                linkedin: allValues.linkedin?.trim() || '',    // 关键修复
+                industries: selectedIndustries,
+                job_target: {
+                    title: allValues.targetRole,
+                    level: allValues.targetLevel
+                }
+            };
+
+            const userUpdateResponse = await fetch('/api/user/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userUpdateData),
+            });
+
+            const userUpdateResult = await userUpdateResponse.json();
+
+            if (userUpdateResult.code === -1) {
+                notification.error({
+                    message: 'Error',
+                    description: userUpdateResult.message || 'Failed to update user profile',
+                });
+                return;
+            }
+
+            notification.success({
+                message: 'Success',
+                description: 'Profile updated successfully!',
+            });
+
+            setCurrent((c) => c + 1);  // 成功后进入第四步
+        } catch (error) {
+            console.error('Error updating user profile:', error);
         }
-      };
+    };
 
-      const userUpdateResponse = await fetch('/api/user/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userUpdateData),
-      });
-
-      const userUpdateResult = await userUpdateResponse.json();
-
-      if (userUpdateResult.code === -1) {
-        notification.error({
-          message: 'Error',
-          description: userUpdateResult.message || 'Failed to update user profile',
-        });
-        throw new Error(userUpdateResult.message);
-      }
-
-      notification.success({
-        message: 'Success',
-        description: 'Profile updated successfully!',
-      });
-
-      setCurrent(current + 1);
-    } catch (error) {
-      console.error('Error updating user profile:', error);
-    }
-  };
 
   const handleStepClick = (step: number) => {
     if (step < current) {
@@ -257,22 +257,25 @@ export default function MenteeSignu({ userId }: MenteeSignupProps) {
 
   return (
     <div className={styles.mentorSignup}>
-      <Steps 
-        current={current} 
-        className={`stepsClassName ${styles.steps}`}
-        onChange={handleStepClick}
-      >
-        {steps.map(item => (
-          <Step key={item.title} title={item.title} />
-        ))}
-      </Steps>
+        <Steps
+            current={current}
+            className={`stepsClassName ${styles.steps}`}
+            onChange={handleStepClick}
+            size="small"
+            direction="horizontal"
+            responsive={false}
+        >
+            {steps.map(item => (
+                <Step key={item.title} title={item.title} />
+            ))}
+        </Steps>
       <div className={styles.stepsContent}>
         <div>
           {current === 0 && <h2>Tell us what is your <span className={styles.blue}>Current Stage</span></h2>}
           {current === 1 && <h2>Tell us about <span className={styles.blue}>Your Goal</span></h2>}
           {current === 2 && <h2>Share your <span className={styles.blue}>Interested Industries</span></h2>}
           {current === 3 && <h2><span className={styles.blue}>Thank You & Welcome!</span></h2>}
-          
+
           <Form
             form={form}
             layout="vertical"
@@ -280,7 +283,7 @@ export default function MenteeSignu({ userId }: MenteeSignupProps) {
             className={styles.form}
           >
             {steps[current].content}
-            
+
             {current < steps.length - 1 && (
               <div className={styles.stepsAction}>
                 {current > 0 && (
@@ -298,4 +301,4 @@ export default function MenteeSignu({ userId }: MenteeSignupProps) {
       </div>
     </div>
   );
-} 
+}

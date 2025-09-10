@@ -1,0 +1,66 @@
+.banner {
+    position: sticky;       /* 作为定位参考元素 */
+    top: 0;
+    z-index: 1000;
+    background: #1677ff;
+    color: #fff;
+    width: 100%;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+
+/* 删掉 position: relative; 让绝对定位找上层的 .banner */
+.content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 8px 48px 8px 16px; /* 右侧多留 32px 给关闭按钮 */
+    display: flex;
+    align-items: center;
+    justify-content: center;   /* 文字整体居中 */
+    gap: 12px;
+}
+
+.text {
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: center;        /* 文案居中 */
+}
+
+.code {
+    font-weight: 700;
+}
+
+.link {
+    color: #fff;
+    text-decoration: underline;
+    font-weight: 600;
+}
+.link:hover {
+    opacity: 0.9;
+    text-decoration: none;
+}
+
+/* 绝对定位到整条 banner 的最右边 */
+.close {
+    position: absolute;
+    right: 12px;               /* 紧贴 banner 右侧 */
+    top: 50%;
+    transform: translateY(-50%);
+    appearance: none;
+    background: transparent;
+    border: 0;
+    color: #fff;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+/* 小屏优化 */
+@media (max-width: 768px) {
+    .content {
+        padding: 8px 44px 8px 12px; /* 同样预留给 × 的空间 */
+    }
+    .text {
+        font-size: 13px;
+    }
+}
