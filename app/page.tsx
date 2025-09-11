@@ -244,7 +244,7 @@ export default function Home() {
     async function fetchMentors() {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_APP_URL}/api/mentor/list`,
+          `/api/mentor/list`,
           {
             cache: "no-store",
             next: { tags: ["mentorlist"] }
