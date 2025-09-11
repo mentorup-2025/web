@@ -38,7 +38,7 @@ const MarqueeSection = () => {
     <section className="relative overflow-hidden py-8">
       <div className="absolute top-0 left-0 right-0 text-center py-4 z-10">
         <p className="text-lg font-semibold text-gray-900">
-          Trusted by 100+ mentors from top organizations.
+          Trusted by mentors from top organizations.
         </p>
       </div>
 

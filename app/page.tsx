@@ -72,8 +72,8 @@ const translations = {
     'Per Mentor Session description': 'Book a mentor at a low price $50–$80/session (save more—get a mentor for only $30)',
     'See Interview Invitations': 'Satisfaction rate',
     'See Interview Invitations description': 'Book a mentor at a low price $50–$80/session (save more — get a mentor for only $30)',
-    'Job Offers': 'Job Offers',
-    'Job Offers description': 'Landed on offers after mentorship (Industry average: 20–30%)',
+    'Job Offers': 'Landed on offers after mentorship',
+    'Job Offers description': 'Industry average: 20–30%',
     'Trusted by 1,300+ Students': 'Trusted by 1,300+ Students',
     'Got Questions?': 'Got Questions?',
     'How do I apply to become a mentor?': 'How do I apply to become a mentor?',
@@ -104,8 +104,8 @@ const translations = {
     '10 years': '10 years',
     'Infrastructure engineering; helped scale systems for millions of users':
       'Infrastructure engineering; helped scale systems for millions of users',
-    'Yuki - Ohio State University': 'Yuki - Ohio State University',
-    'James - SDE': 'James - SDE',
+    'James - Ohio State University': 'James - Ohio State University',
+    'Yuki - SDE': 'Yuki - SDE',
     'No Connection, No Problem': 'No Connection, No Problem',
     'From Layoff to Dream Offer': 'From Layoff to Dream Offer',
     testimonial1:
@@ -171,8 +171,8 @@ const translations = {
     'Per Mentor Session description': '每次导师会话的平均价格',
     'See Interview Invitations': '满意度',
     'See Interview Invitations description': '以低价预约导师每节课50-80美元（更多优惠——只需30美元即可预约导师）',
-    'Job Offers': '获得工作机会',
-    'Job Offers description': '接受导师指导后获得工作机会的比例（行业平均水平：20-30%）',
+    'Job Offers': '接受指导后获得工作机会的比例',
+    'Job Offers description': '行业平均水平：20-30%',
     'Trusted by 1,300+ Students': '1300+学员的信赖之选',
     'Got Questions?': '常见问题',
     'How do I apply to become a mentor?': '如何申请成为导师？',
@@ -201,8 +201,8 @@ const translations = {
     '10 years': '10年',
     'Infrastructure engineering; helped scale systems for millions of users':
       '基础设施工程，助力系统扩展至百万级用户',
-    'Yuki - Ohio State University': 'Yuki - 俄亥俄州立大学',
-    'James - SDE': 'James - SDE',
+    'James - Ohio State University': 'James - 俄亥俄州立大学',
+    'Yuki - SDE': 'Yuki - SDE',
     'No Connection, No Problem': '无关系也无妨',
     'From Layoff to Dream Offer': '从失业到理想Offer',
     testimonial1:
@@ -250,10 +250,12 @@ export default function Home() {
             next: { tags: ["mentorlist"] }
           }
         );
-        const data = await res.json();
+        const data = await res.json()
+        
         const filteredMentors = data.data.filter(
          (m: Mentor) => m.mentor?.default_ranking !== 1000
         );
+
         setMentors(filteredMentors || []);
       } catch (err) {
         console.error("Error fetching mentors:", err);
@@ -397,28 +399,31 @@ export default function Home() {
     }
   
     return (
-      <div className="flex justify-center items-center gap-6 w-full">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
         {visibleMentors.map((mentor, idx) => {
           // Map new data structure → UI props
           const name = mentor.username;
-          const title = `${mentor.mentor?.title || ""} ${mentor.mentor?.company ? "at " + mentor.mentor.company : ""}`;
+          const title = `${mentor.mentor?.title || ""}${
+            mentor.mentor?.company ? " at " + mentor.mentor.company : ""
+          }`;
           const experience = mentor.mentor?.years_of_experience
             ? `${mentor.mentor.years_of_experience} years`
             : "";
           const price =
             mentor.mentor?.services?.length > 0
-              ? `$${mentor.mentor.services[mentor.mentor?.services?.length-1].price}/hr`
+              ? `$${mentor.mentor.services[mentor.mentor.services.length - 1].price}/hr`
               : "";
           const desc = mentor.introduction || "";
           const img =
             mentor.avatar_url ||
             mentor.profile_url ||
             "/images/placeholder-avatar.png";
-  
+    
           return (
             <div
               key={mentor.user_id + idx}
-              className="bg-white border rounded-lg shadow p-6 flex flex-col items-center w-72 transition-all duration-500">
+              className="bg-white border rounded-lg shadow p-6 flex flex-col items-center transition-all duration-500"
+            >
               <img
                 src={img}
                 alt={name}
@@ -433,13 +438,14 @@ export default function Home() {
               <div
                 className={`text-gray-700 text-sm text-center ${styles.mentorDescription}`}
               >
-                {desc.length > 50 ? desc.slice(0, 150) + "..." : desc}
+                {desc.length > 150 ? desc.slice(0, 150) + "..." : desc}
               </div>
             </div>
           );
         })}
       </div>
     );
+    
   }
   
 
@@ -457,19 +463,8 @@ export default function Home() {
 
       <main className='min-h-screen bg-gradient-to-b flex flex-col items-center justify-center p-6'>
         <header className='w-full text-gray-700 flex justify-between items-center py-4 px-4 mx-auto z-10'>
-          <div>
+          <div className='hidden md:block'>
             <span className='text-2xl font-bold'>MentorUp</span>
-            {/*<span className="text-xl"> {t('')}</span>*/}
-            {/* Mobile CTA under logo */}
-            <SignedOut>
-              <div className='mt-2 md:hidden w-40'>
-                <SignUpButton mode='modal'>
-                  <Button type='primary' block>
-                    Become a Mentor/Mentee
-                  </Button>
-                </SignUpButton>
-              </div>
-            </SignedOut>
           </div>
           <div className='flex items-center'>
             {/* Desktop Menu */}
@@ -818,7 +813,7 @@ export default function Home() {
                     className='w-10 h-10 rounded-full mr-3 border border-gray-200'
                   />
                   <span className='text-gray-600 text-sm'>
-                    {t('Yuki - Ohio State University')}
+                    {t('James - Ohio State University')}
                   </span>
                 </div>
                 <div className='text-3xl text-black text-right mt-2'>”</div>
@@ -839,7 +834,7 @@ export default function Home() {
                     className='w-10 h-10 rounded-full mr-3 border border-gray-200'
                   />
                   <span className='text-gray-600 text-sm'>
-                    {t('James - SDE')}
+                    {t('Yuki - SDE')}
                   </span>
                 </div>
                 <div className='text-3xl text-black text-right mt-2'>”</div>
