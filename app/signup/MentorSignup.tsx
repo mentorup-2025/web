@@ -196,8 +196,9 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
 
                     {/* ---------- Avatar section (required) ---------- */}
                     <Form.Item
+                        name="avatar"
                         label="Please upload your profile picture"
-                        style={{ marginBottom: 8 }}
+                        rules={[{ required: true, message: 'Please upload your profile picture!' }]}
                     >
                         <div
                             style={{
@@ -218,12 +219,16 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                                 <div>JPG, PNG, GIF, Max size: 3MB</div>
                             </div>
                             <div style={{ marginLeft: 'auto' }}>
-                                <Button icon={<UploadOutlined />} onClick={() => setUploadImageVisible(true)}>
+                                <Button
+                                    icon={<UploadOutlined />}
+                                    onClick={() => setUploadImageVisible(true)}
+                                >
                                     Upload
                                 </Button>
                             </div>
                         </div>
                     </Form.Item>
+
 
                     <Form.Item
                         name="currentStatus"
