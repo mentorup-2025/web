@@ -6,6 +6,7 @@ export interface Mentor {
     years_of_experience_recorded_date: string;  // ISO date when experience was recorded
     services: Record<string, number>; // Map of service name to price
     created_at: string;
+    avg_rating?: number;             // Average rating from reviews (0.00 to 5.00)
 }
 
 export interface UpsertMentorInput {

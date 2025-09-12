@@ -20,7 +20,7 @@ export async function upsertMentor(userId: string, input: UpsertMentorInput): Pr
     try {
         const { data: existing } = await getSupabaseClient()
             .from('mentors')
-            .select('*')
+            .select()
             .eq('user_id', userId)
             .single();
 

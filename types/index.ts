@@ -27,7 +27,8 @@ export interface Mentor {
     };
     user_id: string;
     created_at: string;
-    default_ranking: number
+    default_ranking: number;
+    avg_rating?: number;             // Average rating from reviews (0.00 to 5.00)
   };
 }
 
