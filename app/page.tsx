@@ -650,12 +650,7 @@ export default function Home() {
             className={`flex flex-col justify-center items-center flex-1 text-center z-10`}
           >
             
-            <h2 className="text-black text-2xl md:text-4xl font-bold">
-              {t("A Marketplace for Career Insights")}
-            </h2>
-            <h2 className="text-black text-2xl md:text-4xl font-bold mb-4">
-              {t("& Mentorship in STEM.")}
-            </h2>
+           
 
             {/* ✅ New typing effect block */}
             <div className="mt-6">
