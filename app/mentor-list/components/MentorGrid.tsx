@@ -1,6 +1,7 @@
 'use client';
 import { Card, Tag, Button, Empty } from 'antd';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { UserOutlined, IdcardOutlined, AppstoreOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import styles from '../search.module.css';
 import { useEffect, useState } from 'react';
@@ -40,6 +41,7 @@ const getMentorPrice = (u: Mentor): number => {
 
 export default function MentorGrid({ filters, mentors, loading }: MentorGridProps) {
     const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
+    const router = useRouter();
 
     useEffect(() => {
         let filtered = mentors.filter(u => {
@@ -115,6 +117,10 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
         setFilteredMentors(filtered);
     }, [mentors, filters]);
 
+    const goProfile = (id: string | number) => {
+        router.push(`/mentor/${id}`);
+    };
+
     if (loading) return <div>Loading...</div>;
 
     if (filteredMentors.length === 0) {
@@ -155,6 +161,14 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                                 </div>
                             )
                         }
+                        hoverable
+                        onClick={() => goProfile(user.user_id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') goProfile(user.user_id);
+                        }}
+                        style={{ cursor: 'pointer' }}
                     >
                         <div className={styles.mentorInfo}>
                             <h3 className={styles.name}>{user.username}</h3>
@@ -186,8 +200,14 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                             <div className={styles.mentorPrice}>
                                 {hourly != null ? `$${hourly}/hr` : 'Free'}
                             </div>
-                            <Link href={`/mentor/${user.user_id}`}>
-                                <Button type="primary" size="middle" className={styles.scheduleButton}>
+                            {/* 阻止冒泡，避免触发 Card 的 onClick */}
+                            <Link href={`/mentor/${user.user_id}`} onClick={(e) => e.stopPropagation()}>
+                                <Button
+                                    type="primary"
+                                    size="middle"
+                                    className={styles.scheduleButton}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
                                     Schedule
                                 </Button>
                             </Link>

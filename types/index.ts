@@ -43,4 +43,6 @@ export interface SearchFiltersType {
   serviceTypes?: string[];
   company?: string[];
   sort?: SortOption;
+  availableAsapWithin7Days?: boolean;
+  offersFreeCoffeeChat?: boolean;
 }

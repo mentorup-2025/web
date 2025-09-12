@@ -1,6 +1,6 @@
 'use client';
 
-import { Layout, Collapse, Checkbox, Slider } from 'antd';
+import { Layout, Collapse, Checkbox, Slider, Divider } from 'antd';
 import {
     UserOutlined,
     AppstoreOutlined,
@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons';
 import styles from '../search.module.css';
 import type { SearchFiltersType } from '../../../types';
+import React from 'react';
 
 const { Sider } = Layout;
 const { Panel } = Collapse;
@@ -25,6 +26,8 @@ type SearchFiltersProps = {
     minYoe: number;
     maxYoe: number;
 };
+
+const FREE_COFFEE_LABEL = 'Free Coffee Chat (15 Mins)';
 
 export default function SearchFilters({
                                           value,
@@ -50,8 +53,45 @@ export default function SearchFilters({
         </div>
     );
 
+    /** 顶部快捷筛选：Free Coffee Chat 同步到 serviceTypes */
+    const onToggleFreeCoffee = (checked: boolean) => {
+        const cur = new Set<string>(value.serviceTypes ?? []);
+        if (checked) cur.add(FREE_COFFEE_LABEL);
+        else cur.delete(FREE_COFFEE_LABEL);
+        set({
+            serviceTypes: Array.from(cur),
+            offersFreeCoffeeChat: checked,
+        });
+    };
+
+    const isCoffeeChecked =
+        value.offersFreeCoffeeChat ?? (value.serviceTypes ?? []).includes(FREE_COFFEE_LABEL);
+
     return (
         <Sider width={280} className={styles.sider}>
+            {/* 顶部两个快捷 Checkboxes —— 与下方面板相同的结构与样式 */}
+            <div className={styles.checkboxGroupCol} style={{ padding: '12px 16px 4px' }}>
+                <label className={styles.filterItem}>
+                    <Checkbox
+                        className={styles.filterCheckbox}
+                        checked={Boolean(value.availableAsapWithin7Days)}
+                        onChange={(e) => set({ availableAsapWithin7Days: e.target.checked })}
+                    />
+                    <span className={styles.filterLabel}>Available ASAP (next 7 days)</span>
+                </label>
+
+                <label className={styles.filterItem}>
+                    <Checkbox
+                        className={styles.filterCheckbox}
+                        checked={isCoffeeChecked}
+                        onChange={(e) => onToggleFreeCoffee(e.target.checked)}
+                    />
+                    <span className={styles.filterLabel}>Offers Free Coffee Chat</span>
+                </label>
+            </div>
+
+            <Divider style={{ margin: '8px 0' }} />
+
             <Collapse
                 defaultActiveKey={['jobTitle', 'industry', 'serviceType']}
                 ghost
