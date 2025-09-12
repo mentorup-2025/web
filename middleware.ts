@@ -21,6 +21,8 @@ export default process.env.ENABLE_AUTH === 'true'
       if (!isPublicRoute(req)) {
         await auth.protect()
       }
+    }, {
+      authorizedParties: ['https://www.mentorup.info', 'https://mentorup.info'],
     })
   : dummyMiddleware;
 
