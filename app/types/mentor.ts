@@ -16,6 +16,7 @@ export interface UpsertMentorInput {
     years_of_experience_recorded_date: string;
     introduction: string;
     services: Record<string, number>; // e.g. { "consultation": 100, "resume_review": 50 }
+    avg_rating?: number;             // Average rating from reviews (0.00 to 5.00)
 }
 
 // Example of services:

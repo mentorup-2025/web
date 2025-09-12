@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { respOk, respErr } from '@/lib/resp';
-import { createReview } from '@/lib/reviews';
+import { createReview, listReviewsByReviewee } from '@/lib/reviews';
+import { updateMentor } from '@/lib/mentor';
 import { CreateReviewInput } from '@/types/reviews';
 
 export async function POST(request: NextRequest) {
@@ -50,6 +51,30 @@ export async function POST(request: NextRequest) {
             reviewer: userId,
             rating: ratingInt,
         });
+
+        // Calculate and update mentor's average rating
+        try {
+            const reviews = await listReviewsByReviewee(reviewee);
+            const ratingsWithValues = reviews
+                .map(r => r.rating)
+                .filter((rating): rating is number => rating !== null && rating !== undefined);
+            
+            if (ratingsWithValues.length > 0) {
+                const avgRating = ratingsWithValues.reduce((sum, rating) => sum + rating, 0) / ratingsWithValues.length;
+                const roundedAvgRating = Math.round(avgRating * 100) / 100; // Round to 2 decimal places
+                
+                await updateMentor(reviewee, { avg_rating: roundedAvgRating });
+                
+                console.log('✅ Mentor avg_rating updated:', {
+                    reviewee,
+                    avgRating: roundedAvgRating,
+                    totalReviews: ratingsWithValues.length
+                });
+            }
+        } catch (avgRatingError) {
+            console.error('⚠️ Failed to update mentor avg_rating (review still created):', avgRatingError);
+            // Don't fail the whole request if avg_rating update fails
+        }
 
         return respOk();
     } catch (error) {
