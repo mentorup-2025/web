@@ -8,7 +8,14 @@ export async function GET() {
         // Filter to only users who have mentor profiles
         const mentors = users.filter(user => user.mentor !== null);
 
-        return respJson(200, 'Mentors retrieved successfully', mentors);
+        const response = respJson(200, 'Mentors retrieved successfully', mentors);
+        
+        // Add CORS headers to handle server-side fetch from same origin
+        response.headers.set('Access-Control-Allow-Origin', '*');
+        response.headers.set('Access-Control-Allow-Methods', 'GET');
+        response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+        
+        return response;
 
     } catch (error) {
         console.error('Error fetching mentors:', error);

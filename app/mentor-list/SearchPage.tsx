@@ -5,10 +5,14 @@ import ClientSearchPage from "./ClientSearchPage";
 const { Content } = Layout;
 
 export default async function SearchPage() {
-  // Server-side data fetching with relative path to avoid CORS issues
-  const res = await fetch('/api/mentor/list', {
+  // Server-side data fetching - use absolute URL for server-side fetch
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const res = await fetch(`${baseUrl}/api/mentor/list`, {
     cache: 'no-store',
-    next: { tags: ['mentorlist'] }
+    next: { tags: ['mentorlist'] },
+    headers: {
+      'Content-Type': 'application/json',
+    }
   });
   const data = await res.json();
   const mentors: Mentor[] = data.data || [];
