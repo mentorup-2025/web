@@ -467,6 +467,8 @@ export default function MentorDetailsPage() {
               setIsBookingModalVisible(false);
               setStep(1);
             }}
+            zIndex={11000}
+            getContainer={() => document.body}
         >
           {step === 1 && selectedSlot && (
               <div>
@@ -799,59 +801,41 @@ export default function MentorDetailsPage() {
 
         </Modal>
 
-        {/*<Modal*/}
-        {/*    open={isSuccessModalVisible}*/}
-        {/*    footer={null}*/}
-        {/*    onCancel={() => setIsSuccessModalVisible(false)}*/}
-        {/*>*/}
-        {/*  <Title level={4}>Session Scheduled - Pending Mentor Confirmation</Title>*/}
-        {/*  <p>Check your email for session details.</p>*/}
-        {/*  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>*/}
-        {/*    <Button onClick={() => setIsSuccessModalVisible(false)}>Stay On This Page</Button>*/}
-        {/*    <Button*/}
-        {/*        type="primary"*/}
-        {/*        onClick={() => window.location.href = `/mentee-profile/${user?.id}#sessions`}*/}
-        {/*    >*/}
-        {/*      View All My Booked Sessions*/}
-        {/*    </Button>*/}
-        {/*  </div>*/}
-        {/*</Modal>*/}
+        {/* Success (after Stripe or free booking) */}
+        <Modal
+          open={isSuccessModalVisible}
+          footer={null}
+          onCancel={() => setIsSuccessModalVisible(false)}
+          width={560}
+          getContainer={() => document.body}
+          zIndex={11000}
+        >
+          <div style={{ padding: '8px 4px' }}>
+            <Title level={4} style={{ marginBottom: 12 }}>
+              Request Sent to Mentor
+            </Title>
 
-          {/* Success (after Stripe or free booking) */}
-          <Modal
-              open={isSuccessModalVisible}
-              footer={null}
-              onCancel={() => setIsSuccessModalVisible(false)}
-              width={560}
-              getContainer={() => document.body}
-              zIndex={11000}
-          >
-              <div style={{ padding: '8px 4px' }}>
-                  <Title level={4} style={{ marginBottom: 12 }}>
-                      Request Sent to Mentor
-                  </Title>
+            <p style={{ marginBottom: 8 }}>
+              Thank you for scheduling your session!
+            </p>
 
-                  <p style={{ marginBottom: 8 }}>
-                      Thank you for scheduling your session!
-                  </p>
+            <p style={{ marginBottom: 0 }}>
+              Your request has been sent to the mentor. <strong>You’ll receive the meeting link by email once the mentor confirms.</strong>
+            </p>
 
-                  <p style={{ marginBottom: 0 }}>
-                      Your request has been sent to the mentor. <strong>You’ll receive the meeting link by email once the mentor confirms.</strong>
-                  </p>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
-                      <Button onClick={() => setIsSuccessModalVisible(false)}>
-                          Stay On This Page
-                      </Button>
-                      <Button
-                          type="primary"
-                          onClick={() => router.push(`/mentee-profile/${user?.id}#sessions`)}
-                      >
-                          View All My Booked Sessions
-                      </Button>
-                  </div>
-              </div>
-          </Modal>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
+              <Button onClick={() => setIsSuccessModalVisible(false)}>
+                Stay On This Page
+              </Button>
+              <Button
+                type="primary"
+                onClick={() => router.push(`/mentee-profile/${user?.id}#sessions`)}
+              >
+                View All My Booked Sessions
+              </Button>
+            </div>
+          </div>
+        </Modal>
 
         <Modal
             open={isWeChatModalVisible}
@@ -908,6 +892,8 @@ export default function MentorDetailsPage() {
             open={isPaymentFailedModalVisible}
             footer={null}
             onCancel={() => setIsPaymentFailedModalVisible(false)}
+            getContainer={() => document.body}
+            zIndex={11000}
         >
           <Title level={4}>Payment Failed</Title>
           <p>Please finish your payment to continue.</p>
