@@ -2,7 +2,13 @@
 import { Card, Tag, Button, Empty } from 'antd';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { UserOutlined, IdcardOutlined, AppstoreOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import {
+    UserOutlined,
+    IdcardOutlined,
+    AppstoreOutlined,
+    ClockCircleOutlined,
+    StarFilled,
+} from '@ant-design/icons';
 import styles from '../search.module.css';
 import { useEffect, useState } from 'react';
 import { Mentor, SearchFiltersType } from '../../../types';
@@ -21,8 +27,8 @@ function extractServiceEntries(services?: Record<string, any> | null) {
         if (typeof v === 'number') {
             return { type: key, price: Number(v) };
         }
-        const t = typeof v?.type === 'string' ? v.type : key;
-        const p = Number(v?.price);
+        const t = typeof (v as any)?.type === 'string' ? (v as any).type : key;
+        const p = Number((v as any)?.price);
         return { type: t, price: Number.isFinite(p) ? p : NaN };
     });
     return list.filter(e => Number.isFinite(e.price));
@@ -37,6 +43,19 @@ const getMentorPrice = (u: Mentor): number => {
     const entries = extractServiceEntries(m?.services);
     const firstPaid = entries.find(e => !isFreeCoffeeChat((e.type ?? '') as string));
     return firstPaid ? firstPaid.price : 0;
+};
+
+/** 读取评论数量（尽量兼容不同字段名） */
+const getReviewCount = (obj: any): number | null => {
+    const cand = [
+        obj?.review_count,
+        obj?.reviews_count,
+        obj?.rating_count,
+        obj?.total_reviews,
+        obj?.ratings_count,
+    ];
+    const n = cand.find(v => Number.isFinite(Number(v)));
+    return n != null ? Number(n) : null;
 };
 
 export default function MentorGrid({ filters, mentors, loading }: MentorGridProps) {
@@ -56,8 +75,9 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                 if (!inds.some(i => filters.industries!.includes(i))) return false;
             }
 
-            if (filters.company?.length && !filters.company.includes(m?.company ?? '')) {
-                return false;
+            if (filters.company?.length) {
+                const companies = Array.isArray(filters.company) ? filters.company : [filters.company];
+                if (!companies.includes(m?.company ?? '')) return false;
             }
 
             const yoe = Number(m?.years_of_experience ?? 0);
@@ -141,6 +161,13 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                 const firstPaid = entries.find(e => !isFreeCoffeeChat((e.type ?? '') as string));
                 const hourly = firstPaid ? netToGross(firstPaid.price) : null;
 
+                // ★ 评分与评论数（来自 mentors 表）
+                const avgRatingRaw = m?.avg_rating ?? (user as any)?.avg_rating;
+                const avgRating = Number.isFinite(Number(avgRatingRaw)) ? Number(avgRatingRaw) : null;
+
+                // ★ 评论条数（尽量兼容不同字段名；若均无，则不显示括号）
+                const reviewCount = getReviewCount(m) ?? getReviewCount(user as any);
+
                 return (
                     <Card
                         key={user.user_id}
@@ -171,7 +198,22 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                         style={{ cursor: 'pointer' }}
                     >
                         <div className={styles.mentorInfo}>
-                            <h3 className={styles.name}>{user.username}</h3>
+                            <h3 className={styles.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                                {user.username}
+
+                                {/* ★ 姓名右侧：蓝色星标 + 平均分 + (条数) */}
+                                {avgRating != null && (
+                                    <span
+                                        className={styles.inlineRating}
+                                        aria-label={`Average rating ${avgRating}${reviewCount != null ? ` from ${reviewCount} reviews` : ''}`}
+                                        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 600, color: '#1677ff' }}
+                                    >
+                    <StarFilled style={{ color: '#1677ff' }} />
+                    <span>{avgRating.toFixed(1)}</span>
+                                        {reviewCount != null && <span style={{ fontWeight: 400 }}>({reviewCount})</span>}
+                  </span>
+                                )}
+                            </h3>
 
                             <ul className={styles.metaList}>
                                 <li className={styles.metaItem}>

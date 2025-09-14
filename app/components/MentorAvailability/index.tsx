@@ -83,6 +83,11 @@ export default function MentorAvailability({
     const [heldSlots, setHeldSlots] = useState<Set<string>>(new Set());
     const [userTimezone, setUserTimezone] = useState('');
 
+    // ✅ 新增：只有 mentor 提供 Free Coffee Chat 且用户未使用时才显示 Banner
+    const hasFreeCoffee = Array.isArray(services) &&
+        services.some((s) => typeof s?.type === 'string' && /free coffee chat/i.test(s.type));
+    const showFreeBanner = hasFreeCoffee && coffeeChatCount === 0;
+
     useEffect(() => {
         const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
         setUserTimezone(tz);
@@ -248,7 +253,7 @@ export default function MentorAvailability({
             return d.isSameOrAfter(today, 'day') && d.isBetween(monthStart, monthEnd, 'day', '[]');
         });
 
-        return filtered; // 这里返回所有命中的日期（不再 slice(0,4)）
+        return filtered; // 这里返回所有命中的日期
     })();
 
     // 移动端默认选第一天
@@ -281,7 +286,7 @@ export default function MentorAvailability({
 
     // —————————— 渲染分支 ——————————
 
-    // 移动端 UI（与示例图一致）
+    // 移动端 UI
     if (isMobile) {
         return (
             <Card className={`${styles.availabilityCard} ${styles.mobileCard}`}>
@@ -327,7 +332,7 @@ export default function MentorAvailability({
                     </div>
                 </div>
 
-                {/* 日期卡片（Today / Tomorrow / …） */}
+                {/* 日期卡片 */}
                 <div className={styles.mobileDayScroller}>
                     {mobileDayList.length ? (
                         mobileDayList.map((iso) => {
@@ -355,8 +360,8 @@ export default function MentorAvailability({
                 {/* Session Time 标题 */}
                 <div className={styles.sectionTitle}>Session Time</div>
 
-                {/* 免费横幅（首次） */}
-                {coffeeChatCount === 0 && (
+                {/* ✅ 仅当 mentor 有 Free Coffee 且用户未用过时显示 */}
+                {showFreeBanner && (
                     <div className={styles.banner}>
                         <span className={styles.bannerIcon}>📣</span>
                         <div>
@@ -368,7 +373,6 @@ export default function MentorAvailability({
                     </div>
                 )}
 
-                {/* 时段 pills */}
                 {/* 时段 pills（横向滑动） */}
                 <div className={styles.slotScroller}>
                     {selectedDate &&
@@ -417,7 +421,7 @@ export default function MentorAvailability({
         );
     }
 
-    // 桌面端 UI（保持原样）
+    // 桌面端 UI
     return (
         <Card className={styles.availabilityCard}>
             <Calendar
@@ -433,10 +437,11 @@ export default function MentorAvailability({
             {selectedDate && (
                 <div className={styles.timeSlots}>
                     <Text strong className={styles.timeSlotsTitle}>
-                        Available Time Slots on {selectedDate.format('MMMM D, YYYY')}
+                        Available Time Slots on {selectedDate.format('MMMM D, 2024')}
                     </Text>
 
-                    {coffeeChatCount === 0 && (
+                    {/* ✅ 仅当 mentor 有 Free Coffee 且用户未用过时显示 */}
+                    {showFreeBanner && (
                         <div
                             style={{
                                 backgroundColor: '#f9f9ff',
