@@ -25,6 +25,12 @@ import styles from './signupProcess.module.css';
 const { Step } = Steps;
 const { Text } = Typography;
 
+// Option 1: force dynamic HTML for this route
+export const dynamic = 'force-dynamic';
+
+// Option 2: disable static revalidation
+export const revalidate = 0;
+
 interface MentorSignupProps {
     userId: string;
 }
@@ -198,6 +204,17 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                     <Form.Item
                         name="avatar"
                         label="Please upload your profile picture?"
+                        required
+                        rules={[
+                            {
+                                validator: () => {
+                                    if (!avatarUploaded) {
+                                        return Promise.reject(new Error('Please upload your profile picture!'));
+                                    }
+                                    return Promise.resolve();
+                                }
+                            }
+                        ]}
                         style={{ marginBottom: 8 }}
                     >
                         <div
@@ -512,12 +529,6 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
 
     const next = async () => {
         try {
-            // 检查是否已上传头像（第一步时）
-            if (current === 0 && !avatarUploaded) {
-                notification.error({ message: 'Please upload your profile picture!' });
-                return;
-            }
-
             const values = await form.validateFields();
             const updated = { ...formData, ...values };
             setFormData(updated);
