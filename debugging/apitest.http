@@ -700,4 +700,27 @@ Content-Type: application/json
     "end_time": "2025-03-21T10:30:00Z"
 }
 
+### Available Mentors API Tests
+
+### Test Get Available Mentors in Next 7 Days - Local
+GET {{baseUri}}/api/availability/free_soon
+Content-Type: application/json
+
+### Test Get Available Mentors in Next 7 Days - Production
+GET https://www.mentorup.info/api/availability/free_soon
+Content-Type: application/json
+
+### Expected Response Format:
+# {
+#   "success": true,
+#   "data": [
+#     "user_30KIxrkHcXshwpAbVLQ6YfzZTMU",
+#     "user_2bKLmNoPqRsTuVwXyZ1234567",
+#     "93137255-d7ac-4219-90d9-a886ae987732"
+#   ]
+# }
+
+### Test Available Mentors - Error Handling
+# Should return empty array if no mentors available
+GET {{baseUri}}/api/availability/free_soon
 
