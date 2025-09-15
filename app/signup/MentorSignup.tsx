@@ -145,6 +145,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
 
             setAvatarUploaded(true);
             form.setFieldsValue({ avatar: 'uploaded' }); // Update form field to satisfy validation
+            console.log('🔍 DEBUG: Upload success - avatarUploaded set to true, form field set to:', form.getFieldValue('avatar'));
             notification.success({ message: 'Profile image updated successfully' });
             setUploadImageVisible(false);
         } else {
@@ -198,13 +199,8 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                     {/* ---------- Avatar section (required) ---------- */}
                     <Form.Item
                         name="avatar"
-                        label={
-                            <span>
-                                Profile Picture <span style={{ color: 'red' }}>*</span>
-                                {avatarUploaded && <span style={{ color: 'green', marginLeft: 8 }}>✓ Uploaded</span>}
-                            </span>
-                        }
-                        rules={[{ required: true, message: 'Please upload your profile picture!' }]}
+                        label="Please upload your profile picture"
+                        style={{ marginBottom: 8 }}
                     >
                         <Input type="hidden" />
                         <div
@@ -524,15 +520,23 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
         try {
             // Check if user has uploaded OR already has a profile image
             if (current === 0) {
+                console.log('🔍 DEBUG Next button clicked:');
+                console.log('- avatarUploaded:', avatarUploaded);
+                console.log('- avatarPreview:', avatarPreview);
+                console.log('- form avatar value:', form.getFieldValue('avatar'));
+                
                 const hasValidAvatar = avatarUploaded || (avatarPreview && avatarPreview.startsWith('http'));
+                console.log('- hasValidAvatar:', hasValidAvatar);
                 
                 if (!hasValidAvatar) {
+                    console.log('🚫 DEBUG: Manual check failed');
                     notification.error({ 
                         message: 'Profile picture required!',
                         description: 'Please upload your profile picture to continue.'
                     });
                     return;
                 }
+                console.log('✅ DEBUG: Manual check passed');
             }
 
             const values = await form.validateFields();
