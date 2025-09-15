@@ -144,7 +144,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
             else setAvatarPreview(URL.createObjectURL(file));
 
             setAvatarUploaded(true);
-            form.setFieldsValue({ avatar: true }); // Update form field to satisfy validation
+            form.setFieldsValue({ avatar: 'uploaded' }); // Update form field to satisfy validation
             notification.success({ message: 'Profile image updated successfully' });
             setUploadImageVisible(false);
         } else {
