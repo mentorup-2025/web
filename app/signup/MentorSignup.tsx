@@ -206,6 +206,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                         }
                         rules={[{ required: true, message: 'Please upload your profile picture!' }]}
                     >
+                        <Input type="hidden" />
                         <div
                             style={{
                                 display: 'flex',
