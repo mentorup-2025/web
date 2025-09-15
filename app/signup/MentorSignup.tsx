@@ -194,9 +194,6 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                         <Input placeholder="Enter your display name" />
                     </Form.Item>
 
-                    {/* ---------- Avatar section (required) ---------- */}
-
-
                     <Form.Item
                         name="currentStatus"
                         label="Which of the following best describes your current role?"
@@ -484,7 +481,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
         try {
             // 检查是否已上传头像（第一步时）
             if (current === 0 && !avatarUploaded) {
-                notification.error({ message: 'Please upload your profile picture!' });
+                notification.error({ message: 'Please upload your profile picture' });
                 return;
             }
 
