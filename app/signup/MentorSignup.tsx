@@ -197,7 +197,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                     {/* ---------- Avatar section (required) ---------- */}
                     <Form.Item
                         name="avatar"
-                        label="Please upload your profile picture"
+                        label="Please upload your profile picture?"
                         style={{ marginBottom: 8 }}
                     >
                         <div
