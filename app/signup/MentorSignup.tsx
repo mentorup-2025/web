@@ -144,6 +144,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
             else setAvatarPreview(URL.createObjectURL(file));
 
             setAvatarUploaded(true);
+            form.setFieldsValue({ avatar: true }); // Update form field to satisfy validation
             notification.success({ message: 'Profile image updated successfully' });
             setUploadImageVisible(false);
         } else {
@@ -197,7 +198,12 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                     {/* ---------- Avatar section (required) ---------- */}
                     <Form.Item
                         name="avatar"
-                        label="Please upload your profile picture"
+                        label={
+                            <span>
+                                Profile Picture <span style={{ color: 'red' }}>*</span>
+                                {avatarUploaded && <span style={{ color: 'green', marginLeft: 8 }}>✓ Uploaded</span>}
+                            </span>
+                        }
                         rules={[{ required: true, message: 'Please upload your profile picture!' }]}
                     >
                         <div
@@ -515,10 +521,17 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
 
     const next = async () => {
         try {
-            // 检查是否已上传头像（第一步时）
-            if (current === 0 && !avatarUploaded) {
-                notification.error({ message: 'Please upload your profile picture!' });
-                return;
+            // Check if user has uploaded OR already has a profile image
+            if (current === 0) {
+                const hasValidAvatar = avatarUploaded || (avatarPreview && avatarPreview.startsWith('http'));
+                
+                if (!hasValidAvatar) {
+                    notification.error({ 
+                        message: 'Profile picture required!',
+                        description: 'Please upload your profile picture to continue.'
+                    });
+                    return;
+                }
             }
 
             const values = await form.validateFields();
