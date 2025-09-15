@@ -194,6 +194,39 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                         <Input placeholder="Enter your display name" />
                     </Form.Item>
 
+                    {/* ---------- Avatar section (required) ---------- */}
+                    <Form.Item
+                        name="avatar"
+                        label="Please upload your profile picture"
+                        style={{ marginBottom: 8 }}
+                    >
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 16,
+                                padding: '8px 0',
+                            }}
+                        >
+                            <Avatar
+                                size={72}
+                                src={avatarPreview}
+                                icon={<UserOutlined />}
+                                style={{ flex: '0 0 auto' }}
+                            />
+                            <div style={{ lineHeight: 1.4, color: '#8c8c8c' }}>
+                                <div>Recommended size: 240 × 240 px</div>
+                                <div>JPG, PNG, GIF, Max size: 3MB</div>
+                            </div>
+                            <div style={{ marginLeft: 'auto' }}>
+                            <Button icon={<UploadOutlined />} onClick={() => setUploadImageVisible(true)}>
+                                    Upload
+                                </Button>
+                            </div>
+                        </div>
+                    </Form.Item>
+
+
                     <Form.Item
                         name="currentStatus"
                         label="Which of the following best describes your current role?"
@@ -481,7 +514,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
         try {
             // 检查是否已上传头像（第一步时）
             if (current === 0 && !avatarUploaded) {
-                notification.error({ message: 'Please upload your profile picture' });
+                notification.error({ message: 'Please upload your profile picture!' });
                 return;
             }
 
