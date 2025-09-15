@@ -144,8 +144,6 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
             else setAvatarPreview(URL.createObjectURL(file));
 
             setAvatarUploaded(true);
-            form.setFieldsValue({ avatar: 'uploaded' }); // Update form field to satisfy validation
-            console.log('🔍 DEBUG: Upload success - avatarUploaded set to true, form field set to:', form.getFieldValue('avatar'));
             notification.success({ message: 'Profile image updated successfully' });
             setUploadImageVisible(false);
         } else {
@@ -202,7 +200,6 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                         label="Please upload your profile picture"
                         style={{ marginBottom: 8 }}
                     >
-                        <Input type="hidden" />
                         <div
                             style={{
                                 display: 'flex',
@@ -222,10 +219,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                                 <div>JPG, PNG, GIF, Max size: 3MB</div>
                             </div>
                             <div style={{ marginLeft: 'auto' }}>
-                                <Button
-                                    icon={<UploadOutlined />}
-                                    onClick={() => setUploadImageVisible(true)}
-                                >
+                            <Button icon={<UploadOutlined />} onClick={() => setUploadImageVisible(true)}>
                                     Upload
                                 </Button>
                             </div>
@@ -518,25 +512,10 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
 
     const next = async () => {
         try {
-            // Check if user has uploaded OR already has a profile image
-            if (current === 0) {
-                console.log('🔍 DEBUG Next button clicked:');
-                console.log('- avatarUploaded:', avatarUploaded);
-                console.log('- avatarPreview:', avatarPreview);
-                console.log('- form avatar value:', form.getFieldValue('avatar'));
-                
-                const hasValidAvatar = avatarUploaded || (avatarPreview && avatarPreview.startsWith('http'));
-                console.log('- hasValidAvatar:', hasValidAvatar);
-                
-                if (!hasValidAvatar) {
-                    console.log('🚫 DEBUG: Manual check failed');
-                    notification.error({ 
-                        message: 'Profile picture required!',
-                        description: 'Please upload your profile picture to continue.'
-                    });
-                    return;
-                }
-                console.log('✅ DEBUG: Manual check passed');
+            // 检查是否已上传头像（第一步时）
+            if (current === 0 && !avatarUploaded) {
+                notification.error({ message: 'Please upload your profile picture!' });
+                return;
             }
 
             const values = await form.validateFields();
