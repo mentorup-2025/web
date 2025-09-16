@@ -9,7 +9,6 @@ import {
     Select,
     message,
     Radio,
-    Grid,
 } from 'antd';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
@@ -27,7 +26,6 @@ dayjs.extend(isSameOrAfter);
 dayjs.extend(isBetween);
 
 const { Text, Title } = Typography;
-const { useBreakpoint } = Grid;
 
 interface TimeSlot { slot_time: string; }
 interface AvailabilityResponse {
@@ -73,9 +71,6 @@ export default function MentorAvailability({
                                                onBook,
                                                coffeeChatCount,
                                            }: MentorAvailabilityProps) {
-    const screens = useBreakpoint();
-    const isMobile = !screens.md; // md 以下视为移动端
-
     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
     const [availabilityData, setAvailabilityData] = useState<Map<string, SlotLabel[]>>(new Map());
@@ -83,7 +78,7 @@ export default function MentorAvailability({
     const [heldSlots, setHeldSlots] = useState<Set<string>>(new Set());
     const [userTimezone, setUserTimezone] = useState('');
 
-    // ✅ 新增：只有 mentor 提供 Free Coffee Chat 且用户未使用时才显示 Banner
+    // ✅ 只有 mentor 提供 Free Coffee Chat 且用户未使用时才显示 Banner
     const hasFreeCoffee = Array.isArray(services) &&
         services.some((s) => typeof s?.type === 'string' && /free coffee chat/i.test(s.type));
     const showFreeBanner = hasFreeCoffee && coffeeChatCount === 0;
@@ -153,7 +148,7 @@ export default function MentorAvailability({
 
                                 // 桌面端/业务计算用（原始）
                                 const raw = `${startTime.format('h:mm A')} - ${nextHour.format('h:mm A')}`;
-                                // 手机端展示用（精简）
+                                // 展示用（精简）
                                 const formatted = formatSlot(startTime, nextHour);
 
                                 if (!availabilityMap.has(dateKey)) availabilityMap.set(dateKey, []);
@@ -230,41 +225,6 @@ export default function MentorAvailability({
         );
     };
 
-    // —— 移动端：生成“本月所有可预约日期”的横向列表 ——
-    // 规则：只显示 availabilityData 中本月且今天及以后有档期的日期
-    const getDayLabel = (d: dayjs.Dayjs) => {
-        const today = dayjs().startOf('day');
-        if (d.isSame(today, 'day')) return 'Today';
-        if (d.isSame(today.add(1, 'day'), 'day')) return 'Tomorrow';
-        return d.format('ddd'); // Mon / Tue / ...
-    };
-
-    const mobileDayList = (() => {
-        const monthStart = currentMonth.startOf('month');
-        const monthEnd = currentMonth.endOf('month');
-        const today = dayjs().startOf('day');
-
-        // availabilityData 的 key 是 'YYYY-MM-DD'
-        const keys = Array.from(availabilityData.keys()).sort();
-
-        // 仅取“本月 & 今天及以后”的并排序
-        const filtered = keys.filter((k) => {
-            const d = dayjs(k);
-            return d.isSameOrAfter(today, 'day') && d.isBetween(monthStart, monthEnd, 'day', '[]');
-        });
-
-        return filtered; // 这里返回所有命中的日期
-    })();
-
-    // 移动端默认选第一天
-    useEffect(() => {
-        if (isMobile && !selectedDate && mobileDayList.length) {
-            setSelectedDate(dayjs(mobileDayList[0]));
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isMobile, availabilityData]);
-
-    // 公共：slot 可用判断 + 价格文案
     const isSlotDisabled = (dateISO: string, slotLabel: string) => {
         const [startStr] = slotLabel.split(' - ');
         const start = dayjs(`${dateISO} ${startStr}`);
@@ -284,144 +244,7 @@ export default function MentorAvailability({
         return firstPaidService ? `$${netToGross(firstPaidService.price)}` : 'Free';
     };
 
-    // —————————— 渲染分支 ——————————
-
-    // 移动端 UI
-    if (isMobile) {
-        return (
-            <Card className={`${styles.availabilityCard} ${styles.mobileCard}`}>
-                <Title level={3} style={{ marginBottom: 12 }}>Book a Session with the Mentor</Title>
-
-                {/* 年/月 + 时区展示 */}
-                <div className={styles.mobileHeaderRow}>
-                    <Select
-                        value={(selectedDate || currentMonth).year()}
-                        options={[...Array(3)].map((_, i) => {
-                            const y = dayjs().year() - 1 + i;
-                            return { label: y, value: y };
-                        })}
-                        onChange={(y) => {
-                            const base = (selectedDate || currentMonth).year(y);
-                            setCurrentMonth(base);
-                        }}
-                        className={styles.mobileYMSelect}
-                        getPopupContainer={() => document.body}
-                        dropdownStyle={{ zIndex: 9999 }}
-                        popupClassName={styles.selectPopup}
-                    />
-                    <Select
-                        value={(selectedDate || currentMonth).month()}
-                        options={Array.from({ length: 12 }, (_, i) => ({
-                            label: dayjs().month(i).format('MMMM'),
-                            value: i,
-                        }))}
-                        onChange={(m) => {
-                            const base = (selectedDate || currentMonth).month(m);
-                            setCurrentMonth(base);
-                        }}
-                        className={styles.mobileYMSelect}
-                        getPopupContainer={() => document.body}
-                        dropdownStyle={{ zIndex: 9999 }}
-                        popupClassName={styles.selectPopup}
-                    />
-                    <div className={styles.mobileTZ}>
-                        <span role="img" aria-label="globe">🌐</span>
-                        <span className={styles.mobileTZText}>
-              (GMT{dayjs().format('Z')}) {userTimezone}
-            </span>
-                    </div>
-                </div>
-
-                {/* 日期卡片 */}
-                <div className={styles.mobileDayScroller}>
-                    {mobileDayList.length ? (
-                        mobileDayList.map((iso) => {
-                            const d = dayjs(iso);
-                            const active = selectedDate?.isSame(d, 'day');
-                            return (
-                                <button
-                                    key={iso}
-                                    className={`${styles.dayCard} ${active ? styles.dayCardActive : ''}`}
-                                    onClick={() => {
-                                        setSelectedDate(d);
-                                        setSelectedSlot(null);
-                                    }}
-                                >
-                                    <div className={styles.dayLabel}>{getDayLabel(d)}</div>
-                                    <div className={styles.dayDate}>{d.format('MMM D')}</div>
-                                </button>
-                            );
-                        })
-                    ) : (
-                        <Text type="secondary">No available days yet.</Text>
-                    )}
-                </div>
-
-                {/* Session Time 标题 */}
-                <div className={styles.sectionTitle}>Session Time</div>
-
-                {/* ✅ 仅当 mentor 有 Free Coffee 且用户未用过时显示 */}
-                {showFreeBanner && (
-                    <div className={styles.banner}>
-                        <span className={styles.bannerIcon}>📣</span>
-                        <div>
-                            <div className={styles.bannerStrong}>Your first 15-min coffee chat is on us!</div>
-                            <div className={styles.bannerSub}>
-                                Pick any available slot — your session will take place in the first 15 min.
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* 时段 pills（横向滑动） */}
-                <div className={styles.slotScroller}>
-                    {selectedDate &&
-                        availabilityData.get(selectedDate.format('YYYY-MM-DD'))?.map((slot) => {
-                            const iso = selectedDate.format('YYYY-MM-DD');
-                            const disabled = isSlotDisabled(iso, slot.raw);      // 计算用 raw
-                            const selected = selectedSlot === slot.raw && !disabled;
-                            return (
-                                <button
-                                    key={slot.raw}
-                                    disabled={disabled}
-                                    className={[
-                                        styles.slotPill,
-                                        selected ? styles.slotPillSelected : '',
-                                        disabled ? styles.slotPillDisabled : '',
-                                    ].join(' ')}
-                                    onClick={() => setSelectedSlot(slot.raw)}         // 选中 raw
-                                >
-                                    <div className={styles.slotTime}>{slot.formatted}</div> {/* 展示 formatted */}
-                                    <div className={styles.slotPrice}>{getPriceText()}</div>
-                                </button>
-                            );
-                        })}
-                </div>
-
-                {/* CTA */}
-                <Button
-                    type="primary"
-                    size="large"
-                    className={styles.bookBtn}
-                    disabled={!selectedDate || !selectedSlot}
-                    onClick={() => {
-                        if (!selectedDate || !selectedSlot) return;
-                        const iso = selectedDate.format('YYYY-MM-DD');
-                        if (isSlotDisabled(iso, selectedSlot)) {
-                            message.error('Cannot book this slot.');
-                            return;
-                        }
-                        onSlotSelect({ date: iso, time: selectedSlot });
-                        onBook();
-                    }}
-                >
-                    Book Now
-                </Button>
-            </Card>
-        );
-    }
-
-    // 桌面端 UI
+    // —— 仅桌面端 UI ——
     return (
         <Card className={styles.availabilityCard}>
             <Calendar
@@ -437,7 +260,7 @@ export default function MentorAvailability({
             {selectedDate && (
                 <div className={styles.timeSlots}>
                     <Text strong className={styles.timeSlotsTitle}>
-                        Available Time Slots on {selectedDate.format('MMMM D, 2024')}
+                        Available Time Slots on {selectedDate.format('MMMM D, YYYY')}
                     </Text>
 
                     {/* ✅ 仅当 mentor 有 Free Coffee 且用户未用过时显示 */}
@@ -464,13 +287,14 @@ export default function MentorAvailability({
 
                     {availabilityData.has(selectedDate.format('YYYY-MM-DD')) ? (
                         <>
+                        <div className={styles.slotsScroll}>
                             <Radio.Group
                                 value={selectedSlot}
                                 onChange={(e) => setSelectedSlot(e.target.value)}
                                 className={styles.radioGroup}
                             >
                                 {availabilityData.get(selectedDate.format('YYYY-MM-DD'))!.map((slot, i) => {
-                                    const [startStr, endStr] = slot.raw.split(' - '); // 用 raw 解析
+                                    const [startStr, endStr] = slot.raw.split(' - ');
                                     const start = dayjs(`${selectedDate.format('YYYY-MM-DD')} ${startStr}`);
                                     const end = dayjs(`${selectedDate.format('YYYY-MM-DD')} ${endStr}`);
                                     const durationMinutes = end.diff(start, 'minute');
@@ -491,17 +315,17 @@ export default function MentorAvailability({
                                     const price = firstPaidService ? `$${netToGross(firstPaidService.price)}` : 'Free';
 
                                     const slotKey = `${selectedDate.format('YYYY-MM-DD')}|${slot.raw}`;
-                                    const isDisabled = start.isBefore(dayjs().add(24, 'hour')) || heldSlots.has(slotKey);
+                                    const disabled = start.isBefore(dayjs().add(24, 'hour')) || heldSlots.has(slotKey);
 
                                     return (
                                         <Radio
                                             key={i}
-                                            value={slot.raw}                       // value 用 raw
-                                            disabled={isDisabled}
+                                            value={slot.raw}
+                                            disabled={disabled}
                                             className={styles.timeSlotRadio}
                                         >
                                             <div className={styles.radioContent}>
-                                                <span className={styles.slotText}>{slot.raw}</span> {/* 显示原始格式 */}
+                                                <span className={styles.slotText}>{slot.raw}</span>
                                                 <span className={styles.slotDetails}>({durationText}) {price}</span>
                                             </div>
                                         </Radio>
@@ -533,6 +357,7 @@ export default function MentorAvailability({
                             >
                                 Book Now
                             </Button>
+                        </div>
                         </>
                     ) : (
                         <Text className={styles.noSlotsText}>No available time slots.</Text>

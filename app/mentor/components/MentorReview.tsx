@@ -8,6 +8,7 @@ import {
 import { MessageOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useUser } from '@clerk/nextjs';
+import { Spin } from 'antd';
 
 const { Text, Title } = Typography;
 
@@ -44,7 +45,8 @@ export default function MentorReviews({ mentorId }: { mentorId?: string }) {
 
     const [reviews, setReviews] = useState<Review[]>([]);
     const [displayList, setDisplayList] = useState<DisplayReview[]>([]);
-    const [loadingList, setLoadingList] = useState(false);
+    const [loadingList, setLoadingList] = useState(true);
+    const [hasFetched, setHasFetched] = useState(false);
 
     // 新增：我与该 mentor 的 completed 场次数 & 已写条数
     const [completedCount, setCompletedCount] = useState<number>(0);
@@ -93,18 +95,28 @@ export default function MentorReviews({ mentorId }: { mentorId?: string }) {
     /** 拉取该 mentor 的全部评论 */
     useEffect(() => {
         if (!mentorId) return;
+        setLoadingList(true);
+        setHasFetched(false);
         (async () => {
             try {
-                setLoadingList(true);
+                // setLoadingList(true);
                 const res = await fetch(`/api/reviews/list_by_reviewee?revieweeId=${mentorId}`);
                 const json = await res.json();
                 if (!res.ok) throw new Error(json?.message || 'Failed to load reviews');
                 const list: Review[] = Array.isArray(json?.data) ? json.data : [];
                 setReviews(list);
+                setDisplayList(
+                    list.map(r => ({
+                        ...r,
+                        reviewer_username: r.reviewer,
+                        reviewer_avatar: null,
+                    }))
+                );
             } catch (e: any) {
                 message.error(e?.message || 'Failed to load reviews');
             } finally {
                 setLoadingList(false);
+                setHasFetched(true);
             }
         })();
     }, [mentorId]);
@@ -114,10 +126,7 @@ export default function MentorReviews({ mentorId }: { mentorId?: string }) {
         let cancelled = false;
 
         (async () => {
-            if (reviews.length === 0) {
-                setDisplayList([]);
-                return;
-            }
+            if (reviews.length === 0) return;
 
             const idsToFetch = Array.from(
                 new Set(
@@ -159,8 +168,8 @@ export default function MentorReviews({ mentorId }: { mentorId?: string }) {
             });
 
             if (!cancelled) {
-                setDisplayList(
-                    reviews.map(r => {
+                setDisplayList(prev =>
+                    prev.map(r => {
                         if (looksLikeUserId(r.reviewer)) {
                             const hit = mapById.get(r.reviewer);
                             return {
@@ -169,7 +178,7 @@ export default function MentorReviews({ mentorId }: { mentorId?: string }) {
                                 reviewer_avatar: hit?.profile_url ?? null,
                             };
                         }
-                        return { ...r, reviewer_username: r.reviewer, reviewer_avatar: null };
+                        return r;
                     })
                 );
             }
@@ -276,7 +285,7 @@ export default function MentorReviews({ mentorId }: { mentorId?: string }) {
         }
     };
 
-    const isEmpty = !loadingList && total === 0;
+    const isEmpty = hasFetched && !loadingList && reviews.length === 0;
 
     return (
         <div style={{ width: '100%' }}>
@@ -291,17 +300,20 @@ export default function MentorReviews({ mentorId }: { mentorId?: string }) {
                     flexWrap: 'wrap',
                 }}
             >
-                {!isEmpty ? (
+                {/* 评分区：仅在加载完成且有数据时渲染，避免 0/5 闪烁 */}
+                {!loadingList && reviews.length > 0 ? (
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                         <Text style={{ fontSize: 28, fontWeight: 700 }}>{ratingAvg}</Text>
                         <Text style={{ fontSize: 28 }}>/5</Text>
                         {total >= 5 && (
                             <Text type="secondary" style={{ marginLeft: 8 }}>
-                                ({total} reviews{loadingList ? ', loading…' : ''})
+                                ({total} reviews)
                             </Text>
                         )}
                     </div>
-                ) : <div />}
+                ) : (
+                    <div />
+                )}
 
                 <Space>
                     <Text type="secondary" style={{ fontSize: 13 }}>
@@ -333,81 +345,82 @@ export default function MentorReviews({ mentorId }: { mentorId?: string }) {
                 </Space>
             </div>
 
-            {/* 列表 */}
-            {isEmpty ? (
-                <Card
-                    style={{
-                        borderRadius: 8,
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                    }}
-                    bodyStyle={{ padding: 24, display: 'flex', justifyContent: 'center' }}
-                >
-                    <Space>
-                        <InfoCircleOutlined />
-                        <Text type="secondary">No reviews yet</Text>
-                    </Space>
-                </Card>
-            ) : (
-                <Row gutter={[24, 24]}>
-                    {displayList.map((r) => (
-                        <Col key={r.id} xs={24} md={12}>
-                            <Card
-                                bodyStyle={{ padding: 16 }}
-                                style={{
-                                    borderRadius: 8,
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                                    height: 220,
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                }}
-                            >
-                                {/* 头部：头像 用户名 评分 日期 */}
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        marginBottom: 12,
-                                    }}
-                                >
-                                    <Space>
-                                        <Avatar size={28} src={r.reviewer_avatar ?? undefined} style={{ background: '#eee' }}>
-                                            {!r.reviewer_avatar && (r.reviewer_username?.[0] ?? '?')}
-                                        </Avatar>
-                                        <Text strong>{r.reviewer_username ?? r.reviewer}</Text>
-                                        {typeof r.rating === 'number' && (
-                                            <>
-                                                <Text strong style={{ marginLeft: 4 }}>{r.rating.toFixed(1)}</Text>
-                                                <Text type="secondary">/5</Text>
-                                            </>
-                                        )}
-                                    </Space>
+            {/* 列表：加载时只显示转圈；加载后直接显示空态或内容 */}
+            <div style={{ minHeight: 260 }}>
+                <Spin spinning={loadingList} tip="Loading reviews...">
+                    {isEmpty ? (
+                        <Card
+                            style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+                            bodyStyle={{ padding: 24, display: 'flex', justifyContent: 'center' }}
+                        >
+                            <Space>
+                                <InfoCircleOutlined />
+                                <Text type="secondary">No reviews yet</Text>
+                            </Space>
+                        </Card>
+                    ) : (
+                        <Row gutter={[24, 24]}>
+                            {displayList.map((r) => (
+                                <Col key={r.id} xs={24} md={12}>
+                                    <Card
+                                        bodyStyle={{ padding: 16 }}
+                                        style={{
+                                            borderRadius: 8,
+                                            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                                            height: 220,
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                        }}
+                                    >
+                                        {/* 头部：头像 用户名 评分 日期 */}
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                marginBottom: 12,
+                                            }}
+                                        >
+                                            <Space>
+                                                <Avatar size={28} src={r.reviewer_avatar ?? undefined} style={{ background: '#eee' }}>
+                                                    {!r.reviewer_avatar && (r.reviewer_username?.[0] ?? '?')}
+                                                </Avatar>
+                                                <Text strong>{r.reviewer_username ?? r.reviewer}</Text>
+                                                {typeof r.rating === 'number' && (
+                                                    <>
+                                                        <Text strong style={{ marginLeft: 4 }}>{r.rating.toFixed(1)}</Text>
+                                                        <Text type="secondary">/5</Text>
+                                                    </>
+                                                )}
+                                            </Space>
 
-                                    <Text type="secondary">
-                                        {dayjs(r.creation_time).format('MMM D, YYYY')}
-                                    </Text>
-                                </div>
+                                            <Text type="secondary">
+                                                {dayjs(r.creation_time).format('MMM D, YYYY')}
+                                            </Text>
+                                        </div>
 
-                                {/* 内容（四行截断） */}
-                                <Text
-                                    style={{
-                                        color: 'rgba(0,0,0,0.65)',
-                                        whiteSpace: 'pre-wrap',
-                                        overflow: 'hidden',
-                                        display: '-webkit-box',
-                                        WebkitLineClamp: 4,
-                                        WebkitBoxOrient: 'vertical',
-                                        lineHeight: '1.5em',
-                                        flex: 1,
-                                    }}
-                                >
-                                    {r.content}
-                                </Text>
-                            </Card>
-                        </Col>
-                    ))}
-                </Row>
-            )}
+                                        {/* 内容（四行截断） */}
+                                        <Text
+                                            style={{
+                                                color: 'rgba(0,0,0,0.65)',
+                                                whiteSpace: 'pre-wrap',
+                                                overflow: 'hidden',
+                                                display: '-webkit-box',
+                                                WebkitLineClamp: 4,
+                                                WebkitBoxOrient: 'vertical',
+                                                lineHeight: '1.5em',
+                                                flex: 1,
+                                            }}
+                                        >
+                                            {r.content}
+                                        </Text>
+                                    </Card>
+                                </Col>
+                            ))}
+                        </Row>
+                    )}
+                </Spin>
+            </div>
 
             {/* 写评弹窗 */}
             <Modal

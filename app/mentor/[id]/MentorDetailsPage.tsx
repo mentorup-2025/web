@@ -42,6 +42,9 @@ import { netToGross } from '../../services/priceHelper';
 import { Tabs } from 'antd';
 import MentorReviews from '../components/MentorReview';
 
+import { usePathname } from 'next/navigation';
+import { Grid } from 'antd';
+
 const { Content } = Layout;
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -71,6 +74,38 @@ export default function MentorDetailsPage() {
   const [coffeeChatCount, setCoffeeChatCount] = useState<number>(0);
 
   const mentorIdForReviews = mentor?.user_id;
+
+  const pathname = usePathname();
+  const [activeTab, setActiveTab] = useState<'overview' | 'reviews'>('overview');
+
+  const { useBreakpoint } = Grid;
+  const screens = useBreakpoint();
+  const isMobile = !screens.md;
+  const [isAvailabilityModalOpen, setIsAvailabilityModalOpen] = useState(false);
+    const [showTrialTip, setShowTrialTip] = useState(true);
+
+    // ✅ 只有 mentor 提供 Free Coffee Chat 且用户未使用时才显示 Banner
+    const hasFreeCoffee =
+        Array.isArray(mentor?.services) &&
+        mentor.services.some(
+            (s: any) => typeof s?.type === 'string' && /free coffee chat/i.test(s.type)
+        );
+
+    const showFreeTrialBanner = hasFreeCoffee && coffeeChatCount === 0;
+
+  useEffect(() => {
+      // 初始根据 hash 设定 tab
+      const initial = (window.location.hash || '#overview').replace('#', '') as 'overview' | 'reviews';
+      setActiveTab(initial);
+
+      // 监听 hash 变化（例如外部跳转 /mentor/xxx#reviews）
+      const onHashChange = () => {
+          const key = (window.location.hash || '#overview').replace('#', '') as 'overview' | 'reviews';
+            setActiveTab(key);
+      };
+      window.addEventListener('hashchange', onHashChange);
+      return () => window.removeEventListener('hashchange', onHashChange);
+      }, []);
 
   // 👇 resume file list 渲染逻辑统一处理
   const resumeFileList: UploadFile[] = resume
@@ -368,8 +403,14 @@ export default function MentorDetailsPage() {
                       </div>
                   )}
                 </div>
-                <Tabs
-                    defaultActiveKey="about"
+                  <Tabs
+                      activeKey={activeTab}
+                      onChange={(key) => {
+                          const k = key as 'overview' | 'reviews';
+                          setActiveTab(k);
+                          // 用 replace 避免回退栈过多；不滚动
+                          router.replace(`${pathname}#${k}`, { scroll: false });
+                      }}
                     items={[
                       {
                         key: 'overview',
@@ -430,22 +471,63 @@ export default function MentorDetailsPage() {
 
               </div>
 
-              <div className={styles.rightSection}>
-                <SignedIn>
-                  <Title level={3} className={styles.availabilityHeader}>Mentor's Availability</Title>
-                  <MentorAvailability
-                      mentorId={mentor.user_id}
-                      services={mentor.services || []}
-                      onSlotSelect={(slot) => setSelectedSlot(slot)}
+                <div className={styles.rightSection}>
+                    <SignedIn>
+                        <Title level={3} className={styles.availabilityHeader}>Mentor's Availability</Title>
 
-                      onBook={() => {
-                        setStep(2);
-                        setIsBookingModalVisible(true);
-                      }}
-                      coffeeChatCount={coffeeChatCount}
-                  />
+                        {/* 桌面端：直接展示 */}
+                        {!isMobile && (
+                            <MentorAvailability
+                                mentorId={mentor.user_id}
+                                services={mentor.services || []}
+                                onSlotSelect={(slot) => setSelectedSlot(slot)}
+                                onBook={() => {
+                                    setStep(2);
+                                    setIsBookingModalVisible(true);
+                                }}
+                                coffeeChatCount={coffeeChatCount}
+                            />
+                        )}
 
-                </SignedIn>
+                        {/* 移动端：按钮 + 弹窗 */}
+                        {isMobile && (
+                            <>
+                                <Card>
+                                    <Button
+                                        type="primary"
+                                        block
+                                        onClick={() => setIsAvailabilityModalOpen(true)}
+                                    >
+                                        Check Availability
+                                    </Button>
+                                </Card>
+
+                                <Modal
+                                    title={<div style={{ fontWeight: 600, fontSize: 18 }}>Book Session</div>}  // ✅ 第一行写“Book Session”
+                                    open={isAvailabilityModalOpen}
+                                    footer={null}
+                                    onCancel={() => setIsAvailabilityModalOpen(false)}
+                                    width="100%"
+                                    style={{ top: 16 }}
+                                    bodyStyle={{ paddingTop: 8, paddingBottom: 8 }}
+                                    getContainer={() => document.body}
+                                    zIndex={10900}
+                                >
+                                    <MentorAvailability
+                                        mentorId={mentor.user_id}
+                                        services={mentor.services || []}
+                                        onSlotSelect={(slot) => setSelectedSlot(slot)}
+                                        onBook={() => {
+                                            setIsAvailabilityModalOpen(false); // 选好后先收起弹窗
+                                            setStep(2);
+                                            setIsBookingModalVisible(true);
+                                        }}
+                                        coffeeChatCount={coffeeChatCount}
+                                    />
+                                </Modal>
+                            </>
+                        )}
+                    </SignedIn>
                 <SignedOut>
                   <Card>
                     <Title level={4}>Please sign in to book an appointment</Title>
@@ -467,6 +549,7 @@ export default function MentorDetailsPage() {
               setIsBookingModalVisible(false);
               setStep(1);
             }}
+            zIndex={10900}
         >
           {step === 1 && selectedSlot && (
               <div>
@@ -861,6 +944,7 @@ export default function MentorDetailsPage() {
               setQrScanned(false);
             }}
             width={800}
+            zIndex={10900}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             {/* 左侧：二维码 */}
@@ -908,6 +992,7 @@ export default function MentorDetailsPage() {
             open={isPaymentFailedModalVisible}
             footer={null}
             onCancel={() => setIsPaymentFailedModalVisible(false)}
+            zIndex={10900}
         >
           <Title level={4}>Payment Failed</Title>
           <p>Please finish your payment to continue.</p>
@@ -925,7 +1010,20 @@ export default function MentorDetailsPage() {
             </Button>
           </div>
         </Modal>
-
+          {isMobile && showTrialTip && showFreeTrialBanner && (
+              <div className={styles.trialTipFixed} role="note" aria-live="polite">
+                  <span className={styles.trialTipIcon} aria-hidden>📣</span>
+                  <span className={styles.trialTipText}>Book your free trial session!</span>
+                  <button
+                      type="button"
+                      className={styles.trialTipClose}
+                      aria-label="Dismiss"
+                      onClick={() => setShowTrialTip(false)}
+                  >
+                      ×
+                  </button>
+              </div>
+          )}
       </Layout>
   );
 }

@@ -43,6 +43,7 @@ import type { RescheduleProposal } from '@/types/reschedule_proposal';
 import { User } from '@/types';
 import styles from './MySessionsTab.module.css';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 // ✅ 允许 null，兼容后端返回
 type UserWithMaybeAvatar = User & {
@@ -144,6 +145,8 @@ export default function MySessionsTab() {
     const [feedbackComment, setFeedbackComment] = useState('');
     const [feedbackLoading, setFeedbackLoading] = useState(false);
 
+    const router = useRouter();
+
     type ReviewItem = {
         id: string;
         reviewerId: string;
@@ -168,7 +171,7 @@ export default function MySessionsTab() {
         setReviewsLoading(true);
         try {
             const res = await fetch(
-                `/web/app/api/reviews/list_by_reviewee?revieweeId=${encodeURIComponent(revieweeId)}`
+                `/api/reviews/list_by_reviewee?revieweeId=${encodeURIComponent(revieweeId)}`
             );
             const data = await res.json();
             const list = Array.isArray(data) ? data : data?.data;
@@ -499,6 +502,48 @@ export default function MySessionsTab() {
             window.open(appt.link, '_blank', 'noopener,noreferrer');
         } else {
             alert('No meeting link available yet. Please wait for the session to be confirmed.');
+        }
+    };
+    const submitReview = async () => {
+        if (!feedbackTarget?.revieweeId) {
+            return message.warning('No review target selected.');
+        }
+        if (!feedbackComment.trim()) {
+            return message.warning('Please write a short comment.');
+        }
+        if (feedbackRating == null) {
+            return message.warning('Please select a rating.');
+        }
+
+        try {
+            setFeedbackLoading(true);
+            const res = await fetch('/api/reviews/insert', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    reviewee: feedbackTarget.revieweeId,      // ← 用反馈目标里的 revieweeId
+                    content: feedbackComment.trim(),
+                    rating: feedbackRating,
+                    // reviewer 不要传，让后端从 auth 注入
+                }),
+            });
+            const data = await res.json().catch(() => ({} as any));
+            if (!res.ok) throw new Error(data?.message || 'Submit failed');
+
+            // 关弹窗 + 成功提示
+            setIsFeedbackOpen(false);
+            setIsThanksOpen(true);
+
+            // 清输入
+            setFeedbackComment('');
+            setFeedbackRating(null);
+
+            // 刷新该被评对象的评论列表（如果你在本页要展示）
+            await fetchReviewsByReviewee(feedbackTarget.revieweeId);
+        } catch (e: any) {
+            message.error(e?.message || 'Failed to submit review');
+        } finally {
+            setFeedbackLoading(false);
         }
     };
 
@@ -1049,35 +1094,11 @@ export default function MySessionsTab() {
                         key="submit"
                         type="primary"
                         loading={feedbackLoading}
-                        disabled={!feedbackComment.trim()}
-                        onClick={async () => {
-                            if (!feedbackTarget) return;
-                            try {
-                                setFeedbackLoading(true);
-                                const res = await fetch('/api/reviews/insert', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                        reviewee: feedbackTarget.revieweeId,
-                                        reviewer: menteeId,
-                                        content: feedbackComment.trim(),
-                                    }),
-                                });
-                                const data = await res.json().catch(() => ({}));
-                                if (!res.ok) throw new Error(data?.message || 'Submit failed');
-
-                                setIsFeedbackOpen(false);
-                                setIsThanksOpen(true);
-                                setFeedbackComment('');
-                            } catch (e:any) {
-                                message.error(e?.message || 'Failed to submit review');
-                            } finally {
-                                setFeedbackLoading(false);
-                            }
-                        }}
+                        disabled={!feedbackComment.trim() || feedbackRating == null}
+                        onClick={submitReview}   // ← 与第二段一致，走统一的提交逻辑
                     >
                         Submit
-                    </Button>
+                    </Button>,
                 ]}
             >
                 <div style={{ marginBottom: 16 }}>
@@ -1086,14 +1107,45 @@ export default function MySessionsTab() {
                         <Radio.Group
                             value={feedbackRating ?? undefined}
                             onChange={(e) => setFeedbackRating(e.target.value)}
+                            style={{ width: '100%' }}
                         >
-                            <Space size="large">
-                                {EMOJIS.map(e => (
-                                    <Radio key={e.value} value={e.value} aria-label={`rating-${e.value}`}>
-                                        <span style={{ fontSize: 24, lineHeight: 1 }}>{e.label}</span>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between', // 一行平均分布
+                                    gap: 0,
+                                    whiteSpace: 'nowrap',
+                                }}
+                            >
+                                {[1, 2, 3, 4, 5].map((v) => (
+                                    <Radio
+                                        key={v}
+                                        value={v}
+                                        aria-label={`rating-${v}`}
+                                        style={{
+                                            flex: '0 0 10%',            // 5 个等宽，始终一行
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            padding: '0px 0',          // 扩大触控区域
+                                            textAlign: 'center',
+                                        }}
+                                    >
+            <span
+                style={{
+                    // 移动端自适应字号：小屏不挤，大屏不显小
+                    fontSize: 'clamp(18px, 7vw, 28px)',
+                    lineHeight: 1,
+                    display: 'inline-block',
+                    transform: 'translateY(-1px)', // 视觉微调
+                }}
+            >
+              {['😡','😟','😐','😊','😄'][v-1]}
+            </span>
                                     </Radio>
                                 ))}
-                            </Space>
+                            </div>
                         </Radio.Group>
                     </div>
                 </div>
@@ -1107,9 +1159,9 @@ export default function MySessionsTab() {
                     value={feedbackComment}
                     onChange={(e) => setFeedbackComment(e.target.value)}
                 />
-
-
             </Modal>
+
+
             {/* Thank you Modal */}
             <Modal
                 open={isThanksOpen}
@@ -1120,9 +1172,14 @@ export default function MySessionsTab() {
                         type="primary"
                         onClick={() => {
                             setIsThanksOpen(false);
-                            // 这里可以跳转到“我的评论”页，或刷新当前
-                            // router.push('/my/reviews') 之类；此处简单刷新
-                            // fetchAppointments();
+                            // 使用写评时保存的 review 目标作为跳转 mentorId
+                            const mentorId = feedbackTarget?.revieweeId || reviewAppt?.mentor_id;
+                            if (mentorId) {
+                                router.push(`/mentor/${mentorId}#reviews`);
+                            } else {
+                                // 兜底：没有目标就回到列表或主页
+                                router.push('/mentor-list');
+                            }
                         }}
                     >
                         Check my review

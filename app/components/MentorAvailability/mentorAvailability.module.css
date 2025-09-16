@@ -396,3 +396,80 @@
   color: #fff;
 }
 
+/* 仅在小屏时，让 time slot 区域滚动 */
+@media (max-width: 768px) {
+  .slotsScroll {
+    max-height: 56vh;            /* 你可以调成 50~60vh，或固定 px */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 4px;          /* 避免滚动条遮挡内容 */
+  }
+
+  /* 列表本身竖排并留点间距，提升可读性 */
+  .radioGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* 去掉底部多余外边距，减少整体高度 */
+  .timeSlots {
+    margin-bottom: 0;
+  }
+}
+
+/* 只在移动端生效的紧凑化 */
+@media (max-width: 768px) {
+  /* 标题/头部区域更紧凑 */
+  .timezoneText { font-size: 12px; margin-bottom: 6px; }
+  .calendarHeader { padding: 6px; }
+  .navButton { width: 24px; height: 24px; font-size: 12px; }
+
+  .mobileHeaderRow { gap: 8px; margin-bottom: 8px; }
+  .mobileYMSelect { width: 84px; }
+  .mobileYMSelect :global(.ant-select-selector) {
+    height: 30px;
+  }
+  .mobileTZ { gap: 4px; }
+  .mobileTZText { font-size: 11px; }
+
+  /* 日期卡片更小 */
+  .mobileDayScroller { gap: 6px; padding-bottom: 4px; }
+  .dayCard { min-width: 68px; height: 42px; border-radius: 8px; }
+  .dayLabel { font-size: 12px; font-weight: 600; }
+  .dayDate { font-size: 10px; }
+
+  /* time slots 标题与分隔线间距更小 */
+  .timeSlots { margin-top: 8px; padding-top: 8px; }
+  .timeSlotsTitle { font-size: 13px; margin-bottom: 6px; }
+
+  /* 单个 slot（Radio 样式）更紧凑 */
+  .radioGroup { gap: 8px; margin-top: 8px; }
+  .timeSlotRadio { padding: 8px 10px; font-size: 13px; border-radius: 6px; }
+  .radioContent { padding-left: 4px; }
+  .slotText { font-weight: 600; font-size: 12px; }
+  .slotDetails { font-size: 11px; }
+
+  /* 横向滚动的药丸 slot 样式（如果你在用 slotPill 这套） */
+  .slotScroller { gap: 6px; padding: 2px 0 6px; }
+  .slotPill {
+    height: 32px;
+    min-width: 84px;
+    border-radius: 16px;
+    padding: 0;
+    gap: 0;
+  }
+  .slotTime { font-size: 11px; font-weight: 600; line-height: 1; }
+  .slotPrice { font-size: 10px; line-height: 1; }
+
+  /* 预约按钮更小 */
+  .scheduleButton { height: 36px; font-size: 14px; border-radius: 8px; }
+
+  /* 弹窗内可滚区域高度略降，避免看起来“太大” */
+  .slotsScroll {
+    max-height: 48vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 2px;
+  }
+}
