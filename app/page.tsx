@@ -546,12 +546,24 @@ export default function Home() {
             </nav>
 
             {/* Mobile Menu Button */}
-            <Button
-              type='text'
-              icon={<MenuOutlined />}
-              className='md:hidden'
-              onClick={() => setMobileMenuOpen(true)}
-            />
+            <div className='flex items-center justify-between w-full'>
+              {/* Left button */}
+              <Button
+                type='text'
+                icon={<MenuOutlined />}
+                className='md:hidden'
+                onClick={() => setMobileMenuOpen(true)}
+              />
+
+              {/* Right button */}
+              <SignedOut>
+                <SignUpButton mode='modal'>
+                  <Button type='primary' className='md:hidden'>
+                    Become a Mentor/Mentee
+                  </Button>
+                </SignUpButton>
+              </SignedOut>
+            </div>
 
             {/* Mobile Menu Drawer */}
             <Drawer
@@ -649,30 +661,27 @@ export default function Home() {
           <div
             className={`flex flex-col justify-center items-center flex-1 text-center z-10`}
           >
-            
-           
-
             {/* ✅ New typing effect block */}
-            <div className="mt-6">
-                <h1 className="text-blue-600 text-4xl md:text-6xl font-bold mb-4">
-                {t("1-on-1 Mentorship with")}
-                </h1>
+            <div className='mt-6'>
+              <h1 className='text-blue-600 text-4xl md:text-6xl font-bold mb-4'>
+                {t('1-on-1 Mentorship with')}
+              </h1>
               <div
                 ref={typingRef}
-                className="text-2xl md:text-3xl font-bold text-gray-800 border-r-2 border-gray-800 inline-block mt-2 min-h-[2.5rem]"
+                className='text-2xl md:text-3xl font-bold text-gray-800 border-r-2 border-gray-800 inline-block mt-2 min-h-[2.5rem]'
               ></div>
             </div>
 
-            <p className="text-gray-600 text-lg md:text-xl mb-6 max-w-2xl">
+            <p className='text-gray-600 text-lg md:text-xl mb-6 max-w-2xl'>
               {t(
-                "Connect with experienced professionals and accelerate your career."
+                'Connect with experienced professionals and accelerate your career.'
               )}
             </p>
             <Link
-              className="px-6 py-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition"
-              href="/mentor-list"
+              className='px-6 py-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition'
+              href='/mentor-list'
             >
-              {t("Meet Our Mentors")}
+              {t('Meet Our Mentors')}
             </Link>
           </div>
         </section>
@@ -763,7 +772,7 @@ export default function Home() {
                   {t('Per Mentor Session')}
                 </div>
                 <div className={`text-xs ${styles.MentorshipDescription}`}>
-                {t('Per Mentor Session description')}
+                  {t('Per Mentor Session description')}
                 </div>
               </div>
 
@@ -773,14 +782,14 @@ export default function Home() {
                   {t('See Interview Invitations')}
                 </div>
                 <div className={`text-xs ${styles.MentorshipDescription}`}>
-                {t('See Interview Invitations description')}
+                  {t('See Interview Invitations description')}
                 </div>
               </div>
               <div className='bg-blue-900 text-white rounded-lg p-8 flex-1 min-w-[220px] text-center'>
                 <div className='text-5xl font-bold mb-2'>80%</div>
                 <div className='font-semibold mb-2'>{t('Job Offers')}</div>
                 <div className={`text-xs ${styles.MentorshipDescription}`}>
-                {t('Job Offers description')}
+                  {t('Job Offers description')}
                 </div>
               </div>
             </div>
