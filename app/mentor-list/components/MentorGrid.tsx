@@ -66,8 +66,10 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
         let filtered = mentors.filter(u => {
             const m = asMentorObj(u);
 
-            if (filters.jobTitle && !m?.title?.toLowerCase().includes(filters.jobTitle.toLowerCase())) {
-                return false;
+            if (filters.jobTitle?.length) {
+                const title = m?.title?.toLowerCase() ?? "";
+                const match = filters.jobTitle.some(jt => title.includes(jt.toLowerCase()));
+                if (!match) return false;
             }
 
             if (filters.industries?.length) {
