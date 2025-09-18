@@ -230,13 +230,11 @@
         bottom: 0;
 
         /* 半屏高度 */
-        height: 50vh;
+        height: 10vh;
         width: 100%;
 
         /* 外观样式 */
         background: #fff;
-        border-top-left-radius: 16px;
-        border-top-right-radius: 16px;
         box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
 
         /* 内容滚动 */
@@ -278,23 +276,146 @@
 }
 
 
+
+
 @media (max-width: 768px) {
-    /* 左侧整体高度 = 视口 - 顶部 padding(你 Content 设置了 88px) - 底部半屏(50vh) */
-    .leftSection {
-        max-height: calc(100vh - 88px - 50vh);
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 12px; /* 滚动到底不紧贴 */
+    .rightSection {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+
+        height:  72px;
+        width: 100%;
+
+        background: #fff;
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
+
+        /* 这里不需要滚动，因为只放一个按钮条 */
+        overflow: hidden;
+
+        /* 让按钮左右有点留白 */
+        padding: 18px 24px;
+
+        z-index: 1500;
     }
 
-    /* Tabs 内容本身不要再套额外 max-height，避免双层滚动 */
-    .leftSection :global(.ant-tabs-content-holder) {
-        max-height: none;
-        overflow: visible;
+    /* 让 Card 占满弹层高度，去掉边框/内边距 */
+    .rightSection :global(.ant-card) {
+        height: 100%;
+        margin: 0;
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent;
+        font-weight: 400 !important;
+    }
+    .rightSection :global(.ant-card-body) {
+        height: 100%;
+        padding: 0;
     }
 
-    /* 给页面内容预留出被底部弹层遮住的空间（若不插占位 DOM，可直接用容器 padding） */
+    /* 让按钮撑满弹层高度，圆角友好一些 */
+    .rightSection :global(.ant-btn) {
+        height: 100%;
+        border-radius: 18px;
+        font-weight: 600;
+    }
+
+    /* 隐藏不需要的头部/分割线（保持你原有的“干净条”效果） */
+    .rightSection :global(.ant-divider),
+    .rightSection :global(h4),
+    .rightSection :global(h5) {
+        display: none !important;
+    }
+
+    /* 页面底部预留空间，避免内容被固定条遮住 */
     .container {
-        padding-bottom: calc(50vh + 16px); /* 底部空白，避免最后一屏被盖住 */
+        padding-bottom: calc(var(--popup-height) + 16px);
+    }
+}
+
+/* 桌面端保持现状 */
+@media (min-width: 769px) {
+    .mobileSpacer { display: none; }
+}
+
+
+/* ===== 底部固定的 Free Trial 气泡（不在容器里，盖在最上层） ===== */
+@media (max-width: 768px) {
+    .trialTipFixed {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        /* 气泡在按钮之上：按钮条高 32px，这里再加 8px 间距和安全区 */
+        bottom: calc(32px + env(safe-area-inset-bottom) + 36px);
+
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        z-index: 10000; /* > 右侧条(1500)，< Modal(11000) */
+    }
+
+    /* 向下指向按钮的小尾巴（在气泡底部中间） */
+    .trialTipFixed::after {
+        content: '';
+        position: absolute;
+        left: 24px;  /* 👈 这里控制水平位置，可以微调 */
+        bottom: -8px;
+        width: 0;
+        height: 0;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-top: 8px solid #fff;
+        filter: drop-shadow(0 2px 2px rgba(0,0,0,0.08));
+    }
+
+    .trialTipIcon {
+        font-size: 16px;
+        line-height: 1;
+    }
+
+    .trialTipText {
+        color: #1677ff; /* AntD 主色 */
+        font-size: 14px;
+        font-weight: 500;
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .trialTipClose {
+        appearance: none;
+        border: none;
+        background: transparent;
+        color: rgba(0,0,0,0.45);
+        font-size: 18px;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0 2px;
+    }
+    .trialTipClose:hover { color: rgba(0,0,0,0.65); }
+}
+
+/* === 紧凑版移动端 Modal 外观 === */
+.mobilePopupCompact :global(.ant-modal-header) {
+    padding: 8px 12px;
+}
+.mobilePopupCompact :global(.ant-modal-title) {
+    font-size: 16px;
+    font-weight: 600;
+}
+.mobilePopupCompact :global(.ant-modal-body) {
+    padding: 8px 12px; /* 默认 24，改小 */
+}
+
+/* 可选：Card 内容也缩小 */
+@media (max-width: 768px) {
+    .mobilePopupCompact :global(.ant-card-body) {
+        padding: 8px 10px; /* 比默认更小 */
     }
 }
