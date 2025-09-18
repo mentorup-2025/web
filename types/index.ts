@@ -35,7 +35,7 @@ export interface Mentor {
 export type SortOption = 'price-asc' | 'price-desc' | 'yoe-asc' | 'yoe-desc' | null;
 
 export interface SearchFiltersType {
-  jobTitle?: string;
+    jobTitle?: string[];
   industries?: string[];
   minExperience?: number;
   maxExperience?: number;
@@ -46,4 +46,5 @@ export interface SearchFiltersType {
   sort?: SortOption;
   availableAsapWithin7Days?: boolean;
   offersFreeCoffeeChat?: boolean;
+  availableMentorIds?: string[];
 }

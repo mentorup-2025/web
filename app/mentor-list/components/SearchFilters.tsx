@@ -1,12 +1,7 @@
 'use client';
 
-import { Layout, Collapse, Checkbox, Slider, Divider } from 'antd';
-import {
-    UserOutlined,
-    AppstoreOutlined,
-    ToolOutlined,
-    BankOutlined,
-} from '@ant-design/icons';
+import { Layout, Collapse, Checkbox, Slider, Divider, message } from 'antd';
+import { UserOutlined, AppstoreOutlined, ToolOutlined, BankOutlined } from '@ant-design/icons';
 import styles from '../search.module.css';
 import type { SearchFiltersType } from '../../../types';
 import React from 'react';
@@ -41,11 +36,16 @@ export default function SearchFilters({
                                           minYoe,
                                           maxYoe,
                                       }: SearchFiltersProps) {
-    const set = (patch: Partial<SearchFiltersType>) => {
-        onFiltersChange({ ...value, ...patch });
+    const [loadingASAP, setLoadingASAP] = React.useState(false);
+    const inFlightRef = React.useRef(false);
+    const controllerRef = React.useRef<AbortController | null>(null);
+    const wantedRef = React.useRef<boolean>(Boolean(value.availableAsapWithin7Days));
+
+    // 只上报 patch，由父组件合并
+    const patch = (p: Partial<SearchFiltersType>) => {
+        onFiltersChange(p as SearchFiltersType);
     };
 
-    /** 渲染带左侧图标的分组标题 */
     const renderHeader = (icon: React.ReactNode, text: string) => (
         <div className={styles.filterHeader}>
             <span className={styles.filterHeaderIcon}>{icon}</span>
@@ -53,12 +53,11 @@ export default function SearchFilters({
         </div>
     );
 
-    /** 顶部快捷筛选：Free Coffee Chat 同步到 serviceTypes */
     const onToggleFreeCoffee = (checked: boolean) => {
         const cur = new Set<string>(value.serviceTypes ?? []);
         if (checked) cur.add(FREE_COFFEE_LABEL);
         else cur.delete(FREE_COFFEE_LABEL);
-        set({
+        patch({
             serviceTypes: Array.from(cur),
             offersFreeCoffeeChat: checked,
         });
@@ -67,17 +66,84 @@ export default function SearchFilters({
     const isCoffeeChecked =
         value.offersFreeCoffeeChat ?? (value.serviceTypes ?? []).includes(FREE_COFFEE_LABEL);
 
+    const extractIds = (raw: unknown): string[] => {
+        if (!Array.isArray(raw) || raw.length === 0) return [];
+        if (typeof raw[0] === 'string') return raw as string[];
+        return (raw as Array<{ id?: string; user_id?: string }>)
+            .map((r) => r.id ?? r.user_id)
+            .filter(Boolean) as string[];
+    };
+
+    const onToggleAvailableASAP = async (checked: boolean) => {
+        wantedRef.current = checked;
+        patch({ availableAsapWithin7Days: checked });
+
+        if (!checked) {
+            patch({ availableMentorIds: undefined });
+            if (inFlightRef.current) {
+                try {
+                    controllerRef.current?.abort();
+                } catch {}
+                inFlightRef.current = false;
+            }
+            setLoadingASAP(false);
+            return;
+        }
+
+        if (inFlightRef.current) return;
+
+        inFlightRef.current = true;
+        setLoadingASAP(true);
+        const controller = new AbortController();
+        controllerRef.current = controller;
+
+        try {
+            const res = await fetch('/api/availability/free_soon', {
+                cache: 'no-store',
+                signal: controller.signal,
+            });
+            const json = await res.json();
+
+            if (!wantedRef.current) return;
+
+            if (res.ok && json?.code === 0) {
+                const mentorIds = extractIds(json.data);
+                patch({ availableMentorIds: mentorIds });
+                if (mentorIds.length === 0) {
+                    message.info('未来 7 天暂无可预约导师');
+                }
+            } else {
+                patch({ availableAsapWithin7Days: false, availableMentorIds: undefined });
+                message.error(json?.message || '获取未来 7 天可预约导师失败，请稍后重试');
+            }
+        } catch (err: any) {
+            if (err?.name !== 'AbortError') {
+                patch({ availableAsapWithin7Days: false, availableMentorIds: undefined });
+                message.error('网络异常，获取可预约导师失败');
+            }
+        } finally {
+            inFlightRef.current = false;
+            setLoadingASAP(false);
+            controllerRef.current = null;
+        }
+    };
+
+    const disableASAPCheckbox = false; // 允许随时点/取消
+
     return (
         <Sider width={280} className={styles.sider}>
-            {/* 顶部两个快捷 Checkboxes —— 与下方面板相同的结构与样式 */}
             <div className={styles.checkboxGroupCol} style={{ padding: '12px 16px 4px' }}>
                 <label className={styles.filterItem}>
                     <Checkbox
                         className={styles.filterCheckbox}
                         checked={Boolean(value.availableAsapWithin7Days)}
-                        onChange={(e) => set({ availableAsapWithin7Days: e.target.checked })}
+                        onChange={(e) => onToggleAvailableASAP(e.target.checked)}
+                        disabled={disableASAPCheckbox}
                     />
-                    <span className={styles.filterLabel}>Available ASAP (next 7 days)</span>
+                    <span className={styles.filterLabel}>
+            {loadingASAP && !value.availableAsapWithin7Days ? 'Loading… ' : ''}
+                        Available ASAP (next 7 days)
+          </span>
                 </label>
 
                 <label className={styles.filterItem}>
@@ -98,11 +164,12 @@ export default function SearchFilters({
                 expandIconPosition="end"
                 className={styles.siderCollapse}
             >
+                {/* ✅ Job Title 改为“多选数组”，逻辑与 Industry 一致 */}
                 <Panel header={renderHeader(<UserOutlined />, 'Job Title')} key="jobTitle">
                     <Checkbox.Group
                         className={styles.checkboxGroupCol}
-                        value={value.jobTitle ? [value.jobTitle] : []}
-                        onChange={(vals) => set({ jobTitle: (vals?.[0] as string) ?? '' })}
+                        value={value.jobTitle ?? []}
+                        onChange={(vals) => patch({ jobTitle: vals as string[] })}
                     >
                         {jobTitles.map((title) => (
                             <label key={title} className={styles.filterItem}>
@@ -117,7 +184,7 @@ export default function SearchFilters({
                     <Checkbox.Group
                         className={styles.checkboxGroupCol}
                         value={value.industries ?? []}
-                        onChange={(vals) => set({ industries: vals as string[] })}
+                        onChange={(vals) => patch({ industries: vals as string[] })}
                     >
                         {industries.map((industry) => (
                             <label key={industry} className={styles.filterItem}>
@@ -132,7 +199,7 @@ export default function SearchFilters({
                     <Checkbox.Group
                         className={styles.checkboxGroupCol}
                         value={value.serviceTypes ?? []}
-                        onChange={(vals) => set({ serviceTypes: vals as string[] })}
+                        onChange={(vals) => patch({ serviceTypes: vals as string[] })}
                     >
                         {serviceTypes.map((type) => (
                             <label key={type} className={styles.filterItem}>
@@ -147,7 +214,7 @@ export default function SearchFilters({
                     <Checkbox.Group
                         className={styles.checkboxGroupCol}
                         value={value.company ?? []}
-                        onChange={(vals) => set({ company: vals as string[] })}
+                        onChange={(vals) => patch({ company: vals as string[] })}
                     >
                         {uniqueCompanies?.map((company) => (
                             <label key={company} className={styles.filterItem}>
@@ -169,7 +236,10 @@ export default function SearchFilters({
                                 value.maxExperience !== undefined ? value.maxExperience : maxYoe,
                             ]}
                             onChange={(rng) =>
-                                set({ minExperience: (rng as number[])[0], maxExperience: (rng as number[])[1] })
+                                patch({
+                                    minExperience: (rng as number[])[0],
+                                    maxExperience: (rng as number[])[1],
+                                })
                             }
                             marks={{ [minYoe]: `${minYoe}`, [maxYoe]: `${maxYoe}+` }}
                         />
@@ -186,7 +256,12 @@ export default function SearchFilters({
                                 value.minPrice !== undefined ? value.minPrice : minPrice,
                                 value.maxPrice !== undefined ? value.maxPrice : maxPrice,
                             ]}
-                            onChange={(rng) => set({ minPrice: (rng as number[])[0], maxPrice: (rng as number[])[1] })}
+                            onChange={(rng) =>
+                                patch({
+                                    minPrice: (rng as number[])[0],
+                                    maxPrice: (rng as number[])[1],
+                                })
+                            }
                             marks={{ [minPrice]: `$${minPrice}`, [maxPrice]: `$${maxPrice}+` }}
                         />
                     </div>
