@@ -132,14 +132,15 @@ export default function ClientSearchPage({ initialMentors }: ClientSearchPagePro
                 )}
 
                 <Content className={styles.content}>
-                    {/* 顶部操作区：移动端显示 Filters 按钮 + 排序 */}
                     <div className={styles.topActions}>
-                        {isMobile && (
-                            <Button className={styles.filtersButtonMobile} onClick={() => setFiltersOpen(true)}>
-                                Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}
-                            </Button>
-                        )}
-                        <TopSort onChange={handleTopFiltersPatch} currentFilters={filters} />
+                        <div className={styles.scrollableActions}>
+                            {isMobile && (
+                                <Button className={styles.filtersButtonMobile} onClick={() => setFiltersOpen(true)}>
+                                    Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}
+                                </Button>
+                            )}
+                            <TopSort onChange={handleTopFiltersPatch} currentFilters={filters} />
+                        </div>
                     </div>
 
                     {/* ✅ 传入 mentorsAfterASAP，而不是原始 mentors */}
