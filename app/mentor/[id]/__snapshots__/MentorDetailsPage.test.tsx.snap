@@ -27,34 +27,6 @@ exports[`MentorDetailsPage Free Coffee Chat Banner Logic Visual Regression Tests
 </div>
 `;
 
-exports[`MentorDetailsPage Free Coffee Chat Banner Logic Visual Regression Tests should match visual snapshot for not signed-in user: mentor-details-not-signed-in 1`] = `
-<div
-  class="ant-card ant-card-bordered css-dev-only-do-not-override-240cud"
->
-  <div
-    class="ant-card-body"
-  >
-    <h4
-      class="ant-typography css-dev-only-do-not-override-240cud"
-    >
-      Please sign in to book an appointment
-    </h4>
-    <button
-      data-testid="signin-button"
-    >
-      <button
-        class="ant-btn css-dev-only-do-not-override-240cud ant-btn-primary ant-btn-color-primary ant-btn-variant-solid"
-        type="button"
-      >
-        <span>
-          Sign In
-        </span>
-      </button>
-    </button>
-  </div>
-</div>
-`;
-
 exports[`MentorDetailsPage Free Coffee Chat Banner Logic Visual Regression Tests should match visual snapshot for signed-in user with free coffee chat available: mentor-details-with-free-coffee-banner 1`] = `
 <div
   data-testid="mentor-availability"
