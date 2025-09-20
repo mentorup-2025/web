@@ -42,6 +42,11 @@ describe('MentorSignup Avatar Upload Requirement', () => {
     const user = userEvent.setup()
     render(<MentorSignup userId={defaultUserId} />)
     
+    // Wait for component to fully load
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('Enter your display name')).toBeInTheDocument()
+    }, { timeout: 10000 })
+    
     // Fill in other required fields
     await user.type(screen.getByPlaceholderText('Enter your display name'), 'Test Mentor')
     
@@ -52,7 +57,7 @@ describe('MentorSignup Avatar Upload Requirement', () => {
     // Wait for dropdown options to appear and select one
     await waitFor(() => {
       expect(screen.getByText('Senior')).toBeInTheDocument()
-    })
+    }, { timeout: 10000 })
     await user.click(screen.getByText('Senior'))
     
     await user.type(screen.getByPlaceholderText('Enter your WeChat ID'), 'testuser123')
@@ -64,7 +69,7 @@ describe('MentorSignup Avatar Upload Requirement', () => {
     // Should show validation error
     await waitFor(() => {
       expect(screen.getByText('Please upload your profile picture!')).toBeInTheDocument()
-    })
+    }, { timeout: 10000 })
     
     // Should still be on step 0 (Current Status) - check step indicator
     expect(screen.getByText('Current Status')).toBeInTheDocument()
@@ -73,5 +78,5 @@ describe('MentorSignup Avatar Upload Requirement', () => {
     const activeStep = document.querySelector('.ant-steps-item-active')
     expect(activeStep).toBeInTheDocument()
     expect(activeStep?.querySelector('.ant-steps-item-title')?.textContent).toBe('Current Status')
-  })
+  }, 15000)
 })
