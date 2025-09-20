@@ -21,7 +21,6 @@ interface MentorGridProps {
     loading: boolean;
 }
 
-/** 统一解析 mentor.mentor.services：兼容 number 或 {price,type}；允许 null/undefined */
 function extractServiceEntries(services?: Record<string, any> | null) {
     const list = Object.entries(services ?? {}).map(([key, v]) => {
         if (typeof v === 'number') {
@@ -34,10 +33,8 @@ function extractServiceEntries(services?: Record<string, any> | null) {
     return list.filter(e => Number.isFinite(e.price));
 }
 
-/** 有些后端会把 mentors 作为数组返回，这里统一取单对象 */
 const asMentorObj = (u: any) => (Array.isArray(u?.mentor) ? u.mentor[0] : u?.mentor) ?? null;
 
-/** 获取导师价格（首个非 Free Coffee Chat） */
 const getMentorPrice = (u: Mentor): number => {
     const m = asMentorObj(u);
     const entries = extractServiceEntries(m?.services);
@@ -45,7 +42,6 @@ const getMentorPrice = (u: Mentor): number => {
     return firstPaid ? firstPaid.price : 0;
 };
 
-/** 读取评论数量（尽量兼容不同字段名） */
 const getReviewCount = (obj: any): number | null => {
     const cand = [
         obj?.review_count,
@@ -56,6 +52,14 @@ const getReviewCount = (obj: any): number | null => {
     ];
     const n = cand.find(v => Number.isFinite(Number(v)));
     return n != null ? Number(n) : null;
+};
+
+// ✅ 新增：提取平均评分（m.avg_rating 或顶层 avg_rating）
+const getAvgRating = (u: Mentor): number | null => {
+    const m = asMentorObj(u);
+    const raw = m?.avg_rating ?? (u as any)?.avg_rating;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
 };
 
 export default function MentorGrid({ filters, mentors, loading }: MentorGridProps) {
@@ -102,10 +106,9 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
             return true;
         });
 
-        const rankOf = (u: Mentor) => (asMentorObj(u)?.default_ranking ?? Number.POSITIVE_INFINITY); // NULLS LAST
+        const rankOf = (u: Mentor) => (asMentorObj(u)?.default_ranking ?? Number.POSITIVE_INFINITY);
 
         const tie = (a: Mentor, b: Mentor) => {
-            // 次级排序：价格升序 -> 经验降序 -> 用户名
             const pa = getMentorPrice(a), pb = getMentorPrice(b);
             if (pa !== pb) return pa - pb;
 
@@ -116,6 +119,7 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
             return (a.username || '').localeCompare(b.username || '');
         };
 
+        // ✅ 增加对 rating-asc / rating-desc 的处理
         if (filters.sort) {
             filtered = [...filtered].sort((a, b) => {
                 switch (filters.sort) {
@@ -127,12 +131,30 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                         return (asMentorObj(a)?.years_of_experience ?? 0) - (asMentorObj(b)?.years_of_experience ?? 0) || rankOf(a) - rankOf(b);
                     case 'yoe-desc':
                         return (asMentorObj(b)?.years_of_experience ?? 0) - (asMentorObj(a)?.years_of_experience ?? 0) || rankOf(a) - rankOf(b);
+
+                    // --- 新增两种评分排序 ---
+                    case 'rating-desc': {
+                        const ra = getAvgRating(a); // 高 -> 低；无评分排在后面
+                        const rb = getAvgRating(b);
+                        const va = ra ?? -Infinity;
+                        const vb = rb ?? -Infinity;
+                        if (va !== vb) return vb - va;
+                        return rankOf(a) - rankOf(b) || tie(a, b);
+                    }
+                    case 'rating-asc': {
+                        const ra = getAvgRating(a); // 低 -> 高；无评分排在后面
+                        const rb = getAvgRating(b);
+                        const va = ra ?? Infinity;
+                        const vb = rb ?? Infinity;
+                        if (va !== vb) return va - vb;
+                        return rankOf(a) - rankOf(b) || tie(a, b);
+                    }
+
                     default:
                         return rankOf(a) - rankOf(b) || tie(a, b);
                 }
             });
         } else {
-            // 无显式排序：按 default_ranking 升序（NULLS LAST），再用 tiebreaker 保稳定
             filtered = [...filtered].sort((a, b) => rankOf(a) - rankOf(b) || tie(a, b));
         }
 
@@ -140,11 +162,13 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
     }, [mentors, filters]);
 
     const goProfile = (id: string | number) => {
+        const router = useRouter();
         router.push(`/mentor/${id}`);
     };
 
+    // ……（其余渲染代码保持不变，原样拷贝即可）……
+    // 下面是你已有的渲染部分，不变：
     if (loading) return <div>Loading...</div>;
-
     if (filteredMentors.length === 0) {
         return (
             <div className={styles.noResults}>
@@ -152,7 +176,6 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
             </div>
         );
     }
-
     return (
         <div className={styles.mentorGrid}>
             {filteredMentors.map(user => {
@@ -163,11 +186,8 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                 const firstPaid = entries.find(e => !isFreeCoffeeChat((e.type ?? '') as string));
                 const hourly = firstPaid ? netToGross(firstPaid.price) : null;
 
-                // ★ 评分与评论数（来自 mentors 表）
                 const avgRatingRaw = m?.avg_rating ?? (user as any)?.avg_rating;
                 const avgRating = Number.isFinite(Number(avgRatingRaw)) ? Number(avgRatingRaw) : null;
-
-                // ★ 评论条数（尽量兼容不同字段名；若均无，则不显示括号）
                 const reviewCount = getReviewCount(m) ?? getReviewCount(user as any);
 
                 return (
@@ -191,11 +211,17 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                             )
                         }
                         hoverable
-                        onClick={() => goProfile(user.user_id)}
+                        onClick={() => {
+                            const r = useRouter();
+                            r.push(`/mentor/${user.user_id}`);
+                        }}
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) => {
-                            if (e.key === 'Enter') goProfile(user.user_id);
+                            if (e.key === 'Enter') {
+                                const r = useRouter();
+                                r.push(`/mentor/${user.user_id}`);
+                            }
                         }}
                         style={{ cursor: 'pointer' }}
                     >
@@ -203,7 +229,6 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                             <h3 className={styles.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
                                 {user.username}
 
-                                {/* ★ 姓名右侧：蓝色星标 + 平均分 + (条数) */}
                                 {avgRating != null && (
                                     <span
                                         className={styles.inlineRating}
@@ -233,7 +258,6 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                             </ul>
                         </div>
 
-                        {/* 标签：全部显示，自动换行 */}
                         <div className={styles.mentorTagsRow}>
                             {industries.map(industry => (
                                 <Tag className={styles.mentorTag} key={industry}>{industry}</Tag>
@@ -244,7 +268,6 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                             <div className={styles.mentorPrice}>
                                 {hourly != null ? `$${hourly}/hr` : 'Free'}
                             </div>
-                            {/* 阻止冒泡，避免触发 Card 的 onClick */}
                             <Link href={`/mentor/${user.user_id}`} onClick={(e) => e.stopPropagation()}>
                                 <Button
                                     type="primary"

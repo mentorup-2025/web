@@ -1,7 +1,8 @@
 'use client';
 
 import { Layout, Collapse, Checkbox, Slider, Divider, message } from 'antd';
-import { UserOutlined, AppstoreOutlined, ToolOutlined, BankOutlined } from '@ant-design/icons';
+import { UserOutlined, AppstoreOutlined, ToolOutlined, BankOutlined, FieldTimeOutlined, GiftOutlined } from '@ant-design/icons';
+
 import styles from '../search.module.css';
 import type { SearchFiltersType } from '../../../types';
 import React from 'react';
@@ -140,10 +141,11 @@ export default function SearchFilters({
                         onChange={(e) => onToggleAvailableASAP(e.target.checked)}
                         disabled={disableASAPCheckbox}
                     />
+                    <FieldTimeOutlined className={styles.filterIcon} />
                     <span className={styles.filterLabel}>
-            {loadingASAP && !value.availableAsapWithin7Days ? 'Loading… ' : ''}
-                        Available ASAP (next 7 days)
-          </span>
+    {loadingASAP && !value.availableAsapWithin7Days ? 'Loading… ' : ''}
+                        Available ASAP (in 7 days)
+  </span>
                 </label>
 
                 <label className={styles.filterItem}>
@@ -152,8 +154,10 @@ export default function SearchFilters({
                         checked={isCoffeeChecked}
                         onChange={(e) => onToggleFreeCoffee(e.target.checked)}
                     />
+                    <GiftOutlined className={styles.filterIcon} />
                     <span className={styles.filterLabel}>Offers Free Coffee Chat</span>
                 </label>
+
             </div>
 
             <Divider style={{ margin: '8px 0' }} />
