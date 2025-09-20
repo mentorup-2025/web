@@ -58,8 +58,15 @@ export default function MenteeProfilePage() {
   const params = useParams();
   const menteeId = params?.id as string;
   const { user, isSignedIn } = useUser();
-  // const isOwnProfile = isSignedIn && user?.id === menteeId;
-  const isOwnProfile = true;
+  const isOwnProfile = isSignedIn && user?.id === menteeId;
+  
+  // Debug logging for tests
+  if (process.env.NODE_ENV === 'test') {
+    console.log('[MenteeProfile DEBUG] menteeId:', menteeId);
+    console.log('[MenteeProfile DEBUG] user?.id:', user?.id);
+    console.log('[MenteeProfile DEBUG] isSignedIn:', isSignedIn);
+    console.log('[MenteeProfile DEBUG] isOwnProfile:', isOwnProfile);
+  }
 
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
