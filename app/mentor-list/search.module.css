@@ -55,6 +55,13 @@
 /* 顶部操作区 */
 .topActions { display: flex; gap: 12px; align-items: center; margin-bottom: 4px; }
 
+.scrollableActions {
+    display: flex;
+    gap: 12px;
+    width: max-content; /* 确保内容宽度足够时可以滚动 */
+    padding-right: 20px; /* 确保最后一个按钮有足够空间 */
+}
+
 /* =================== 左侧筛选（样式重做） =================== */
 
 /* 去掉 Collapse 默认背景与边框 */
