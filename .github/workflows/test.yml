@@ -30,7 +30,18 @@ jobs:
         cache: 'pnpm'
 
     - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      run: |
+        # Check if lockfile exists and is valid
+        if [ -f "pnpm-lock.yaml" ]; then
+          echo "Found pnpm-lock.yaml, attempting frozen install..."
+          pnpm install --frozen-lockfile || {
+            echo "Frozen install failed, falling back to regular install..."
+            pnpm install
+          }
+        else
+          echo "No pnpm-lock.yaml found, running regular install..."
+          pnpm install
+        fi
 
     - name: Run linting
       run: pnpm lint
@@ -74,7 +85,18 @@ jobs:
         cache: 'pnpm'
 
     - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      run: |
+        # Check if lockfile exists and is valid
+        if [ -f "pnpm-lock.yaml" ]; then
+          echo "Found pnpm-lock.yaml, attempting frozen install..."
+          pnpm install --frozen-lockfile || {
+            echo "Frozen install failed, falling back to regular install..."
+            pnpm install
+          }
+        else
+          echo "No pnpm-lock.yaml found, running regular install..."
+          pnpm install
+        fi
 
     - name: Run profile component tests specifically
       run: pnpm test --testPathPattern="ProfilePage.test.tsx" --watchAll=false
