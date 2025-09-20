@@ -17,7 +17,8 @@ import {
     Button,
     Input,
     Radio,
-    Tabs
+    Tabs,
+    Tooltip
 } from 'antd';
 import {
     CalendarOutlined,
@@ -500,9 +501,8 @@ export default function MySessionsTab() {
         if (appt.link) {
             // Open the meet link in a new window/tab
             window.open(appt.link, '_blank', 'noopener,noreferrer');
-        } else {
-            alert('No meeting link available yet. Please wait for the session to be confirmed.');
         }
+        // If no link, do nothing - tooltip will show the message
     };
     const submitReview = async () => {
         if (!feedbackTarget?.revieweeId) {
@@ -709,9 +709,20 @@ export default function MySessionsTab() {
                                                         <div key="noshow" onClick={() => showReportModal(appt)} style={{ cursor: 'pointer' }}>
                                                             <FrownOutlined style={{ fontSize: 18 }} /><div>Report Issue</div>
                                                         </div>,
-                                                        <div key="join" onClick={() => handleJoinClick(appt)} style={{ cursor: 'pointer' }}>
-                                                            <BellOutlined style={{ fontSize: 18 }} /><div>Join</div>
-                                                        </div>,
+                                                        <Tooltip 
+                                                            title={appt.link ? "" : "No meeting link available yet. Please wait for the session to be confirmed."}
+                                                        >
+                                                            <div 
+                                                                key="join" 
+                                                                onClick={() => handleJoinClick(appt)} 
+                                                                style={{ 
+                                                                    cursor: appt.link ? 'pointer' : 'not-allowed',
+                                                                    opacity: appt.link ? 1 : 0.5
+                                                                }}
+                                                            >
+                                                                <BellOutlined style={{ fontSize: 18 }} /><div>Join</div>
+                                                            </div>
+                                                        </Tooltip>,
                                                     ])
 
                                 }
