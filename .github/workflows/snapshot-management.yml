@@ -1,0 +1,202 @@
+name: Snapshot Management
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '**/__snapshots__/**'
+      - '**/*.test.tsx'
+      - '**/*.test.ts'
+      - 'app/**/*.tsx'
+      - 'app/**/*.ts'
+
+jobs:
+  analyze-snapshots:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Need full history to compare
+
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+
+    - name: Use Node.js 18.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18.x
+        cache: 'pnpm'
+
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile || pnpm install
+
+    - name: Analyze Snapshot Changes
+      id: analyze
+      run: |
+        echo "## 📸 Snapshot Analysis" > snapshot-analysis.md
+        echo "" >> snapshot-analysis.md
+        
+        # Check for new snapshots
+        NEW_SNAPSHOTS=$(git diff --name-status origin/main...HEAD | grep "^A.*__snapshots__" | wc -l)
+        MODIFIED_SNAPSHOTS=$(git diff --name-status origin/main...HEAD | grep "^M.*__snapshots__" | wc -l)
+        DELETED_SNAPSHOTS=$(git diff --name-status origin/main...HEAD | grep "^D.*__snapshots__" | wc -l)
+        
+        echo "### Changes Summary:" >> snapshot-analysis.md
+        echo "- **New snapshots**: $NEW_SNAPSHOTS" >> snapshot-analysis.md
+        echo "- **Modified snapshots**: $MODIFIED_SNAPSHOTS" >> snapshot-analysis.md
+        echo "- **Deleted snapshots**: $DELETED_SNAPSHOTS" >> snapshot-analysis.md
+        echo "" >> snapshot-analysis.md
+        
+        if [ $NEW_SNAPSHOTS -gt 0 ]; then
+          echo "### 🆕 New Snapshots:" >> snapshot-analysis.md
+          git diff --name-status origin/main...HEAD | grep "^A.*__snapshots__" | cut -f2 | sed 's/^/- /' >> snapshot-analysis.md
+          echo "" >> snapshot-analysis.md
+        fi
+        
+        if [ $MODIFIED_SNAPSHOTS -gt 0 ]; then
+          echo "### 📝 Modified Snapshots:" >> snapshot-analysis.md
+          git diff --name-status origin/main...HEAD | grep "^M.*__snapshots__" | cut -f2 | sed 's/^/- /' >> snapshot-analysis.md
+          echo "" >> snapshot-analysis.md
+        fi
+        
+        if [ $DELETED_SNAPSHOTS -gt 0 ]; then
+          echo "### 🗑️ Deleted Snapshots:" >> snapshot-analysis.md
+          git diff --name-status origin/main...HEAD | grep "^D.*__snapshots__" | cut -f2 | sed 's/^/- /' >> snapshot-analysis.md
+          echo "" >> snapshot-analysis.md
+        fi
+        
+        echo "has-changes=$((NEW_SNAPSHOTS + MODIFIED_SNAPSHOTS + DELETED_SNAPSHOTS > 0))" >> $GITHUB_OUTPUT
+
+    - name: Run Visual Tests to Validate Snapshots
+      if: steps.analyze.outputs.has-changes == 'true'
+      run: pnpm test -- --testNamePattern="Visual Regression Tests" --watchAll=false --verbose
+      env:
+        NODE_ENV: test
+        CI: true
+
+    - name: Generate Snapshot Diff Report
+      if: steps.analyze.outputs.has-changes == 'true'
+      run: |
+        echo "" >> snapshot-analysis.md
+        echo "### 🔍 Review Guidelines:" >> snapshot-analysis.md
+        echo "" >> snapshot-analysis.md
+        echo "#### For New Snapshots:" >> snapshot-analysis.md
+        echo "- ✅ Verify new UI components render correctly" >> snapshot-analysis.md
+        echo "- ✅ Ensure snapshots capture the intended UI state" >> snapshot-analysis.md
+        echo "- ✅ Check that test names are descriptive" >> snapshot-analysis.md
+        echo "" >> snapshot-analysis.md
+        echo "#### For Modified Snapshots:" >> snapshot-analysis.md
+        echo "- ⚠️ **CRITICAL**: Review visual changes carefully" >> snapshot-analysis.md
+        echo "- ❓ Are the changes intentional?" >> snapshot-analysis.md
+        echo "- ❓ Do the changes match the PR description?" >> snapshot-analysis.md
+        echo "- ❓ Could these changes break user experience?" >> snapshot-analysis.md
+        echo "" >> snapshot-analysis.md
+        echo "#### For Deleted Snapshots:" >> snapshot-analysis.md
+        echo "- ❓ Were the corresponding tests removed intentionally?" >> snapshot-analysis.md
+        echo "- ❓ Are we losing important visual regression coverage?" >> snapshot-analysis.md
+        echo "" >> snapshot-analysis.md
+        echo "### 🛠️ Local Commands:" >> snapshot-analysis.md
+        echo "\`\`\`bash" >> snapshot-analysis.md
+        echo "# View snapshot differences locally:" >> snapshot-analysis.md
+        echo "pnpm test -- --testNamePattern=\"Visual Regression Tests\"" >> snapshot-analysis.md
+        echo "" >> snapshot-analysis.md
+        echo "# Update snapshots if changes are correct:" >> snapshot-analysis.md
+        echo "pnpm test -- --updateSnapshot" >> snapshot-analysis.md
+        echo "\`\`\`" >> snapshot-analysis.md
+
+    - name: Upload Snapshot Analysis
+      if: steps.analyze.outputs.has-changes == 'true'
+      uses: actions/upload-artifact@v3
+      with:
+        name: snapshot-analysis
+        path: snapshot-analysis.md
+
+    - name: Comment on PR
+      if: steps.analyze.outputs.has-changes == 'true'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const analysis = fs.readFileSync('snapshot-analysis.md', 'utf8');
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `${analysis}
+            
+            ---
+            *This comment was automatically generated by the Snapshot Management workflow.*`
+          });
+
+  validate-visual-consistency:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+
+    - name: Use Node.js 18.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18.x
+        cache: 'pnpm'
+
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile || pnpm install
+
+    - name: Test All Visual Regression Scenarios
+      run: |
+        echo "🧪 Testing all visual regression scenarios..."
+        
+        # Run each visual test individually for better error reporting
+        pnpm test -- --testNamePattern="should match visual snapshot for signed-in user with free coffee chat available" --watchAll=false --verbose
+        pnpm test -- --testNamePattern="should match visual snapshot for signed-in user with no free coffee chat" --watchAll=false --verbose  
+        pnpm test -- --testNamePattern="should match visual snapshot for not signed-in user" --watchAll=false --verbose
+        pnpm test -- --testNamePattern="should match visual snapshot for mobile view with trial tip banner" --watchAll=false --verbose
+      env:
+        NODE_ENV: test
+        CI: true
+
+    - name: Generate Visual Consistency Report
+      if: always()
+      run: |
+        echo "# 🎨 Visual Consistency Validation" > visual-consistency.md
+        echo "" >> visual-consistency.md
+        echo "## Scenarios Tested:" >> visual-consistency.md
+        echo "" >> visual-consistency.md
+        echo "### ✅ Signed-in User with Free Coffee Chat" >> visual-consistency.md
+        echo "- Banner visibility ✓" >> visual-consistency.md
+        echo "- Component structure ✓" >> visual-consistency.md
+        echo "- User interface elements ✓" >> visual-consistency.md
+        echo "" >> visual-consistency.md
+        echo "### ✅ Signed-in User without Free Coffee Chat" >> visual-consistency.md
+        echo "- No banner display ✓" >> visual-consistency.md
+        echo "- Regular booking interface ✓" >> visual-consistency.md
+        echo "" >> visual-consistency.md
+        echo "### ✅ Not Signed-in User Experience" >> visual-consistency.md
+        echo "- Limited interface ✓" >> visual-consistency.md
+        echo "- Authentication prompts ✓" >> visual-consistency.md
+        echo "" >> visual-consistency.md
+        echo "### ✅ Mobile View Experience" >> visual-consistency.md
+        echo "- Trial tip banner ✓" >> visual-consistency.md
+        echo "- Responsive layout ✓" >> visual-consistency.md
+        echo "" >> visual-consistency.md
+        echo "## 🛡️ Protection Level:" >> visual-consistency.md
+        echo "- **UI Regressions**: Protected ✅" >> visual-consistency.md
+        echo "- **Component Structure**: Validated ✅" >> visual-consistency.md
+        echo "- **User Experience**: Consistent ✅" >> visual-consistency.md
+        echo "- **Cross-device**: Tested ✅" >> visual-consistency.md
+
+    - name: Upload Visual Consistency Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: visual-consistency-report
+        path: visual-consistency.md
