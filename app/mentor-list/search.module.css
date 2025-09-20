@@ -91,6 +91,16 @@
     border-radius: 6px;
     cursor: pointer;
 }
+
+.filterIcon {
+    font-size: 18px;     /* 图标大小可按需调整 16~20 都行 */
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #222;         /* 或用 var(--text-secondary) */
+}
+
 .filterItem:hover { background: #f5f9ff; }
 
 /* 被勾选时整行浅蓝高亮（现代浏览器支持） */

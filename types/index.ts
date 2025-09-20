@@ -32,7 +32,7 @@ export interface Mentor {
   };
 }
 
-export type SortOption = 'price-asc' | 'price-desc' | 'yoe-asc' | 'yoe-desc' | null;
+export type SortOption = 'price-asc' | 'price-desc' | 'yoe-asc' | 'yoe-desc' | 'rating-asc' | 'rating-desc' | null;
 
 export interface SearchFiltersType {
     jobTitle?: string[];
