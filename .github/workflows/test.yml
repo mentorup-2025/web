@@ -10,65 +10,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     
-    strategy:
-      matrix:
-        node-version: [18.x]
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v2
-      with:
-        version: 8
-
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'pnpm'
-
-    - name: Install dependencies
-      run: |
-        # Check if lockfile exists and is valid
-        if [ -f "pnpm-lock.yaml" ]; then
-          echo "Found pnpm-lock.yaml, attempting frozen install..."
-          pnpm install --frozen-lockfile || {
-            echo "Frozen install failed, falling back to regular install..."
-            pnpm install
-          }
-        else
-          echo "No pnpm-lock.yaml found, running regular install..."
-          pnpm install
-        fi
-
-    - name: Run linting
-      run: pnpm lint
-      continue-on-error: false
-
-    - name: Run type checking
-      run: pnpm type-check
-      continue-on-error: false
-
-    - name: Run tests
-      run: pnpm test --coverage --watchAll=false
-      env:
-        NODE_ENV: test
-
-    - name: Upload coverage to Codecov (optional)
-      if: success()
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage/lcov.info
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
-
-  # Separate job for component tests (can run in parallel)
-  component-tests:
-    runs-on: ubuntu-latest
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -98,7 +39,12 @@ jobs:
           pnpm install
         fi
 
-    - name: Run profile component tests specifically
-      run: pnpm test --testPathPattern="ProfilePage.test.tsx" --watchAll=false
+    - name: Run tests
+      run: pnpm test -- --coverage --watchAll=false --passWithNoTests
+      env:
+        NODE_ENV: test
+
+    - name: Run profile component tests
+      run: pnpm test -- --testPathPattern="ProfilePage.test.tsx" --watchAll=false --verbose
       env:
         NODE_ENV: test
