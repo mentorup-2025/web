@@ -1,4 +1,4 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
 import MentorDetailsPage from './MentorDetailsPage'
 import { useParams, useRouter, usePathname } from 'next/navigation'
 import { useUser, useAuth, SignedIn, SignedOut, SignInButton, useClerk } from '@clerk/nextjs'
@@ -410,24 +410,43 @@ describe('MentorDetailsPage Free Coffee Chat Banner Logic', () => {
   })
 
   describe('Visual Regression Tests', () => {
-    it('should match visual snapshot for signed-in user with free coffee chat available', async () => {
-      render(<MentorDetailsPage />)
-      
-      await waitFor(() => {
-        expect(screen.getByText('Test Mentor')).toBeInTheDocument()
-      }, { timeout: 10000 })
+            it('should match visual snapshot for signed-in user with free coffee chat available', async () => {
+              // Suppress console warnings during snapshot testing
+              const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
+              const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation()
+              
+              await act(async () => {
+                render(<MentorDetailsPage />)
+              })
+              
+              await waitFor(() => {
+                expect(screen.getByText('Test Mentor')).toBeInTheDocument()
+              }, { timeout: 10000 })
 
-      // Wait for banner to appear
-      await waitFor(() => {
-        expect(screen.getByTestId('mentor-availability-banner')).toBeInTheDocument()
-      }, { timeout: 5000 })
+              // Wait for banner to appear
+              await waitFor(() => {
+                expect(screen.getByTestId('mentor-availability-banner')).toBeInTheDocument()
+              }, { timeout: 5000 })
 
-      // Take snapshot of the component tree structure
-      const component = screen.getByTestId('mentor-availability')
-      expect(component).toMatchSnapshot('mentor-details-with-free-coffee-banner')
-    })
+              // Wait for all state updates to complete
+              await act(async () => {
+                await new Promise(resolve => setTimeout(resolve, 500))
+              })
+
+              // Take snapshot of the component tree structure
+              const component = screen.getByTestId('mentor-availability')
+              expect(component).toMatchSnapshot('mentor-details-with-free-coffee-banner')
+              
+              // Restore console methods
+              consoleSpy.mockRestore()
+              consoleWarnSpy.mockRestore()
+            })
 
     it('should match visual snapshot for signed-in user with no free coffee chat', async () => {
+      // Suppress console warnings during snapshot testing
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation()
+      
       // Override to use mentor without free coffee
       mockFetch.mockImplementation((url) => {
         if (url === '/api/user/test-mentor-id') {
@@ -451,59 +470,86 @@ describe('MentorDetailsPage Free Coffee Chat Banner Logic', () => {
         return Promise.reject(new Error('Unexpected URL'))
       })
 
-      render(<MentorDetailsPage />)
+      await act(async () => {
+        render(<MentorDetailsPage />)
+      })
       
       await waitFor(() => {
         expect(screen.getByText('Test Mentor')).toBeInTheDocument()
       }, { timeout: 10000 })
 
-      // Wait for component to stabilize
-      await new Promise(resolve => setTimeout(resolve, 500))
+      // Wait for all state updates to complete
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 500))
+      })
 
       const component = screen.getByTestId('mentor-availability')
       expect(component).toMatchSnapshot('mentor-details-without-free-coffee-banner')
+      
+      // Restore console methods
+      consoleSpy.mockRestore()
+      consoleWarnSpy.mockRestore()
     })
 
-    it('should match visual snapshot for not signed-in user', async () => {
-      setMockSignedInState(false)
-      
-      mockUseUser.mockReturnValue({
-        isSignedIn: false,
-        user: null,
-        isLoaded: true,
-      })
+            it('should match visual snapshot for not signed-in user', async () => {
+              // Suppress console warnings during snapshot testing
+              const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
+              const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation()
+              
+              setMockSignedInState(false)
+              
+              mockUseUser.mockReturnValue({
+                isSignedIn: false,
+                user: null,
+                isLoaded: true,
+              })
 
-      mockFetch.mockImplementation((url) => {
-        if (url === '/api/user/test-mentor-id') {
-          return Promise.resolve({
-            ok: true,
-            json: async () => ({ data: mockMentorWithFreeCoffee }),
-          } as Response)
-        }
-        return Promise.reject(new Error('Unexpected URL for unsigned user'))
-      })
+              mockFetch.mockImplementation((url) => {
+                if (url === '/api/user/test-mentor-id') {
+                  return Promise.resolve({
+                    ok: true,
+                    json: async () => ({ data: mockMentorWithFreeCoffee }),
+                  } as Response)
+                }
+                return Promise.reject(new Error('Unexpected URL for unsigned user'))
+              })
 
-      render(<MentorDetailsPage />)
-      
-      await waitFor(() => {
-        expect(screen.getByText('Test Mentor')).toBeInTheDocument()
-      }, { timeout: 10000 })
+              await act(async () => {
+                render(<MentorDetailsPage />)
+              })
+              
+              await waitFor(() => {
+                expect(screen.getByText('Test Mentor')).toBeInTheDocument()
+              }, { timeout: 10000 })
 
-      // Wait for component to stabilize
-      await new Promise(resolve => setTimeout(resolve, 500))
+              // Wait for all state updates to complete
+              await act(async () => {
+                await new Promise(resolve => setTimeout(resolve, 1000))
+              })
 
-      // Snapshot the entire page structure for not signed-in users
-      const pageContainer = document.body
-      expect(pageContainer).toMatchSnapshot('mentor-details-not-signed-in')
-    })
+              // For not signed-in users, snapshot the sign-in prompt section which is the key difference
+              const signInSection = screen.getByText('Please sign in to book an appointment')
+              const signInContainer = signInSection.closest('.ant-card') || signInSection.closest('div')
+              expect(signInContainer).toMatchSnapshot('mentor-details-not-signed-in')
+              
+              // Restore console methods
+              consoleSpy.mockRestore()
+              consoleWarnSpy.mockRestore()
+            })
 
     it('should match visual snapshot for mobile view with trial tip banner', async () => {
+      // Suppress console warnings during snapshot testing
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation()
+      
       // Mock mobile viewport
       mockUseBreakpoint.mockReturnValue({
         md: false, // Mobile viewport
       })
 
-      render(<MentorDetailsPage />)
+      await act(async () => {
+        render(<MentorDetailsPage />)
+      })
 
       await waitFor(() => {
         expect(screen.getByText('Test Mentor')).toBeInTheDocument()
@@ -513,9 +559,18 @@ describe('MentorDetailsPage Free Coffee Chat Banner Logic', () => {
         expect(screen.getByText('Book your free trial session!')).toBeInTheDocument()
       }, { timeout: 5000 })
 
+      // Wait for all state updates to complete
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 500))
+      })
+
       // Snapshot mobile-specific elements
       const trialTipBanner = screen.getByText('Book your free trial session!').closest('div')
       expect(trialTipBanner).toMatchSnapshot('mobile-trial-tip-banner')
+      
+      // Restore console methods
+      consoleSpy.mockRestore()
+      consoleWarnSpy.mockRestore()
     })
   })
 

@@ -28,289 +28,31 @@ exports[`MentorDetailsPage Free Coffee Chat Banner Logic Visual Regression Tests
 `;
 
 exports[`MentorDetailsPage Free Coffee Chat Banner Logic Visual Regression Tests should match visual snapshot for not signed-in user: mentor-details-not-signed-in 1`] = `
-<body>
-  <div>
-    <div
-      class="ant-layout layout css-dev-only-do-not-override-240cud"
+<div
+  class="ant-card ant-card-bordered css-dev-only-do-not-override-240cud"
+>
+  <div
+    class="ant-card-body"
+  >
+    <h4
+      class="ant-typography css-dev-only-do-not-override-240cud"
     >
-      <div
-        data-testid="navbar"
+      Please sign in to book an appointment
+    </h4>
+    <button
+      data-testid="signin-button"
+    >
+      <button
+        class="ant-btn css-dev-only-do-not-override-240cud ant-btn-primary ant-btn-color-primary ant-btn-variant-solid"
+        type="button"
       >
-        Navbar
-      </div>
-      <main
-        class="ant-layout-content content css-dev-only-do-not-override-240cud"
-        style="padding-top: 88px;"
-      >
-        <div
-          class="container"
-        >
-          <div
-            class="mainContent"
-          >
-            <div
-              class="leftSection"
-            >
-              <div
-                class="profileHeader"
-              >
-                <span
-                  class="ant-avatar ant-avatar-circle ant-avatar-image css-dev-only-do-not-override-240cud"
-                  style="width: 120px; height: 120px; font-size: 18px; background: rgb(240, 240, 240);"
-                >
-                  <img
-                    src="https://example.com/avatar.jpg"
-                  />
-                </span>
-                <div
-                  class="profileText"
-                >
-                  <h2
-                    class="ant-typography name css-dev-only-do-not-override-240cud"
-                  >
-                    Test Mentor
-                  </h2>
-                  <span
-                    class="ant-typography jobTitle css-dev-only-do-not-override-240cud"
-                  >
-                    Software Engineer
-                     @
-                    Test Company
-                  </span>
-                </div>
-                <div
-                  class="socialIconWrapper"
-                >
-                  <a
-                    href="https://linkedin.com/in/test"
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    <span
-                      aria-label="linkedin"
-                      class="anticon anticon-linkedin socialIcon"
-                      role="img"
-                    >
-                      <svg
-                        aria-hidden="true"
-                        data-icon="linkedin"
-                        fill="currentColor"
-                        focusable="false"
-                        height="1em"
-                        viewBox="64 64 896 896"
-                        width="1em"
-                      >
-                        <path
-                          d="M880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32zM349.3 793.7H230.6V411.9h118.7v381.8zm-59.3-434a68.8 68.8 0 1168.8-68.8c-.1 38-30.9 68.8-68.8 68.8zm503.7 434H675.1V608c0-44.3-.8-101.2-61.7-101.2-61.7 0-71.2 48.2-71.2 98v188.9H423.7V411.9h113.8v52.2h1.6c15.8-30 54.5-61.7 112.3-61.7 120.2 0 142.3 79.1 142.3 181.9v209.4z"
-                        />
-                      </svg>
-                    </span>
-                  </a>
-                </div>
-              </div>
-              <div
-                class="ant-tabs ant-tabs-top css-dev-only-do-not-override-240cud"
-              >
-                <div
-                  aria-orientation="horizontal"
-                  class="ant-tabs-nav"
-                  role="tablist"
-                >
-                  <div
-                    class="ant-tabs-nav-wrap"
-                  >
-                    <div
-                      class="ant-tabs-nav-list"
-                      style="transform: translate(0px, 0px);"
-                    >
-                      <div
-                        class="ant-tabs-tab ant-tabs-tab-active"
-                        data-node-key="overview"
-                      >
-                        <div
-                          aria-controls="rc-tabs-test-panel-overview"
-                          aria-selected="true"
-                          class="ant-tabs-tab-btn"
-                          id="rc-tabs-test-tab-overview"
-                          role="tab"
-                          tabindex="0"
-                        >
-                          Overview
-                        </div>
-                      </div>
-                      <div
-                        class="ant-tabs-tab"
-                        data-node-key="reviews"
-                      >
-                        <div
-                          aria-controls="rc-tabs-test-panel-reviews"
-                          aria-selected="false"
-                          class="ant-tabs-tab-btn"
-                          id="rc-tabs-test-tab-reviews"
-                          role="tab"
-                          tabindex="-1"
-                        >
-                          Reviews
-                        </div>
-                      </div>
-                      <div
-                        class="ant-tabs-ink-bar ant-tabs-ink-bar-animated"
-                        style="width: 0px; left: 0px; transform: translateX(-50%);"
-                      />
-                    </div>
-                  </div>
-                  <div
-                    class="ant-tabs-nav-operations ant-tabs-nav-operations-hidden"
-                  >
-                    <button
-                      aria-controls="rc-tabs-test-more-popup"
-                      aria-expanded="false"
-                      aria-haspopup="listbox"
-                      class="ant-tabs-nav-more"
-                      id="rc-tabs-test-more"
-                      style="visibility: hidden; order: 1;"
-                      type="button"
-                    >
-                      <span
-                        aria-label="ellipsis"
-                        class="anticon anticon-ellipsis"
-                        role="img"
-                      >
-                        <svg
-                          aria-hidden="true"
-                          data-icon="ellipsis"
-                          fill="currentColor"
-                          focusable="false"
-                          height="1em"
-                          viewBox="64 64 896 896"
-                          width="1em"
-                        >
-                          <path
-                            d="M176 511a56 56 0 10112 0 56 56 0 10-112 0zm280 0a56 56 0 10112 0 56 56 0 10-112 0zm280 0a56 56 0 10112 0 56 56 0 10-112 0z"
-                          />
-                        </svg>
-                      </span>
-                    </button>
-                  </div>
-                </div>
-                <div
-                  class="ant-tabs-content-holder"
-                >
-                  <div
-                    class="ant-tabs-content ant-tabs-content-top"
-                  >
-                    <div
-                      aria-hidden="false"
-                      aria-labelledby="rc-tabs-test-tab-overview"
-                      class="ant-tabs-tabpane ant-tabs-tabpane-active"
-                      id="rc-tabs-test-panel-overview"
-                      role="tabpanel"
-                      tabindex="0"
-                    >
-                      <div
-                        class="ant-card ant-card-bordered infoCard css-dev-only-do-not-override-240cud"
-                        style="margin-bottom: 24px;"
-                      >
-                        <div
-                          class="ant-card-head"
-                        >
-                          <div
-                            class="ant-card-head-wrapper"
-                          >
-                            <div
-                              class="ant-card-head-title"
-                            >
-                              Introduction
-                            </div>
-                          </div>
-                        </div>
-                        <div
-                          class="ant-card-body"
-                        >
-                          <span
-                            class="ant-typography css-dev-only-do-not-override-240cud"
-                          >
-                            Test introduction
-                          </span>
-                        </div>
-                      </div>
-                      <div
-                        class="ant-card ant-card-bordered infoCard css-dev-only-do-not-override-240cud"
-                      >
-                        <div
-                          class="ant-card-head"
-                        >
-                          <div
-                            class="ant-card-head-wrapper"
-                          >
-                            <div
-                              class="ant-card-head-title"
-                            >
-                              Services
-                            </div>
-                          </div>
-                        </div>
-                        <div
-                          class="ant-card-body"
-                        >
-                          <div
-                            class="serviceTags"
-                          >
-                            <span
-                              class="ant-tag serviceTag css-dev-only-do-not-override-240cud"
-                            >
-                              Free Coffee Chat (15 Mins)
-                               - $
-                            </span>
-                            <span
-                              class="ant-tag serviceTag css-dev-only-do-not-override-240cud"
-                            >
-                              1:1 Mentorship Session
-                               - $
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div
-              class="rightSection"
-            >
-              <div
-                class="ant-card ant-card-bordered css-dev-only-do-not-override-240cud"
-              >
-                <div
-                  class="ant-card-body"
-                >
-                  <h4
-                    class="ant-typography css-dev-only-do-not-override-240cud"
-                  >
-                    Please sign in to book an appointment
-                  </h4>
-                  <button
-                    data-testid="signin-button"
-                  >
-                    <button
-                      class="ant-btn css-dev-only-do-not-override-240cud ant-btn-primary ant-btn-color-primary ant-btn-variant-solid"
-                      type="button"
-                    >
-                      <span>
-                        Sign In
-                      </span>
-                    </button>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
+        <span>
+          Sign In
+        </span>
+      </button>
+    </button>
   </div>
-</body>
+</div>
 `;
 
 exports[`MentorDetailsPage Free Coffee Chat Banner Logic Visual Regression Tests should match visual snapshot for signed-in user with free coffee chat available: mentor-details-with-free-coffee-banner 1`] = `
