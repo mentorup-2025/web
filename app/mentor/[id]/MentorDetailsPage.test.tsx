@@ -491,8 +491,8 @@ describe('MentorDetailsPage Free Coffee Chat Banner Logic', () => {
       consoleWarnSpy.mockRestore()
     })
 
-            it('should match visual snapshot for not signed-in user', async () => {
-              // Suppress console warnings during snapshot testing
+            it('should show sign-in prompt for not signed-in user', async () => {
+              // Suppress console warnings during testing
               const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
               const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation()
               
@@ -522,15 +522,17 @@ describe('MentorDetailsPage Free Coffee Chat Banner Logic', () => {
                 expect(screen.getByText('Test Mentor')).toBeInTheDocument()
               }, { timeout: 10000 })
 
-              // Wait for all state updates to complete
+              // Wait for component to stabilize
               await act(async () => {
-                await new Promise(resolve => setTimeout(resolve, 1000))
+                await new Promise(resolve => setTimeout(resolve, 500))
               })
 
-              // For not signed-in users, snapshot the sign-in prompt section which is the key difference
-              const signInSection = screen.getByText('Please sign in to book an appointment')
-              const signInContainer = signInSection.closest('.ant-card') || signInSection.closest('div')
-              expect(signInContainer).toMatchSnapshot('mentor-details-not-signed-in')
+              // Verify the sign-in prompt appears (this is the key business logic)
+              expect(screen.getByText('Please sign in to book an appointment')).toBeInTheDocument()
+              expect(screen.getByText('Sign In')).toBeInTheDocument()
+              
+              // Verify MentorAvailability component is NOT rendered for unsigned users
+              expect(screen.queryByTestId('mentor-availability')).not.toBeInTheDocument()
               
               // Restore console methods
               consoleSpy.mockRestore()
