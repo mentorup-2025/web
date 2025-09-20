@@ -69,3 +69,25 @@ export async function waitForUploadModal() {
 export async function waitForModalNotToAppear() {
   await new Promise(resolve => setTimeout(resolve, 500))
 }
+
+/**
+ * Wait for free coffee chat banner to appear
+ */
+export async function waitForFreeCoffeeBanner() {
+  await waitFor(() => {
+    expect(screen.getByText('📣 Your first 15-min coffee chat is on us!')).toBeInTheDocument()
+  }, { timeout: WAIT_OPTIONS.DEFAULT_TIMEOUT })
+}
+
+/**
+ * Check if free coffee chat banner is visible
+ */
+export function expectFreeCoffeeBannerVisible(shouldBeVisible: boolean) {
+  const bannerQuery = screen.queryByText('📣 Your first 15-min coffee chat is on us!')
+  
+  if (shouldBeVisible) {
+    expect(bannerQuery).toBeInTheDocument()
+  } else {
+    expect(bannerQuery).not.toBeInTheDocument()
+  }
+}

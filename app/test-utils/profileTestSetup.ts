@@ -39,6 +39,22 @@ export const MOCK_MENTEE_DATA = {
   resume_url: null
 }
 
+// Free coffee chat service data
+export const FREE_COFFEE_SERVICE = { type: 'Free Coffee Chat (15 Mins)', price: 0 }
+export const PAID_SESSION_SERVICE = { type: '1:1 Mentorship Session', price: 50 }
+export const RESUME_REVIEW_SERVICE = { type: 'Resume Review', price: 25 }
+
+// Service combinations for testing
+export const SERVICES_WITH_FREE_COFFEE = [FREE_COFFEE_SERVICE, PAID_SESSION_SERVICE]
+export const SERVICES_WITHOUT_FREE_COFFEE = [PAID_SESSION_SERVICE, RESUME_REVIEW_SERVICE]
+
+// Coffee chat count scenarios
+export const COFFEE_CHAT_SCENARIOS = {
+  UNUSED: 0,    // User hasn't used free coffee chat
+  USED_ONCE: 1, // User has used it once
+  USED_MULTIPLE: 3, // User has used it multiple times
+} as const
+
 // Common user scenarios for mocking (data only)
 export const USER_SCENARIOS = {
   OWN_MENTOR_PROFILE: {

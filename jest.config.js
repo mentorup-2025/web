@@ -20,6 +20,18 @@ const customJestConfig = {
     '!app/**/*.d.ts',
     '!app/test/**',
   ],
+  // Snapshot testing configuration
+  snapshotSerializers: [
+    // Add custom serializers if needed for better snapshot readability
+  ],
+  // Improve snapshot testing performance
+  maxWorkers: '50%',
+  // Better error reporting for snapshots
+  verbose: true,
+  // Snapshot format options
+  snapshotFormat: {
+    printBasicPrototype: false,
+  },
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

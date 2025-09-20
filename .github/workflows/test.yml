@@ -39,12 +39,33 @@ jobs:
           pnpm install
         fi
 
-    - name: Run tests
+    - name: Type Check
+      run: pnpm type-check
+
+    - name: Lint Code
+      run: pnpm lint
+
+    - name: Run All Tests
       run: pnpm test -- --coverage --watchAll=false --passWithNoTests
       env:
         NODE_ENV: test
+        CI: true
 
-    - name: Run profile component tests
-      run: pnpm test -- --testPathPattern="ProfilePage.test.tsx" --watchAll=false --verbose
-      env:
-        NODE_ENV: test
+    - name: Upload Coverage Reports
+      uses: codecov/codecov-action@v3
+      if: success()
+      with:
+        file: ./coverage/lcov.info
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+    - name: Archive Test Artifacts
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-artifacts
+        path: |
+          coverage/
+          **/__snapshots__/
+        retention-days: 7
