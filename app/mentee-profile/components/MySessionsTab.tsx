@@ -644,6 +644,7 @@ export default function MySessionsTab() {
                                         ? [
                                             <div
                                                 key="write-comment"
+                                                className={styles.actionLink}
                                                 onClick={() => openWriteComment(appt)}
                                                 style={{ cursor: 'pointer' }}
                                             >
@@ -652,6 +653,7 @@ export default function MySessionsTab() {
                                             </div>,
                                             <div
                                                 key="report-issue"
+                                                className={styles.actionLink}
                                                 onClick={() => showReportModal(appt)}
                                                 style={{ cursor: 'pointer' }}
                                             >
@@ -686,6 +688,7 @@ export default function MySessionsTab() {
                                                     : [
                                                         <div
                                                             key="reschedule"
+                                                            className={styles.actionLink}
                                                             onClick={() => {
                                                                 if (appt.service_type === 'Free Coffee Chat (15 Mins)') {
                                                                     return; // 禁用状态，不响应
@@ -703,17 +706,24 @@ export default function MySessionsTab() {
                                                             <CalendarTwoTone style={{ fontSize: 18 }} />
                                                             <div>Reschedule</div>
                                                         </div>,
-                                                        <div key="cancel" onClick={() => showCancelModal(appt)} style={{ cursor: 'pointer' }}>
+                                                        <div key="cancel"
+                                                             className={styles.actionLink}
+                                                             onClick={() => showCancelModal(appt)}
+                                                             style={{ cursor: 'pointer' }}>
                                                             <CloseCircleOutlined style={{ fontSize: 18 }} /><div>Cancel</div>
                                                         </div>,
-                                                        <div key="noshow" onClick={() => showReportModal(appt)} style={{ cursor: 'pointer' }}>
+                                                        <div key="noshow"
+                                                             className={styles.actionLink}
+                                                             onClick={() => showReportModal(appt)}
+                                                             style={{ cursor: 'pointer' }}>
                                                             <FrownOutlined style={{ fontSize: 18 }} /><div>Report Issue</div>
                                                         </div>,
                                                         <Tooltip 
                                                             title={appt.link ? "" : "No meeting link available yet. Please wait for the session to be confirmed."}
                                                         >
                                                             <div 
-                                                                key="join" 
+                                                                key="join"
+                                                                className={styles.actionLink}
                                                                 onClick={() => handleJoinClick(appt)} 
                                                                 style={{ 
                                                                     cursor: appt.link ? 'pointer' : 'not-allowed',

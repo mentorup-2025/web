@@ -11,6 +11,7 @@ export interface Appointment {
     price: number;
     link?: string;  // Google Meet link
     cancel_reason?: string;  // Reason for cancellation
+    description?: string;
 }
 
 export interface CreateAppointmentInput {
@@ -21,6 +22,7 @@ export interface CreateAppointmentInput {
     service_type: string;
     price: number;
     resume_url?: string; // 加上resume的url
+    description?: string;
 }
 
 export interface ConfirmAppointmentPaidInput {

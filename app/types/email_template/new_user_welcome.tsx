@@ -18,7 +18,7 @@ interface NewUserWelcomeProps {
   userEmail: string;  // 如需展示可保留，不展示也没问题
 }
 
-const HERO_URL = '/images/claim.png';
+const HERO_URL = 'https://www.mentorup.info/images/claim.png';
 
 const NewUserWelcomeEmail: React.FC<NewUserWelcomeProps> = ({
                                                               userName,
@@ -69,8 +69,8 @@ const NewUserWelcomeEmail: React.FC<NewUserWelcomeProps> = ({
               </Section>
 
               <Text style={detailLine}>
-                And a <strong>FREE coffee chat</strong> with a mentor — available with mentors who
-                opt in for Free Coffee Chats.
+                And a <strong>FREE coffee chat</strong> with a mentor — available with mentors who opt
+                in for Free Coffee Chats.
               </Text>
             </Section>
 
@@ -92,7 +92,7 @@ const NewUserWelcomeEmail: React.FC<NewUserWelcomeProps> = ({
                 claim your free coffee chat!)
               </Text>
 
-              {/* CTA 按钮（可选） */}
+              {/* CTA 按钮 */}
               <Section style={buttonRow}>
                 <Button href="https://mentorup.info" style={buttonPrimary}>
                   Complete My Profile
@@ -140,37 +140,39 @@ const h1: React.CSSProperties = {
   fontSize: '22px',
   fontWeight: 'bold',
   margin: '0 0 16px',
+  color: '#0A3D91', // 深蓝标题
 };
 
 const h2: React.CSSProperties = {
   fontSize: '18px',
   fontWeight: 'bold',
   margin: '0 0 12px',
+  color: '#0A3D91',
 };
 
 const text: React.CSSProperties = {
   fontSize: '16px',
   lineHeight: '24px',
   margin: '0 0 16px',
-  color: '#111',
+  color: '#111827',
 };
 
 const link: React.CSSProperties = {
-  color: '#0070f3',
+  color: '#1E40AF', // 蓝色链接
   textDecoration: 'underline',
 };
 
 const boxContainer: React.CSSProperties = {
   padding: '20px',
-  backgroundColor: '#f6f9fc',
+  backgroundColor: '#E0F2FE', // 淡蓝背景
   borderRadius: '8px',
   marginBottom: '24px',
 };
 
 const promoBox: React.CSSProperties = {
   padding: '20px',
-  backgroundColor: '#fff7e6',
-  border: '1px solid #ffe7ba',
+  backgroundColor: '#EFF6FF', // 浅蓝
+  border: '1px solid #BFDBFE',
   borderRadius: 8,
   marginBottom: 24,
 };
@@ -179,16 +181,18 @@ const promoTitle: React.CSSProperties = {
   fontSize: 16,
   fontWeight: 700,
   margin: '0 0 8px',
+  color: '#1E3A8A',
 };
 
 const detailLine: React.CSSProperties = {
   margin: '8px 0',
   fontSize: 14,
   lineHeight: '22px',
+  color: '#1E293B',
 };
 
 const codeBox: React.CSSProperties = {
-  backgroundColor: '#111827',
+  backgroundColor: '#1E3A8A',
   borderRadius: 6,
   padding: '10px 14px',
   display: 'inline-block',
@@ -209,13 +213,13 @@ const li: React.CSSProperties = {
 
 const buttonRow: React.CSSProperties = {
   display: 'flex',
-  gap: 12,
-  marginTop: 16,
+  gap: 20, // ✅ 增大按钮之间的间距
+  marginTop: 20,
   flexWrap: 'wrap',
 };
 
 const buttonPrimary: React.CSSProperties = {
-  backgroundColor: '#0070f3',
+  backgroundColor: '#2563EB', // 蓝色按钮
   borderRadius: 6,
   color: '#fff',
   fontSize: 14,
@@ -223,30 +227,30 @@ const buttonPrimary: React.CSSProperties = {
   textDecoration: 'none',
   textAlign: 'center',
   display: 'inline-block',
-  padding: '12px 16px',
+  padding: '12px 20px',
 };
 
 const buttonSecondary: React.CSSProperties = {
   backgroundColor: '#ffffff',
   borderRadius: 6,
-  color: '#0070f3',
-  border: '1px solid #0070f3',
+  color: '#2563EB',
+  border: '1px solid #2563EB',
   fontSize: 14,
   fontWeight: 700,
   textDecoration: 'none',
   textAlign: 'center',
   display: 'inline-block',
-  padding: '12px 16px',
+  padding: '12px 20px',
 };
 
 const hr: React.CSSProperties = {
-  borderColor: '#e6ebf1',
+  borderColor: '#E5E7EB',
   margin: '20px 0',
 };
 
 const footer: React.CSSProperties = {
   fontSize: '14px',
-  color: '#666666',
+  color: '#6B7280',
   marginTop: '16px',
 };
 
