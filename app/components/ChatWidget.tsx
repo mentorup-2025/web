@@ -44,9 +44,11 @@ function SuggestionButtons({ onSelect }: { onSelect: (msg: string) => void }) {
 function GuestChatContent({
                               messages,
                               onSelect,
+                              isMentor,
                           }: {
     messages: { role: string; content: string }[];
     onSelect: (msg: string) => void;
+    isMentor: boolean;
 }) {
     // 底部锚点（未登录视图）
     const endRef = useRef<HTMLDivElement | null>(null);
@@ -56,7 +58,13 @@ function GuestChatContent({
     }, [messages]);
 
     return (
-        <div className="fixed bottom-20 right-6 w-80 h-[500px] bg-white shadow-2xl rounded-xl z-50 flex flex-col text-[14px]">
+        <div
+            className={`
+        fixed right-6 w-80 h-[500px] bg-white shadow-2xl rounded-xl
+        z-[9999] flex flex-col text-[14px]
+        ${isMentor ? "bottom-40 md:bottom-28" : "bottom-20"}
+      `}
+        >
             <div className="flex-1 p-4 overflow-y-auto space-y-2">
                 {messages.map((msg, i) => (
                     <div key={i}>
@@ -94,7 +102,8 @@ function GuestChatContent({
 export default function ChatWidget() {
     const pathname = usePathname();
     const { isLoaded, isSignedIn, user } = useUser();
-
+    const path = pathname ?? "";
+    const isMentor: boolean = path === "/mentor" || path.startsWith("/mentor/");
     const [open, setOpen] = useState(false);
     const [messages, setMessages] = useState([
         { role: "system", content: "What could we help you with?" },
@@ -205,14 +214,25 @@ export default function ChatWidget() {
         <>
             <button
                 onClick={() => setOpen(!open)}
-                className="fixed bottom-6 right-6 w-16 h-16 bg-blue-500 text-white rounded-full shadow-lg flex items-center justify-center z-50"
+                className={`
+          fixed right-6 w-16 h-16 bg-blue-500 text-white rounded-full shadow-lg
+          flex items-center justify-center
+          z-[9999]
+          ${isMentor ? "bottom-28 md:bottom-6" : "bottom-6"}
+        `}
             >
                 <img src="/chat-icon.png" alt="Chat" className="w-8 h-8" />
             </button>
 
             {open &&
                 (isSignedIn ? (
-                    <div className="fixed bottom-20 right-6 w-80 h-[500px] bg-white shadow-2xl rounded-xl z-50 flex flex-col text-[13px]">
+                    <div
+                        className={`
+              fixed right-6 w-80 h-[500px] bg-white shadow-2xl rounded-xl
+              z-[9999] flex flex-col text-[13px]
+              ${isMentor ? "bottom-40 md:bottom-28" : "bottom-20"}
+            `}
+                    >
                         <div className="flex-1 p-4 overflow-y-auto space-y-2">
                             {messages.map((msg, i) => (
                                 <div key={i}>
@@ -246,7 +266,11 @@ export default function ChatWidget() {
                         </div>
                     </div>
                 ) : (
-                    <GuestChatContent messages={messages} onSelect={handleUserInput} />
+                    <GuestChatContent
+                        messages={messages}
+                        onSelect={handleUserInput}
+                        isMentor={isMentor}
+                    />
                 ))}
         </>
     );

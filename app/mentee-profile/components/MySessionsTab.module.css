@@ -46,3 +46,38 @@
         margin: 0;
     }
 }
+
+/* 给卡片动作区做作用域，避免全局污染 */
+.sessionCard :global(.ant-card-actions) {
+    border-top-color: #e6f4ff; /* 轻蓝分隔线，可选 */
+}
+
+/* 动作项统一蓝色（文字+图标） */
+.actionLink {
+    color: #1677ff;              /* antd 5 默认品牌蓝 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    transition: color 0.15s ease, opacity 0.15s ease;
+    text-align: center;
+}
+
+.actionLink:hover {
+    color: #0958d9;              /* hover 深一点的蓝 */
+}
+
+/* 图标也跟着变蓝 */
+.actionLink :global(.anticon) {
+    color: inherit;
+}
+
+/* 兼容双击 / Active 时的反馈 */
+.actionLink:active {
+    color: #003eb3;
+}
+
+/* 如果你想让“不可用”的蓝色也显式一些，可以加这条（配合内联 opacity 0.5） */
+.actionLink[style*="not-allowed"] {
+    pointer-events: none; /* 真正禁止点击（可选） */
+}

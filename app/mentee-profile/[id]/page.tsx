@@ -412,24 +412,33 @@ export default function MenteeProfilePage() {
           <div className={styles.container}>
             <div className={styles.profileHeader}>
               <div className={styles.profileInfo}>
-                <div style={{ position: 'relative', display: 'inline-block' }}>
+                <div className={styles.avatarWrap}>
                   <Avatar
                       size={120}
                       src={userData.profile_url || '/placeholder-avatar.png'}
                       className={styles.avatar}
                       style={{ cursor: isOwnProfile ? 'pointer' : 'default' }}
                       onClick={() => {
-                        if (isOwnProfile) {
-                          console.log('[MenteeProfile] Avatar clicked, opening upload modal');
-                          setUploadImageVisible(true);
-                        }
+                        if (isOwnProfile) setUploadImageVisible(true);
                       }}
                   />
+                  {isOwnProfile && (
+                      <button
+                          type="button"
+                          className={styles.avatarEditBtn}
+                          aria-label="Edit profile photo"
+                          onClick={() => setUploadImageVisible(true)}
+                      >
+                        <EditOutlined />
+                      </button>
+                  )}
                 </div>
                 <div className={styles.profileText}>
                   <Space align="center">
-                    <Title level={2} style={{ margin: 0 }}>{userData.username}</Title>
-                    <EditOutlined style={{ cursor: 'pointer' }} onClick={openEditProfileModal} />
+                      <Title level={2} style={{ margin: 0 }}>{userData.username}</Title>
+                      {isOwnProfile && (
+                          <EditOutlined style={{ cursor: 'pointer' }} onClick={openEditProfileModal} />
+                      )}
                   </Space>
                   <Text className={styles.title} style={{ display: 'block', marginTop: 4 }}>
                     Target Job:&nbsp;

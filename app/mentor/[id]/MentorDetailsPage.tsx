@@ -47,7 +47,7 @@ export default function MentorDetailsPage() {
     const [qrScanned, setQrScanned] = useState(false);
     const [isPaymentFailedModalVisible, setIsPaymentFailedModalVisible] = useState(false);
     const [userResume, setUserResume] = useState<string | null>(null);
-    const [coffeeChatCount, setCoffeeChatCount] = useState<number>(0);
+    const [coffeeChatCount, setCoffeeChatCount] = useState<number | null>(null);
 
     const mentorIdForReviews = mentor?.user_id;
 
@@ -66,7 +66,10 @@ export default function MentorDetailsPage() {
             (s: any) => typeof s?.type === 'string' && /free coffee chat/i.test(s.type)
         );
 
-    const showFreeTrialBanner = hasFreeCoffee && coffeeChatCount === 0;
+    const showFreeTrialBanner =
+        hasFreeCoffee &&
+        coffeeChatCount !== null &&
+        coffeeChatCount === 0;
 
     useEffect(() => {
         // 初始根据 hash 设定 tab
@@ -273,7 +276,7 @@ export default function MentorDetailsPage() {
                                 start_time: startTimeObj.toISOString(),
                                 end_time: endTimeObj.toISOString(),
                                 service_type: supportType,
-                                description,
+                                description: description.trim(),
                                 price: 0,
                             }),
                         });
@@ -311,7 +314,8 @@ export default function MentorDetailsPage() {
         ? mentor.services.map((service: any) => {
             const type = typeof service === 'string' ? service : service.type;
             const isFreeChat = isFreeCoffeeChat(type);
-            const usedUp = isFreeChat && coffeeChatCount > 0;
+            const coffeeCount = coffeeChatCount ?? 0;
+            const usedUp = isFreeChat && coffeeCount > 0;
 
             return {
                 value: type,
@@ -451,7 +455,7 @@ export default function MentorDetailsPage() {
                                             setStep(2);
                                             setIsBookingModalVisible(true);
                                         }}
-                                        coffeeChatCount={coffeeChatCount}
+                                        coffeeChatCount={coffeeChatCount ?? 0}
                                     />
                                 )}
 
@@ -489,7 +493,7 @@ export default function MentorDetailsPage() {
                                                     setStep(2);
                                                     setIsBookingModalVisible(true);
                                                 }}
-                                                coffeeChatCount={coffeeChatCount}
+                                                coffeeChatCount={coffeeChatCount ?? 0}
                                             />
                                         </Modal>
                                     </>

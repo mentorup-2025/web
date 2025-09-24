@@ -525,18 +525,26 @@ export default function MentorProfilePage() {
         <div className={styles.container}>
           <div className={styles.profileHeader}>
             <div className={styles.profileInfo}>
-              <div style={{ position: 'relative', display: 'inline-block' }}>
+              <div className={styles.avatarWrap}>
                 <Avatar
-                  size={120}
-                  src={mentorData?.profile_url || "/placeholder-avatar.png"}
-                  className={styles.avatar}
-                  style={{ cursor: isOwnProfile ? 'pointer' : 'default' }}
-                  onClick={() => {
-                    if (isOwnProfile) {
-                      setUploadImageVisible(true);
-                    }
-                  }}
+                    size={120}
+                    src={mentorData?.profile_url || "/placeholder-avatar.png"}
+                    className={styles.avatar}
+                    style={{ cursor: isOwnProfile ? 'pointer' : 'default' }}
+                    onClick={() => {
+                      if (isOwnProfile) setUploadImageVisible(true);
+                    }}
                 />
+                {isOwnProfile && (
+                    <button
+                        type="button"
+                        className={styles.avatarEditBtn}
+                        aria-label="Edit profile photo"
+                        onClick={() => setUploadImageVisible(true)}
+                    >
+                      <EditOutlined />
+                    </button>
+                )}
               </div>
               <div className={styles.profileText}>
                 {/* —— 在这里展示 username、title、company，并加上编辑按钮 —— */}
@@ -545,8 +553,8 @@ export default function MentorProfilePage() {
                     {mentorData.username}
                   </Title>
                   <EditOutlined
-                    style={{ cursor: "pointer" }}
-                    onClick={() => setEditProfileVisible(true)}
+                      style={{ cursor: "pointer" }}
+                      onClick={() => setEditProfileVisible(true)}
                   />
                 </Space>
                 <Text

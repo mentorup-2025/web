@@ -15,6 +15,7 @@ export async function createAppointment(input: CreateAppointmentInput): Promise<
           end_time: input.end_time,
           service_type: input.service_type,
           price: input.price,
+          description: input.description ?? null,
         }
       });
 
