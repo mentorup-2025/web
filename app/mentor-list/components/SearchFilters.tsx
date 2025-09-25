@@ -184,21 +184,6 @@ export default function SearchFilters({
                     </Checkbox.Group>
                 </Panel>
 
-                <Panel header={renderHeader(<AppstoreOutlined />, 'Industry')} key="industry">
-                    <Checkbox.Group
-                        className={styles.checkboxGroupCol}
-                        value={value.industries ?? []}
-                        onChange={(vals) => patch({ industries: vals as string[] })}
-                    >
-                        {industries.map((industry) => (
-                            <label key={industry} className={styles.filterItem}>
-                                <Checkbox value={industry} className={styles.filterCheckbox} />
-                                <span className={styles.filterLabel}>{industry}</span>
-                            </label>
-                        ))}
-                    </Checkbox.Group>
-                </Panel>
-
                 <Panel header={renderHeader(<ToolOutlined />, 'Service')} key="serviceType">
                     <Checkbox.Group
                         className={styles.checkboxGroupCol}
@@ -209,21 +194,6 @@ export default function SearchFilters({
                             <label key={type} className={styles.filterItem}>
                                 <Checkbox value={type} className={styles.filterCheckbox} />
                                 <span className={styles.filterLabel}>{type}</span>
-                            </label>
-                        ))}
-                    </Checkbox.Group>
-                </Panel>
-
-                <Panel header={renderHeader(<BankOutlined />, 'Company')} key="company">
-                    <Checkbox.Group
-                        className={styles.checkboxGroupCol}
-                        value={value.company ?? []}
-                        onChange={(vals) => patch({ company: vals as string[] })}
-                    >
-                        {uniqueCompanies?.map((company) => (
-                            <label key={company} className={styles.filterItem}>
-                                <Checkbox value={company} className={styles.filterCheckbox} />
-                                <span className={styles.filterLabel}>{company}</span>
                             </label>
                         ))}
                     </Checkbox.Group>
@@ -248,6 +218,36 @@ export default function SearchFilters({
                             marks={{ [minYoe]: `${minYoe}`, [maxYoe]: `${maxYoe}+` }}
                         />
                     </div>
+                </Panel>
+
+                <Panel header={renderHeader(<BankOutlined />, 'Company')} key="company">
+                    <Checkbox.Group
+                        className={styles.checkboxGroupCol}
+                        value={value.company ?? []}
+                        onChange={(vals) => patch({ company: vals as string[] })}
+                    >
+                        {uniqueCompanies?.map((company) => (
+                            <label key={company} className={styles.filterItem}>
+                                <Checkbox value={company} className={styles.filterCheckbox} />
+                                <span className={styles.filterLabel}>{company}</span>
+                            </label>
+                        ))}
+                    </Checkbox.Group>
+                </Panel>
+
+                <Panel header={renderHeader(<AppstoreOutlined />, 'Industry')} key="industry">
+                    <Checkbox.Group
+                        className={styles.checkboxGroupCol}
+                        value={value.industries ?? []}
+                        onChange={(vals) => patch({ industries: vals as string[] })}
+                    >
+                        {industries.map((industry) => (
+                            <label key={industry} className={styles.filterItem}>
+                                <Checkbox value={industry} className={styles.filterCheckbox} />
+                                <span className={styles.filterLabel}>{industry}</span>
+                            </label>
+                        ))}
+                    </Checkbox.Group>
                 </Panel>
 
                 <Panel header={renderHeader(<ToolOutlined />, 'Price Range')} key="price">
