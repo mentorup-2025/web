@@ -212,15 +212,13 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                         }
                         hoverable
                         onClick={() => {
-                            const r = useRouter();
-                            r.push(`/mentor/${user.user_id}`);
+                            router.push(`/mentor/${user.user_id}`);
                         }}
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') {
-                                const r = useRouter();
-                                r.push(`/mentor/${user.user_id}`);
+                                router.push(`/mentor/${user.user_id}`);
                             }
                         }}
                         style={{ cursor: 'pointer' }}

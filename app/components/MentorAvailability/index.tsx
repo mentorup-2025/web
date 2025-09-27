@@ -78,7 +78,7 @@ export default function MentorAvailability({
     const [heldSlots, setHeldSlots] = useState<Set<string>>(new Set());
     const [userTimezone, setUserTimezone] = useState('');
 
-    // ✅ 只有 mentor 提供 Free Coffee Chat 且用户未使用时才显示 Banner
+    // ✅ 只有 mentor 提供 Free Coffee Chat 且用户未使用时才显示 Banner (对所有用户显示)
     const hasFreeCoffee = Array.isArray(services) &&
         services.some((s) => typeof s?.type === 'string' && /free coffee chat/i.test(s.type));
     const showFreeBanner = hasFreeCoffee && coffeeChatCount === 0;
