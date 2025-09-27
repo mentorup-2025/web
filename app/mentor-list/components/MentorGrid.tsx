@@ -54,7 +54,7 @@ const getReviewCount = (obj: any): number | null => {
     return n != null ? Number(n) : null;
 };
 
-// ✅ 新增：提取平均评分（m.avg_rating 或顶层 avg_rating）
+// 提取平均评分（m.avg_rating 或顶层 avg_rating）
 const getAvgRating = (u: Mentor): number | null => {
     const m = asMentorObj(u);
     const raw = m?.avg_rating ?? (u as any)?.avg_rating;
@@ -66,12 +66,17 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
     const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
     const router = useRouter();
 
+    // 统一的跳转函数（避免在事件里再次调用 useRouter）
+    const goProfile = (id: string | number) => {
+        router.push(`/mentor/${id}`);
+    };
+
     useEffect(() => {
         let filtered = mentors.filter(u => {
             const m = asMentorObj(u);
 
             if (filters.jobTitle?.length) {
-                const title = m?.title?.toLowerCase() ?? "";
+                const title = m?.title?.toLowerCase() ?? '';
                 const match = filters.jobTitle.some(jt => title.includes(jt.toLowerCase()));
                 if (!match) return false;
             }
@@ -106,7 +111,8 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
             return true;
         });
 
-        const rankOf = (u: Mentor) => (asMentorObj(u)?.default_ranking ?? Number.POSITIVE_INFINITY);
+        const rankOf = (u: Mentor) =>
+            asMentorObj(u)?.default_ranking ?? Number.POSITIVE_INFINITY;
 
         const tie = (a: Mentor, b: Mentor) => {
             const pa = getMentorPrice(a), pb = getMentorPrice(b);
@@ -119,7 +125,7 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
             return (a.username || '').localeCompare(b.username || '');
         };
 
-        // ✅ 增加对 rating-asc / rating-desc 的处理
+        // 增加对 rating-asc / rating-desc 的处理
         if (filters.sort) {
             filtered = [...filtered].sort((a, b) => {
                 switch (filters.sort) {
@@ -131,8 +137,6 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                         return (asMentorObj(a)?.years_of_experience ?? 0) - (asMentorObj(b)?.years_of_experience ?? 0) || rankOf(a) - rankOf(b);
                     case 'yoe-desc':
                         return (asMentorObj(b)?.years_of_experience ?? 0) - (asMentorObj(a)?.years_of_experience ?? 0) || rankOf(a) - rankOf(b);
-
-                    // --- 新增两种评分排序 ---
                     case 'rating-desc': {
                         const ra = getAvgRating(a); // 高 -> 低；无评分排在后面
                         const rb = getAvgRating(b);
@@ -149,7 +153,6 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                         if (va !== vb) return va - vb;
                         return rankOf(a) - rankOf(b) || tie(a, b);
                     }
-
                     default:
                         return rankOf(a) - rankOf(b) || tie(a, b);
                 }
@@ -161,14 +164,8 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
         setFilteredMentors(filtered);
     }, [mentors, filters]);
 
-    const goProfile = (id: string | number) => {
-        const router = useRouter();
-        router.push(`/mentor/${id}`);
-    };
-
-    // ……（其余渲染代码保持不变，原样拷贝即可）……
-    // 下面是你已有的渲染部分，不变：
     if (loading) return <div>Loading...</div>;
+
     if (filteredMentors.length === 0) {
         return (
             <div className={styles.noResults}>
@@ -176,6 +173,7 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
             </div>
         );
     }
+
     return (
         <div className={styles.mentorGrid}>
             {filteredMentors.map(user => {
@@ -211,22 +209,22 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                             )
                         }
                         hoverable
-                        onClick={() => {
-                            const r = useRouter();
-                            r.push(`/mentor/${user.user_id}`);
-                        }}
-                        role="button"
+                        onClick={() => goProfile(user.user_id)}        // ✅ 使用外层 router
+                        role="link"                                     // ✅ 更合适的语义
                         tabIndex={0}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                                const r = useRouter();
-                                r.push(`/mentor/${user.user_id}`);
+                        onKeyDown={(e) => {                             // ✅ 可访问性：Enter/空格
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                goProfile(user.user_id);
                             }
                         }}
                         style={{ cursor: 'pointer' }}
                     >
                         <div className={styles.mentorInfo}>
-                            <h3 className={styles.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                            <h3
+                                className={styles.name}
+                                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}
+                            >
                                 {user.username}
 
                                 {avgRating != null && (
@@ -268,7 +266,10 @@ export default function MentorGrid({ filters, mentors, loading }: MentorGridProp
                             <div className={styles.mentorPrice}>
                                 {hourly != null ? `$${hourly}/hr` : 'Free'}
                             </div>
-                            <Link href={`/mentor/${user.user_id}`} onClick={(e) => e.stopPropagation()}>
+                            <Link
+                                href={`/mentor/${user.user_id}`}
+                                onClick={(e) => e.stopPropagation()}        // 避免按钮点击触发整卡片跳转
+                            >
                                 <Button
                                     type="primary"
                                     size="middle"
