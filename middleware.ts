@@ -6,6 +6,7 @@ const isPublicRoute = createRouteMatcher([
   '/signup(.*)', 
   '/signup(.*)',
   '/api/availability/get(.*)',
+  '/api/availability/view(.*)',
   '/mentor-list(.*)',
   '/mentor/(.*)', // Allow public access to mentor detail pages
   '/api/user/(.*)', // Allow public access to user data for mentor profiles
