@@ -1,6 +1,6 @@
 'use client';
 
-import { Layout, Collapse, Checkbox, Slider, Divider, message } from 'antd';
+import { Layout, Collapse, Checkbox, Slider, Divider, message, Input } from 'antd';
 import { UserOutlined, AppstoreOutlined, ToolOutlined, BankOutlined, FieldTimeOutlined, GiftOutlined } from '@ant-design/icons';
 
 import styles from '../search.module.css';
@@ -41,6 +41,14 @@ export default function SearchFilters({
     const inFlightRef = React.useRef(false);
     const controllerRef = React.useRef<AbortController | null>(null);
     const wantedRef = React.useRef<boolean>(Boolean(value.availableAsapWithin7Days));
+
+    // Company text search
+    const [companyQuery, setCompanyQuery] = React.useState('');
+    const filteredCompanies = React.useMemo(() => {
+        const q = companyQuery.trim().toLowerCase();
+        if (!q) return uniqueCompanies;
+        return uniqueCompanies.filter((c) => c.toLowerCase().includes(q));
+    }, [companyQuery, uniqueCompanies]);
 
     // 只上报 patch，由父组件合并
     const patch = (p: Partial<SearchFiltersType>) => {
@@ -131,6 +139,47 @@ export default function SearchFilters({
 
     const disableASAPCheckbox = false; // 允许随时点/取消
 
+    // 将选中的显示项映射回实际的服务类型
+    const mapSelectedToServiceTypes = (selectedDisplays: string[]): string[] => {
+        const mapping = {
+            'Free Coffee Chat (15 Mins)': ['Free Coffee Chat (15 Mins)'],
+            'Resume Review': ['Resume Review', 'Job Search Guidance'],
+            'Mock Interview': ['Mock Interview', 'Behavioral Question Coaching'],
+            'Career & Promotion': [
+                'General Career Advice',
+                'Salary Negotiation',
+                'Promotion Strategy',
+                'My Company / Role Deep Dive'
+            ],
+            'Grad School Application Advice': ['Grad School Application Advice']
+        };
+
+        return selectedDisplays.flatMap(display => mapping[display as keyof typeof mapping] || []);
+    };
+
+// 将实际的服务类型映射回显示项（用于初始化选中状态）
+    const getCheckedServiceTypes = (serviceTypes: string[]): string[] => {
+        const mapping = [
+            { display: 'Free Coffee Chat (15 Mins)', values: ['Free Coffee Chat (15 Mins)'] },
+            { display: 'Resume Review', values: ['Resume Review', 'Job Search Guidance'] },
+            { display: 'Mock Interview', values: ['Mock Interview', 'Behavioral Question Coaching'] },
+            {
+                display: 'Career & Promotion',
+                values: [
+                    'General Career Advice',
+                    'Salary Negotiation',
+                    'Promotion Strategy',
+                    'My Company / Role Deep Dive'
+                ]
+            },
+            { display: 'Grad School Application Advice', values: ['Grad School Application Advice'] }
+        ];
+
+        return mapping
+            .filter(item => item.values.some(value => serviceTypes.includes(value)))
+            .map(item => item.display);
+    };
+
     return (
         <Sider width={280} className={styles.sider}>
             <div className={styles.checkboxGroupCol} style={{ padding: '12px 16px 4px' }}>
@@ -143,9 +192,9 @@ export default function SearchFilters({
                     />
                     <FieldTimeOutlined className={styles.filterIcon} />
                     <span className={styles.filterLabel}>
-    {loadingASAP && !value.availableAsapWithin7Days ? 'Loading… ' : ''}
+            {loadingASAP && !value.availableAsapWithin7Days ? 'Loading… ' : ''}
                         Available ASAP (in 7 days)
-  </span>
+          </span>
                 </label>
 
                 <label className={styles.filterItem}>
@@ -157,7 +206,6 @@ export default function SearchFilters({
                     <GiftOutlined className={styles.filterIcon} />
                     <span className={styles.filterLabel}>Offers Free Coffee Chat</span>
                 </label>
-
             </div>
 
             <Divider style={{ margin: '8px 0' }} />
@@ -187,13 +235,36 @@ export default function SearchFilters({
                 <Panel header={renderHeader(<ToolOutlined />, 'Service')} key="serviceType">
                     <Checkbox.Group
                         className={styles.checkboxGroupCol}
-                        value={value.serviceTypes ?? []}
-                        onChange={(vals) => patch({ serviceTypes: vals as string[] })}
+                        value={getCheckedServiceTypes(value.serviceTypes ?? [])}
+                        onChange={(vals) => patch({ serviceTypes: mapSelectedToServiceTypes(vals as string[]) })}
                     >
-                        {serviceTypes.map((type) => (
-                            <label key={type} className={styles.filterItem}>
-                                <Checkbox value={type} className={styles.filterCheckbox} />
-                                <span className={styles.filterLabel}>{type}</span>
+                        {[
+                            { display: 'Free Coffee Chat (15 Mins)', values: ['Free Coffee Chat (15 Mins)'] },
+                            {
+                                display: 'Resume Review',
+                                values: ['Resume review', 'Job Search Guidance']
+                            },
+                            {
+                                display: 'Mock Interview',
+                                values: ['Mock Interview', 'Behavioral Question Coaching']
+                            },
+                            {
+                                display: 'Career & Promotion',
+                                values: [
+                                    'General Career Advice',
+                                    'Salary Negotiation',
+                                    'Promotion Strategy',
+                                    'My Company / Role Deep Dive'
+                                ]
+                            },
+                            {
+                                display: 'Grad School Application Advice',
+                                values: ['Grad School Application Advice']
+                            }
+                        ].map((item) => (
+                            <label key={item.display} className={styles.filterItem}>
+                                <Checkbox value={item.display} className={styles.filterCheckbox} />
+                                <span className={styles.filterLabel}>{item.display}</span>
                             </label>
                         ))}
                     </Checkbox.Group>
@@ -221,17 +292,35 @@ export default function SearchFilters({
                 </Panel>
 
                 <Panel header={renderHeader(<BankOutlined />, 'Company')} key="company">
+                    {/* 🔎 文本搜索框（顶部） */}
+                    <div style={{ padding: '0 8px 8px' }}>
+                        <Input
+                            allowClear
+                            placeholder="Search company..."
+                            value={companyQuery}
+                            onChange={(e) => setCompanyQuery(e.target.value)}
+                            size="middle"
+                        />
+                    </div>
+
                     <Checkbox.Group
                         className={styles.checkboxGroupCol}
                         value={value.company ?? []}
                         onChange={(vals) => patch({ company: vals as string[] })}
                     >
-                        {uniqueCompanies?.map((company) => (
+                        {(filteredCompanies.length > 0 ? filteredCompanies : []).map((company) => (
                             <label key={company} className={styles.filterItem}>
                                 <Checkbox value={company} className={styles.filterCheckbox} />
                                 <span className={styles.filterLabel}>{company}</span>
                             </label>
                         ))}
+
+                        {/* 空状态（无匹配项） */}
+                        {filteredCompanies.length === 0 && (
+                            <div style={{ padding: '8px 12px', color: 'var(--ant-color-text-tertiary)' }}>
+                                No companies found
+                            </div>
+                        )}
                     </Checkbox.Group>
                 </Panel>
 
