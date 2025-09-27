@@ -442,71 +442,73 @@ export default function MentorDetailsPage() {
                         </div>
 
                         <div className={styles.rightSection}>
-                            <SignedIn>
-                                <Title level={3} className={styles.availabilityHeader}>Mentor's Availability</Title>
+                            <Title level={3} className={styles.availabilityHeader}>Mentor's Availability</Title>
 
-                                {/* 桌面端：直接展示 */}
-                                {!isMobile && (
-                                    <MentorAvailability
-                                        mentorId={mentor.user_id}
-                                        services={mentor.services || []}
-                                        onSlotSelect={(slot) => setSelectedSlot(slot)}
-                                        onBook={() => {
-                                            setStep(2);
-                                            setIsBookingModalVisible(true);
-                                        }}
-                                        coffeeChatCount={coffeeChatCount ?? 0}
-                                    />
-                                )}
+                            {/* 桌面端：直接展示 */}
+                            {!isMobile && (
+                                <MentorAvailability
+                                    mentorId={mentor.user_id}
+                                    services={mentor.services || []}
+                                    onSlotSelect={(slot) => setSelectedSlot(slot)}
+                                    onBook={() => {
+                                        // Check authentication before opening booking modal
+                                        if (!isSignedIn) {
+                                            router.push('/login');
+                                            return;
+                                        }
+                                        setStep(2);
+                                        setIsBookingModalVisible(true);
+                                    }}
+                                    coffeeChatCount={coffeeChatCount ?? 0}
+                                />
+                            )}
 
-                                {/* 移动端：按钮 + 弹窗 */}
-                                {isMobile && (
-                                    <>
-                                        <Card>
-                                            <Button
-                                                type="primary"
-                                                block
-                                                onClick={() => setIsAvailabilityModalOpen(true)}
-                                            >
-                                                Check Availability
-                                            </Button>
-                                        </Card>
-
-                                        <Modal
-                                            title={<div style={{fontWeight: 600, fontSize: 18}}>Book
-                                                Session</div>}  // ✅ 第一行写“Book Session”
-                                            open={isAvailabilityModalOpen}
-                                            footer={null}
-                                            onCancel={() => setIsAvailabilityModalOpen(false)}
-                                            width="100%"
-                                            style={{top: 16}}
-                                            bodyStyle={{paddingTop: 8, paddingBottom: 8}}
-                                            getContainer={() => document.body}
-                                            zIndex={10900}
+                            {/* 移动端：按钮 + 弹窗 */}
+                            {isMobile && (
+                                <>
+                                    <Card>
+                                        <Button
+                                            type="primary"
+                                            block
+                                            onClick={() => setIsAvailabilityModalOpen(true)}
                                         >
-                                            <MentorAvailability
-                                                mentorId={mentor.user_id}
-                                                services={mentor.services || []}
-                                                onSlotSelect={(slot) => setSelectedSlot(slot)}
-                                                onBook={() => {
-                                                    setIsAvailabilityModalOpen(false); // 选好后先收起弹窗
-                                                    setStep(2);
-                                                    setIsBookingModalVisible(true);
-                                                }}
-                                                coffeeChatCount={coffeeChatCount ?? 0}
-                                            />
-                                        </Modal>
-                                    </>
-                                )}
-                            </SignedIn>
-                            <SignedOut>
-                                <Card>
-                                    <Title level={4}>Please sign in to book an appointment</Title>
-                                    <SignInButton mode="modal">
-                                        <Button type="primary">Sign In</Button>
-                                    </SignInButton>
-                                </Card>
-                            </SignedOut>
+                                            Check Availability
+                                        </Button>
+                                    </Card>
+
+                                    <Modal
+                                        title={<div style={{fontWeight: 600, fontSize: 18}}>Book
+                                            Session</div>}  // ✅ 第一行写"Book Session"
+                                        open={isAvailabilityModalOpen}
+                                        footer={null}
+                                        onCancel={() => setIsAvailabilityModalOpen(false)}
+                                        width="100%"
+                                        style={{top: 16}}
+                                        bodyStyle={{paddingTop: 8, paddingBottom: 8}}
+                                        getContainer={() => document.body}
+                                        zIndex={10900}
+                                    >
+                                        <MentorAvailability
+                                            mentorId={mentor.user_id}
+                                            services={mentor.services || []}
+                                            onSlotSelect={(slot) => setSelectedSlot(slot)}
+                                            onBook={() => {
+                                                // Check authentication before opening booking modal
+                                                if (!isSignedIn) {
+                                                    setIsAvailabilityModalOpen(false);
+                                                    router.push('/login');
+                                                    return;
+                                                }
+                                                setIsAvailabilityModalOpen(false); // 选好后先收起弹窗
+                                                setStep(2);
+                                                setIsBookingModalVisible(true);
+                                            }}
+                                            coffeeChatCount={coffeeChatCount ?? 0}
+                                        />
+                                    </Modal>
+                                </>
+                            )}
+
                         </div>
                     </div>
                 </div>
