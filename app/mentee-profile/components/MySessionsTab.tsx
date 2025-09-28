@@ -751,6 +751,10 @@ export default function MySessionsTab() {
                                         ({appt.service_type})
                                     </Text>
                                 </Space>
+                                <div style={{ marginTop: 8 }}>
+                                    <Text type="secondary">Notes:</Text>
+                                    <p>{appt.description}</p>
+                                </div>
                                 {/* 第二行：resume 链接 */}
                                 {menteeResumeUrl && (() => {
                                     const fullName = menteeResumeUrl.split('/').pop() || '';

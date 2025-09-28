@@ -64,9 +64,7 @@ const NewUserWelcomeEmail: React.FC<NewUserWelcomeProps> = ({
                 <strong>20% OFF</strong> first order with code:
               </Text>
 
-              <Section style={codeBox}>
-                <Text style={codeText}>HIMENTORUP20</Text>
-              </Section>
+              <Text style={codeText}>HIMENTORUP20</Text>
 
               <Text style={detailLine}>
                 And a <strong>FREE coffee chat</strong> with a mentor — available with mentors who opt
@@ -75,7 +73,7 @@ const NewUserWelcomeEmail: React.FC<NewUserWelcomeProps> = ({
             </Section>
 
             {/* Getting Started */}
-            <Section style={boxContainer}>
+            <Section style={promoBox}>
               <Text style={h2}>Getting Started:</Text>
 
               <Text style={li}>
@@ -97,7 +95,8 @@ const NewUserWelcomeEmail: React.FC<NewUserWelcomeProps> = ({
                 <Button href="https://mentorup.info" style={buttonPrimary}>
                   Complete My Profile
                 </Button>
-                <Button href="https://www.mentorup.info/mentor-list" style={buttonSecondary}>
+                <span style={{ display: 'inline-block', width: '20px' }}></span> {/* 按钮间隔 */}
+                <Button href="https://www.mentorup.info/mentor-list" style={buttonPrimary}>
                   Browse Mentors
                 </Button>
               </Section>
@@ -200,9 +199,10 @@ const codeBox: React.CSSProperties = {
 };
 
 const codeText: React.CSSProperties = {
-  color: '#fff',
+  color: '#1E3A8A',
   fontWeight: 700,
-  letterSpacing: 1,
+  fontSize: 16,
+  margin: '8px 0',
 };
 
 const li: React.CSSProperties = {
