@@ -478,12 +478,14 @@ export default function Home() {
               </div>
               <Space>
                 <SignedOut>
-                  <SignUpButton mode='modal'>
-                    <Button type='primary'>Become a Mentor/Mentee</Button>
-                  </SignUpButton>{' '}
-                  <SignInButton mode='modal'>
-                    <Button type='default'>Login</Button>
-                  </SignInButton>
+                  <div className='flex gap-2'>
+                    <SignUpButton mode='modal'>
+                      <Button type='primary'>Become a Mentor/Mentee</Button>
+                    </SignUpButton>{' '}
+                    <SignInButton mode='modal'>
+                      <Button type='default'>Login</Button>
+                    </SignInButton>
+                  </div>
                 </SignedOut>
                 <SignedIn>
                   <div
@@ -901,7 +903,6 @@ export default function Home() {
           overflow-x: hidden;
         }
         main,
-        header,
         footer {
           overflow-x: hidden;
         }
