@@ -5,7 +5,7 @@ import {SignedIn, SignedOut, SignInButton, useUser} from '@clerk/nextjs';
 
 import styles from './mentorDetails.module.css';
 import MentorAvailability from '../../components/MentorAvailability';
-import {useState, useEffect} from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {useRouter, useParams} from 'next/navigation';
 import dayjs from 'dayjs';
 import type {UploadFile} from 'antd/es/upload/interface';
@@ -20,6 +20,11 @@ import MentorReviews from '../components/MentorReview';
 
 import {usePathname} from 'next/navigation';
 import {Grid} from 'antd';
+
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { Popover } from 'antd';
+
+
 
 const {Content} = Layout;
 const {Title, Text} = Typography;
@@ -60,6 +65,8 @@ export default function MentorDetailsPage() {
     const [isAvailabilityModalOpen, setIsAvailabilityModalOpen] = useState(false);
     const [showTrialTip, setShowTrialTip] = useState(true);
 
+    const availabilityRef = useRef<HTMLDivElement | null>(null);
+
     const hasFreeCoffee =
         Array.isArray(mentor?.services) &&
         mentor.services.some(
@@ -70,6 +77,14 @@ export default function MentorDetailsPage() {
         hasFreeCoffee &&
         coffeeChatCount !== null &&
         coffeeChatCount === 0;
+
+    const scrollToAvailability = () => {
+        if (isMobile) {
+            setIsAvailabilityModalOpen(true);
+        } else {
+            availabilityRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
 
     useEffect(() => {
         // 初始根据 hash 设定 tab
@@ -351,8 +366,13 @@ export default function MentorDetailsPage() {
             <Content style={{paddingTop: 88}} className={styles.content}>
                 {/* NavBar is fixed, so we add paddingTop to avoid overlap */}
                 <div className={styles.container}>
+
                     <div className={styles.mainContent}>
                         <div className={styles.leftSection}>
+                            {/*<div>*/}
+                            {/*    <TestModalComponent />*/}
+                            {/*    /!* 其他 MentorDetailsPage 内容 *!/*/}
+                            {/*</div>*/}
                             <div className={styles.profileHeader}>
                                 <Avatar
                                     size={120}
@@ -403,20 +423,32 @@ export default function MentorDetailsPage() {
                                                 </Card>
 
                                                 <Card className={styles.infoCard} title="Services" bordered>
-                                                    <div className={styles.serviceTags}>
+                                                    <div className={styles.serviceGrid}>
                                                         {Array.isArray(mentor.services) && mentor.services.length > 0 ? (
-                                                            mentor.services.map((service: any, idx: number) => (
-                                                                <Tag key={idx} className={styles.serviceTag}>
-                                                                    {service.type} - $
-                                                                    {isFreeCoffeeChat(service.type)
-                                                                        ? 0
-                                                                        : netToGross(service.price)}
-                                                                </Tag>
-                                                            ))
+                                                            mentor.services.map((service: any, idx: number) => {
+                                                                const type = typeof service === 'string' ? service : service.type;
+                                                                const priceText = isFreeCoffeeChat(type) ? 'Free' : `$${netToGross(service.price)}`;
+                                                                const isSelected = supportType === type;
+
+                                                                return (
+                                                                    <Button
+                                                                        key={idx}
+                                                                        type={isSelected ? 'primary' : 'default'}
+                                                                        className={styles.serviceButton}
+                                                                        onClick={() => {
+                                                                            setSupportType(type);
+                                                                            scrollToAvailability();
+                                                                        }}
+                                                                        block
+                                                                    >
+                                                                        {/* 文案分两段，左对齐整洁 */}
+                                                                        <span className={styles.serviceTitle}>{type}</span>
+                                                                        <span className={styles.servicePrice}>{priceText}</span>
+                                                                    </Button>
+                                                                );
+                                                            })
                                                         ) : (
-                                                            <Text type="secondary">
-                                                                This mentor has not listed any services.
-                                                            </Text>
+                                                            <Text type="secondary">This mentor has not listed any services.</Text>
                                                         )}
                                                     </div>
                                                 </Card>
@@ -444,47 +476,49 @@ export default function MentorDetailsPage() {
                         <div className={styles.rightSection}>
                             <Title level={3} className={styles.availabilityHeader}>Mentor's Availability</Title>
 
-                            {/* 桌面端：直接展示 */}
-                            {!isMobile && (
-                                <MentorAvailability
-                                    mentorId={mentor.user_id}
-                                    services={mentor.services || []}
-                                    onSlotSelect={(slot) => setSelectedSlot(slot)}
-                                    onBook={() => {
-                                        // Check authentication before opening booking modal
-                                        if (!isSignedIn) {
-                                            router.push('/login');
-                                            return;
-                                        }
-                                        setStep(2);
-                                        setIsBookingModalVisible(true);
-                                    }}
-                                    coffeeChatCount={coffeeChatCount ?? 0}
-                                />
-                            )}
+                            <div ref={availabilityRef}> {/* ✅ 新增 */}
+                                {!isMobile && (
+                                    <MentorAvailability
+                                        mentorId={mentor.user_id}
+                                        services={mentor.services || []}
+                                        onSlotSelect={(slot) => setSelectedSlot(slot)}
+                                        onBook={() => {
+                                            // ✅ 只有选了 service 才允许进入弹窗
+                                            if (!isSignedIn) {
+                                                router.push('/login');
+                                                return;
+                                            }
+                                            setStep(2);
+                                            setIsBookingModalVisible(true); // ✅ 点击 Book Now → 弹窗
+                                        }}
+                                        coffeeChatCount={coffeeChatCount ?? 0}
+                                        selectedServiceType={supportType}
+                                    />
+                                )}
+                            </div>
 
-                            {/* 移动端：按钮 + 弹窗 */}
                             {isMobile && (
                                 <>
                                     <Card>
                                         <Button
                                             type="primary"
                                             block
-                                            onClick={() => setIsAvailabilityModalOpen(true)}
+                                            onClick={() => {
+                                                setIsAvailabilityModalOpen(true); // ✅ 直接打开
+                                            }}
                                         >
                                             Check Availability
                                         </Button>
                                     </Card>
 
                                     <Modal
-                                        title={<div style={{fontWeight: 600, fontSize: 18}}>Book
-                                            Session</div>}  // ✅ 第一行写"Book Session"
+                                        title={<div style={{ fontWeight: 600, fontSize: 18 }}>Book Session</div>}
                                         open={isAvailabilityModalOpen}
                                         footer={null}
                                         onCancel={() => setIsAvailabilityModalOpen(false)}
                                         width="100%"
-                                        style={{top: 16}}
-                                        bodyStyle={{paddingTop: 8, paddingBottom: 8}}
+                                        style={{ top: 16 }}
+                                        bodyStyle={{ paddingTop: 8, paddingBottom: 8 }}
                                         getContainer={() => document.body}
                                         zIndex={10900}
                                     >
@@ -493,23 +527,23 @@ export default function MentorDetailsPage() {
                                             services={mentor.services || []}
                                             onSlotSelect={(slot) => setSelectedSlot(slot)}
                                             onBook={() => {
-                                                // Check authentication before opening booking modal
                                                 if (!isSignedIn) {
                                                     setIsAvailabilityModalOpen(false);
                                                     router.push('/login');
                                                     return;
                                                 }
-                                                setIsAvailabilityModalOpen(false); // 选好后先收起弹窗
+                                                setIsAvailabilityModalOpen(false);
                                                 setStep(2);
-                                                setIsBookingModalVisible(true);
+                                                setIsBookingModalVisible(true); // ✅ Book Now → 弹窗
                                             }}
                                             coffeeChatCount={coffeeChatCount ?? 0}
+                                            selectedServiceType={supportType}
                                         />
                                     </Modal>
                                 </>
                             )}
-
                         </div>
+
                     </div>
                 </div>
             </Content>
@@ -742,7 +776,30 @@ export default function MentorDetailsPage() {
                         <div>
                             <Title level={4} style={{marginBottom: 28}}>Payment Method</Title>
 
-                            <p style={{marginBottom: 12}}>Which way would you like to pay?</p>
+                            <p style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span>Which way would you like to pay?</span>
+
+                                <Popover
+                                    placement="right"
+                                    overlayInnerStyle={{ maxWidth: 300, lineHeight: 1.5 }}
+                                    content={
+                                        <div style={{ color: '#8c8c8c' }}> {/* 灰色字体 */}
+                                            <div>
+                                                You can get full refund if canceled <b>48hr</b> before the session. We will charge <b>$5</b> if canceled within <b>48hr</b>.
+                                            </div>
+                                        </div>
+                                    }
+                                >
+                                    {/* 圆形感叹号按钮 */}
+                                    <button
+                                        type="button"
+                                        className={styles.infoBadge}
+                                        aria-label="Refund policy tooltip"
+                                    >
+                                        <ExclamationCircleOutlined />
+                                    </button>
+                                </Popover>
+                            </p>
 
                             <div
                                 className={styles.payRow}
@@ -866,21 +923,42 @@ export default function MentorDetailsPage() {
                 getContainer={() => document.body}
                 zIndex={11000}
             >
-                <div style={{padding: '8px 4px'}}>
-                    <Title level={4} style={{marginBottom: 12}}>
-                        Request Sent to Mentor
+                <div style={{ padding: '8px 4px' }}>
+                    <Title level={4} style={{ marginBottom: 12 }}>
+                        🎉 Succeed -- Request Sent to Mentor
                     </Title>
 
-                    <p style={{marginBottom: 8}}>
-                        Thank you for scheduling your session!
-                    </p>
+                    <div style={{ marginBottom: 16 }}>
+                        <Text style={{ fontSize: 14 }}>
+                            <strong>Session Time:</strong> {dayjs(selectedSlot?.date).format('MM/DD/YYYY')} {selectedSlot?.time} {userTzAbbr}
+                        </Text>
+                        <br />
+                        <Text style={{ fontSize: 14 }}>
+                            <strong>Mentor:</strong>
+                            <Avatar
+                                size={30}
+                                src={mentor?.profile_url || undefined}
+                                icon={!mentor?.profile_url ? <UserOutlined /> : undefined}
+                                style={{ marginRight: 8, verticalAlign: 'middle' }}
+                            />
+                            {mentor?.username || 'User Name Placeholder'}
+                            <Text style={{ color: '#1890ff', marginLeft: 8 }}>
+                                Waiting for confirmation
+                            </Text>
+                        </Text>
+                        <br />
+                        <Text style={{ fontSize: 14 }}>
+                            <strong>Service Type:</strong>{' '}
+                            {mentor?.services
+                                ?.find((service: any) => (typeof service === 'string' ? service : service?.type) === supportType)
+                                ? (typeof mentor!.services!.find((s: any) => (typeof s === 'string' ? s : s?.type) === supportType) === 'string'
+                                    ? mentor!.services!.find((s: any) => (typeof s === 'string' ? s : s?.type) === supportType)
+                                    : (mentor!.services!.find((s: any) => (typeof s === 'string' ? s : s?.type) === supportType) as any).type)
+                                : 'Free Trial Session - 15min'}
+                        </Text>
+                    </div>
 
-                    <p style={{marginBottom: 0}}>
-                        Your request has been sent to the mentor. <strong>You’ll receive the meeting link by email once
-                        the mentor confirms.</strong>
-                    </p>
-
-                    <div style={{display: 'flex', justifyContent: 'space-between', marginTop: 24}}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
                         <Button onClick={() => setIsSuccessModalVisible(false)}>
                             Stay On This Page
                         </Button>
@@ -889,7 +967,63 @@ export default function MentorDetailsPage() {
                             onClick={() => router.push(`/mentee-profile/${user?.id}#sessions`)}
                         >
                             View All My Booked Sessions
-                        </Button>
+                        </Button><Modal
+                        open={isSuccessModalVisible}
+                        footer={null}
+                        onCancel={() => setIsSuccessModalVisible(false)}
+                        width={560}
+                        getContainer={() => document.body}
+                        zIndex={11000}
+                    >
+                        <div style={{ padding: '8px 4px' }}>
+                            <Title level={4} style={{ marginBottom: 12 }}>
+                                🎉 Succeed -- Request Sent to Mentor
+                            </Title>
+
+                            <div style={{ marginBottom: 16 }}>
+                                <Text style={{ fontSize: 14 }}>
+                                    <strong>Session Time:</strong> {dayjs(selectedSlot?.date).format('MM/DD/YYYY')} {selectedSlot?.time} {userTzAbbr}
+                                </Text>
+                                <br />
+                                <Text style={{ fontSize: 14 }}>
+                                    <strong>Mentor:</strong>
+                                    <Avatar
+                                        size={30}
+                                        src={mentor?.profile_url || undefined}
+                                        icon={!mentor?.profile_url ? <UserOutlined /> : undefined}
+                                        style={{ marginRight: 8, verticalAlign: 'middle' }}
+                                    />
+                                    {mentor?.username || 'User Name Placeholder'}
+                                    <Text style={{ color: '#1890ff', marginLeft: 8 }}>
+                                        Waiting for confirmation
+                                    </Text>
+                                </Text>
+                                <br />
+                                <Text style={{ fontSize: 14 }}>
+                                    <strong>Service Type:</strong>{' '}
+                                    {mentor?.services
+                                        ?.find((service: any) => (typeof service === 'string' ? service : service?.type) === supportType)
+                                        ? (typeof mentor!.services!.find((s: any) => (typeof s === 'string' ? s : s?.type) === supportType) === 'string'
+                                            ? mentor!.services!.find((s: any) => (typeof s === 'string' ? s : s?.type) === supportType)
+                                            : (mentor!.services!.find((s: any) => (typeof s === 'string' ? s : s?.type) === supportType) as any).type)
+                                        : 'Free Trial Session - 15min'}
+                                </Text>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
+                                <Button onClick={() => setIsSuccessModalVisible(false)}>
+                                    Stay On This Page
+                                </Button>
+                                <Button
+                                    type="primary"
+                                    onClick={() => router.push(`/mentee-profile/${user?.id}#sessions`)}
+                                >
+                                    View All My Booked Sessions
+                                </Button>
+                            </div>
+                        </div>
+                    </Modal>
+
                     </div>
                 </div>
             </Modal>
