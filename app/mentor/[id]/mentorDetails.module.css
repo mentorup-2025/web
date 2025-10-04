@@ -527,3 +527,54 @@
         display: none;
     }
 }
+
+/* 服务按钮容器：手机一列，>=768px 两列 */
+.serviceGrid {
+    display: grid;
+    grid-template-columns: 1fr;      /* 默认手机端一列 */
+    gap: 6px;                       /* 按钮间距 */
+}
+
+@media (min-width: 768px) {
+    .serviceGrid {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* 桌面端两列 */
+        gap: 6px 8px; /* 行间距6px，列间距8px（可以微调） */
+    }
+}
+
+/* 统一按钮尺寸与排版 */
+.serviceButton {
+    height: auto; /* 高度自适应文字 */
+    padding: 4px 8px; /* 上下4px视觉刚好有呼吸感 */
+    line-height: 1.2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    white-space: nowrap; /* 避免长文字换行导致高度不一 */
+    text-align: left;                /* 左对齐文字更整齐 */
+}
+
+/* 选中态可以再强调一下（可选） */
+:global(.ant-btn-primary).serviceButton {
+    /* Antd primary 已有背景，必要时可加阴影等 */
+}
+
+/* 标题长文案的处理 */
+.serviceTitle {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;         /* 单行省略号 */
+    display: -webkit-box;            /* 多行省略号（与下一行配套） */
+    -webkit-line-clamp: 2;           /* 最多显示两行 */
+    -webkit-box-orient: vertical;
+}
+
+/* 价格固定在右侧，弱化权重 */
+.servicePrice {
+    margin-left: 8px;
+    opacity: 0.75;
+    white-space: nowrap;
+    flex-shrink: 0;                  /* 防止价格被压缩 */
+}
