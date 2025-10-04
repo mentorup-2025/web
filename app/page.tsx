@@ -480,7 +480,7 @@ export default function Home() {
                 <SignedOut>
                   <div className='flex gap-2'>
                     <SignUpButton mode='modal'>
-                      <Button type='primary'>Become a Mentor/Mentee</Button>
+                      <Button type='primary'>Become a Mentor</Button>
                     </SignUpButton>{' '}
                     <SignInButton mode='modal'>
                       <Button type='default'>Login</Button>

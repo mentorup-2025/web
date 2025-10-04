@@ -37,7 +37,7 @@
   height:300px;
 }
 .landingBg {
-  background-image: url('/images/landing_pic.png');
+  background-image: url('/app/images/landing_pic.png');
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;

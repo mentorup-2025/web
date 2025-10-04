@@ -47,7 +47,7 @@ export default function Navbar() {
           <Space className={styles.headerRight}>
             <SignedOut>
               <SignUpButton mode="modal">
-                <Button type="primary">Become a Mentor/Mentee</Button>
+                <Button type="primary">Become a Mentor</Button>
               </SignUpButton>
               <SignInButton mode="modal">
                 <Button type="default">Login</Button>

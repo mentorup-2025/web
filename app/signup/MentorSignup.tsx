@@ -16,7 +16,7 @@ import {
     Upload,
     Avatar
 } from 'antd';
-import { UploadOutlined, UserOutlined } from '@ant-design/icons';
+import { UploadOutlined, UserOutlined, LikeOutlined, DislikeOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { SERVICE_OPTIONS as serviceOptions } from '../services/constants';
 import { isFreeCoffeeChat } from '../services/constants';
@@ -309,6 +309,110 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                                 <p className="ant-upload-text">Click or drag pictures to this area to upload</p>
                                 <p className="ant-upload-hint">Support JPG, PNG, GIF. Max 3MB.</p>
                             </Upload.Dragger>
+                        </div>
+
+                        {/* 新增的头像示例提示区 */}
+                        <div
+                            style={{
+                                marginTop: 24,
+                                textAlign: 'center',
+                                // 用 CSS 变量控制卡片基准尺寸，clamp(最小, 理想, 最大)
+                                // 这样手机(窄屏)会自动缩到 ~56px，桌面最多到 80px
+                                // 你也可以把 14vw 调大/调小，调整体缩放敏感度
+                                ['--sz' as any]: 'clamp(52px, 14vw, 80px)',
+                            }}
+                        >
+                            <h4 style={{ marginBottom: 12 }}>A clear, professional photo helps you stand out</h4>
+
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    gap: 12,
+                                    rowGap: 12,
+                                    flexWrap: 'wrap',          // 关键：小屏时自动换行
+                                    maxWidth: 520,             // 可选：限制一行最长宽度，利于换行
+                                    margin: '0 auto',
+                                }}
+                            >
+                                {/* 好的示例 */}
+                                {['/images/avatar_good1.jpg', '/images/avatar_good2.jpg'].map((src) => (
+                                    <div
+                                        key={src}
+                                        style={{
+                                            position: 'relative',
+                                            width: 'var(--sz)',
+                                            height: 'var(--sz)',
+                                            border: '2px solid #52c41a',
+                                            borderRadius: 6,
+                                            overflow: 'hidden',
+                                            flex: '0 0 auto',       // 防止被拉伸
+                                        }}
+                                    >
+                                        <img
+                                            src={src}
+                                            alt="good example"
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        />
+                                        <div
+                                            style={{
+                                                position: 'absolute',
+                                                right: 0,
+                                                bottom: 0,
+                                                backgroundColor: '#52c41a',
+                                                borderTopLeftRadius: 4,
+                                                padding: 'calc(var(--sz) * 0.06)',     // 角标随尺寸缩放
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                            }}
+                                        >
+                                            <LikeOutlined style={{ color: '#fff', fontSize: 'calc(var(--sz) * 0.22)' }} />
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {/* 不好的示例 */}
+                                {['/images/avatar_bad1.jpg', '/images/avatar_bad2.jpg', '/images/avatar_bad3.jpg'].map((src) => (
+                                    <div
+                                        key={src}
+                                        style={{
+                                            position: 'relative',
+                                            width: 'var(--sz)',
+                                            height: 'var(--sz)',
+                                            border: '2px solid #f5222d',
+                                            borderRadius: 6,
+                                            overflow: 'hidden',
+                                            flex: '0 0 auto',
+                                        }}
+                                    >
+                                        <img
+                                            src={src}
+                                            alt="bad example"
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        />
+                                        <div
+                                            style={{
+                                                position: 'absolute',
+                                                right: 0,
+                                                bottom: 0,
+                                                backgroundColor: '#f5222d',
+                                                borderTopLeftRadius: 4,
+                                                padding: 'calc(var(--sz) * 0.06)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                            }}
+                                        >
+                                            <DislikeOutlined style={{ color: '#fff', fontSize: 'calc(var(--sz) * 0.22)' }} />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <p style={{ color: '#8c8c8c', marginTop: 8 }}>
+                                Choose a clear headshot (no filters, cartoons, or pets) to win the trust of more mentees.
+                            </p>
                         </div>
                     </Modal>
                 </>
