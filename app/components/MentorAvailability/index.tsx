@@ -305,11 +305,23 @@ export default function MentorAvailability({
 
                     {/* ✅ 仅当 mentor 有 Free Coffee 且用户未用过时显示 */}
                     {showFreeBanner && (
-                        <div className={styles.trialBubble} role="note" aria-live="polite">
-                            <span className={styles.bubbleIcon}>
-                            <SoundFilled />
-                            </span>
-                            <span className={styles.bubbleText}>Get a trial session for FREE!</span>
+                        <div
+                            style={{
+                                backgroundColor: '#f9f9ff',
+                                borderLeft: '4px solid #1890ff',
+                                padding: '12px 16px',
+                                borderRadius: 4,
+                                margin: '8px 0 16px',
+                                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                                color: '#1890ff',
+                            }}
+                        >
+                            <div style={{ fontWeight: 600, fontSize: 14 }}>
+                                📣 Your first 15-min coffee chat is on us!
+                            </div>
+                            <div style={{ fontSize: 13, marginTop: 4 }}>
+                                Pick any available slot — your session will take place in the first 15 min.
+                            </div>
                         </div>
                     )}
 
