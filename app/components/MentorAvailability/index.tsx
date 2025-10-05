@@ -19,7 +19,6 @@ import { supabase } from '../../services/supabase';
 import { netToGross } from '../../services/priceHelper';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isBetween from 'dayjs/plugin/isBetween';
-import { SoundFilled } from '@ant-design/icons';
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrBefore);
@@ -42,7 +41,6 @@ interface MentorAvailabilityProps {
     onSlotSelect: (slot: { date: string; time: string }) => void;
     onBook: () => void;
     coffeeChatCount: number;
-    selectedServiceType?: string | null;
 }
 
 interface SlotLabel {
@@ -72,7 +70,6 @@ export default function MentorAvailability({
                                                onSlotSelect,
                                                onBook,
                                                coffeeChatCount,
-                                               selectedServiceType,
                                            }: MentorAvailabilityProps) {
     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
@@ -80,9 +77,6 @@ export default function MentorAvailability({
     const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs());
     const [heldSlots, setHeldSlots] = useState<Set<string>>(new Set());
     const [userTimezone, setUserTimezone] = useState('');
-
-    const isFreeSelected =
-        !!selectedServiceType && /free coffee chat/i.test(selectedServiceType);
 
     // ✅ 只有 mentor 提供 Free Coffee Chat 且用户未使用时才显示 Banner (对所有用户显示)
     const hasFreeCoffee = Array.isArray(services) &&
@@ -185,45 +179,13 @@ export default function MentorAvailability({
         return availabilityData.has(dateStr) ? <div className={styles.availabilityDot} /> : null;
     };
 
-
-    // 1) 用 full cell render 灰掉不可用日期（不显示小蓝点）
-    const fullCellRender = (date: Dayjs) => {
-        const dateStr = date.format('YYYY-MM-DD');
-        const hasSlots = availabilityData.has(dateStr);
-        const isSelected = selectedDate ? date.isSame(selectedDate, 'day') : false;
-
-        const classNames = [
-            styles.dateCell,
-            !hasSlots ? styles.dateDisabled : '',
-            isSelected ? styles.dateSelected : '',
-        ].filter(Boolean).join(' ');
-
-        return (
-            <div
-                className={classNames}
-                onClick={(e) => {
-                    if (!hasSlots) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                    }
-                }}
-                role="button"
-                aria-disabled={!hasSlots}
-            >
-                <span className={styles.dateNum}>{date.format('DD')}</span>
-            </div>
-        );
-    };
-
-    // 2) 选中某天
     const handleDateSelect = (date: Dayjs) => {
         const dateStr = date.format('YYYY-MM-DD');
-        if (!availabilityData.has(dateStr)) {
-            // 不可用日期不做任何提示，直接无效（如果你仍想提示，可恢复 message.warning）
-            return;
-        }
         setSelectedDate(date);
         setSelectedSlot(null);
+        if (!availabilityData.has(dateStr)) {
+            message.warning('No available time slots for this date.');
+        }
     };
 
     const handlePanelChange = (date: Dayjs) => {
@@ -289,7 +251,7 @@ export default function MentorAvailability({
                 fullscreen={false}
                 onSelect={handleDateSelect}
                 onPanelChange={handlePanelChange}
-                fullCellRender={fullCellRender}
+                dateCellRender={dateCellRender}
                 headerRender={headerRender}
                 value={selectedDate || currentMonth}
                 className={styles.calendar}
@@ -304,7 +266,6 @@ export default function MentorAvailability({
                     {/* ✅ 仅当 mentor 有 Free Coffee 且用户未用过时显示 */}
                     {showFreeBanner && (
                         <div
-                            data-testid="mentor-availability-banner"     // ← 新增：供测试查询
                             style={{
                                 backgroundColor: '#f9f9ff',
                                 borderLeft: '4px solid #1890ff',
@@ -326,93 +287,77 @@ export default function MentorAvailability({
 
                     {availabilityData.has(selectedDate.format('YYYY-MM-DD')) ? (
                         <>
-                        <div className={styles.slotsScroll}>
-                            <Radio.Group
-                                value={selectedSlot}
-                                onChange={(e) => setSelectedSlot(e.target.value)}
-                                className={styles.radioGroup}
-                            >
-                                {availabilityData.get(selectedDate.format('YYYY-MM-DD'))!.map((slot, i) => {
-                                    // 原始小时段
-                                    const [startStr /* , endStr */] = slot.raw.split(' - ');
-                                    const start = dayjs(`${selectedDate.format('YYYY-MM-DD')} ${startStr}`);
+                            <div className={styles.slotsScroll}>
+                                <Radio.Group
+                                    value={selectedSlot}
+                                    onChange={(e) => setSelectedSlot(e.target.value)}
+                                    className={styles.radioGroup}
+                                >
+                                    {availabilityData.get(selectedDate.format('YYYY-MM-DD'))!.map((slot, i) => {
+                                        const [startStr, endStr] = slot.raw.split(' - ');
+                                        const start = dayjs(`${selectedDate.format('YYYY-MM-DD')} ${startStr}`);
+                                        const end = dayjs(`${selectedDate.format('YYYY-MM-DD')} ${endStr}`);
+                                        const durationMinutes = end.diff(start, 'minute');
+                                        const durationText =
+                                            durationMinutes >= 60
+                                                ? `${Math.floor(durationMinutes / 60)}h${durationMinutes % 60 ? ` ${durationMinutes % 60}m` : ''}`
+                                                : `${durationMinutes}m`;
 
-                                    // —— 如果选中的是 Free Coffee Chat：把小时段改为前 15 分钟 —— //
-                                    const freeEnd = start.add(15, 'minute');
-                                    const raw15 = `${start.format('h:mm A')} - ${freeEnd.format('h:mm A')}`; // 传给父组件用
-                                    const label15 = `${start.format('h:mm')}-${freeEnd.format('h:mm A')}`;   // 展示用：7:00-7:15 PM
+                                        const firstPaidService =
+                                            services.find(
+                                                (s) =>
+                                                    s &&
+                                                    typeof s.type === 'string' &&
+                                                    !/free coffee chat/i.test(s.type) &&
+                                                    (s.price ?? 0) > 0
+                                            );
 
-                                    // 禁用逻辑：24h 内或被 hold
-                                    const slotKey = `${selectedDate.format('YYYY-MM-DD')}|${slot.raw}`; // hold 针对原小时段
-                                    const disabled =
-                                        start.isBefore(dayjs().add(24, 'hour')) || heldSlots.has(slotKey);
+                                        const price = firstPaidService ? `$${netToGross(firstPaidService.price)}` : 'Free';
 
-                                    // 展示用文本 & 价格/时长
-                                    const slotText = isFreeSelected ? label15 : (slot.formatted ?? slot.raw);
-                                    const durationText = isFreeSelected ? '(15mins)' : '(1h)';
+                                        const slotKey = `${selectedDate.format('YYYY-MM-DD')}|${slot.raw}`;
+                                        const disabled = start.isBefore(dayjs().add(24, 'hour')) || heldSlots.has(slotKey);
 
-                                    // 付费价格：如果是 Free，显示 Free；否则沿用你的逻辑
-                                    let price = 'Free';
-                                    if (!isFreeSelected) {
-                                        const firstPaidService = services.find(
-                                            (s) =>
-                                                s &&
-                                                typeof s.type === 'string' &&
-                                                !/free coffee chat/i.test(s.type) &&
-                                                (s.price ?? 0) > 0
+                                        return (
+                                            <Radio
+                                                key={i}
+                                                value={slot.raw}
+                                                disabled={disabled}
+                                                className={styles.timeSlotRadio}
+                                            >
+                                                <div className={styles.radioContent}>
+                                                    <span className={styles.slotText}>{slot.raw}</span>
+                                                    <span className={styles.slotDetails}>({durationText}) {price}</span>
+                                                </div>
+                                            </Radio>
                                         );
-                                        price = firstPaidService ? `$${netToGross(firstPaidService.price)}` : 'Free';
-                                    }
+                                    })}
+                                </Radio.Group>
 
-                                    // 单选值：如果是 Free 用 15 分钟段，否则还是原小时段
-                                    const radioValue = isFreeSelected ? raw15 : slot.raw;
-
-                                    return (
-                                        <Radio
-                                            key={i}
-                                            value={radioValue}
-                                            disabled={disabled}
-                                            className={[
-                                                styles.timeSlotRadio,
-                                                disabled ? styles.timeSlotRadioDisabled : ''
-                                            ].join(' ')}
-                                        >
-                                            <div className={styles.radioContent}>
-                                                <span className={styles.slotText}>{slotText}</span>
-                                                <span className={styles.slotDetails}>
-          {durationText}
-        </span>
-                                            </div>
-                                        </Radio>
-                                    );
-                                })}
-                            </Radio.Group>
-
-                            <Button
-                                type="primary"
-                                block
-                                disabled={!selectedSlot}
-                                className={styles.scheduleButton}
-                                style={{ marginTop: 20 }}
-                                onClick={() => {
-                                    if (selectedDate && selectedSlot) {
-                                        const [startStr] = selectedSlot.split(' - ');
-                                        const slotDateTime = dayjs(`${selectedDate.format('YYYY-MM-DD')} ${startStr}`);
-                                        if (slotDateTime.isBefore(dayjs().add(24, 'hour'))) {
-                                            message.error('Cannot book less than 24 hours in advance.');
-                                            return;
+                                <Button
+                                    type="primary"
+                                    block
+                                    disabled={!selectedSlot}
+                                    className={styles.scheduleButton}
+                                    style={{ marginTop: 20 }}
+                                    onClick={() => {
+                                        if (selectedDate && selectedSlot) {
+                                            const [startStr] = selectedSlot.split(' - ');
+                                            const slotDateTime = dayjs(`${selectedDate.format('YYYY-MM-DD')} ${startStr}`);
+                                            if (slotDateTime.isBefore(dayjs().add(24, 'hour'))) {
+                                                message.error('Cannot book less than 24 hours in advance.');
+                                                return;
+                                            }
+                                            onSlotSelect({
+                                                date: selectedDate.format('YYYY-MM-DD'),
+                                                time: selectedSlot,
+                                            });
+                                            onBook();
                                         }
-                                        onSlotSelect({
-                                            date: selectedDate.format('YYYY-MM-DD'),
-                                            time: selectedSlot,
-                                        });
-                                        onBook();
-                                    }
-                                }}
-                            >
-                                Book Now
-                            </Button>
-                        </div>
+                                    }}
+                                >
+                                    Book Now
+                                </Button>
+                            </div>
                         </>
                     ) : (
                         <Text className={styles.noSlotsText}>No available time slots.</Text>
