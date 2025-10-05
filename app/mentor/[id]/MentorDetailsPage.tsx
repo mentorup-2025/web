@@ -12,6 +12,10 @@ import type {UploadFile} from 'antd/es/upload/interface';
 import NavBar from '../../components/Navbar';
 import moment from 'moment-timezone';
 
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import CheckoutForm from '../../components/CheckoutForm';
+
 import {isFreeCoffeeChat} from '../../services/constants';
 import {netToGross} from '../../services/priceHelper';
 
@@ -24,6 +28,8 @@ import {Grid} from 'antd';
 const {Content} = Layout;
 const {Title, Text} = Typography;
 const {TextArea} = Input;
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 export default function MentorDetailsPage() {
     const {user, isSignedIn} = useUser();
@@ -822,13 +828,23 @@ export default function MentorDetailsPage() {
                                             const appointmentId = result.data.appointment_id;
 
                                             if (selectedPaymentMethod === 'stripe') {
+                                                // ✅ 保存必要的状态给 Step 4 使用
+                                                setAppointmentId(appointmentId);     // 这里用的是上面 const appointmentId = result.data.appointment_id
+                                                setPrice(calculatedPrice);           // 再次确保 price 与 UI 一致
+
+                                                // ✅ 确保只有一个弹层可见（以防和别的 Modal 叠加造成“多一个弹窗”的错觉）
+                                                setIsWeChatModalVisible(false);
+                                                setIsPaymentFailedModalVisible(false);
+                                                setIsBookingModalVisible(true);
+
+                                                // ✅ 直接在当前 Booking Modal 进入 Stripe 表单
                                                 setStep(4);
-                                                window.open(`/booking/payment?appointmentId=${appointmentId}&amount=${calculatedPrice}`, '_blank');
                                             } else if (selectedPaymentMethod === 'wechat') {
                                                 setAppointmentId(appointmentId);
                                                 setPrice(calculatedPrice);
                                                 setIsWeChatModalVisible(true);
                                             }
+
                                         } catch (err) {
                                             console.error('Failed to create paid appointment:', err);
                                             message.error('Unexpected error creating appointment');
@@ -844,10 +860,17 @@ export default function MentorDetailsPage() {
 
                 {step === 4 && (
                     <div>
-                        <p>Jumping to the payment page...</p>
-                        <p>After finishing the payment it will lead you to the next step.</p>
+                        <h3 style={{marginBottom: 16}}>Payment Details</h3>
+                        <div style={{marginBottom: 24}}>
+                            <strong>Total:</strong> ${price ? price.toFixed(2) : '0.00'}
+                        </div>
+
+                        <Elements stripe={stripePromise}>
+                            <CheckoutForm amount={price ?? 0} appointmentId={appointmentId ?? undefined} />
+                        </Elements>
                     </div>
                 )}
+
 
                 {(step === 1 || step === 2) && (
                     <div style={{display: 'flex', justifyContent: 'space-between', marginTop: 24}}>

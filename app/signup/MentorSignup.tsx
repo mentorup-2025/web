@@ -21,6 +21,10 @@ import { useRouter } from 'next/navigation';
 import { SERVICE_OPTIONS as serviceOptions } from '../services/constants';
 import { isFreeCoffeeChat } from '../services/constants';
 import styles from './signupProcess.module.css';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import 'quill-emoji/dist/quill-emoji.css';
+import 'quill-emoji/dist/quill-emoji.js';
 
 const { Step } = Steps;
 const { Text } = Typography;
@@ -290,7 +294,31 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                         label="Please introduce yourself to your future mentees."
                         rules={[{ required: false, message: 'Please enter an introduction!' }]}
                     >
-                        <Input.TextArea rows={4} placeholder="Share your experience and why you want to be a mentor." />
+                        <ReactQuill
+                            value={form.getFieldValue('introduction')}
+                            onChange={(value) => form.setFieldsValue({ introduction: value })}
+                            placeholder="Example: Hi, I'm Alex. I studied CS at UC Berkeley and have been working as a SDE for the past 5 years at Oracle, mostly in backend..."
+                            modules={{
+                                toolbar: {
+                                    container: [
+                                        ['bold', 'italic', 'underline'],
+                                        [{ 'header': [1, 2, 3, false] }],
+                                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                        ['image'],
+                                        ['emoji'],  // 添加表情按钮
+                                        // ['clean']
+                                    ],
+                                    // 表情配置
+                                    'emoji-toolbar': true,
+                                    'emoji-textarea': false,
+                                    'emoji-shortname': true,
+                                },
+                                'emoji-toolbar': true,
+                                'emoji-textarea': false,
+                                'emoji-shortname': true,
+                            }}
+                            style={{ height: '200px', marginBottom: '40px' }}
+                        />
                     </Form.Item>
 
                     {/* ---------- Avatar Upload Modal ---------- */}
