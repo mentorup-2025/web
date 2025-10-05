@@ -19,6 +19,7 @@ import { supabase } from '../../services/supabase';
 import { netToGross } from '../../services/priceHelper';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isBetween from 'dayjs/plugin/isBetween';
+import { SoundFilled } from '@ant-design/icons';
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrBefore);
@@ -41,6 +42,7 @@ interface MentorAvailabilityProps {
     onSlotSelect: (slot: { date: string; time: string }) => void;
     onBook: () => void;
     coffeeChatCount: number;
+    selectedServiceType?: string | null;
 }
 
 interface SlotLabel {
@@ -70,6 +72,7 @@ export default function MentorAvailability({
                                                onSlotSelect,
                                                onBook,
                                                coffeeChatCount,
+                                               selectedServiceType,
                                            }: MentorAvailabilityProps) {
     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
@@ -77,6 +80,9 @@ export default function MentorAvailability({
     const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs());
     const [heldSlots, setHeldSlots] = useState<Set<string>>(new Set());
     const [userTimezone, setUserTimezone] = useState('');
+
+    const isFreeSelected =
+        !!selectedServiceType && /free coffee chat/i.test(selectedServiceType);
 
     // ✅ 只有 mentor 提供 Free Coffee Chat 且用户未使用时才显示 Banner (对所有用户显示)
     const hasFreeCoffee = Array.isArray(services) &&
@@ -179,13 +185,45 @@ export default function MentorAvailability({
         return availabilityData.has(dateStr) ? <div className={styles.availabilityDot} /> : null;
     };
 
+
+    // 1) 用 full cell render 灰掉不可用日期（不显示小蓝点）
+    const dateFullCellRender = (date: Dayjs) => {
+        const dateStr = date.format('YYYY-MM-DD');
+        const hasSlots = availabilityData.has(dateStr);
+        const isSelected = selectedDate ? date.isSame(selectedDate, 'day') : false;
+
+        const classNames = [
+            styles.dateCell,
+            !hasSlots ? styles.dateDisabled : '',
+            isSelected ? styles.dateSelected : '',   // 👈 选中态
+        ]
+            .filter(Boolean)
+            .join(' ');
+
+        return (
+            <div
+                className={classNames}
+                onClick={(e) => {
+                    if (!hasSlots) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                }}
+                role="button"
+                aria-disabled={!hasSlots}
+            >
+                <span className={styles.dateNum}>{date.date()}</span>
+            </div>
+        );
+    };
+
     const handleDateSelect = (date: Dayjs) => {
         const dateStr = date.format('YYYY-MM-DD');
+        if (!availabilityData.has(dateStr)) {
+            return;
+        }
         setSelectedDate(date);
         setSelectedSlot(null);
-        if (!availabilityData.has(dateStr)) {
-            message.warning('No available time slots for this date.');
-        }
     };
 
     const handlePanelChange = (date: Dayjs) => {
@@ -251,7 +289,7 @@ export default function MentorAvailability({
                 fullscreen={false}
                 onSelect={handleDateSelect}
                 onPanelChange={handlePanelChange}
-                dateCellRender={dateCellRender}
+                dateFullCellRender={dateFullCellRender}
                 headerRender={headerRender}
                 value={selectedDate || currentMonth}
                 className={styles.calendar}
@@ -265,25 +303,14 @@ export default function MentorAvailability({
 
                     {/* ✅ 仅当 mentor 有 Free Coffee 且用户未用过时显示 */}
                     {showFreeBanner && (
-                        <div
-                            style={{
-                                backgroundColor: '#f9f9ff',
-                                borderLeft: '4px solid #1890ff',
-                                padding: '12px 16px',
-                                borderRadius: 4,
-                                margin: '8px 0 16px',
-                                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                                color: '#1890ff',
-                            }}
-                        >
-                            <div style={{ fontWeight: 600, fontSize: 14 }}>
-                                📣 Your first 15-min coffee chat is on us!
-                            </div>
-                            <div style={{ fontSize: 13, marginTop: 4 }}>
-                                Pick any available slot — your session will take place in the first 15 min.
-                            </div>
+                        <div className={styles.trialBubble} role="note" aria-live="polite">
+        <span className={styles.bubbleIcon}>
+        <SoundFilled />
+        </span>
+                            <span className={styles.bubbleText}>Get a trial session for FREE!</span>
                         </div>
                     )}
+
 
                     {availabilityData.has(selectedDate.format('YYYY-MM-DD')) ? (
                         <>
@@ -294,17 +321,27 @@ export default function MentorAvailability({
                                     className={styles.radioGroup}
                                 >
                                     {availabilityData.get(selectedDate.format('YYYY-MM-DD'))!.map((slot, i) => {
-                                        const [startStr, endStr] = slot.raw.split(' - ');
+                                        const [startStr /* , endStr */] = slot.raw.split(' - ');
                                         const start = dayjs(`${selectedDate.format('YYYY-MM-DD')} ${startStr}`);
-                                        const end = dayjs(`${selectedDate.format('YYYY-MM-DD')} ${endStr}`);
-                                        const durationMinutes = end.diff(start, 'minute');
-                                        const durationText =
-                                            durationMinutes >= 60
-                                                ? `${Math.floor(durationMinutes / 60)}h${durationMinutes % 60 ? ` ${durationMinutes % 60}m` : ''}`
-                                                : `${durationMinutes}m`;
 
-                                        const firstPaidService =
-                                            services.find(
+                                        // —— 如果选中的是 Free Coffee Chat：把小时段改为前 15 分钟 —— //
+                                        const freeEnd = start.add(15, 'minute');
+                                        const raw15 = `${start.format('h:mm A')} - ${freeEnd.format('h:mm A')}`; // 传给父组件用
+                                        const label15 = `${start.format('h:mm')}-${freeEnd.format('h:mm A')}`;   // 展示用：7:00-7:15 PM
+
+                                        // 禁用逻辑：24h 内或被 hold
+                                        const slotKey = `${selectedDate.format('YYYY-MM-DD')}|${slot.raw}`; // hold 针对原小时段
+                                        const disabled =
+                                            start.isBefore(dayjs().add(24, 'hour')) || heldSlots.has(slotKey);
+
+                                        // 展示用文本 & 价格/时长
+                                        const slotText = isFreeSelected ? label15 : (slot.formatted ?? slot.raw);
+                                        const durationText = isFreeSelected ? '(15mins)' : '(1h)';
+
+                                        // 付费价格：如果是 Free，显示 Free；否则沿用你的逻辑
+                                        let price = 'Free';
+                                        if (!isFreeSelected) {
+                                            const firstPaidService = services.find(
                                                 (s) =>
                                                     s &&
                                                     typeof s.type === 'string' &&
@@ -312,21 +349,24 @@ export default function MentorAvailability({
                                                     (s.price ?? 0) > 0
                                             );
 
-                                        const price = firstPaidService ? `$${netToGross(firstPaidService.price)}` : 'Free';
-
-                                        const slotKey = `${selectedDate.format('YYYY-MM-DD')}|${slot.raw}`;
-                                        const disabled = start.isBefore(dayjs().add(24, 'hour')) || heldSlots.has(slotKey);
-
+                                            price = firstPaidService ? `$${netToGross(firstPaidService.price)}` : 'Free';
+                                        }
+                                        const radioValue = isFreeSelected ? raw15 : slot.raw;
                                         return (
                                             <Radio
                                                 key={i}
-                                                value={slot.raw}
+                                                value={radioValue}
                                                 disabled={disabled}
-                                                className={styles.timeSlotRadio}
+                                                className={[
+                                                    styles.timeSlotRadio,
+                                                    disabled ? styles.timeSlotRadioDisabled : ''
+                                                ].join(' ')}
                                             >
                                                 <div className={styles.radioContent}>
-                                                    <span className={styles.slotText}>{slot.raw}</span>
-                                                    <span className={styles.slotDetails}>({durationText}) {price}</span>
+                                                    <span className={styles.slotText}>{slotText}</span>
+                                                    <span className={styles.slotDetails}>
+          {durationText}
+        </span>
                                                 </div>
                                             </Radio>
                                         );
