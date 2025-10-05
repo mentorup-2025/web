@@ -427,7 +427,8 @@ export default function MentorDetailsPage() {
                                                         {Array.isArray(mentor.services) && mentor.services.length > 0 ? (
                                                             mentor.services.map((service: any, idx: number) => {
                                                                 const type = typeof service === 'string' ? service : service.type;
-                                                                const priceText = isFreeCoffeeChat(type) ? 'Free' : `$${netToGross(service.price)}`;
+                                                                const price = typeof service === 'string' ? 0 : (service?.price ?? 0);
+                                                                const priceText = isFreeCoffeeChat(type) ? 'Free' : `$${netToGross(price)}`;
                                                                 const isSelected = supportType === type;
 
                                                                 return (
@@ -441,7 +442,6 @@ export default function MentorDetailsPage() {
                                                                         }}
                                                                         block
                                                                     >
-                                                                        {/* 文案分两段，左对齐整洁 */}
                                                                         <span className={styles.serviceTitle}>{type}</span>
                                                                         <span className={styles.servicePrice}>{priceText}</span>
                                                                     </Button>
@@ -967,62 +967,7 @@ export default function MentorDetailsPage() {
                             onClick={() => router.push(`/mentee-profile/${user?.id}#sessions`)}
                         >
                             View All My Booked Sessions
-                        </Button><Modal
-                        open={isSuccessModalVisible}
-                        footer={null}
-                        onCancel={() => setIsSuccessModalVisible(false)}
-                        width={560}
-                        getContainer={() => document.body}
-                        zIndex={11000}
-                    >
-                        <div style={{ padding: '8px 4px' }}>
-                            <Title level={4} style={{ marginBottom: 12 }}>
-                                🎉 Succeed -- Request Sent to Mentor
-                            </Title>
-
-                            <div style={{ marginBottom: 16 }}>
-                                <Text style={{ fontSize: 14 }}>
-                                    <strong>Session Time:</strong> {dayjs(selectedSlot?.date).format('MM/DD/YYYY')} {selectedSlot?.time} {userTzAbbr}
-                                </Text>
-                                <br />
-                                <Text style={{ fontSize: 14 }}>
-                                    <strong>Mentor:</strong>
-                                    <Avatar
-                                        size={30}
-                                        src={mentor?.profile_url || undefined}
-                                        icon={!mentor?.profile_url ? <UserOutlined /> : undefined}
-                                        style={{ marginRight: 8, verticalAlign: 'middle' }}
-                                    />
-                                    {mentor?.username || 'User Name Placeholder'}
-                                    <Text style={{ color: '#1890ff', marginLeft: 8 }}>
-                                        Waiting for confirmation
-                                    </Text>
-                                </Text>
-                                <br />
-                                <Text style={{ fontSize: 14 }}>
-                                    <strong>Service Type:</strong>{' '}
-                                    {mentor?.services
-                                        ?.find((service: any) => (typeof service === 'string' ? service : service?.type) === supportType)
-                                        ? (typeof mentor!.services!.find((s: any) => (typeof s === 'string' ? s : s?.type) === supportType) === 'string'
-                                            ? mentor!.services!.find((s: any) => (typeof s === 'string' ? s : s?.type) === supportType)
-                                            : (mentor!.services!.find((s: any) => (typeof s === 'string' ? s : s?.type) === supportType) as any).type)
-                                        : 'Free Trial Session - 15min'}
-                                </Text>
-                            </div>
-
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
-                                <Button onClick={() => setIsSuccessModalVisible(false)}>
-                                    Stay On This Page
-                                </Button>
-                                <Button
-                                    type="primary"
-                                    onClick={() => router.push(`/mentee-profile/${user?.id}#sessions`)}
-                                >
-                                    View All My Booked Sessions
-                                </Button>
-                            </div>
-                        </div>
-                    </Modal>
+                        </Button>
 
                     </div>
                 </div>

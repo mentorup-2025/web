@@ -212,7 +212,7 @@ export default function MentorAvailability({
                 role="button"
                 aria-disabled={!hasSlots}
             >
-                <span className={styles.dateNum}>{date.date()}</span>
+                <span className={styles.dateNum}>{date.format('DD')}</span>
             </div>
         );
     };

@@ -497,10 +497,7 @@
   opacity: 0.8;
 }
 
-/* 选中/悬浮可用日期（可选） */
-.dateCell:hover {
-  background: #f0f7ff;
-}
+
 
 /* —— 时间段 —— */
 .timeSlotRadio {
@@ -599,30 +596,38 @@
   border-color: #ffffff transparent transparent transparent;  /* 与气泡背景同色 */
 }
 
-.dateCell {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  padding: 6px 6px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  border-radius: 6px;
-  transition: background 0.2s ease, box-shadow 0.2s ease;
-  cursor: pointer;
-}
+
 
 /* 选中态：用 inset box-shadow 画 2px 蓝色边框，不改变布局 */
 .dateSelected {
-  box-shadow: inset 0 0 0 1px #1890FF;
-  background: #f7fbff;            /* 轻微高亮背景，可按需去掉 */
+  background-color: #1677ff;
+  color: #fff;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  /* 关键：让 28×28 的小块在格子里水平居中 */
+  margin: 0 auto;
 }
 
-/* 可选：悬浮时给轻微描边，强调可点击 */
-.dateCell:hover:not(.dateDisabled):not(.dateSelected) {
-  box-shadow: inset 0 0 0 2px #e6f4ff;
-  background: #fafcff;
+.calendar :global(.ant-picker-content) {
+  table-layout: fixed;
+  width: 100%;
 }
+
+.calendar :global(.ant-picker-content th),
+.calendar :global(.ant-picker-content td) {
+  padding: 0 !important;
+  height: 36px;
+  vertical-align: middle;
+}
+
+
+
 
 .dateNum { line-height: 1; }
 

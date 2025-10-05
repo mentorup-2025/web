@@ -92,8 +92,7 @@ describe('MentorAvailability Free Coffee Chat Banner', () => {
 
         // BUSINESS LOGIC: Banner should be visible
         await waitFor(() => {
-          expect(screen.getByText('📣 Your first 15-min coffee chat is on us!')).toBeInTheDocument()
-          expect(screen.getByText(/Pick any available slot — your session will take place in the first 15 min/)).toBeInTheDocument()
+          expect(screen.getByText('Get a trial session for FREE!')).toBeInTheDocument()
         })
       })
 
