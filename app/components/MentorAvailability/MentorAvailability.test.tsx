@@ -110,7 +110,7 @@ describe('MentorAvailability Free Coffee Chat Banner', () => {
         })
 
         // BUSINESS LOGIC: Banner should not be visible without date selection
-        expect(screen.queryByText('📣 Your first 15-min coffee chat is on us!')).not.toBeInTheDocument()
+        expect(screen.queryByText('Get a trial session for FREE!')).not.toBeInTheDocument()
       })
     })
 
@@ -137,7 +137,7 @@ describe('MentorAvailability Free Coffee Chat Banner', () => {
         })
 
         // BUSINESS LOGIC: Banner should NOT be visible when already used
-        expect(screen.queryByText('📣 Your first 15-min coffee chat is on us!')).not.toBeInTheDocument()
+        expect(screen.queryByText('Get a trial session for FREE!')).not.toBeInTheDocument()
       })
     })
   })
@@ -170,7 +170,7 @@ describe('MentorAvailability Free Coffee Chat Banner', () => {
       })
 
       // BUSINESS LOGIC: Banner should NOT be visible when service is not offered
-      expect(screen.queryByText('📣 Your first 15-min coffee chat is on us!')).not.toBeInTheDocument()
+      expect(screen.queryByText('Get a trial session for FREE!')).not.toBeInTheDocument()
     })
   })
 
@@ -201,7 +201,7 @@ describe('MentorAvailability Free Coffee Chat Banner', () => {
       })
 
       // BUSINESS LOGIC: Should detect service regardless of case
-      expect(screen.getByText('📣 Your first 15-min coffee chat is on us!')).toBeInTheDocument()
+      expect(screen.getByText('Get a trial session for FREE!')).toBeInTheDocument()
     })
 
     it('should handle empty or invalid services array', async () => {
@@ -225,7 +225,7 @@ describe('MentorAvailability Free Coffee Chat Banner', () => {
       })
 
       // BUSINESS LOGIC: Should handle empty services gracefully
-      expect(screen.queryByText('📣 Your first 15-min coffee chat is on us!')).not.toBeInTheDocument()
+      expect(screen.queryByText('Get a trial session for FREE!')).not.toBeInTheDocument()
     })
   })
 

@@ -213,7 +213,7 @@ describe('MentorDetailsPage Free Coffee Chat Banner Logic', () => {
       // Wait for MentorAvailability banner to appear (this tests the business logic)
       await waitFor(() => {
         expect(screen.getByTestId('mentor-availability-banner')).toBeInTheDocument()
-        expect(screen.getByText('📣 Your first 15-min coffee chat is on us!')).toBeInTheDocument()
+        expect(screen.getByText('Get a trial session for FREE!')).toBeInTheDocument()
       }, { timeout: 10000 })
     })
 
@@ -541,7 +541,7 @@ describe('MentorDetailsPage Free Coffee Chat Banner Logic', () => {
                     <div data-testid="mentor-availability">
                       <div data-testid="availability-component">Mentor Availability Component</div>
                       {showFreeBanner && (
-                        <div data-testid="mentor-availability-banner">📣 Your first 15-min coffee chat is on us!</div>
+                        <div data-testid="mentor-availability-banner">Get a trial session for FREE!</div>
                       )}
                       <button data-testid="book-button" onClick={onBook}>Book Now</button>
                     </div>
@@ -641,7 +641,7 @@ describe('MentorDetailsPage Free Coffee Chat Banner Logic', () => {
         // Step 2: User sees free coffee chat banner
         await waitFor(() => {
           expect(screen.getByTestId('mentor-availability-banner')).toBeInTheDocument()
-          expect(screen.getByText('📣 Your first 15-min coffee chat is on us!')).toBeInTheDocument()
+          expect(screen.getByText('Get a trial session for FREE!')).toBeInTheDocument()
         })
 
         // Step 3: User sees MentorAvailability component
@@ -651,7 +651,7 @@ describe('MentorDetailsPage Free Coffee Chat Banner Logic', () => {
         // Step 4: Verify banner encourages booking (check for banner presence)
         // Note: The detailed text is in the real MentorAvailability component, not our mock
         expect(screen.getByTestId('mentor-availability-banner')).toBeInTheDocument()
-        expect(screen.getByText('📣 Your first 15-min coffee chat is on us!')).toBeInTheDocument()
+        expect(screen.getByText('Get a trial session for FREE!')).toBeInTheDocument()
 
         // This simulates the complete visual journey a user would see
         // In a real e2e test, we would click slots and complete booking
