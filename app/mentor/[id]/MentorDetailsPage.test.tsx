@@ -67,7 +67,7 @@ jest.mock('../../components/MentorAvailability', () => {
       <div data-testid="mentor-availability">
         <div data-testid="availability-component">Mentor Availability Component</div>
         {showFreeBanner && (
-          <div data-testid="mentor-availability-banner">📣 Your first 15-min coffee chat is on us!</div>
+          <div data-testid="mentor-availability-banner">Get a trial session for FREE!/div>
         )}
         {/* Note: Booking behavior should be tested in MentorAvailability component tests */}
       </div>
