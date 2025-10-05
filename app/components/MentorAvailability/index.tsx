@@ -187,7 +187,7 @@ export default function MentorAvailability({
 
 
     // 1) 用 full cell render 灰掉不可用日期（不显示小蓝点）
-    const dateFullCellRender = (date: Dayjs) => {
+    const fullCellRender = (date: Dayjs) => {
         const dateStr = date.format('YYYY-MM-DD');
         const hasSlots = availabilityData.has(dateStr);
         const isSelected = selectedDate ? date.isSame(selectedDate, 'day') : false;
@@ -195,10 +195,8 @@ export default function MentorAvailability({
         const classNames = [
             styles.dateCell,
             !hasSlots ? styles.dateDisabled : '',
-            isSelected ? styles.dateSelected : '',   // 👈 选中态
-        ]
-            .filter(Boolean)
-            .join(' ');
+            isSelected ? styles.dateSelected : '',
+        ].filter(Boolean).join(' ');
 
         return (
             <div
@@ -291,7 +289,7 @@ export default function MentorAvailability({
                 fullscreen={false}
                 onSelect={handleDateSelect}
                 onPanelChange={handlePanelChange}
-                dateFullCellRender={dateFullCellRender}
+                fullCellRender={fullCellRender}
                 headerRender={headerRender}
                 value={selectedDate || currentMonth}
                 className={styles.calendar}
@@ -306,6 +304,7 @@ export default function MentorAvailability({
                     {/* ✅ 仅当 mentor 有 Free Coffee 且用户未用过时显示 */}
                     {showFreeBanner && (
                         <div
+                            data-testid="mentor-availability-banner"     // ← 新增：供测试查询
                             style={{
                                 backgroundColor: '#f9f9ff',
                                 borderLeft: '4px solid #1890ff',
