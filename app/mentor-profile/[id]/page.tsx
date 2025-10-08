@@ -35,6 +35,10 @@ import PaymentTab from "../components/PaymentTab";
 import styles from "../mentorProfile.module.css";
 import { useUser } from "@clerk/nextjs";
 import { allServiceTypes } from "../../services/constants";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import 'quill-emoji/dist/quill-emoji.css';
+import 'quill-emoji/dist/quill-emoji.js';
 import { netToGross, grossToNet } from "../../services/priceHelper";
 
 const { Content } = Layout;
@@ -723,55 +727,76 @@ export default function MentorProfilePage() {
                 </Card>
 
                 {/* —— 编辑 Introduction 的 Modal —— */}
-                <Modal
-                  title="Introduction"
-                  open={editIntroVisible}
-                  onCancel={() => setEditIntroVisible(false)}
-                  footer={
-                    <div style={{ display: "flex", width: "100%" }}>
-                      <Button
-                        key="cancel"
-                        style={{ flex: 1, borderRadius: 2, marginRight: 8 }}
-                        onClick={() => setEditIntroVisible(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        key="save"
-                        type="primary"
-                        style={{
-                          flex: 1,
-                          borderRadius: 2,
-                          backgroundColor: "#1890ff",
-                          borderColor: "#1890ff",
-                        }}
-                        onClick={handleSaveIntro}
-                      >
-                        Save
-                      </Button>
-                    </div>
-                  }
-                  style={{ borderRadius: 4 }}
-                >
-                  <Text
-                    style={{
-                      display: "block",
-                      marginBottom: 4,
-                      textAlign: "right",
-                      color: "#999",
-                    }}
+                  <Modal
+                      title="Introduction"
+                      open={editIntroVisible}
+                      onCancel={() => setEditIntroVisible(false)}
+                      footer={
+                          <div style={{ display: "flex", width: "100%" }}>
+                              <Button
+                                  key="cancel"
+                                  style={{ flex: 1, borderRadius: 2, marginRight: 8 }}
+                                  onClick={() => setEditIntroVisible(false)}
+                              >
+                                  Cancel
+                              </Button>
+                              <Button
+                                  key="save"
+                                  type="primary"
+                                  style={{
+                                      flex: 1,
+                                      borderRadius: 2,
+                                      backgroundColor: "#1890ff",
+                                      borderColor: "#1890ff",
+                                  }}
+                                  onClick={handleSaveIntro}
+                              >
+                                  Save
+                              </Button>
+                          </div>
+                      }
+                      style={{ borderRadius: 4 }}
+                      width={800} // 增加宽度以适应富文本编辑器
                   >
-                    {(draftIntro?.length ?? 0)} / 1500
-                  </Text>
-                  <TextArea
-                    rows={4}
-                    value={draftIntro}
-                    onChange={(e) => setDraftIntro(e.target.value)}
-                    maxLength={1500}
-                    placeholder="Edit your introduction"
-                    style={{ borderRadius: 2 }}
-                  />
-                </Modal>
+                      <div style={{ marginBottom: 8, textAlign: 'right' }}>
+                          <Text style={{ color: "#999" }}>
+                              {draftIntro?.replace(/<[^>]*>/g, '').length || 0} / 1500
+                          </Text>
+                      </div>
+
+                      <ReactQuill
+                          value={draftIntro}
+                          onChange={(value) => setDraftIntro(value)}
+                          modules={{
+                              toolbar: {
+                                  container: [
+                                      ['bold', 'italic', 'underline'],
+                                      [{ 'header': [1, 2, 3, false] }],
+                                      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                      ['image'],
+                                      ['emoji'],
+                                      // ['clean']
+                                  ],
+                                  'emoji-toolbar': true,
+                                  'emoji-textarea': false,
+                                  'emoji-shortname': true,
+                              },
+                              'emoji-toolbar': true,
+                              'emoji-textarea': false,
+                              'emoji-shortname': true,
+                          }}
+                          formats={[
+                              'bold', 'italic', 'underline', 'header', 'list', 'bullet',
+                              'link', 'image', 'emoji'
+                          ]}
+                          placeholder="Example: Hi, I'm Alex. I studied CS at UC Berkeley and have been working as a SDE for the past 5 years at Oracle, mostly in backend..."
+                          style={{
+                              height: '300px',
+                              marginBottom: '60px',
+                              borderRadius: '2px'
+                          }}
+                      />
+                  </Modal>
 
                 {/* —— 编辑 Services 的 Modal —— */}
                 <Modal
