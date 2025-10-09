@@ -569,7 +569,7 @@ export default function MentorProfilePage() {
                   {formatTitleCompany(mentor?.title, mentor?.company)}
                 </Text>
                 <Space className={styles.socialLinks}>
-                  {mentorData.linkedin && (
+                  {mentorData.linkedin && mentorData.linkedin_display && (
                       <a
                           href={formatUrl(mentorData.linkedin)}
                           target="_blank"

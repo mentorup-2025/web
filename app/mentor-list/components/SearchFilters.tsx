@@ -25,6 +25,56 @@ type SearchFiltersProps = {
 
 const FREE_COFFEE_LABEL = 'Free Coffee Chat (15 Mins)';
 
+/** ===== 持久化相关：只保存“可选择”的字段 ===== */
+const STORAGE_KEY = 'mentor.search.filters.v1';
+
+type Persistable = Partial<
+    Pick<
+        SearchFiltersType,
+        | 'jobTitle'
+        | 'industries'
+        | 'serviceTypes'
+        | 'company'
+        | 'minPrice'
+        | 'maxPrice'
+        | 'minExperience'
+        | 'maxExperience'
+        | 'offersFreeCoffeeChat'
+        | 'availableAsapWithin7Days'
+    >
+>;
+
+function pickPersistable(v: SearchFiltersType): Persistable {
+    return {
+        jobTitle: v.jobTitle ?? [],
+        industries: v.industries ?? [],
+        serviceTypes: v.serviceTypes ?? [],
+        company: v.company ?? [],
+        minPrice: v.minPrice,
+        maxPrice: v.maxPrice,
+        minExperience: v.minExperience,
+        maxExperience: v.maxExperience,
+        offersFreeCoffeeChat: v.offersFreeCoffeeChat,
+        availableAsapWithin7Days: v.availableAsapWithin7Days,
+    };
+}
+
+function loadPersisted(): Persistable | null {
+    try {
+        const raw = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') return parsed as Persistable;
+    } catch {}
+    return null;
+}
+
+function savePersisted(val: Persistable) {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(val));
+    } catch {}
+}
+
 export default function SearchFilters({
                                           value,
                                           onFiltersChange,
@@ -41,6 +91,27 @@ export default function SearchFilters({
     const inFlightRef = React.useRef(false);
     const controllerRef = React.useRef<AbortController | null>(null);
     const wantedRef = React.useRef<boolean>(Boolean(value.availableAsapWithin7Days));
+
+    // === 首次挂载时从 localStorage 回填 ===
+    const hydratedOnceRef = React.useRef(false);
+    React.useEffect(() => {
+        if (hydratedOnceRef.current) return;
+        hydratedOnceRef.current = true;
+
+        const persisted = loadPersisted();
+        if (persisted) {
+            // 合并到父状态：以本地持久化为准覆盖对应字段
+            onFiltersChange({ ...value, ...persisted } as SearchFiltersType);
+        }
+    }, [onFiltersChange]); // value 不放依赖，避免循环
+
+    // === 当 value 变化时，持久化保存（只保存可选择字段） ===
+    const persistableMemo = React.useMemo(() => pickPersistable(value), [value]);
+    React.useEffect(() => {
+        // 轻微 debounce，避免频繁写入
+        const id = window.setTimeout(() => savePersisted(persistableMemo), 50);
+        return () => window.clearTimeout(id);
+    }, [persistableMemo]);
 
     // Company text search
     const [companyQuery, setCompanyQuery] = React.useState('');
@@ -143,22 +214,24 @@ export default function SearchFilters({
     const mapSelectedToServiceTypes = (selectedDisplays: string[]): string[] => {
         const mapping = {
             'Free Coffee Chat (15 Mins)': ['Free Coffee Chat (15 Mins)'],
-            'Resume Review': ['Resume Review', 'Job Search Guidance'],
+            'Resume Review': ['Resume Review', 'Job Search Guidance'], // 注意大小写一致
             'Mock Interview': ['Mock Interview', 'Behavioral Question Coaching'],
             'Career & Promotion': [
                 'General Career Advice',
                 'Salary Negotiation',
                 'Promotion Strategy',
-                'My Company / Role Deep Dive'
+                'My Company / Role Deep Dive',
             ],
-            'Grad School Application Advice': ['Grad School Application Advice']
-        };
+            'Grad School Application Advice': ['Grad School Application Advice'],
+        } as const;
 
-        return selectedDisplays.flatMap(display => mapping[display as keyof typeof mapping] || []);
+        return selectedDisplays.flatMap(
+            (display) => (mapping as any)[display] || []
+        );
     };
 
-// 将实际的服务类型映射回显示项（用于初始化选中状态）
-    const getCheckedServiceTypes = (serviceTypes: string[]): string[] => {
+    // 将实际的服务类型映射回显示项（用于初始化选中状态）
+    const getCheckedServiceTypes = (serviceTypesSel: string[]): string[] => {
         const mapping = [
             { display: 'Free Coffee Chat (15 Mins)', values: ['Free Coffee Chat (15 Mins)'] },
             { display: 'Resume Review', values: ['Resume Review', 'Job Search Guidance'] },
@@ -169,15 +242,15 @@ export default function SearchFilters({
                     'General Career Advice',
                     'Salary Negotiation',
                     'Promotion Strategy',
-                    'My Company / Role Deep Dive'
-                ]
+                    'My Company / Role Deep Dive',
+                ],
             },
-            { display: 'Grad School Application Advice', values: ['Grad School Application Advice'] }
+            { display: 'Grad School Application Advice', values: ['Grad School Application Advice'] },
         ];
 
         return mapping
-            .filter(item => item.values.some(value => serviceTypes.includes(value)))
-            .map(item => item.display);
+            .filter((item) => item.values.some((v) => serviceTypesSel.includes(v)))
+            .map((item) => item.display);
     };
 
     return (
@@ -216,7 +289,7 @@ export default function SearchFilters({
                 expandIconPosition="end"
                 className={styles.siderCollapse}
             >
-                {/* ✅ Job Title 改为“多选数组”，逻辑与 Industry 一致 */}
+                {/* Job Title 多选 */}
                 <Panel header={renderHeader(<UserOutlined />, 'Job Title')} key="jobTitle">
                     <Checkbox.Group
                         className={styles.checkboxGroupCol}
@@ -240,27 +313,18 @@ export default function SearchFilters({
                     >
                         {[
                             { display: 'Free Coffee Chat (15 Mins)', values: ['Free Coffee Chat (15 Mins)'] },
-                            {
-                                display: 'Resume Review',
-                                values: ['Resume review', 'Job Search Guidance']
-                            },
-                            {
-                                display: 'Mock Interview',
-                                values: ['Mock Interview', 'Behavioral Question Coaching']
-                            },
+                            { display: 'Resume Review', values: ['Resume Review', 'Job Search Guidance'] }, // 修正大小写一致
+                            { display: 'Mock Interview', values: ['Mock Interview', 'Behavioral Question Coaching'] },
                             {
                                 display: 'Career & Promotion',
                                 values: [
                                     'General Career Advice',
                                     'Salary Negotiation',
                                     'Promotion Strategy',
-                                    'My Company / Role Deep Dive'
-                                ]
+                                    'My Company / Role Deep Dive',
+                                ],
                             },
-                            {
-                                display: 'Grad School Application Advice',
-                                values: ['Grad School Application Advice']
-                            }
+                            { display: 'Grad School Application Advice', values: ['Grad School Application Advice'] },
                         ].map((item) => (
                             <label key={item.display} className={styles.filterItem}>
                                 <Checkbox value={item.display} className={styles.filterCheckbox} />
@@ -292,7 +356,7 @@ export default function SearchFilters({
                 </Panel>
 
                 <Panel header={renderHeader(<BankOutlined />, 'Company')} key="company">
-                    {/* 🔎 文本搜索框（顶部） */}
+                    {/* 文本搜索框（顶部） */}
                     <div style={{ padding: '0 8px 8px' }}>
                         <Input
                             allowClear

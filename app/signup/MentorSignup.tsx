@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import {useState, useEffect} from 'react';
 import {
     Select,
     Steps,
@@ -8,6 +8,7 @@ import {
     Form,
     Input,
     InputNumber,
+    ConfigProvider,
     Checkbox,
     Typography,
     notification,
@@ -16,18 +17,18 @@ import {
     Upload,
     Avatar
 } from 'antd';
-import { UploadOutlined, UserOutlined, LikeOutlined, DislikeOutlined } from '@ant-design/icons';
-import { useRouter } from 'next/navigation';
-import { SERVICE_OPTIONS as serviceOptions } from '../services/constants';
-import { isFreeCoffeeChat } from '../services/constants';
+import {UploadOutlined, UserOutlined, LikeOutlined, DislikeOutlined} from '@ant-design/icons';
+import {useRouter} from 'next/navigation';
+import {SERVICE_OPTIONS as serviceOptions} from '../services/constants';
+import {isFreeCoffeeChat} from '../services/constants';
 import styles from './signupProcess.module.css';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import 'quill-emoji/dist/quill-emoji.css';
 import 'quill-emoji/dist/quill-emoji.js';
 
-const { Step } = Steps;
-const { Text } = Typography;
+const {Step} = Steps;
+const {Text} = Typography;
 
 // Option 1: force dynamic HTML for this route
 export const dynamic = 'force-dynamic';
@@ -39,7 +40,7 @@ interface MentorSignupProps {
     userId: string;
 }
 
-export default function MentorSignup({ userId }: MentorSignupProps) {
+export default function MentorSignup({userId}: MentorSignupProps) {
     const [current, setCurrent] = useState(0);
     const [form] = Form.useForm();
     const router = useRouter();
@@ -154,7 +155,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
             else setAvatarPreview(URL.createObjectURL(file));
 
             setAvatarUploaded(true);
-            notification.success({ message: 'Profile image updated successfully' });
+            notification.success({message: 'Profile image updated successfully'});
             setUploadImageVisible(false);
         } else {
             throw new Error(result?.message || 'Failed to update profile image');
@@ -170,17 +171,17 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                 file.type.startsWith('image/');
 
             if (!isImage) {
-                notification.error({ message: 'You can only upload image files (JPG/PNG/GIF)!' });
+                notification.error({message: 'You can only upload image files (JPG/PNG/GIF)!'});
                 return Upload.LIST_IGNORE;
             }
             const isLt3M = file.size / 1024 / 1024 < 3;
             if (!isLt3M) {
-                notification.error({ message: 'Image must be smaller than 3MB!' });
+                notification.error({message: 'Image must be smaller than 3MB!'});
                 return Upload.LIST_IGNORE;
             }
             return true;
         },
-        customRequest: async ({ file, onSuccess, onError }: any) => {
+        customRequest: async ({file, onSuccess, onError}: any) => {
             try {
                 await handleImageUpload(file as File);
                 onSuccess?.({});
@@ -199,9 +200,9 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                     <Form.Item
                         name="displayName"
                         label="How do you want us to call you?"
-                        rules={[{ required: true, message: 'Please input your display name!' }]}
+                        rules={[{required: true, message: 'Please input your display name!'}]}
                     >
-                        <Input placeholder="Enter your display name" />
+                        <Input placeholder="Enter your display name"/>
                     </Form.Item>
 
                     {/* ---------- Avatar section (required) ---------- */}
@@ -219,7 +220,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                                 }
                             }
                         ]}
-                        style={{ marginBottom: 8 }}
+                        style={{marginBottom: 8}}
                     >
                         <div
                             style={{
@@ -232,15 +233,15 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                             <Avatar
                                 size={72}
                                 src={avatarPreview}
-                                icon={<UserOutlined />}
-                                style={{ flex: '0 0 auto' }}
+                                icon={<UserOutlined/>}
+                                style={{flex: '0 0 auto'}}
                             />
-                            <div style={{ lineHeight: 1.4, color: '#8c8c8c' }}>
+                            <div style={{lineHeight: 1.4, color: '#8c8c8c'}}>
                                 <div>Recommended size: 240 × 240 px</div>
                                 <div>JPG, PNG, GIF, Max size: 3MB</div>
                             </div>
-                            <div style={{ marginLeft: 'auto' }}>
-                            <Button icon={<UploadOutlined />} onClick={() => setUploadImageVisible(true)}>
+                            <div style={{marginLeft: 'auto'}}>
+                                <Button icon={<UploadOutlined/>} onClick={() => setUploadImageVisible(true)}>
                                     Upload
                                 </Button>
                             </div>
@@ -251,7 +252,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                     <Form.Item
                         name="currentStatus"
                         label="Which of the following best describes your current role?"
-                        rules={[{ required: true, message: 'Please select your current status!' }]}
+                        rules={[{required: true, message: 'Please select your current status!'}]}
                     >
                         <Select placeholder="Select your current role">
                             <Select.Option value="student">Student</Select.Option>
@@ -270,7 +271,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                         name="wechat"
                         label="WeChat ID"
                         rules={[
-                            { required: true, message: 'Please input your WeChat ID!' },
+                            {required: true, message: 'Please input your WeChat ID!'},
                             {
                                 pattern: /^[a-zA-Z0-9_-]{6,20}$/,
                                 message:
@@ -278,32 +279,53 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                             },
                         ]}
                     >
-                        <Input placeholder="Enter your WeChat ID" />
+                        <Input placeholder="Enter your WeChat ID"/>
                     </Form.Item>
 
                     <Form.Item
                         name="linkedin"
                         label="LinkedIn Profile"
-                        rules={[{ required: false, type: 'url', message: 'Please enter a valid URL!' }]}
+                        rules={[{required: false, type: 'url', message: 'Please enter a valid URL!'}]}
                     >
-                        <Input placeholder="Enter your LinkedIn profile URL" />
+                        <Input placeholder="Enter your LinkedIn profile URL"/>
+                    </Form.Item>
+
+                    {/* 新增：是否在个人主页展示 LinkedIn */}
+                    <Form.Item
+                        name="linkedin_display"
+                        valuePropName="checked"
+                        style={{ marginTop: -12, marginBottom: 16 }}
+                    >
+                        <ConfigProvider
+                            theme={{
+                                components: {
+                                    Checkbox: {
+                                        colorPrimary: '#9254DE',          // 你的主紫色
+                                        colorPrimaryHover: '#B18AF0',
+                                        colorPrimaryBorder: '#9254DE',
+                                    },
+                                },
+                            }}
+                        >
+                            <Checkbox>Display on my profile</Checkbox>
+                        </ConfigProvider>
                     </Form.Item>
 
                     <Form.Item
                         name="introduction"
                         label="Please introduce yourself to your future mentees."
-                        rules={[{ required: false, message: 'Please enter an introduction!' }]}
+                        rules={[{required: false, message: 'Please enter an introduction!'}]}
                     >
                         <ReactQuill
                             value={form.getFieldValue('introduction')}
-                            onChange={(value) => form.setFieldsValue({ introduction: value })}
+                            onChange={(value) => form.setFieldsValue({introduction: value})}
                             placeholder="Example: Hi, I'm Alex. I studied CS at UC Berkeley and have been working as a SDE for the past 5 years at Oracle, mostly in backend..."
                             modules={{
                                 toolbar: {
                                     container: [
                                         ['bold', 'italic', 'underline'],
-                                        [{ 'header': [1, 2, 3, false] }],
-                                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                        [{'header': [1, 2, 3, false]}],
+                                        [{'list': 'ordered'}, {'list': 'bullet'}],
                                         ['image'],
                                         ['emoji'],  // 添加表情按钮
                                         // ['clean']
@@ -317,7 +339,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                                 'emoji-textarea': false,
                                 'emoji-shortname': true,
                             }}
-                            style={{ height: '200px', marginBottom: '40px' }}
+                            style={{height: '200px', marginBottom: '40px'}}
                         />
                     </Form.Item>
 
@@ -329,10 +351,10 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                         footer={null}
                         width={560}
                     >
-                        <div style={{ padding: '8px 0' }}>
+                        <div style={{padding: '8px 0'}}>
                             <Upload.Dragger {...uploadProps}>
                                 <p className="ant-upload-drag-icon">
-                                    <UserOutlined />
+                                    <UserOutlined/>
                                 </p>
                                 <p className="ant-upload-text">Click or drag pictures to this area to upload</p>
                                 <p className="ant-upload-hint">Support JPG, PNG, GIF. Max 3MB.</p>
@@ -350,7 +372,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                                 ['--sz' as any]: 'clamp(52px, 14vw, 80px)',
                             }}
                         >
-                            <h4 style={{ marginBottom: 12 }}>A clear, professional photo helps you stand out</h4>
+                            <h4 style={{marginBottom: 12}}>A clear, professional photo helps you stand out</h4>
 
                             <div
                                 style={{
@@ -380,7 +402,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                                         <img
                                             src={src}
                                             alt="good example"
-                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            style={{width: '100%', height: '100%', objectFit: 'cover'}}
                                         />
                                         <div
                                             style={{
@@ -395,7 +417,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                                                 justifyContent: 'center',
                                             }}
                                         >
-                                            <LikeOutlined style={{ color: '#fff', fontSize: 'calc(var(--sz) * 0.22)' }} />
+                                            <LikeOutlined style={{color: '#fff', fontSize: 'calc(var(--sz) * 0.22)'}}/>
                                         </div>
                                     </div>
                                 ))}
@@ -417,7 +439,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                                         <img
                                             src={src}
                                             alt="bad example"
-                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            style={{width: '100%', height: '100%', objectFit: 'cover'}}
                                         />
                                         <div
                                             style={{
@@ -432,14 +454,16 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                                                 justifyContent: 'center',
                                             }}
                                         >
-                                            <DislikeOutlined style={{ color: '#fff', fontSize: 'calc(var(--sz) * 0.22)' }} />
+                                            <DislikeOutlined
+                                                style={{color: '#fff', fontSize: 'calc(var(--sz) * 0.22)'}}/>
                                         </div>
                                     </div>
                                 ))}
                             </div>
 
-                            <p style={{ color: '#8c8c8c', marginTop: 8 }}>
-                                Choose a clear headshot (no filters, cartoons, or pets) to win the trust of more mentees.
+                            <p style={{color: '#8c8c8c', marginTop: 8}}>
+                                Choose a clear headshot (no filters, cartoons, or pets) to win the trust of more
+                                mentees.
                             </p>
                         </div>
                     </Modal>
@@ -453,14 +477,14 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                     <Form.Item
                         name="company"
                         label="Where do you work now?"
-                        rules={[{ required: true, message: 'Please enter your company or school name!' }]}
+                        rules={[{required: true, message: 'Please enter your company or school name!'}]}
                     >
-                        <Input placeholder="Enter your company or school name" />
+                        <Input placeholder="Enter your company or school name"/>
                     </Form.Item>
                     <Form.Item
                         name="title"
                         label="What's your current job title?"
-                        rules={[{ required: true, message: 'Please select your title!' }]}
+                        rules={[{required: true, message: 'Please select your title!'}]}
                     >
                         <Select
                             showSearch
@@ -473,74 +497,74 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                                 {
                                     label: 'Software & IT',
                                     options: [
-                                        { value: 'Software Engineer', label: 'Software Engineer' },
-                                        { value: 'Software Developer', label: 'Software Developer' },
-                                        { value: 'Data Analyst', label: 'Data Analyst' },
-                                        { value: 'Data Scientist', label: 'Data Scientist' },
-                                        { value: 'Business Analyst', label: 'Business Analyst' },
-                                        { value: 'Systems Analyst', label: 'Systems Analyst' },
-                                        { value: 'Web Developer', label: 'Web Developer' },
-                                        { value: 'Full Stack Developer', label: 'Full Stack Developer' },
-                                        { value: 'Java Developer', label: 'Java Developer' },
-                                        { value: 'Python Developer', label: 'Python Developer' },
-                                        { value: 'DevOps Engineer', label: 'DevOps Engineer' },
-                                        { value: 'Cloud Engineer', label: 'Cloud Engineer' },
-                                        { value: 'Machine Learning Engineer', label: 'Machine Learning Engineer' },
-                                        { value: 'Network Engineer', label: 'Network Engineer' },
-                                        { value: 'Database Administrator', label: 'Database Administrator' },
-                                        { value: 'IT Project Manager', label: 'IT Project Manager' },
-                                        { value: 'Information Security Analyst', label: 'Information Security Analyst' },
+                                        {value: 'Software Engineer', label: 'Software Engineer'},
+                                        {value: 'Software Developer', label: 'Software Developer'},
+                                        {value: 'Data Analyst', label: 'Data Analyst'},
+                                        {value: 'Data Scientist', label: 'Data Scientist'},
+                                        {value: 'Business Analyst', label: 'Business Analyst'},
+                                        {value: 'Systems Analyst', label: 'Systems Analyst'},
+                                        {value: 'Web Developer', label: 'Web Developer'},
+                                        {value: 'Full Stack Developer', label: 'Full Stack Developer'},
+                                        {value: 'Java Developer', label: 'Java Developer'},
+                                        {value: 'Python Developer', label: 'Python Developer'},
+                                        {value: 'DevOps Engineer', label: 'DevOps Engineer'},
+                                        {value: 'Cloud Engineer', label: 'Cloud Engineer'},
+                                        {value: 'Machine Learning Engineer', label: 'Machine Learning Engineer'},
+                                        {value: 'Network Engineer', label: 'Network Engineer'},
+                                        {value: 'Database Administrator', label: 'Database Administrator'},
+                                        {value: 'IT Project Manager', label: 'IT Project Manager'},
+                                        {value: 'Information Security Analyst', label: 'Information Security Analyst'},
                                     ],
                                 },
                                 {
                                     label: 'Engineering',
                                     options: [
-                                        { value: 'Mechanical Engineer', label: 'Mechanical Engineer' },
-                                        { value: 'Electrical Engineer', label: 'Electrical Engineer' },
-                                        { value: 'Civil Engineer', label: 'Civil Engineer' },
-                                        { value: 'Manufacturing Engineer', label: 'Manufacturing Engineer' },
-                                        { value: 'Industrial Engineer', label: 'Industrial Engineer' },
-                                        { value: 'Quality Engineer', label: 'Quality Engineer' },
+                                        {value: 'Mechanical Engineer', label: 'Mechanical Engineer'},
+                                        {value: 'Electrical Engineer', label: 'Electrical Engineer'},
+                                        {value: 'Civil Engineer', label: 'Civil Engineer'},
+                                        {value: 'Manufacturing Engineer', label: 'Manufacturing Engineer'},
+                                        {value: 'Industrial Engineer', label: 'Industrial Engineer'},
+                                        {value: 'Quality Engineer', label: 'Quality Engineer'},
                                     ],
                                 },
                                 {
                                     label: 'Finance & Business',
                                     options: [
-                                        { value: 'Financial Analyst', label: 'Financial Analyst' },
-                                        { value: 'Accountant', label: 'Accountant' },
-                                        { value: 'Auditor', label: 'Auditor' },
-                                        { value: 'Management Analyst', label: 'Management Analyst' },
-                                        { value: 'Market Research Analyst', label: 'Market Research Analyst' },
-                                        { value: 'Economist', label: 'Economist' },
-                                        { value: 'Operations Research Analyst', label: 'Operations Research Analyst' },
+                                        {value: 'Financial Analyst', label: 'Financial Analyst'},
+                                        {value: 'Accountant', label: 'Accountant'},
+                                        {value: 'Auditor', label: 'Auditor'},
+                                        {value: 'Management Analyst', label: 'Management Analyst'},
+                                        {value: 'Market Research Analyst', label: 'Market Research Analyst'},
+                                        {value: 'Economist', label: 'Economist'},
+                                        {value: 'Operations Research Analyst', label: 'Operations Research Analyst'},
                                     ],
                                 },
                                 {
                                     label: 'Healthcare & Science',
                                     options: [
-                                        { value: 'Medical Scientist', label: 'Medical Scientist' },
-                                        { value: 'Biochemist', label: 'Biochemist' },
-                                        { value: 'Research Associate', label: 'Research Associate' },
-                                        { value: 'Pharmacist', label: 'Pharmacist' },
-                                        { value: 'Physical Therapist', label: 'Physical Therapist' },
+                                        {value: 'Medical Scientist', label: 'Medical Scientist'},
+                                        {value: 'Biochemist', label: 'Biochemist'},
+                                        {value: 'Research Associate', label: 'Research Associate'},
+                                        {value: 'Pharmacist', label: 'Pharmacist'},
+                                        {value: 'Physical Therapist', label: 'Physical Therapist'},
                                     ],
                                 },
                                 {
                                     label: 'Education',
                                     options: [
-                                        { value: 'Postsecondary Teacher', label: 'Postsecondary Teacher' },
-                                        { value: 'Research Assistant', label: 'Research Assistant' },
-                                        { value: 'Instructional Coordinator', label: 'Instructional Coordinator' },
+                                        {value: 'Postsecondary Teacher', label: 'Postsecondary Teacher'},
+                                        {value: 'Research Assistant', label: 'Research Assistant'},
+                                        {value: 'Instructional Coordinator', label: 'Instructional Coordinator'},
                                     ],
                                 },
                                 {
                                     label: 'Other Tech & Support Roles',
                                     options: [
-                                        { value: 'UI/UX Designer', label: 'UI/UX Designer' },
-                                        { value: 'Product Manager', label: 'Product Manager' },
-                                        { value: 'QA Analyst', label: 'QA Analyst' },
-                                        { value: 'Technical Support Specialist', label: 'Technical Support Specialist' },
-                                        { value: 'ERP Consultant', label: 'ERP Consultant (e.g., SAP, Oracle)' },
+                                        {value: 'UI/UX Designer', label: 'UI/UX Designer'},
+                                        {value: 'Product Manager', label: 'Product Manager'},
+                                        {value: 'QA Analyst', label: 'QA Analyst'},
+                                        {value: 'Technical Support Specialist', label: 'Technical Support Specialist'},
+                                        {value: 'ERP Consultant', label: 'ERP Consultant (e.g., SAP, Oracle)'},
                                     ],
                                 },
                             ]}
@@ -549,10 +573,10 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                     <Form.Item
                         name="yearsOfExperience"
                         label="How many years of professional experience do you have?"
-                        rules={[{ required: true, message: 'Please select your years of experience!' }]}
+                        rules={[{required: true, message: 'Please select your years of experience!'}]}
                     >
                         <Select placeholder="Select years of experience">
-                            {Array.from({ length: 19 }, (_, i) => (
+                            {Array.from({length: 19}, (_, i) => (
                                 <Select.Option key={i + 1} value={i + 1}>
                                     {i + 1} {i + 1 === 1 ? 'year' : 'years'}
                                 </Select.Option>
@@ -563,7 +587,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
 
                     {/* Hidden input to hold services structure */}
                     <Form.Item name="services" noStyle>
-                        <Input type="hidden" />
+                        <Input type="hidden"/>
                     </Form.Item>
                 </>
             ),
@@ -575,14 +599,14 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                     <Form.Item
                         name="basePrice"
                         label="How much would you like to get paid per hour?"
-                        rules={[{ required: true, message: 'Please enter a base price!' }]}
+                        rules={[{required: true, message: 'Please enter a base price!'}]}
                     >
-                        <InputNumber min={0} placeholder="Price in USD" style={{ width: '100%' }} />
+                        <InputNumber min={0} placeholder="Price in USD" style={{width: '100%'}}/>
                     </Form.Item>
 
                     {suggestion && (
-                        <div style={{ marginTop: '-8px', marginBottom: '16px' }}>
-                            <Text style={{ color: '#9254DE', fontSize: '14px', fontWeight: 'normal' }}>
+                        <div style={{marginTop: '-8px', marginBottom: '16px'}}>
+                            <Text style={{color: '#9254DE', fontSize: '14px', fontWeight: 'normal'}}>
                                 Based on your experience, we suggest you start with {suggestion}/hour
                             </Text>
                         </div>
@@ -591,11 +615,11 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                     <Form.Item
                         name="servicesList"
                         label="Select the services you can provide"
-                        rules={[{ required: true, message: 'Please select at least one service!' }]}
+                        rules={[{required: true, message: 'Please select at least one service!'}]}
                     >
                         <Checkbox.Group
                             options={serviceOptions}
-                            style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+                            style={{display: 'flex', flexDirection: 'column', gap: '8px'}}
                         />
                     </Form.Item>
                 </>
@@ -606,7 +630,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
             content: (
                 <div className={styles.industriesSection}>
                     <h3>Select Industries You Are Interested In</h3>
-                    <p style={{ color: '#8c8c8c', marginBottom: '20px' }}>(Feel free to select multiple.)</p>
+                    <p style={{color: '#8c8c8c', marginBottom: '20px'}}>(Feel free to select multiple.)</p>
 
                     <div className={styles.industryBubbles}>
                         {industries.map((industry) => (
@@ -642,7 +666,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                         type="default"
                         size="large"
                         onClick={() => router.push('/mentor-list')}
-                        style={{ marginRight: '16px' }}
+                        style={{marginRight: '16px'}}
                     >
                         Start Exploration
                     </Button>
@@ -662,7 +686,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
     const next = async () => {
         try {
             const values = await form.validateFields();
-            const updated = { ...formData, ...values };
+            const updated = {...formData, ...values};
             setFormData(updated);
 
             if (current === 3) {
@@ -685,7 +709,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
     const onFinish = async (allValues: any) => {
         try {
             // construct services array from selected services and base price
-             // Price logic: $5 + 45% markup
+            // Price logic: $5 + 45% markup
             const services = (allValues.servicesList || []).map((type: string) => ({
                 type,
                 price: isFreeCoffeeChat(type) ? 0 : allValues.basePrice * 1.45 + 5 || 0,
@@ -701,7 +725,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
 
             const mentorResponse = await fetch(`/api/mentor/upsert/${userId}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(mentorData),
             });
 
@@ -721,11 +745,12 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                 wechat: allValues.wechat || '',
                 industries: selectedIndustries || [],
                 introduction: allValues.introduction || '',
+                linkedin_display: Boolean(allValues.linkedin_display),
             };
 
             const userUpdateResponse = await fetch('/api/user/update', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(userUpdateData),
             });
 
@@ -765,7 +790,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                 size="small"
                 direction="horizontal"
                 responsive={false}
-                items={steps.map(s => ({ title: s.title }))}
+                items={steps.map(s => ({title: s.title}))}
             />
 
             <div className={styles.stepsContent}>
@@ -803,7 +828,7 @@ export default function MentorSignup({ userId }: MentorSignupProps) {
                         {current < steps.length - 1 && (
                             <div className={styles.stepsAction}>
                                 {current > 0 && (
-                                    <Button style={{ margin: '0 8px' }} onClick={prev}>
+                                    <Button style={{margin: '0 8px'}} onClick={prev}>
                                         Previous
                                     </Button>
                                 )}
