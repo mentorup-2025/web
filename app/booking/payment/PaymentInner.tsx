@@ -2,7 +2,7 @@
 
 import { useSearchParams } from 'next/navigation';
 import { Elements } from '@stripe/react-stripe-js';
-import { stripePromise } from '../../lib/stripe';
+import { stripePromise } from '../../services/stripe';
 import CheckoutForm from '../../components/CheckoutForm';
 
 export default function PaymentInner() {
