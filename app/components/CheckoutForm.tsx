@@ -4,16 +4,12 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { Button, message } from 'antd';
-import { loadStripe } from '@stripe/stripe-js';
 import { useUser } from '@clerk/nextjs';
 
 interface CheckoutFormProps {
     amount: number;
     appointmentId?: string;
 }
-
-// Initialize Stripe outside of component
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 export default function CheckoutForm({ amount, appointmentId }: CheckoutFormProps) {
     const elements = useElements();

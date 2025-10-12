@@ -12,10 +12,6 @@ import type {UploadFile} from 'antd/es/upload/interface';
 import NavBar from '../../components/Navbar';
 import moment from 'moment-timezone';
 
-import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
-import CheckoutForm from '../../components/CheckoutForm';
-
 import {isFreeCoffeeChat} from '../../services/constants';
 import {netToGross} from '../../services/priceHelper';
 
@@ -33,8 +29,6 @@ import { Popover } from 'antd';
 const {Content} = Layout;
 const {Title, Text} = Typography;
 const {TextArea} = Input;
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 export default function MentorDetailsPage() {
     const {user, isSignedIn} = useUser();
@@ -885,17 +879,38 @@ export default function MentorDetailsPage() {
                                             const appointmentId = result.data.appointment_id;
 
                                             if (selectedPaymentMethod === 'stripe') {
-                                                // ✅ 保存必要的状态给 Step 4 使用
-                                                setAppointmentId(appointmentId);     // 这里用的是上面 const appointmentId = result.data.appointment_id
-                                                setPrice(calculatedPrice);           // 再次确保 price 与 UI 一致
+                                                // ✅ SKIP Step 4 - Go directly to Stripe checkout
+                                                const checkoutResponse = await fetch('/api/checkout', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ 
+                                                        amount: calculatedPrice * 100, 
+                                                        appointmentId, 
+                                                        menteeUserId: user.id 
+                                                    }),
+                                                });
 
-                                                // ✅ 确保只有一个弹层可见（以防和别的 Modal 叠加造成“多一个弹窗”的错觉）
-                                                setIsWeChatModalVisible(false);
-                                                setIsPaymentFailedModalVisible(false);
-                                                setIsBookingModalVisible(true);
+                                                if (!checkoutResponse.ok) {
+                                                    const errorData = await checkoutResponse.json();
+                                                    throw new Error(errorData.error || 'Failed to create checkout session');
+                                                }
 
-                                                // ✅ 直接在当前 Booking Modal 进入 Stripe 表单
-                                                setStep(4);
+                                                const checkoutData = await checkoutResponse.json();
+                                                
+                                                if (!checkoutData.sessionUrl) {
+                                                    throw new Error('No checkout session URL received');
+                                                }
+
+                                                // Store session info for potential webhook handling
+                                                if (typeof window !== 'undefined') {
+                                                    sessionStorage.setItem('stripe_session_id', checkoutData.sessionId);
+                                                    sessionStorage.setItem('appointment_id', appointmentId);
+                                                }
+
+                                                // Close modal and redirect directly to Stripe
+                                                setIsBookingModalVisible(false);
+                                                window.location.href = checkoutData.sessionUrl;
+
                                             } else if (selectedPaymentMethod === 'wechat') {
                                                 setAppointmentId(appointmentId);
                                                 setPrice(calculatedPrice);
@@ -908,24 +923,11 @@ export default function MentorDetailsPage() {
                                         }
                                     }}
                                 >
-                                    Pay for the Session
+                                    {selectedPaymentMethod === 'stripe' ? 'Pay Now' : 'Pay for the Session'}
                                 </Button>
                             </div>
                         </div>
                     )
-                )}
-
-                {step === 4 && (
-                    <div>
-                        <h3 style={{marginBottom: 16}}>Payment Details</h3>
-                        <div style={{marginBottom: 24}}>
-                            <strong>Total:</strong> ${price ? price.toFixed(2) : '0.00'}
-                        </div>
-
-                        <Elements stripe={stripePromise}>
-                            <CheckoutForm amount={price ?? 0} appointmentId={appointmentId ?? undefined} />
-                        </Elements>
-                    </div>
                 )}
 
 
