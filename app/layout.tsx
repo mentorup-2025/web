@@ -6,6 +6,7 @@ import "../styles/index.css";
 import '../styles/globals.css';
 import ChatWidget from "@/components/ChatWidget";
 import GlobalPromoBanner from '@/components/GlobalPromoBanner';   // ← NEW
+import FooterClient from "@/components/FooterClient";
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
                 {children}
                 <ChatWidget />
+                <FooterClient />
             </main>
 
             <GoogleAnalytics gaId="G-1H558DKVKE" />

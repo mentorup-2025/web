@@ -19,6 +19,7 @@ import MarqueeSection from './MarqueeSection';
 import styles from './styles/features.module.css';
 import { useMentorStatus } from './hooks/useMentorStatus';
 import { Mentor } from "../types";
+import { netToGross } from './services/priceHelper';
 
 // Translation object with all your content
 const translations = {
@@ -409,10 +410,18 @@ export default function Home() {
           const experience = mentor.mentor?.years_of_experience
             ? `${mentor.mentor.years_of_experience} years`
             : "";
-          const price =
-            mentor.mentor?.services?.length > 0
-              ? `$${mentor.mentor.services[mentor.mentor.services.length - 1].price}/hr`
-              : "";
+          const lastService = mentor.mentor?.services?.length
+              ? mentor.mentor.services[mentor.mentor.services.length - 1]
+              : null;
+
+// 取“净价”
+          const netPrice = typeof lastService?.price === 'number' ? lastService.price : null;
+
+// 转“毛价”（净价 × 1.45 + 5），用 priceHelper
+          const grossPrice = netPrice !== null ? netToGross(netPrice) : null;
+
+// 展示
+          const price = grossPrice !== null ? `$${grossPrice}/hr` : "";
           const desc = mentor.introduction || "";
           const img =
             mentor.avatar_url ||
@@ -867,33 +876,7 @@ export default function Home() {
         </div>
       </main>
 
-      <footer className='bg-blue-100 w-full px-6 py-12 mt-10'>
-        <div className='max-w-5xl mx-auto flex flex-col space-y-6'>
-          {/* 左上：黑色文字 */}
-          <h3 className='text-black'>{t('MentorUp')}</h3>
 
-          {/* 中间：蓝色大字体 */}
-          <h2 className='text-blue-500 text-3xl md:text-4xl font-bold'>
-            {t('Ready to Accelerate Your Career? ')}
-          </h2>
-
-          <Link
-            href='/mentor-list'
-            className='w-fit px-6 py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition'
-          >
-            {t('Meet Our Mentors')}
-          </Link>
-
-          <div className={styles.footerCopyright}>
-            <p className='text-gray-500 text-sm mt-8'>
-              ©2025 MentorUp contactus@mentorup.info.
-            </p>
-            <p className='text-gray-500 text-sm mt-8 flex justify-center gap-6'>
-              <a href='/privacy'>Privacy Policy & Term of use</a>
-            </p>
-          </div>
-        </div>
-      </footer>
       {/* ✅ 全局样式：防止滚动 */}
       <style jsx global>{`
         html,
