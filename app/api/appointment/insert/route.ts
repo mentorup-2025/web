@@ -15,11 +15,14 @@ export async function POST(request: Request) {
             return respErr('Missing required fields');
         }
 
+        console.log('🧾 Final appointmentId sent to backend:', input.mentor_id, input.mentee_id, input.start_time, input.end_time, input.service_type, input.price);
+
         // Validate mentor and mentee exist in parallel
         const [mentor, mentee] = await Promise.all([
             getUser(input.mentor_id),
             getUser(input.mentee_id)
         ]);
+        console.log('🧾 Mentor and mentee:', mentee);
 
         // Validate mentor
         if (!mentor?.mentor) {

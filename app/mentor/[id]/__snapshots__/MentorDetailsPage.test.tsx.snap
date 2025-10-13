@@ -1,0 +1,71 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`MentorDetailsPage Free Coffee Chat Banner Logic Visual Regression Tests should match visual snapshot for mobile view with trial tip banner: mobile-trial-tip-banner 1`] = `
+<div
+  aria-live="polite"
+  class="trialTipFixed"
+  role="note"
+>
+  <span
+    aria-hidden="true"
+    class="trialTipIcon"
+  >
+    📣
+  </span>
+  <span
+    class="trialTipText"
+  >
+    Book your free trial session!
+  </span>
+  <button
+    aria-label="Dismiss"
+    class="trialTipClose"
+    type="button"
+  >
+    ×
+  </button>
+</div>
+`;
+
+exports[`MentorDetailsPage Free Coffee Chat Banner Logic Visual Regression Tests should match visual snapshot for signed-in user with different mentor services: mentor-details-different-services 1`] = `
+<div
+  data-coffee-count="0"
+  data-mentor-id="test-mentor-id"
+  data-testid="mentor-availability"
+>
+  <div
+    data-testid="availability-component"
+  >
+    Mentor Availability Component
+  </div>
+  <button
+    data-testid="mock-book-button"
+  >
+    Book Session
+  </button>
+</div>
+`;
+
+exports[`MentorDetailsPage Free Coffee Chat Banner Logic Visual Regression Tests should match visual snapshot for signed-in user with mentor availability: mentor-details-with-availability 1`] = `
+<div
+  data-coffee-count="0"
+  data-mentor-id="test-mentor-id"
+  data-testid="mentor-availability"
+>
+  <div
+    data-testid="availability-component"
+  >
+    Mentor Availability Component
+  </div>
+  <div
+    data-testid="free-coffee-banner"
+  >
+    Free coffee chat available!
+  </div>
+  <button
+    data-testid="mock-book-button"
+  >
+    Book Session
+  </button>
+</div>
+`;
