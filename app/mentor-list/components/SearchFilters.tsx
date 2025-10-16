@@ -75,6 +75,13 @@ function savePersisted(val: Persistable) {
     } catch {}
 }
 
+/** 清空本地持久化 */
+function clearPersisted() {
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+    } catch {}
+}
+
 export default function SearchFilters({
                                           value,
                                           onFiltersChange,
@@ -253,6 +260,39 @@ export default function SearchFilters({
             .map((item) => item.display);
     };
 
+    /** Reset：不改变其它逻辑，仅提供点击清空并恢复默认区间 */
+    const handleReset = () => {
+        // 取消正在进行的请求与 loading
+        if (inFlightRef.current) {
+            try { controllerRef.current?.abort(); } catch {}
+            inFlightRef.current = false;
+        }
+        setLoadingASAP(false);
+
+        // 清空公司搜索输入
+        setCompanyQuery('');
+
+        // 恢复默认区间与多选
+        patch({
+            jobTitle: [],
+            industries: [],
+            serviceTypes: [],
+            company: [],
+            minPrice,
+            maxPrice,
+            minExperience: minYoe,
+            maxExperience: maxYoe,
+            offersFreeCoffeeChat: false,
+            availableAsapWithin7Days: false,
+            availableMentorIds: undefined,
+        });
+
+        // 清空持久化
+        clearPersisted();
+
+        message.success('Filters reset');
+    };
+
     return (
         <Sider width={280} className={styles.sider}>
             <div className={styles.checkboxGroupCol} style={{ padding: '12px 16px 4px' }}>
@@ -265,9 +305,9 @@ export default function SearchFilters({
                     />
                     <FieldTimeOutlined className={styles.filterIcon} />
                     <span className={styles.filterLabel}>
-            {loadingASAP && !value.availableAsapWithin7Days ? 'Loading… ' : ''}
+                        {loadingASAP && !value.availableAsapWithin7Days ? 'Loading… ' : ''}
                         Available ASAP (in 7 days)
-          </span>
+                    </span>
                 </label>
 
                 <label className={styles.filterItem}>
@@ -424,6 +464,21 @@ export default function SearchFilters({
                     </div>
                 </Panel>
             </Collapse>
+
+            {/* 底部右侧 Reset */}
+            <div style={{ padding: '4px 16px 12px', textAlign: 'right' }}>
+                <span
+                    role="button"
+                    onClick={handleReset}
+                    style={{
+                        textDecoration: 'underline',
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                    }}
+                >
+                    Reset
+                </span>
+            </div>
         </Sider>
     );
 }
