@@ -543,53 +543,76 @@
     }
 }
 
-/* 统一按钮尺寸与排版 */
-/* 初始样式：蓝色描边 */
+/* ✅ 只做尺寸与排版，不碰颜色 */
 .serviceButton {
     height: auto;
-    padding: 4px 8px;
-    line-height: 1.2;
+    padding: 4px 10px;        /* 🔽 原来 8px 12px → 缩小上下间距 */
+    line-height: 1.1;         /* 🔽 稍微压紧文字 */
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 14px;
+    font-size: 13px;          /* 🔽 可略微减小字号，整体更轻盈 */
     white-space: nowrap;
     text-align: left;
-    border: 1px solid #1890ff;
-    color: #1890ff;
-    background-color: #fff;
     transition: all 0.2s ease;
 }
 
-/* 点击（active）或选中态 */
-.serviceButton:active,
-.serviceButton:focus,
-.serviceButton.selected {
-    background-color: #1890ff;
-    color: #fff;
-    border-color: #1890ff;
+/* ✅ 仅“非 primary”按钮的描边与文字颜色（避免覆盖 ant-btn-primary） */
+.serviceButton:not(.ant-btn-primary) {
+    border: 1px solid #1890ff;
+    color: #1890ff;
+    background: #fff;
 }
 
-/* hover 效果 */
-.serviceButton:hover {
+/* ✅ 仅“非 primary”按钮的 hover 效果 */
+.serviceButton:not(.ant-btn-primary):hover {
     border-color: #40a9ff;
     color: #40a9ff;
 }
 
-/* 标题长文案的处理 */
+/* ❌ 不要用 :active / :focus 当成“选中”视觉；选中应该由 primary 控制
+   如果一定要有键盘 focus 的可见样式，可以只加 outline： */
+.serviceButton:focus-visible {
+    outline: 2px solid rgba(64, 150, 255, 0.6);
+    outline-offset: 2px;
+}
+
+/* ✅ 当按钮是 primary（由 React 传入 type="primary" 决定）时，确保蓝底白字不被覆盖 */
+:global(.ant-btn-primary).serviceButton,
+.serviceButton:global(.ant-btn-primary) {
+    background-color: #1677ff;
+    border-color: #1677ff;
+    color: #fff;
+}
+
+/* ✅ primary 的 hover/active（可选，保持和 antd 接近） */
+:global(.ant-btn-primary).serviceButton:hover,
+.serviceButton:global(.ant-btn-primary):hover {
+    background-color: #4096ff;
+    border-color: #4096ff;
+    color: #fff;
+}
+
+:global(.ant-btn-primary).serviceButton:active,
+.serviceButton:global(.ant-btn-primary):active {
+    background-color: #0958d9;
+    border-color: #0958d9;
+    color: #fff;
+}
+
+/* 标题与价格的排版（保留你的实现） */
 .serviceTitle {
     flex: 1;
     overflow: hidden;
-    text-overflow: ellipsis;         /* 单行省略号 */
-    display: -webkit-box;            /* 多行省略号（与下一行配套） */
-    -webkit-line-clamp: 2;           /* 最多显示两行 */
+    text-overflow: ellipsis;      /* 单行省略号 */
+    display: -webkit-box;         /* 多行省略号（与下一行配套） */
+    -webkit-line-clamp: 2;        /* 最多显示两行 */
     -webkit-box-orient: vertical;
 }
 
-/* 价格固定在右侧，弱化权重 */
 .servicePrice {
     margin-left: 8px;
     opacity: 0.75;
     white-space: nowrap;
-    flex-shrink: 0;                  /* 防止价格被压缩 */
+    flex-shrink: 0;
 }

@@ -579,7 +579,41 @@ export default function MySessionsTab() {
         }
         // If no link, do nothing - tooltip will show the message
     };
-
+// 小工具：把动作渲染成「蓝色按钮（可点）/ 灰掉（禁点）」统一风格
+    const ActionButton = ({
+                              icon,
+                              text,
+                              onClick,
+                              disabled = false,
+                              danger = false,
+                          }: {
+        icon: React.ReactNode;
+        text: string;
+        onClick?: () => void;
+        disabled?: boolean;
+        danger?: boolean;
+    }) => (
+        <Button
+            type="primary"
+            danger={danger}
+            disabled={disabled}
+            onClick={onClick}
+            block
+            style={{
+                height: 64,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                whiteSpace: 'normal',
+                textAlign: 'center',
+            }}
+        >
+    <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+      <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>
+      <span>{text}</span>
+    </span>
+        </Button>
+    );
 
     return (
         <div style={{ padding: 16 }}>
@@ -725,6 +759,7 @@ export default function MySessionsTab() {
                                                                 showRescheduleModal(appt);
                                                             }}
                                                             style={{
+                                                                color: '#1677ff',
                                                                 cursor: appt.service_type === 'Free Coffee Chat (15 Mins)' ? 'not-allowed' : 'pointer',
                                                                 opacity: appt.service_type === 'Free Coffee Chat (15 Mins)' ? 0.5 : 1,
                                                                 display: 'flex',
@@ -738,23 +773,26 @@ export default function MySessionsTab() {
                                                         <div key="cancel"
                                                              className={styles.actionLink}
                                                              onClick={() => showCancelModal(appt)}
-                                                             style={{ cursor: 'pointer' }}>
+                                                             style={{ cursor: 'pointer',
+                                                                 color: '#1677ff', }}>
                                                             <CloseCircleOutlined style={{ fontSize: 18 }} /><div>Cancel</div>
                                                         </div>,
                                                         <div key="noshow"
                                                              className={styles.actionLink}
                                                              onClick={() => showReportModal(appt)}
-                                                             style={{ cursor: 'pointer' }}>
+                                                             style={{ cursor: 'pointer' ,
+                                                                 color: '#1677ff', }}>
                                                             <FrownOutlined style={{ fontSize: 18 }} /><div>Report Issue</div>
                                                         </div>,
-                                                        <Tooltip 
+                                                        <Tooltip
                                                             title={appt.link ? "" : "No meeting link available yet. Please wait for the session to be confirmed."}
                                                         >
-                                                            <div 
+                                                            <div
                                                                 key="join"
                                                                 className={styles.actionLink}
-                                                                onClick={() => handleJoinClick(appt)} 
-                                                                style={{ 
+                                                                onClick={() => handleJoinClick(appt)}
+                                                                style={{
+                                                                    color: '#1677ff',
                                                                     cursor: appt.link ? 'pointer' : 'not-allowed',
                                                                     opacity: appt.link ? 1 : 0.5
                                                                 }}
