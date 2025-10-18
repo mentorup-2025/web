@@ -24,8 +24,6 @@ import {Grid} from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Popover } from 'antd';
 
-
-
 const {Content} = Layout;
 const {Title, Text} = Typography;
 const {TextArea} = Input;
@@ -39,7 +37,6 @@ export default function MentorDetailsPage() {
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(1);
     const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
-    const [supportType, setSupportType] = useState<string | null>(null);
     const [description, setDescription] = useState('');
     const [resume, setResume] = useState<File | null>(null);
     const [mentor, setMentor] = useState<any>(null);
@@ -66,6 +63,40 @@ export default function MentorDetailsPage() {
     const [showTrialTip, setShowTrialTip] = useState(true);
 
     const availabilityRef = useRef<HTMLDivElement | null>(null);
+
+    // 统一把 service 表示成字符串：无论后端给的是 string 还是 { type, price }
+    const normalizeServiceType = (s: any) =>
+        (typeof s === 'string' ? s : (s?.type ?? '')).trim().toLowerCase();
+
+    // [ADDED] 用规范化过的 key 反查 service 对象/展示文案
+    const getServiceByKey = (services: any[] | undefined | null, key: string | null) => {
+        if (!key || !Array.isArray(services)) return null;
+        return services.find((s) => normalizeServiceType(s) === key) ?? null;
+    };
+    const getRawLabelByKey = (services: any[] | undefined | null, key: string | null) => {
+        const s = getServiceByKey(services, key);
+        return s ? (typeof s === 'string' ? s : (s.type ?? '')) : '';
+    };
+
+    // 初始化：从 sessionStorage 恢复规范化 key
+    const [supportType, setSupportType] = useState<string | null>(() => {
+        if (typeof window === 'undefined') return null;
+        const saved = sessionStorage.getItem('selectedService');
+        return saved ? saved.trim().toLowerCase() : null;
+    });
+
+    // [ADDED] 当 mentor.services 变化时，校验当前已选 key 是否还存在
+    useEffect(() => {
+        if (!Array.isArray(mentor?.services)) return;
+        if (!supportType) return;
+        const allKeys = mentor.services.map(normalizeServiceType);
+        if (!allKeys.includes(supportType)) {
+            setSupportType(null);
+            if (typeof window !== 'undefined') {
+                sessionStorage.removeItem('selectedService');
+            }
+        }
+    }, [mentor?.services]);
 
     const hasFreeCoffee =
         Array.isArray(mentor?.services) &&
@@ -100,7 +131,7 @@ export default function MentorDetailsPage() {
         return () => window.removeEventListener('hashchange', onHashChange);
     }, []);
 
-    // 👇 resume file list 渲染逻辑统一处理
+    // 简历文件列表
     const resumeFileList: UploadFile[] = resume
         ? [{
             uid: '-1',
@@ -141,7 +172,6 @@ export default function MentorDetailsPage() {
         };
         fetchMenteeResume();
     }, [user?.id]);
-
 
     useEffect(() => {
         const fetchMentor = async () => {
@@ -194,11 +224,10 @@ export default function MentorDetailsPage() {
         const fetchCoffeeChatCount = async () => {
             if (!user?.id || !mentor?.user_id) return;
             try {
-                // const res = await fetch(`/api/coffee-chat-count/${user.id}`);
                 const res = await fetch(`/api/user/${user.id}/get_coffee_chat_time`);
                 const result = await res.json();
                 if (res.ok) {
-                    setCoffeeChatCount(result.data); // 这是次数，例如 0 表示还没约
+                    setCoffeeChatCount(result.data);
                 } else {
                     console.error('Failed to fetch coffee chat count');
                 }
@@ -261,23 +290,24 @@ export default function MentorDetailsPage() {
                     const startTimeObj = dayjs(`${dateStr} ${startTimeStr}`, 'YYYY-MM-DD h:mm A');
 
                     let endTimeObj: dayjs.Dayjs;
-                    if (isFreeCoffeeChat(supportType)) {
+
+                    // [CHANGED] 先用 key 反查“原始文案”再判断是否 Free
+                    const rawLabel = getRawLabelByKey(mentor?.services, supportType); // ★
+                    if (isFreeCoffeeChat(rawLabel)) { // ★
                         endTimeObj = startTimeObj.add(15, 'minute');
                     } else {
                         const [, endTimeStr] = timeStr.split(' - ');
                         endTimeObj = dayjs(`${dateStr} ${endTimeStr}`, 'YYYY-MM-DD h:mm A');
                     }
 
-                    const rawNetPrice =
-                        mentor.services.find((s: any) => s.type === supportType)?.price ?? 0;
-
-                    const calculatedPrice = isFreeCoffeeChat(supportType)
-                        ? 0
-                        : netToGross(rawNetPrice);
+                    // [CHANGED] 价格同样基于反查到的 service
+                    const selectedService = getServiceByKey(mentor?.services, supportType); // ★
+                    const rawNetPrice = typeof selectedService === 'string' ? 0 : (selectedService?.price ?? 0); // ★
+                    const calculatedPrice = isFreeCoffeeChat(rawLabel) ? 0 : netToGross(rawNetPrice); // ★
 
                     setPrice(calculatedPrice);
 
-                    if (isFreeCoffeeChat(supportType)) {
+                    if (isFreeCoffeeChat(rawLabel)) { // ★
                         if (!user?.id) {
                             message.error('User not signed in');
                             return;
@@ -290,7 +320,7 @@ export default function MentorDetailsPage() {
                                 mentee_id: user.id,
                                 start_time: startTimeObj.toISOString(),
                                 end_time: endTimeObj.toISOString(),
-                                service_type: supportType,
+                                service_type: rawLabel, // [CHANGED] 存原始文案更清晰
                                 description: description.trim(),
                                 price: 0,
                             }),
@@ -327,20 +357,21 @@ export default function MentorDetailsPage() {
 
     const supportTopicsOptions = Array.isArray(mentor?.services)
         ? mentor.services.map((service: any) => {
-            const type = typeof service === 'string' ? service : service.type;
-            const isFreeChat = isFreeCoffeeChat(type);
+            const rawLabel = typeof service === 'string' ? service : service.type; // 展示
+            const key = normalizeServiceType(service);                             // 值
+            const isFreeChat = isFreeCoffeeChat(rawLabel);
             const coffeeCount = coffeeChatCount ?? 0;
             const usedUp = isFreeChat && coffeeCount > 0;
 
             return {
-                value: type,
+                value: key,
                 label: (
-                    <div style={{display: 'flex', justifyContent: 'space-between'}}>
-                        <span>{type}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>{rawLabel}</span>
                         {isFreeChat && (
-                            <span style={{color: '#1890ff', marginLeft: 8, fontSize: 12}}>
-                {usedUp ? '0/1 free times left' : '1/1 free times left'}
-              </span>
+                            <span style={{ color: '#1890ff', marginLeft: 8, fontSize: 12 }}>
+                                {usedUp ? '0/1 free times left' : '1/1 free times left'}
+                            </span>
                         )}
                     </div>
                 ),
@@ -348,7 +379,6 @@ export default function MentorDetailsPage() {
             };
         })
         : [];
-
 
     const userTzAbbr = getUserTimeZoneAbbreviation();
 
@@ -364,15 +394,10 @@ export default function MentorDetailsPage() {
         <Layout className={styles.layout}>
             <NavBar/>
             <Content style={{paddingTop: 88}} className={styles.content}>
-                {/* NavBar is fixed, so we add paddingTop to avoid overlap */}
                 <div className={styles.container}>
 
                     <div className={styles.mainContent}>
                         <div className={styles.leftSection}>
-                            {/*<div>*/}
-                            {/*    <TestModalComponent />*/}
-                            {/*    /!* 其他 MentorDetailsPage 内容 *!/*/}
-                            {/*</div>*/}
                             <div className={styles.profileHeader}>
                                 <Avatar
                                     size={120}
@@ -426,10 +451,11 @@ export default function MentorDetailsPage() {
                                                     <div className={styles.serviceGrid}>
                                                         {Array.isArray(mentor.services) && mentor.services.length > 0 ? (
                                                             mentor.services.map((service: any, idx: number) => {
-                                                                const type = typeof service === 'string' ? service : service.type;
+                                                                const rawLabel = typeof service === 'string' ? service : service.type; // 展示用
+                                                                const key = normalizeServiceType(service);                             // 比较/存储用
                                                                 const price = typeof service === 'string' ? 0 : (service?.price ?? 0);
-                                                                const priceText = isFreeCoffeeChat(type) ? 'Free' : `$${netToGross(price)}`;
-                                                                const isSelected = supportType === type;
+                                                                const priceText = isFreeCoffeeChat(rawLabel) ? 'Free' : `$${netToGross(price)}`;
+                                                                const isSelected = supportType === key;                                // ✅ 用规范化 key 做比较
 
                                                                 return (
                                                                     <Button
@@ -437,12 +463,13 @@ export default function MentorDetailsPage() {
                                                                         type={isSelected ? 'primary' : 'default'}
                                                                         className={styles.serviceButton}
                                                                         onClick={() => {
-                                                                            setSupportType(type);
+                                                                            setSupportType(key);                                             // ✅ 存规范化 key
+                                                                            sessionStorage.setItem('selectedService', key);                  // ✅ 同步到 sessionStorage
                                                                             scrollToAvailability();
                                                                         }}
                                                                         block
                                                                     >
-                                                                        <span className={styles.serviceTitle}>{type}</span>
+                                                                        <span className={styles.serviceTitle}>{rawLabel}</span>
                                                                         <span className={styles.servicePrice}>{priceText}</span>
                                                                     </Button>
                                                                 );
@@ -476,23 +503,22 @@ export default function MentorDetailsPage() {
                         <div className={styles.rightSection}>
                             <Title level={3} className={styles.availabilityHeader}>Mentor's Availability</Title>
 
-                            <div ref={availabilityRef}> {/* ✅ 新增 */}
+                            <div ref={availabilityRef}>
                                 {!isMobile && (
                                     <MentorAvailability
                                         mentorId={mentor.user_id}
                                         services={mentor.services || []}
                                         onSlotSelect={(slot) => setSelectedSlot(slot)}
                                         onBook={() => {
-                                            // ✅ 只有选了 service 才允许进入弹窗
                                             if (!isSignedIn) {
                                                 router.push('/login');
                                                 return;
                                             }
                                             setStep(2);
-                                            setIsBookingModalVisible(true); // ✅ 点击 Book Now → 弹窗
+                                            setIsBookingModalVisible(true);
                                         }}
                                         coffeeChatCount={coffeeChatCount ?? 0}
-                                        selectedServiceType={supportType}
+                                        selectedServiceType={getRawLabelByKey(mentor?.services, supportType)} // [CHANGED] 传原始文案
                                     />
                                 )}
                             </div>
@@ -504,7 +530,7 @@ export default function MentorDetailsPage() {
                                             type="primary"
                                             block
                                             onClick={() => {
-                                                setIsAvailabilityModalOpen(true); // ✅ 直接打开
+                                                setIsAvailabilityModalOpen(true);
                                             }}
                                         >
                                             Check Availability
@@ -534,10 +560,10 @@ export default function MentorDetailsPage() {
                                                 }
                                                 setIsAvailabilityModalOpen(false);
                                                 setStep(2);
-                                                setIsBookingModalVisible(true); // ✅ Book Now → 弹窗
+                                                setIsBookingModalVisible(true);
                                             }}
                                             coffeeChatCount={coffeeChatCount ?? 0}
-                                            selectedServiceType={supportType}
+                                            selectedServiceType={getRawLabelByKey(mentor?.services, supportType)} // [CHANGED]
                                         />
                                     </Modal>
                                 </>
@@ -575,16 +601,20 @@ export default function MentorDetailsPage() {
 
                         {selectedSlot?.time && (
                             <p style={{fontSize: 15, fontWeight: 500, marginBottom: 20}}>
-                                Session Time: {
-                                isFreeCoffeeChat(supportType)
-                                    ? (() => {
-                                        const [start] = selectedSlot.time.split(' - ');
-                                        const startTime = dayjs(`${selectedSlot.date} ${start}`, 'YYYY-MM-DD h:mm A');
-                                        const endTime = startTime.add(15, 'minute');
-                                        return `${startTime.format('h:mm A')} - ${endTime.format('h:mm A')} ${userTzAbbr}`;
-                                    })()
-                                    : `${selectedSlot.time} ${userTzAbbr}`
-                            }
+                                {/* [CHANGED] 用原始文案判断是否 Free */}
+                                {(() => {
+                                    const rawLabel = getRawLabelByKey(mentor?.services, supportType);
+                                    return (
+                                        <>Session Time: {isFreeCoffeeChat(rawLabel)
+                                            ? (() => {
+                                                const [start] = selectedSlot.time.split(' - ');
+                                                const startTime = dayjs(`${selectedSlot.date} ${start}`, 'YYYY-MM-DD h:mm A');
+                                                const endTime = startTime.add(15, 'minute');
+                                                return `${startTime.format('h:mm A')} - ${endTime.format('h:mm A')} ${userTzAbbr}`;
+                                            })()
+                                            : `${selectedSlot.time} ${userTzAbbr}`}</>
+                                    );
+                                })()}
                             </p>
                         )}
 
@@ -594,11 +624,16 @@ export default function MentorDetailsPage() {
                             </strong>
                         </p>
                         <Select
-                            style={{width: '100%', marginBottom: 16}}
+                            style={{ width: '100%', marginBottom: 16 }}
                             placeholder="Pick the topic you want to focus on."
                             options={supportTopicsOptions}
                             value={supportType}
-                            onChange={setSupportType}
+                            onChange={(v) => {
+                                setSupportType(v);
+                                if (typeof window !== 'undefined') {
+                                    sessionStorage.setItem('selectedService', v);
+                                }
+                            }}
                         />
 
                         <p style={{marginBottom: 8, marginTop: 24}}><strong>Help your mentor understand you
@@ -619,16 +654,15 @@ export default function MentorDetailsPage() {
                             borderRadius: 0,
                             padding: 0,
                         }}>
-                            {/* 顶部展示文件信息 */}
                             {resumeFileList.length > 0 && (
                                 <div
                                     style={{
                                         border: '1px solid #d9d9d9',
-                                        borderBottom: 'none', // 关键！去掉底部边框以无缝连接下方上传框
+                                        borderBottom: 'none',
                                         borderTopLeftRadius: 8,
                                         borderTopRightRadius: 8,
                                         padding: '12px 16px',
-                                        marginBottom: 0, // ✅ 紧贴上传框
+                                        marginBottom: 0,
                                         backgroundColor: '#fff',
                                         display: 'flex',
                                         justifyContent: 'space-between',
@@ -646,8 +680,8 @@ export default function MentorDetailsPage() {
                                             {resumeFileList[0].name}
                                         </a>
                                         <span style={{color: '#999', fontSize: 13}}>
-        {dayjs().format('MM/DD/YYYY')} Uploaded
-      </span>
+                                            {dayjs().format('MM/DD/YYYY')} Uploaded
+                                        </span>
                                     </div>
                                     <DeleteOutlined
                                         style={{color: '#999', cursor: 'pointer'}}
@@ -667,7 +701,6 @@ export default function MentorDetailsPage() {
                                             }
                                         }}
                                     />
-
                                 </div>
                             )}
 
@@ -703,7 +736,6 @@ export default function MentorDetailsPage() {
                                     Only one file is allowed. Uploading company-sensitive information or any prohibited
                                     files is strictly forbidden.
                                 </p>
-
                             </Upload.Dragger>
 
                         </div>
@@ -711,7 +743,8 @@ export default function MentorDetailsPage() {
                 )}
 
                 {step === 3 && (
-                    supportType === 'Free coffee chat (15 mins)' ? (
+                    // [CHANGED] 用原始文案判断 Free
+                    isFreeCoffeeChat(getRawLabelByKey(mentor?.services, supportType)) ? (
                         <div>
                             <Title level={4} style={{marginBottom: 20}}>Confirm Free Session</Title>
                             <p style={{fontSize: 16, color: '#52c41a', marginBottom: 20}}>
@@ -745,7 +778,7 @@ export default function MentorDetailsPage() {
                                                     mentee_id: user.id,
                                                     start_time,
                                                     end_time,
-                                                    service_type: supportType,
+                                                    service_type: getRawLabelByKey(mentor?.services, supportType), // [CHANGED]
                                                     description: description.trim(),
                                                     price: 0,
                                                 }),
@@ -758,7 +791,6 @@ export default function MentorDetailsPage() {
                                                 return;
                                             }
 
-                                            // 🎉 成功预约，弹窗
                                             setIsBookingModalVisible(false);
                                             setIsSuccessModalVisible(true);
                                             setStep(1);
@@ -783,14 +815,13 @@ export default function MentorDetailsPage() {
                                     placement="right"
                                     overlayInnerStyle={{ maxWidth: 300, lineHeight: 1.5 }}
                                     content={
-                                        <div style={{ color: '#8c8c8c' }}> {/* 灰色字体 */}
+                                        <div style={{ color: '#8c8c8c' }}>
                                             <div>
                                                 You can get full refund if canceled <b>48hr</b> before the session. We will charge <b>$5</b> if canceled within <b>48hr</b>.
                                             </div>
                                         </div>
                                     }
                                 >
-                                    {/* 圆形感叹号按钮 */}
                                     <button
                                         type="button"
                                         className={styles.infoBadge}
@@ -813,8 +844,6 @@ export default function MentorDetailsPage() {
                                     alignItems: 'center',
                                     justifyContent: 'space-between',
                                     cursor: 'pointer',
-                                    position: 'relative',
-                                    whiteSpace: 'nowrap',
                                 }}
                                 onClick={() => setSelectedPaymentMethod('stripe')}
                             >
@@ -848,12 +877,12 @@ export default function MentorDetailsPage() {
 
                                             const start_time = startTimeObj.toISOString();
                                             const end_time = endTimeObj.toISOString();
-                                            const rawNetPrice =
-                                                mentor.services?.find((s: any) => s.type === supportType)?.price ?? 0;
 
-                                            const calculatedPrice = isFreeCoffeeChat(supportType)
-                                                ? 0
-                                                : netToGross(rawNetPrice);
+                                            // [CHANGED] 通过 key 获取 service & 价格，再判断是否 Free
+                                            const rawLabel = getRawLabelByKey(mentor?.services, supportType); // ★
+                                            const selectedService = getServiceByKey(mentor?.services, supportType); // ★
+                                            const rawNetPrice = typeof selectedService === 'string' ? 0 : (selectedService?.price ?? 0); // ★
+                                            const calculatedPrice = isFreeCoffeeChat(rawLabel) ? 0 : netToGross(rawNetPrice); // ★
 
                                             const response = await fetch('/api/appointment/insert', {
                                                 method: 'POST',
@@ -863,7 +892,7 @@ export default function MentorDetailsPage() {
                                                     mentee_id: user.id,
                                                     start_time,
                                                     end_time,
-                                                    service_type: supportType,
+                                                    service_type: rawLabel, // [CHANGED] 存原始文案
                                                     description: description.trim(),
                                                     price: calculatedPrice,
                                                 }),
@@ -879,14 +908,13 @@ export default function MentorDetailsPage() {
                                             const appointmentId = result.data.appointment_id;
 
                                             if (selectedPaymentMethod === 'stripe') {
-                                                // ✅ SKIP Step 4 - Go directly to Stripe checkout
                                                 const checkoutResponse = await fetch('/api/checkout', {
                                                     method: 'POST',
                                                     headers: { 'Content-Type': 'application/json' },
-                                                    body: JSON.stringify({ 
-                                                        amount: calculatedPrice * 100, 
-                                                        appointmentId, 
-                                                        menteeUserId: user.id 
+                                                    body: JSON.stringify({
+                                                        amount: calculatedPrice * 100,
+                                                        appointmentId,
+                                                        menteeUserId: user.id
                                                     }),
                                                 });
 
@@ -896,18 +924,16 @@ export default function MentorDetailsPage() {
                                                 }
 
                                                 const checkoutData = await checkoutResponse.json();
-                                                
+
                                                 if (!checkoutData.sessionUrl) {
                                                     throw new Error('No checkout session URL received');
                                                 }
 
-                                                // Store session info for potential webhook handling
                                                 if (typeof window !== 'undefined') {
                                                     sessionStorage.setItem('stripe_session_id', checkoutData.sessionId);
                                                     sessionStorage.setItem('appointment_id', appointmentId);
                                                 }
 
-                                                // Close modal and redirect directly to Stripe
                                                 setIsBookingModalVisible(false);
                                                 window.location.href = checkoutData.sessionUrl;
 
@@ -929,7 +955,6 @@ export default function MentorDetailsPage() {
                         </div>
                     )
                 )}
-
 
                 {(step === 1 || step === 2) && (
                     <div style={{display: 'flex', justifyContent: 'space-between', marginTop: 24}}>
@@ -974,12 +999,8 @@ export default function MentorDetailsPage() {
                         <br />
                         <Text style={{ fontSize: 14 }}>
                             <strong>Service Type:</strong>{' '}
-                            {mentor?.services
-                                ?.find((service: any) => (typeof service === 'string' ? service : service?.type) === supportType)
-                                ? (typeof mentor!.services!.find((s: any) => (typeof s === 'string' ? s : s?.type) === supportType) === 'string'
-                                    ? mentor!.services!.find((s: any) => (typeof s === 'string' ? s : s?.type) === supportType)
-                                    : (mentor!.services!.find((s: any) => (typeof s === 'string' ? s : s?.type) === supportType) as any).type)
-                                : 'Free Trial Session - 15min'}
+                            {/* [CHANGED] 简化为通过 key 取原始文案 */}
+                            {getRawLabelByKey(mentor?.services, supportType) || 'Free Trial Session - 15min'}
                         </Text>
                     </div>
 
@@ -1012,7 +1033,7 @@ export default function MentorDetailsPage() {
                     <div style={{textAlign: 'center'}}>
                         <Title level={3}>Payment</Title>
                         <p style={{fontSize: 16}}>打开 <img src="/wechat-pay.png" alt="WeChat"
-                                                            style={{height: 20, verticalAlign: 'middle'}}/> 微信扫一扫
+                                                          style={{height: 20, verticalAlign: 'middle'}}/> 微信扫一扫
                         </p>
                         <p style={{fontSize: 28, fontWeight: 'bold'}}>¥{price ? (price / 100).toFixed(2) : '0.00'}</p>
 
@@ -1073,6 +1094,7 @@ export default function MentorDetailsPage() {
                     </Button>
                 </div>
             </Modal>
+
             {isMobile && showTrialTip && showFreeTrialBanner && (
                 <div className={styles.trialTipFixed} role="note" aria-live="polite">
                     <span className={styles.trialTipIcon} aria-hidden>📣</span>
