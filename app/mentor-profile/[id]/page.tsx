@@ -27,7 +27,7 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Navbar from "../../components/Navbar";
 import MySessionsTab from "../components/MySessionsTab";
 import AvailabilityTab from "../components/AvailabilityTab";
@@ -39,6 +39,7 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import 'quill-emoji/dist/quill-emoji.css';
 import 'quill-emoji/dist/quill-emoji.js';
+import DOMPurify from 'isomorphic-dompurify';
 import { netToGross, grossToNet } from "../../services/priceHelper";
 
 const { Content } = Layout;
@@ -196,6 +197,14 @@ export default function MentorProfilePage() {
   const [activeTab, setActiveTab] = useState<TabKey>(
       isValid ? initialHash! : "about"
   );
+
+    const sanitizedIntro = useMemo(
+        () => DOMPurify.sanitize(draftIntro || '', {
+            ALLOWED_TAGS: ['p','strong','em','u','ol','ul','li','h1','h2','h3','a','img','br','span'],
+            ALLOWED_ATTR: ['href','target','rel','src','alt']
+        }),
+        [draftIntro]
+    );
 
   // 2️⃣ 切换 Tab 时更新 hash
   const onTabChange = (key: string) => {
@@ -685,23 +694,22 @@ export default function MentorProfilePage() {
             <TabPane tab="About Me" key="about">
               <div className={styles.tabContent}>
                 {/* —— Introduction 卡片 —— */}
-                <Card
-                  title="Introduction"
-                  extra={
-                    <EditOutlined
-                      style={{ cursor: "pointer" }}
-                      onClick={() => setEditIntroVisible(true)}
-                    />
-                  }
-                  className={styles.infoCard}
-                  style={{ borderRadius: "2px" }}
-                >
-                  <Paragraph>
-                    {draftIntro?.trim()
-                        ? draftIntro
-                        : "This mentor hasn't added a self introduction yet."}
-                  </Paragraph>
-                </Card>
+                  <Card
+                      title="Introduction"
+                      extra={<EditOutlined style={{ cursor: "pointer" }} onClick={() => setEditIntroVisible(true)} />}
+                      className={styles.infoCard}
+                      style={{ borderRadius: "2px" }}
+                  >
+                      {draftIntro?.trim() ? (
+                          <div
+                              className={styles.quillContent}
+                              // 用已消毒的 HTML 渲染
+                              dangerouslySetInnerHTML={{ __html: sanitizedIntro }}
+                          />
+                      ) : (
+                          <Paragraph>This mentor hasn't added a self introduction yet.</Paragraph>
+                      )}
+                  </Card>
 
                 {/* —— Services 卡片 —— */}
                 <Card
