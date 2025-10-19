@@ -2,7 +2,7 @@
 import { usePathname } from 'next/navigation';
 import Footer from './Footer';
 
-const SHOW_PATHS = new Set<string>(['/', '/mentor-list', '/about']); // 示例
+const SHOW_PATHS = new Set<string>(['/', '/mentor-list', '/about', '/faq']); // 示例
 
 export default function FooterClient() {
     const pathname = usePathname();            // string | null

@@ -314,23 +314,22 @@ export default function MentorSignup({userId}: MentorSignupProps) {
                     <Form.Item
                         name="introduction"
                         label="Please introduce yourself to your future mentees."
-                        rules={[{required: false, message: 'Please enter an introduction!'}]}
+                        // 如果你想做长度校验，可以在这里加自定义 validator
+                        // rules={[{ validator: (_, v) => /* ... */ }]}
+                        valuePropName="value"
+                        trigger="onChange"
                     >
                         <ReactQuill
-                            value={form.getFieldValue('introduction')}
-                            onChange={(value) => form.setFieldsValue({introduction: value})}
-                            placeholder="Example: Hi, I'm Alex. I studied CS at UC Berkeley and have been working as a SDE for the past 5 years at Oracle, mostly in backend..."
+                            placeholder="Example: Hi, I'm Alex..."
                             modules={{
                                 toolbar: {
                                     container: [
                                         ['bold', 'italic', 'underline'],
-                                        [{'header': [1, 2, 3, false]}],
-                                        [{'list': 'ordered'}, {'list': 'bullet'}],
+                                        [{ header: [1, 2, 3, false] }],
+                                        [{ list: 'ordered' }, { list: 'bullet' }],
                                         ['image'],
-                                        ['emoji'],  // 添加表情按钮
-                                        // ['clean']
+                                        ['emoji'],
                                     ],
-                                    // 表情配置
                                     'emoji-toolbar': true,
                                     'emoji-textarea': false,
                                     'emoji-shortname': true,
@@ -339,7 +338,7 @@ export default function MentorSignup({userId}: MentorSignupProps) {
                                 'emoji-textarea': false,
                                 'emoji-shortname': true,
                             }}
-                            style={{height: '200px', marginBottom: '40px'}}
+                            style={{ height: '200px', marginBottom: '40px' }}
                         />
                     </Form.Item>
 
