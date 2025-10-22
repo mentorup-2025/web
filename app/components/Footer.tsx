@@ -1,19 +1,12 @@
+// components/Footer.tsx
 'use client';
+
 import { useState } from "react";
 import Link from "next/link";
 
 export default function Footer() {
     // [ADDED] 控制微信二维码弹窗
     const [wechatOpen, setWechatOpen] = useState(false);
-
-    // [ADDED] 处理Footer链接点击，触发chatbot
-    const handleFooterLinkClick = (item: string) => {
-        // 触发自定义事件，ChatWidget会监听这个事件
-        const event = new CustomEvent('footerChatTrigger', {
-            detail: { item }
-        });
-        window.dispatchEvent(event);
-    };
 
     return (
         <footer className="bg-[#E6F7FF] text-black">
@@ -30,9 +23,10 @@ export default function Footer() {
                                 <p className="text-[13px] md:text-[14px] leading-[20px] md:leading-[22px] text-black">
                                     Level up your career with personalized mentors
                                 </p>
+
                                 {/* ✅ 社交图标区域（已替换为微信 + 小红书） */}
                                 <div className="mt-2 flex items-center gap-5">
-                                    {/* [CHANGED] 原 LinkedIn 改为"微信"按钮，点击后弹出二维码 */}
+                                    {/* [CHANGED] 原 LinkedIn 改为“微信”按钮，点击后弹出二维码 */}
                                     <button
                                         type="button"
                                         onClick={() => setWechatOpen(true)}
@@ -40,8 +34,13 @@ export default function Footer() {
                                         title="WeChat"
                                         className="inline-flex items-center justify-center h-[28px] w-[28px] rounded-full hover:opacity-80 transition focus:outline-none focus:ring-2 focus:ring-[#1890ff]"
                                     >
-                                        <img src="/wechat-footer.png" alt="WeChat" className="h-[22px] w-[22px] object-contain" />
+                                        <img
+                                            src="/wechat-footer.png"
+                                            alt="WeChat"
+                                            className="h-[22px] w-[22px] object-contain"
+                                        />
                                     </button>
+
                                     {/* Xiaohongshu */}
                                     <Link
                                         href="https://www.xiaohongshu.com/user/profile/636b3f08000000001f01b5e1?xsec_token=ABVVlt13kuoRlfjPbKawqXXT5Q60TzP2TsVsejUBu3fkQ%3D&xsec_source=pc_search"
@@ -51,7 +50,11 @@ export default function Footer() {
                                         title="Xiaohongshu"
                                         className="inline-flex h-[28px] w-[28px] items-center justify-center rounded-full hover:opacity-80 transition focus:outline-none focus:ring-2 focus:ring-[#1890ff]"
                                     >
-                                        <img src="/xiaohongshu.png" alt="Xiaohongshu" className="h-[22px] w-[22px] object-contain" />
+                                        <img
+                                            src="/xiaohongshu.png"
+                                            alt="Xiaohongshu"
+                                            className="h-[22px] w-[22px] object-contain"
+                                        />
                                     </Link>
                                 </div>
                             </div>
@@ -77,32 +80,15 @@ export default function Footer() {
                                 <ul className="space-y-2.5 text-[12px] leading-4 text-[#595959]">
                                     <li><Link href="/faq" className="hover:underline">FAQs</Link></li>
                                     <li>
-                                        {/* [CHANGED] Contact 链接改为触发chatbot */}
-                                        <button
-                                            onClick={() => handleFooterLinkClick('contact')}
-                                            className="hover:underline text-left"
+                                        <a
+                                            href="mailto:contactus@mentorup.info"
+                                            className="hover:underline"
                                         >
                                             Contact
-                                        </button>
+                                        </a>
                                     </li>
-                                    <li>
-                                        {/* [CHANGED] Payment 链接改为触发chatbot */}
-                                        <button
-                                            onClick={() => handleFooterLinkClick('payment')}
-                                            className="hover:underline text-left"
-                                        >
-                                            Payment
-                                        </button>
-                                    </li>
-                                    <li>
-                                        {/* [CHANGED] Cancel & Refund 链接改为触发chatbot */}
-                                        <button
-                                            onClick={() => handleFooterLinkClick('cancel-refund')}
-                                            className="hover:underline text-left"
-                                        >
-                                            Cancel &amp; Refund
-                                        </button>
-                                    </li>
+                                    <li><Link href="/chatbot?from=footer&item=payment" className="hover:underline">Payment</Link></li>
+                                    <li><Link href="/chatbot?from=footer&item=cancel-refund" className="hover:underline">Cancel &amp; Refund</Link></li>
                                 </ul>
                             </div>
 
@@ -112,33 +98,9 @@ export default function Footer() {
                                     Service
                                 </h3>
                                 <ul className="space-y-2.5 text-[12px] leading-4 text-[#595959]">
-                                    <li>
-                                        {/* [CHANGED] Free Trial Session 链接改为触发chatbot */}
-                                        <button
-                                            onClick={() => handleFooterLinkClick('free-trial')}
-                                            className="hover:underline text-left"
-                                        >
-                                            Free Trial Session
-                                        </button>
-                                    </li>
-                                    <li>
-                                        {/* [CHANGED] Career Package 链接改为触发chatbot */}
-                                        <button
-                                            onClick={() => handleFooterLinkClick('career-package')}
-                                            className="hover:underline text-left"
-                                        >
-                                            Career Package
-                                        </button>
-                                    </li>
-                                    <li>
-                                        {/* [CHANGED] Become a Mentor 链接改为触发chatbot */}
-                                        <button
-                                            onClick={() => handleFooterLinkClick('become-mentor')}
-                                            className="hover:underline text-left"
-                                        >
-                                            Become a Mentor
-                                        </button>
-                                    </li>
+                                    <li><Link href="/chatbot?from=footer&item=free-trial" className="hover:underline">Free Trial Session</Link></li>
+                                    <li><Link href="/chatbot?from=footer&item=career-package" className="hover:underline">Career Package</Link></li>
+                                    <li><Link href="/chatbot?from=footer&item=become-mentor" className="hover:underline">Become a Mentor</Link></li>
                                 </ul>
                             </div>
                         </div>
@@ -191,14 +153,16 @@ export default function Footer() {
                                 ✕
                             </button>
                         </div>
+
                         <div className="mt-4 flex flex-col items-center text-center">
                             {/* ✅ 微信二维码 */}
                             <img
-                                src="/wechat-qr-placeholder.png"
+                                src="/wechat-qr.png"
                                 alt="WeChat QR Code"
                                 className="w-[240px] h-[240px] rounded-md border border-black/10 object-contain"
                             />
                             <p className="mt-3 text-sm text-[#595959]">Scan the QR code in WeChat</p>
+
                             {/* ✅ 新增微信号展示 */}
                             <div className="mt-2 text-sm text-[#262626]">
                                 <span className="font-medium text-[#096DD9]">WeChat ID:</span>{" "}
