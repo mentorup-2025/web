@@ -20,6 +20,7 @@ import { netToGross } from '../../services/priceHelper';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isBetween from 'dayjs/plugin/isBetween';
 import { SoundFilled } from '@ant-design/icons';
+import { useRef } from 'react';
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrBefore);
@@ -269,6 +270,69 @@ export default function MentorAvailability({
         const key = `${dateISO}|${slotLabel}`;
         return start.isBefore(dayjs().add(24, 'hour')) || heldSlots.has(key);
     };
+
+    function pickFirstAvailable() {
+        if (!availabilityData || availabilityData.size === 0) return false;
+
+        // 日期升序
+        const dates = Array.from(availabilityData.keys()).sort();
+
+        for (const dateKey of dates) {
+            // 当天时段按开始时间升序
+            const slots = [...(availabilityData.get(dateKey) ?? [])].sort((a, b) => {
+                const sa = a.raw.split(' - ')[0];
+                const sb = b.raw.split(' - ')[0];
+                return dayjs(`${dateKey} ${sa}`).valueOf() - dayjs(`${dateKey} ${sb}`).valueOf();
+            });
+
+            for (const slot of slots) {
+                const slotLabel = slot.raw; // "9:00 AM - 10:00 AM"
+                if (isSlotDisabled(dateKey, slotLabel)) continue;
+
+                // 选中日期
+                setSelectedDate(dayjs(dateKey, 'YYYY-MM-DD'));
+
+                // 如果是 Free Coffee Chat，把 1h 切成前 15 分钟
+                if (isFreeSelected) {
+                    const [startStr] = slotLabel.split(' - ');
+                    const start = dayjs(`${dateKey} ${startStr}`);
+                    const end15 = start.add(15, 'minute');
+                    const raw15 = `${start.format('h:mm A')} - ${end15.format('h:mm A')}`;
+                    setSelectedSlot(raw15);
+                } else {
+                    setSelectedSlot(slotLabel);
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+    const prevServiceRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        const serviceChanged = prevServiceRef.current !== selectedServiceType;
+
+        // 没有服务类型或没有可用数据，记录后返回
+        if (!selectedServiceType || !availabilityData || availabilityData.size === 0) {
+            prevServiceRef.current = selectedServiceType ?? null;
+            return;
+        }
+
+        if (serviceChanged) {
+            // 服务切换：强制重选最近可预约的日期+时间（含 Free 15min 逻辑）
+            pickFirstAvailable();
+            prevServiceRef.current = selectedServiceType;
+            return;
+        }
+
+        // 服务没变：保持“用户未手动选择才自动选”的策略
+        if (!selectedDate && !selectedSlot) {
+            pickFirstAvailable();
+        }
+
+        prevServiceRef.current = selectedServiceType;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedServiceType, availabilityData, heldSlots]);
 
     const getPriceText = () => {
         const firstPaidService =
