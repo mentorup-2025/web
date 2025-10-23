@@ -78,13 +78,14 @@ export default function MentorDetailsPage() {
         return s ? (typeof s === 'string' ? s : (s.type ?? '')) : '';
     };
 
-    // 初始化：从 sessionStorage 恢复规范化 key
-    const [supportType, setSupportType] = useState<string | null>(() => {
-        if (typeof window === 'undefined') return null;
-        const saved = sessionStorage.getItem('selectedService');
-        return saved ? saved.trim().toLowerCase() : null;
-    });
 
+    const [supportType, setSupportType] = useState<string | null>(null);
+     // 每次刷新页面时，主动清空之前的缓存
+        useEffect(() => {
+            if (typeof window !== 'undefined') {
+                sessionStorage.removeItem('selectedService');
+                }
+            }, []);
     // [ADDED] 当 mentor.services 变化时，校验当前已选 key 是否还存在
     useEffect(() => {
         if (!Array.isArray(mentor?.services)) return;

@@ -218,7 +218,7 @@ export default function ChatWidget() {
     }, [handleUserInput]); // 添加handleUserInput到依赖数组
 
     // 条件返回必须在所有hook之后
-    if (!isLoaded || pathname === "/") return null;
+    if (!isLoaded) return null;
 
     async function sendEmailTemplate(email: string, type: "refund" | "order") {
         const emailType = type === "refund" ? "RefundProcessedEmail" : "OrderContactEmail";
