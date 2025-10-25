@@ -269,7 +269,7 @@ export default function MentorSignup({userId}: MentorSignupProps) {
 
                     <Form.Item
                         name="wechat"
-                        label="WeChat ID"
+                        label="Please share your WeChat ID, if you have it."
                         rules={[
                             {required: true, message: 'Please input your WeChat ID!'},
                             {
@@ -284,8 +284,8 @@ export default function MentorSignup({userId}: MentorSignupProps) {
 
                     <Form.Item
                         name="linkedin"
-                        label="LinkedIn Profile"
-                        rules={[{required: false, type: 'url', message: 'Please enter a valid URL!'}]}
+                        label="Please share your LinkedIn for verification."
+                        rules={[{required: true, type: 'url', message: 'Please enter a valid URL!'}]}
                     >
                         <Input placeholder="Enter your LinkedIn profile URL"/>
                     </Form.Item>
@@ -571,7 +571,7 @@ export default function MentorSignup({userId}: MentorSignupProps) {
                     </Form.Item>
                     <Form.Item
                         name="yearsOfExperience"
-                        label="How many years of professional experience do you have?"
+                        label="How many years of industry experience do you have?"
                         rules={[{required: true, message: 'Please select your years of experience!'}]}
                     >
                         <Select placeholder="Select years of experience">

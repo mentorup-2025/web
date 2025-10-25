@@ -5,12 +5,13 @@ import {SignedIn, SignedOut, SignInButton, useUser} from '@clerk/nextjs';
 
 import styles from './mentorDetails.module.css';
 import MentorAvailability from '../../components/MentorAvailability';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import {useRouter, useParams} from 'next/navigation';
 import dayjs from 'dayjs';
 import type {UploadFile} from 'antd/es/upload/interface';
 import NavBar from '../../components/Navbar';
 import moment from 'moment-timezone';
+import DOMPurify from 'isomorphic-dompurify';
 
 import {isFreeCoffeeChat} from '../../services/constants';
 import {netToGross} from '../../services/priceHelper';
@@ -78,6 +79,13 @@ export default function MentorDetailsPage() {
         return s ? (typeof s === 'string' ? s : (s.type ?? '')) : '';
     };
 
+    const sanitizedIntro = useMemo(
+        () => DOMPurify.sanitize(mentor?.introduction || '', {
+            ALLOWED_TAGS: ['p','strong','em','u','ol','ul','li','h1','h2','h3','a','img','br','span'],
+            ALLOWED_ATTR: ['href','target','rel','src','alt']
+        }),
+        [mentor?.introduction]
+    );
 
     const [supportType, setSupportType] = useState<string | null>(null);
     // 每次刷新页面时，主动清空之前的缓存
@@ -440,7 +448,10 @@ export default function MentorDetailsPage() {
                                                     style={{marginBottom: 24}}
                                                 >
                                                     {mentor.introduction ? (
-                                                        <Text>{mentor.introduction}</Text>
+                                                        <div
+                                                            className={styles.quillContent}
+                                                            dangerouslySetInnerHTML={{ __html: sanitizedIntro }}
+                                                        />
                                                     ) : (
                                                         <Text type="secondary">
                                                             This mentor has not provided an introduction yet.
