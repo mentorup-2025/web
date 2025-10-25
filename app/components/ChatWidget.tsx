@@ -130,7 +130,7 @@ export default function ChatWidget() {
                 "# Email used for booking:\n" +
                 "# Session details (date, mentor name):\n" +
                 "# Reason for refund:\n\n" +
-                "We typically process refunds within 3-5 business days.";
+                "We typically process refunds within 3-5 business days. \n\nCancel 48 hours in advance for full refund; within 48 hours incurs $5 fee.";
         } else if (content === "Free Trial Session") {
             botReplyContent = "We offer a 15-minute Free Trial Session that you can book with any mentor who provides free coffee chats. Each member receives one free trial.";
         } else if (content === "Career Package") {
