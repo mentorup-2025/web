@@ -137,6 +137,13 @@ const jobTitleOptions = [
       { value: "ERP Consultant", label: "ERP Consultant (e.g., SAP, Oracle)" },
     ],
   },
+  {
+    // ✅ 新增分类：法律领域
+    label: 'Legal & Public Sector',
+    options: [
+      { value: 'Lawyer', label: 'Lawyer' },
+    ],
+  },
 ];
 
 const tabKeys = ["about", "sessions", "availability", "payments"] as const;

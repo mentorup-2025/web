@@ -566,6 +566,13 @@ export default function MentorSignup({userId}: MentorSignupProps) {
                                         {value: 'ERP Consultant', label: 'ERP Consultant (e.g., SAP, Oracle)'},
                                     ],
                                 },
+                                {
+                                    // ✅ 新增分类：法律领域
+                                    label: 'Legal & Public Sector',
+                                    options: [
+                                        { value: 'Lawyer', label: 'Lawyer' },
+                                    ],
+                                },
                             ]}
                         />
                     </Form.Item>
