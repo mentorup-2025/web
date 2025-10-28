@@ -186,3 +186,17 @@
 .actionLink[style*="not-allowed"] {
     pointer-events: none; /* 真正禁止点击（可选） */
 }
+
+/* —— 桌面端：收敛弹层尺寸，避免过宽 —— */
+.block-dates-dropdown .ant-picker-panel-container {
+    border-radius: 8px;
+}
+
+.block-dates-dropdown .ant-picker-panels {
+    gap: 8px;
+}
+
+.block-dates-dropdown {
+    max-width: 92vw;          /* 避免出屏 */
+}
+

@@ -641,6 +641,9 @@ export default function AvailabilityTab({ userId }: Props) {
                             current && current.isBefore(dayjs().startOf('day'))
                         }
                         onChange={handleBlockRangeChange}
+                        dropdownClassName="mobile-range-picker"
+                        placement="bottomLeft"
+
                     />
 
                     {/* 已屏蔽的单日，用 Tag 展示 */}

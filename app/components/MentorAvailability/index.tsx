@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     Card,
     Calendar,
@@ -14,20 +14,18 @@ import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
-import styles from './mentorAvailability.module.css';
-import { supabase } from '../../services/supabase';
-import { netToGross } from '../../services/priceHelper';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isBetween from 'dayjs/plugin/isBetween';
 import { SoundFilled } from '@ant-design/icons';
-import { useRef } from 'react';
+import styles from './mentorAvailability.module.css';
+import { supabase } from '../../services/supabase';
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isBetween);
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 interface TimeSlot { slot_time: string; }
 interface AvailabilityResponse {
@@ -44,27 +42,20 @@ interface MentorAvailabilityProps {
     onBook: () => void;
     coffeeChatCount: number;
     selectedServiceType?: string | null;
+    /** 律师传 30，其它不传或传 60 */
+    forcedDurationMinutes?: number;
 }
 
 interface SlotLabel {
-    raw: string;        // 例: "9:00 AM - 10:00 AM"
-    formatted: string;  // 例: "9-10 AM"
+    raw: string;        // e.g. "1:00 PM - 1:30 PM"
+    formatted: string;  // e.g. "1:00-1:30 PM"
 }
 
-// —— 时间段格式化工具 ——
-// 去掉 :00，只显示小时，如果 AM/PM 相同只写一次
+/** 显示为 “1:00-1:30 PM”；若跨 AM/PM 则两边都带 */
 function formatSlot(start: dayjs.Dayjs, end: dayjs.Dayjs) {
-    const startHour = start.format('h');
-    const endHour = end.format('h');
-
-    const startPeriod = start.format('A');
-    const endPeriod = end.format('A');
-
-    if (startPeriod === endPeriod) {
-        return `${startHour}-${endHour} ${startPeriod}`;
-    } else {
-        return `${startHour} ${startPeriod} - ${endHour} ${endPeriod}`;
-    }
+    const samePeriod = start.format('A') === end.format('A');
+    if (samePeriod) return `${start.format('h:mm')}-${end.format('h:mm A')}`;
+    return `${start.format('h:mm A')} - ${end.format('h:mm A')}`;
 }
 
 export default function MentorAvailability({
@@ -74,6 +65,7 @@ export default function MentorAvailability({
                                                onBook,
                                                coffeeChatCount,
                                                selectedServiceType,
+                                               forcedDurationMinutes,
                                            }: MentorAvailabilityProps) {
     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
@@ -81,11 +73,8 @@ export default function MentorAvailability({
     const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs());
     const [heldSlots, setHeldSlots] = useState<Set<string>>(new Set());
     const [userTimezone, setUserTimezone] = useState('');
-
-    const isFreeSelected =
-        !!selectedServiceType && /free coffee chat/i.test(selectedServiceType);
-
-    // ✅ 只有 mentor 提供 Free Coffee Chat 且用户未使用时才显示 Banner (对所有用户显示)
+    const [userHasPickedSlot, setUserHasPickedSlot] = useState(false);
+    // 仅用于 banner 提示（不影响时长）
     const hasFreeCoffee = Array.isArray(services) &&
         services.some((s) => typeof s?.type === 'string' && /free coffee chat/i.test(s.type));
     const showFreeBanner = hasFreeCoffee && coffeeChatCount === 0;
@@ -130,6 +119,16 @@ export default function MentorAvailability({
                     const availabilityMap = new Map<string, SlotLabel[]>();
                     const nowPlus24h = dayjs().add(24, 'hour');
 
+                    // —— 根据选择的服务动态确定切片时长 —— //
+                    const isFreeSelected =
+                        !!selectedServiceType && /free coffee chat/i.test(selectedServiceType);
+
+                    // 若传入 forcedDurationMinutes（律师=30）则优先使用；否则 Free=15，默认=60
+                    const slotMinutes =
+                        typeof forcedDurationMinutes === 'number' && forcedDurationMinutes > 0
+                            ? forcedDurationMinutes
+                            : (isFreeSelected ? 15 : 60);
+
                     data.data.forEach(({ slot_time }) => {
                         try {
                             let start: string, end: string;
@@ -146,22 +145,26 @@ export default function MentorAvailability({
                             const endTime = dayjs(end);
                             if (!startTime.isValid() || !endTime.isValid()) return;
 
-                            // 跳过 24 小时内的
+                            // 跳过 24 小时内
                             if (startTime.isBefore(nowPlus24h)) return;
 
-                            while (startTime.add(1, 'hour').isSameOrBefore(endTime)) {
-                                const nextHour = startTime.add(1, 'hour');
-                                const dateKey = startTime.format('YYYY-MM-DD');
+                            while (startTime.add(slotMinutes, 'minute').isSameOrBefore(endTime)) {
+                                const nextTime = startTime.add(slotMinutes, 'minute');
 
-                                // 桌面端/业务计算用（原始）
-                                const raw = `${startTime.format('h:mm A')} - ${nextHour.format('h:mm A')}`;
-                                // 展示用（精简）
-                                const formatted = formatSlot(startTime, nextHour);
+                                // ★ 对于 15 或 30 分钟段，只保留“整点开始”的切片（起始分钟 = 0）
+                                if ((slotMinutes === 15 || slotMinutes === 30) && startTime.minute() !== 0) {
+                                    startTime = nextTime;
+                                    continue;
+                                }
+
+                                const dateKey = startTime.format('YYYY-MM-DD');
+                                const raw = `${startTime.format('h:mm A')} - ${nextTime.format('h:mm A')}`;
+                                const formatted = formatSlot(startTime, nextTime);
 
                                 if (!availabilityMap.has(dateKey)) availabilityMap.set(dateKey, []);
                                 availabilityMap.get(dateKey)!.push({ raw, formatted });
 
-                                startTime = nextHour;
+                                startTime = nextTime;
                             }
                         } catch (error) {
                             console.error('Error processing slot_time:', slot_time, error);
@@ -178,16 +181,51 @@ export default function MentorAvailability({
         };
 
         fetchAvailability();
-    }, [currentMonth, mentorId]);
-
-    // —— 桌面端：Calendar 相关 ——
-    const dateCellRender = (date: Dayjs) => {
-        const dateStr = date.format('YYYY-MM-DD');
-        return availabilityData.has(dateStr) ? <div className={styles.availabilityDot} /> : null;
-    };
+    }, [currentMonth, mentorId, forcedDurationMinutes, selectedServiceType]); // ← 关键：根据服务切换重切片
 
 
-    // 1) 用 full cell render 灰掉不可用日期（不显示小蓝点）
+    function tryPreserveSelection(): boolean {
+        if (!selectedDate) return false;
+
+        const dateKey = selectedDate.format('YYYY-MM-DD');
+        const slots = availabilityData.get(dateKey);
+        if (!slots || slots.length === 0) return false;
+
+        // 1) 如果原选的 slot 仍然存在且不禁用，直接保留
+        if (selectedSlot) {
+            const stillExists = slots.some(s => s.raw === selectedSlot && !isSlotDisabled(dateKey, s.raw));
+            if (stillExists) return true;
+        }
+
+        // 2) 否则在同一天找“>=原开始时间”的最近 slot；没有就同天第一可用；同天也没有则返回 false
+        const candidates = slots
+            .filter(s => !isSlotDisabled(dateKey, s.raw))
+            .sort((a, b) => {
+                const sa = dayjs(`${dateKey} ${a.raw.split(' - ')[0]}`).valueOf();
+                const sb = dayjs(`${dateKey} ${b.raw.split(' - ')[0]}`).valueOf();
+                return sa - sb;
+            });
+
+        if (candidates.length === 0) return false;
+
+        if (selectedSlot) {
+            const [origStart] = selectedSlot.split(' - ');
+            const origTs = dayjs(`${dateKey} ${origStart}`).valueOf();
+            const found = candidates.find(s => {
+                const ts = dayjs(`${dateKey} ${s.raw.split(' - ')[0]}`).valueOf();
+                return ts >= origTs;
+            }) || candidates[0];
+
+            setSelectedSlot(found.raw);
+            return true;
+        }
+
+        // 之前没选具体 slot，则用同天第一可用
+        setSelectedSlot(candidates[0].raw);
+        return true;
+    }
+
+    // —— Calendar：禁用无可用日期 + 选中态 —— //
     const dateFullCellRender = (date: Dayjs) => {
         const dateStr = date.format('YYYY-MM-DD');
         const hasSlots = availabilityData.has(dateStr);
@@ -196,7 +234,7 @@ export default function MentorAvailability({
         const classNames = [
             styles.dateCell,
             !hasSlots ? styles.dateDisabled : '',
-            isSelected ? styles.dateSelected : '',   // 👈 选中态
+            isSelected ? styles.dateSelected : '',
         ]
             .filter(Boolean)
             .join(' ');
@@ -220,11 +258,11 @@ export default function MentorAvailability({
 
     const handleDateSelect = (date: Dayjs) => {
         const dateStr = date.format('YYYY-MM-DD');
-        if (!availabilityData.has(dateStr)) {
-            return;
-        }
+        if (!availabilityData.has(dateStr)) return;
+
         setSelectedDate(date);
         setSelectedSlot(null);
+        setUserHasPickedSlot(true); // ✅ 用户手动改过
     };
 
     const handlePanelChange = (date: Dayjs) => {
@@ -274,11 +312,8 @@ export default function MentorAvailability({
     function pickFirstAvailable() {
         if (!availabilityData || availabilityData.size === 0) return false;
 
-        // 日期升序
         const dates = Array.from(availabilityData.keys()).sort();
-
         for (const dateKey of dates) {
-            // 当天时段按开始时间升序
             const slots = [...(availabilityData.get(dateKey) ?? [])].sort((a, b) => {
                 const sa = a.raw.split(' - ')[0];
                 const sb = b.raw.split(' - ')[0];
@@ -286,67 +321,80 @@ export default function MentorAvailability({
             });
 
             for (const slot of slots) {
-                const slotLabel = slot.raw; // "9:00 AM - 10:00 AM"
+                const slotLabel = slot.raw;
                 if (isSlotDisabled(dateKey, slotLabel)) continue;
 
-                // 选中日期
                 setSelectedDate(dayjs(dateKey, 'YYYY-MM-DD'));
-
-                // 如果是 Free Coffee Chat，把 1h 切成前 15 分钟
-                if (isFreeSelected) {
-                    const [startStr] = slotLabel.split(' - ');
-                    const start = dayjs(`${dateKey} ${startStr}`);
-                    const end15 = start.add(15, 'minute');
-                    const raw15 = `${start.format('h:mm A')} - ${end15.format('h:mm A')}`;
-                    setSelectedSlot(raw15);
-                } else {
-                    setSelectedSlot(slotLabel);
-                }
+                setSelectedSlot(slotLabel);
                 return true;
             }
         }
         return false;
     }
-    const prevServiceRef = useRef<string | null>(null);
 
+    const prevServiceRef = useRef<string | null>(null);
     useEffect(() => {
         const serviceChanged = prevServiceRef.current !== selectedServiceType;
 
-        // 没有服务类型或没有可用数据，记录后返回
+        // 没有服务或没有数据时直接记录并返回
         if (!selectedServiceType || !availabilityData || availabilityData.size === 0) {
             prevServiceRef.current = selectedServiceType ?? null;
             return;
         }
 
+        // 服务变了
         if (serviceChanged) {
-            // 服务切换：强制重选最近可预约的日期+时间（含 Free 15min 逻辑）
-            pickFirstAvailable();
+            // 用户手动改过：尽量保留原选择（先同日、再全局兜底）
+            if (userHasPickedSlot) {
+                const preserved = tryPreserveSelection();
+                if (!preserved) {
+                    // 原日找不到可用 → 全局最近
+                    pickFirstAvailable();
+                }
+            } else {
+                // 用户没改过（第一次点服务）：直接选全局最近日期+时段
+                pickFirstAvailable();
+            }
+
             prevServiceRef.current = selectedServiceType;
             return;
         }
 
-        // 服务没变：保持“用户未手动选择才自动选”的策略
-        if (!selectedDate && !selectedSlot) {
+        // 非服务变更，但当前还没选任何日期/时段（如首次加载完数据）
+        if (!selectedDate || !selectedSlot) {
             pickFirstAvailable();
         }
 
         prevServiceRef.current = selectedServiceType;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedServiceType, availabilityData, heldSlots]);
+    }, [selectedServiceType, availabilityData, heldSlots]); // 依赖保持不变
+    useEffect(() => {
+        // 没有日期或没数据，不需要校验
+        if (!selectedDate || availabilityData.size === 0) return;
 
-    const getPriceText = () => {
-        const firstPaidService =
-            services.find(
-                (s) =>
-                    s &&
-                    typeof s.type === 'string' &&
-                    !/free coffee chat/i.test(s.type) &&
-                    (s.price ?? 0) > 0
-            );
-        return firstPaidService ? `$${netToGross(firstPaidService.price)}` : 'Free';
-    };
+        const dateKey = selectedDate.format('YYYY-MM-DD');
+        const slots = availabilityData.get(dateKey) || [];
 
-    // —— 仅桌面端 UI ——
+        // 该日期下是否还包含当前选中的 slot，并且未被禁用
+        const stillValid =
+            !!selectedSlot &&
+            slots.some(s => s.raw === selectedSlot && !isSlotDisabled(dateKey, s.raw));
+
+        if (stillValid) return;
+
+        // 走“保留同日/就近”的规则，失败再全局兜底
+        const preserved = tryPreserveSelection();
+        if (!preserved) {
+            const picked = pickFirstAvailable();
+            if (!picked) {
+                // 全局也没有可选的，清空选中状态（避免 value 指向不存在的项）
+                setSelectedSlot(null);
+            }
+        }
+
+        // 注意：这是自动修复，不应标记为“用户手动选择”
+        // 所以不要 setUserHasPickedSlot(true)
+    }, [availabilityData, heldSlots, selectedDate, selectedSlot]);
+    // —— 仅桌面端 UI —— //
     return (
         <Card className={styles.availabilityCard}>
             <Calendar
@@ -365,61 +413,45 @@ export default function MentorAvailability({
                         Available Time Slots on {selectedDate.format('MMMM D, YYYY')}
                     </Text>
 
-                    {/* ✅ 仅当 mentor 有 Free Coffee 且用户未用过时显示 */}
                     {showFreeBanner && (
                         <div className={styles.trialBubble} role="note" aria-live="polite">
-        <span className={styles.bubbleIcon}>
-        <SoundFilled />
-        </span>
+                            <span className={styles.bubbleIcon}><SoundFilled /></span>
                             <span className={styles.bubbleText}>Get a trial session for FREE!</span>
                         </div>
                     )}
-
 
                     {availabilityData.has(selectedDate.format('YYYY-MM-DD')) ? (
                         <>
                             <div className={styles.slotsScroll}>
                                 <Radio.Group
                                     value={selectedSlot}
-                                    onChange={(e) => setSelectedSlot(e.target.value)}
+                                    onChange={(e) => {
+                                        setSelectedSlot(e.target.value);
+                                        setUserHasPickedSlot(true); // ✅ 用户手动改过
+                                    }}
                                     className={styles.radioGroup}
                                 >
                                     {availabilityData.get(selectedDate.format('YYYY-MM-DD'))!.map((slot, i) => {
-                                        const [startStr /* , endStr */] = slot.raw.split(' - ');
+                                        const [startStr] = slot.raw.split(' - ');
                                         const start = dayjs(`${selectedDate.format('YYYY-MM-DD')} ${startStr}`);
 
-                                        // —— 如果选中的是 Free Coffee Chat：把小时段改为前 15 分钟 —— //
-                                        const freeEnd = start.add(15, 'minute');
-                                        const raw15 = `${start.format('h:mm A')} - ${freeEnd.format('h:mm A')}`; // 传给父组件用
-                                        const label15 = `${start.format('h:mm')}-${freeEnd.format('h:mm A')}`;   // 展示用：7:00-7:15 PM
-
-                                        // 禁用逻辑：24h 内或被 hold
-                                        const slotKey = `${selectedDate.format('YYYY-MM-DD')}|${slot.raw}`; // hold 针对原小时段
+                                        // 禁用逻辑
+                                        const slotKey = `${selectedDate.format('YYYY-MM-DD')}|${slot.raw}`;
                                         const disabled =
                                             start.isBefore(dayjs().add(24, 'hour')) || heldSlots.has(slotKey);
 
-                                        // 展示用文本 & 价格/时长
-                                        const slotText = isFreeSelected ? label15 : (slot.formatted ?? slot.raw);
-                                        const durationText = isFreeSelected ? '(15mins)' : '(1h)';
+                                        // 展示：时长基于 forcedDurationMinutes / Free=15 / 默认60
+                                        const isFreeSelected =
+                                            !!selectedServiceType && /free coffee chat/i.test(selectedServiceType);
+                                        const minutes =
+                                            typeof forcedDurationMinutes === 'number' && forcedDurationMinutes > 0
+                                                ? forcedDurationMinutes
+                                                : (isFreeSelected ? 15 : 60);
 
-                                        // 付费价格：如果是 Free，显示 Free；否则沿用你的逻辑
-                                        let price = 'Free';
-                                        if (!isFreeSelected) {
-                                            const firstPaidService = services.find(
-                                                (s) =>
-                                                    s &&
-                                                    typeof s.type === 'string' &&
-                                                    !/free coffee chat/i.test(s.type) &&
-                                                    (s.price ?? 0) > 0
-                                            );
-
-                                            price = firstPaidService ? `$${netToGross(firstPaidService.price)}` : 'Free';
-                                        }
-                                        const radioValue = isFreeSelected ? raw15 : slot.raw;
                                         return (
                                             <Radio
                                                 key={i}
-                                                value={radioValue}
+                                                value={slot.raw}
                                                 disabled={disabled}
                                                 className={[
                                                     styles.timeSlotRadio,
@@ -427,10 +459,10 @@ export default function MentorAvailability({
                                                 ].join(' ')}
                                             >
                                                 <div className={styles.radioContent}>
-                                                    <span className={styles.slotText}>{slotText}</span>
+                                                    <span className={styles.slotText}>{slot.formatted ?? slot.raw}</span>
                                                     <span className={styles.slotDetails}>
-          {durationText}
-        </span>
+                            ({minutes}mins)
+                          </span>
                                                 </div>
                                             </Radio>
                                         );

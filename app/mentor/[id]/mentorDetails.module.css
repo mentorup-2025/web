@@ -616,3 +616,19 @@
     white-space: nowrap;
     flex-shrink: 0;
 }
+
+/* —— Mobile 优化：卡片左右填充 + 居中 —— */
+@media (max-width: 767px) {
+    /* 容器左右留白一致 */
+    .container {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+
+    /* 主区块改成单列，去掉多余左右 padding/gap */
+    .mainContent {
+        display: block !important;
+        padding: 0 !important;
+    }
+
+}

@@ -34,6 +34,10 @@ export default function MentorDetailsPage() {
     const params = useParams() as { id: string };
     const [isBookingModalVisible, setIsBookingModalVisible] = useState(false);
     const [selectedSlot, setSelectedSlot] = useState<{ date: string; time: string } | null>(null);
+    type ChangeSource = 'service' | 'date' | 'time' | 'auto' | null;
+    const [supportType, setSupportType] = useState<string | null>(null);
+    const [lastChange, setLastChange] = useState<ChangeSource>(null);
+    const [firstServicePicked, setFirstServicePicked] = useState(false);
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(1);
     const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
@@ -64,6 +68,14 @@ export default function MentorDetailsPage() {
 
     const availabilityRef = useRef<HTMLDivElement | null>(null);
 
+    const isLawyer = /lawyer/i.test(mentor?.title ?? '');
+    // 统一的时长决策：律师固定 30min；否则 Free Coffee Chat=15min；否则用选框里的 end time
+    const getSessionDurationMinutes = (rawLabel: string | null | undefined) => {
+        if (isLawyer) return 30;
+        if (rawLabel && isFreeCoffeeChat(rawLabel)) return 15;
+        return null; // null = 使用 selectedSlot.time 提供的 end
+    };
+
     // 统一把 service 表示成字符串：无论后端给的是 string 还是 { type, price }
     const normalizeServiceType = (s: any) =>
         (typeof s === 'string' ? s : (s?.type ?? '')).trim().toLowerCase();
@@ -79,7 +91,6 @@ export default function MentorDetailsPage() {
     };
 
 
-    const [supportType, setSupportType] = useState<string | null>(null);
     // 每次刷新页面时，主动清空之前的缓存
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -290,25 +301,25 @@ export default function MentorDetailsPage() {
                     const [startTimeStr] = timeStr.split(' - ');
                     const startTimeObj = dayjs(`${dateStr} ${startTimeStr}`, 'YYYY-MM-DD h:mm A');
 
-                    let endTimeObj: dayjs.Dayjs;
+                    const rawLabel = getRawLabelByKey(mentor?.services, supportType);
+                    const forcedMinutes = getSessionDurationMinutes(rawLabel);
 
-                    // [CHANGED] 先用 key 反查“原始文案”再判断是否 Free
-                    const rawLabel = getRawLabelByKey(mentor?.services, supportType); // ★
-                    if (isFreeCoffeeChat(rawLabel)) { // ★
-                        endTimeObj = startTimeObj.add(15, 'minute');
+                    let endTimeObj: dayjs.Dayjs;
+                    if (forcedMinutes) {
+                        endTimeObj = startTimeObj.add(forcedMinutes, 'minute');
                     } else {
                         const [, endTimeStr] = timeStr.split(' - ');
                         endTimeObj = dayjs(`${dateStr} ${endTimeStr}`, 'YYYY-MM-DD h:mm A');
                     }
 
-                    // [CHANGED] 价格同样基于反查到的 service
-                    const selectedService = getServiceByKey(mentor?.services, supportType); // ★
-                    const rawNetPrice = typeof selectedService === 'string' ? 0 : (selectedService?.price ?? 0); // ★
-                    const calculatedPrice = isFreeCoffeeChat(rawLabel) ? 0 : netToGross(rawNetPrice); // ★
+                    const selectedService = getServiceByKey(mentor?.services, supportType);
+                    const rawNetPrice = typeof selectedService === 'string' ? 0 : (selectedService?.price ?? 0);
+                    const calculatedPrice = isFreeCoffeeChat(rawLabel || '') ? 0 : netToGross(rawNetPrice);
 
                     setPrice(calculatedPrice);
 
-                    if (isFreeCoffeeChat(rawLabel)) { // ★
+                    // 如果是免费的（即 Free Coffee Chat）也不再是 15 分钟，而是（律师）30 分钟或默认 15 分钟
+                    if (isFreeCoffeeChat(rawLabel || '')) {
                         if (!user?.id) {
                             message.error('User not signed in');
                             return;
@@ -321,23 +332,20 @@ export default function MentorDetailsPage() {
                                 mentee_id: user.id,
                                 start_time: startTimeObj.toISOString(),
                                 end_time: endTimeObj.toISOString(),
-                                service_type: rawLabel, // [CHANGED] 存原始文案更清晰
+                                service_type: rawLabel,
                                 description: description.trim(),
                                 price: 0,
                             }),
                         });
-
                         const result = await response.json();
-
                         if (!response.ok || result.code === -1 || !result.data?.appointment_id) {
                             message.error(result.message || 'Failed to create appointment');
                             return;
                         }
-
                         setIsBookingModalVisible(false);
                         setIsSuccessModalVisible(true);
                         setStep(1);
-                        return; // ⛔ 不继续进入 Step 3
+                        return;
                     }
                 } catch (error) {
                     console.error('Failed to calculate session time/price:', error);
@@ -464,8 +472,9 @@ export default function MentorDetailsPage() {
                                                                         type={isSelected ? 'primary' : 'default'}
                                                                         className={styles.serviceButton}
                                                                         onClick={() => {
-                                                                            setSupportType(key);                                             // ✅ 存规范化 key
-                                                                            sessionStorage.setItem('selectedService', key);                  // ✅ 同步到 sessionStorage
+                                                                            setSupportType(key);
+                                                                            setLastChange('service');
+                                                                            if (!firstServicePicked) setFirstServicePicked(true); // ← 这里改成正确的变量名
                                                                             scrollToAvailability();
                                                                         }}
                                                                         block
@@ -509,7 +518,13 @@ export default function MentorDetailsPage() {
                                     <MentorAvailability
                                         mentorId={mentor.user_id}
                                         services={mentor.services || []}
-                                        onSlotSelect={(slot) => setSelectedSlot(slot)}
+                                        selectedServiceType={getRawLabelByKey(mentor?.services, supportType)}
+                                        forcedDurationMinutes={/lawyer/i.test(mentor?.title ?? '') ? 30 : undefined}
+                                        coffeeChatCount={coffeeChatCount ?? 0}
+                                        onSlotSelect={(slot) => {
+                                            setSelectedSlot(slot);
+                                            setLastChange('time'); // 如果需要标记来源，这里自己设置
+                                        }}
                                         onBook={() => {
                                             if (!isSignedIn) {
                                                 router.push('/login');
@@ -518,8 +533,6 @@ export default function MentorDetailsPage() {
                                             setStep(2);
                                             setIsBookingModalVisible(true);
                                         }}
-                                        coffeeChatCount={coffeeChatCount ?? 0}
-                                        selectedServiceType={getRawLabelByKey(mentor?.services, supportType)} // [CHANGED] 传原始文案
                                     />
                                 )}
                             </div>
@@ -549,22 +562,25 @@ export default function MentorDetailsPage() {
                                         getContainer={() => document.body}
                                         zIndex={10900}
                                     >
+                                        {/* ✅ 移动端 Modal 内 */}
                                         <MentorAvailability
                                             mentorId={mentor.user_id}
                                             services={mentor.services || []}
-                                            onSlotSelect={(slot) => setSelectedSlot(slot)}
+                                            selectedServiceType={getRawLabelByKey(mentor?.services, supportType)}
+                                            forcedDurationMinutes={/lawyer/i.test(mentor?.title ?? '') ? 30 : undefined}
+                                            coffeeChatCount={coffeeChatCount ?? 0}
+                                            onSlotSelect={(slot) => {
+                                                setSelectedSlot(slot);
+                                                setLastChange('time'); // 如果需要标记来源，这里自己设置
+                                            }}
                                             onBook={() => {
                                                 if (!isSignedIn) {
-                                                    setIsAvailabilityModalOpen(false);
                                                     router.push('/login');
                                                     return;
                                                 }
-                                                setIsAvailabilityModalOpen(false);
                                                 setStep(2);
                                                 setIsBookingModalVisible(true);
                                             }}
-                                            coffeeChatCount={coffeeChatCount ?? 0}
-                                            selectedServiceType={getRawLabelByKey(mentor?.services, supportType)} // [CHANGED]
                                         />
                                     </Modal>
                                 </>
@@ -601,20 +617,19 @@ export default function MentorDetailsPage() {
                         </p>
 
                         {selectedSlot?.time && (
-                            <p style={{fontSize: 15, fontWeight: 500, marginBottom: 20}}>
-                                {/* [CHANGED] 用原始文案判断是否 Free */}
+                            <p style={{ fontSize: 15, fontWeight: 500, marginBottom: 20 }}>
                                 {(() => {
                                     const rawLabel = getRawLabelByKey(mentor?.services, supportType);
-                                    return (
-                                        <>Session Time: {isFreeCoffeeChat(rawLabel)
-                                            ? (() => {
-                                                const [start] = selectedSlot.time.split(' - ');
-                                                const startTime = dayjs(`${selectedSlot.date} ${start}`, 'YYYY-MM-DD h:mm A');
-                                                const endTime = startTime.add(15, 'minute');
-                                                return `${startTime.format('h:mm A')} - ${endTime.format('h:mm A')} ${userTzAbbr}`;
-                                            })()
-                                            : `${selectedSlot.time} ${userTzAbbr}`}</>
-                                    );
+                                    const forcedMinutes = getSessionDurationMinutes(rawLabel);
+
+                                    if (forcedMinutes) {
+                                        const [start] = selectedSlot.time.split(' - ');
+                                        const startTime = dayjs(`${selectedSlot.date} ${start}`, 'YYYY-MM-DD h:mm A');
+                                        const endTime = startTime.add(forcedMinutes, 'minute');
+                                        return <>Session Time: {startTime.format('h:mm A')} - {endTime.format('h:mm A')} {userTzAbbr}</>;
+                                    }
+                                    // 否则沿用 slot 自带的区间
+                                    return <>Session Time: {selectedSlot.time} {userTzAbbr}</>;
                                 })()}
                             </p>
                         )}
@@ -766,20 +781,26 @@ export default function MentorDetailsPage() {
                                             const timeStr = selectedSlot.time;
                                             const [startTimeStr] = timeStr.split(' - ');
                                             const startTimeObj = dayjs(`${dateStr} ${startTimeStr}`, 'YYYY-MM-DD h:mm A');
-                                            const endTimeObj = startTimeObj.add(15, 'minute');
 
-                                            const start_time = startTimeObj.toISOString();
-                                            const end_time = endTimeObj.toISOString();
+                                            const rawLabel = getRawLabelByKey(mentor?.services, supportType);
+                                            const forcedMinutes = getSessionDurationMinutes(rawLabel);
+
+                                            const endTimeObj = forcedMinutes
+                                                ? startTimeObj.add(forcedMinutes, 'minute')
+                                                : (() => {
+                                                    const [, endTimeStr] = timeStr.split(' - ');
+                                                    return dayjs(`${dateStr} ${endTimeStr}`, 'YYYY-MM-DD h:mm A');
+                                                })();
 
                                             const response = await fetch('/api/appointment/insert', {
                                                 method: 'POST',
-                                                headers: {'Content-Type': 'application/json'},
+                                                headers: { 'Content-Type': 'application/json' },
                                                 body: JSON.stringify({
                                                     mentor_id: mentor.user_id,
                                                     mentee_id: user.id,
-                                                    start_time,
-                                                    end_time,
-                                                    service_type: getRawLabelByKey(mentor?.services, supportType), // [CHANGED]
+                                                    start_time: startTimeObj.toISOString(),
+                                                    end_time: endTimeObj.toISOString(),
+                                                    service_type: rawLabel,
                                                     description: description.trim(),
                                                     price: 0,
                                                 }),

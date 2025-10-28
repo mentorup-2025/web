@@ -11,6 +11,7 @@ export const allServiceTypes = [
   { key: "promotion_strategy", label: "Promotion Strategy" },
   { key: "role_deep_dive", label: "My Company / Role Deep Dive" },
   { key: "grad_school", label: "Grad School Application Advice" },
+  { key: "packaged_service", label: "Packaged Service" },
 ];
 
 export const SERVICE_OPTIONS = allServiceTypes.map(item => item.label);
