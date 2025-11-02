@@ -380,85 +380,88 @@ export default function Home() {
   };
 
   // MentorSlider component (updated for 5-in-a-row slider)
-  function MentorSlider({ mentors }: { mentors: any[] }) {
-    const [startIndex, setStartIndex] = useState(0);
-    const visibleCount = 3;
-    const total = mentors.length;
-  
-    useEffect(() => {
-      if (total <= visibleCount) return;
-      const timer = setInterval(() => {
-        setStartIndex((prev) => (prev + 1) % total);
-      }, 3500);
-      return () => clearInterval(timer);
-    }, [total]);
-  
-    // Compute the visible mentors (wrap around if needed)
-    const visibleMentors = [];
-    for (let i = 0; i < Math.min(visibleCount, total); i++) {
-      visibleMentors.push(mentors[(startIndex + i) % total]);
-    }
-  
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-        {visibleMentors.map((mentor, idx) => {
-          // Map new data structure → UI props
-          const name = mentor.username;
-          const title = `${mentor.mentor?.title || ""}${
-            mentor.mentor?.company ? " at " + mentor.mentor.company : ""
-          }`;
-          const experience = mentor.mentor?.years_of_experience
-            ? `${mentor.mentor.years_of_experience} years`
-            : "";
-          const lastService = mentor.mentor?.services?.length
-              ? mentor.mentor.services[mentor.mentor.services.length - 1]
-              : null;
+    function MentorSlider({ mentors }: { mentors: any[] }) {
+        const [startIndex, setStartIndex] = useState(0);
+        const visibleCount = 3;
+        const total = mentors.length;
 
-// 取“净价”
-          const netPrice = typeof lastService?.price === 'number' ? lastService.price : null;
+        useEffect(() => {
+            if (total <= visibleCount) return;
+            const timer = setInterval(() => {
+                setStartIndex((prev) => (prev + 1) % total);
+            }, 3500);
+            return () => clearInterval(timer);
+        }, [total]);
 
-// 转“毛价”（净价 × 1.45 + 5），用 priceHelper
-          const grossPrice = netPrice !== null ? netToGross(netPrice) : null;
+        // 计算可见导师（循环滑动）
+        const visibleMentors = [];
+        for (let i = 0; i < Math.min(visibleCount, total); i++) {
+            visibleMentors.push(mentors[(startIndex + i) % total]);
+        }
 
-// 展示
-          const price = grossPrice !== null ? `$${grossPrice}/hr` : "";
-          const desc = mentor.introduction || "";
-          const img =
-            mentor.avatar_url ||
-            mentor.profile_url ||
-            "/images/placeholder-avatar.png";
-    
-          return (
-            <div
-              key={mentor.user_id + idx}
-              className="bg-white border rounded-lg shadow p-6 flex flex-col items-center transition-all duration-500"
-            >
-              <img
-                src={img}
-                alt={name}
-                className="w-24 h-24 rounded-full object-cover mb-4"
-              />
-              <div className="font-bold text-lg mb-1">{name}</div>
-              <div className={`text-gray-600 mb-1 ${styles.mentorTitle}`}>
-                {title}
-              </div>
-              <div className="text-gray-500 text-sm mb-1">{experience}</div>
-              <div className="text-blue-500 font-semibold mb-2">{price}</div>
-              <div
-                className={`text-gray-700 text-sm text-center ${styles.mentorDescription}`}
-              >
-                {desc.length > 150 ? desc.slice(0, 150) + "..." : desc}
-              </div>
+        return (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+                {visibleMentors.map((mentor, idx) => {
+                    const name = mentor.username;
+                    const title = `${mentor.mentor?.title || ""}${
+                        mentor.mentor?.company ? " @" + mentor.mentor.company : ""
+                    }`;
+                    const experience = mentor.mentor?.years_of_experience
+                        ? `${mentor.mentor.years_of_experience} years`
+                        : "";
+                    const lastService = mentor.mentor?.services?.length
+                        ? mentor.mentor.services[mentor.mentor.services.length - 1]
+                        : null;
+
+                    const netPrice =
+                        typeof lastService?.price === "number" ? lastService.price : null;
+                    const grossPrice = netPrice !== null ? netToGross(netPrice) : null;
+                    const price = grossPrice !== null ? `$${grossPrice}/hr` : "";
+                    const desc = mentor.introduction || "";
+                    const img =
+                        mentor.avatar_url ||
+                        mentor.profile_url ||
+                        "/images/placeholder-avatar.png";
+
+                    return (
+                        <div
+                            key={mentor.user_id + idx}
+                            className="bg-white border rounded-2xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300"
+                        >
+                            {/* ✅ 图片部分：与上传示例相同的比例和圆角 */}
+                            <div className="relative w-full" style={{ aspectRatio: "8 / 7" }}>
+                                <img
+                                    src={img}
+                                    alt={name}
+                                    className="w-full h-full object-cover rounded-tr-[40px] rounded-bl-[40px]"
+                                />
+                            </div>
+
+                            {/* ✅ 文字部分 */}
+                            <div className="p-5 flex flex-col items-start text-left">
+                                <div className="font-bold text-lg mb-1">{name}</div>
+                                <div className="text-gray-700 mb-2 font-medium">{title}</div>
+                                <div className="text-gray-500 text-sm mb-3">{experience}</div>
+                                <div className="text-gray-700 text-sm mb-4">
+                                    {desc.length > 140 ? desc.slice(0, 140) + "..." : desc}
+                                </div>
+                                <a
+                                    href={`/mentor/${mentor.user_id}`}
+                                    className="text-blue-600 text-sm font-medium hover:underline"
+                                >
+                                    Learn More →
+                                </a>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
-          );
-        })}
-      </div>
-    );
-    
-  }
-  
+        );
+    }
 
-  const handleBecomeMentor = () => {
+
+
+    const handleBecomeMentor = () => {
     router.push('/signup/mentor/' + user?.id);
   };
 

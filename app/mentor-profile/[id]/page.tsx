@@ -208,7 +208,8 @@ export default function MentorProfilePage() {
     const sanitizedIntro = useMemo(
         () => DOMPurify.sanitize(draftIntro || '', {
             ALLOWED_TAGS: ['p','strong','em','u','ol','ul','li','h1','h2','h3','a','img','br','span'],
-            ALLOWED_ATTR: ['href','target','rel','src','alt']
+            ALLOWED_ATTR: ['href','target','rel','src','alt'],
+            KEEP_CONTENT: true,
         }),
         [draftIntro]
     );
