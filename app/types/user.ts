@@ -7,6 +7,7 @@ export interface User {
   created_at: string;   // ISO timestamp
   github?: string;      // Optional GitHub profile
   linkedin?: string;    // Optional LinkedIn profile
+  linkedin_display?: boolean; // Optional LinkedIn display preference
   resume?: string;      // Optional resume URL
   industries?: string[]; // Optional industries
   wechat?: string;      // Optional WeChat ID
@@ -38,6 +39,7 @@ export interface UpdateUserInput {
   email?: string | null;        // Optional email update
   github?: string | null;       // Optional GitHub profile update
   linkedin?: string | null;     // Optional LinkedIn profile update
+  linkedin_display?: boolean | null; // Optional LinkedIn display preference
   resume?: string | null;       // Optional resume URL update
   industries?: string[] | null; // Optional industries update
   wechat?: string | null;       // Optional WeChat ID update
