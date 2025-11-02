@@ -7,17 +7,26 @@ import { useUser } from "@clerk/nextjs";
 
 const SUGGESTIONS = [
     "Apply to become a mentor",
-    "Payment methods",
+    "Payment",
     "Update account details",
-    "Orders or appointments contact",
+    "Contact",
     "Refund requests",
 ];
 
 const REPLIES: Record<string, string> = {
     "Apply to become a mentor":
         "Click the “Become a Mentor” button at the top-right corner and submit your application. We’ll review it internally and let you know within 1 business day.",
-    "Payment methods":
-        "Currently, we accept all major credit cards and PayPal. Support for WeChat Pay is coming soon.",
+    "Payment":
+        "For mentees (students):\n\n" +
+        "We currently accept major credit cards and debit cards, and Paypal. Support for WeChat Pay is coming soon.\n\n"+"For mentors (payouts):\n" +
+        "We offer three payout methods:\n" +
+        "USD payout — Biweekly direct deposit to your USD account. If your annual income exceeds $600, we are required to issue you a Form 1099 for tax reporting.\n" +
+        "\n" +
+        "\n" +
+        "WeChat Pay (RMB) — Payouts are processed at the beginning of each month.\n" +
+        "\n" +
+        "\n" +
+        "Alipay (RMB) — Also processed monthly at the beginning of each month.\n",
     "Update account details":
         "To update your account details, please email us using the template below:\n\n" +
         "#Your Name:\n" +
@@ -122,17 +131,24 @@ export default function ChatWidget() {
         // [ADDED] 为Footer特定项目设置专门回复
         if (content === "I have a question about contacting support") {
             botReplyContent = "For general inquiries, please email us at contactus@mentorup.info. For urgent matters, you can also reach us through this chat during business hours (9 AM - 6 PM EST).";
-        } else if (content === "Payment methods") {
-            botReplyContent = "We currently accept major credit/debit cards and PayPal. WeChat Pay support is coming soon.";
+        } else if (content === "Payment") {
+            botReplyContent = "For mentees (students):\n\n" +
+                "We currently accept major credit cards and debit cards, and Paypal. Support for WeChat Pay is coming soon.\n\n"+"For mentors (payouts):\n" +
+                "We offer three payout methods:\n" +
+                "USD payout — Biweekly direct deposit to your USD account. If your annual income exceeds $600, we are required to issue you a Form 1099 for tax reporting.\n" +
+                "\n" +
+                "\n" +
+                "WeChat Pay (RMB) — Payouts are processed at the beginning of each month.\n" +
+                "\n" +
+                "\n" +
+                "Alipay (RMB) — Also processed monthly at the beginning of each month.\n";
         } else if (content === "Refund requests") {
-            botReplyContent = "To request a refund, please provide the following details:\n\n" +
-                "# Your Name:\n" +
-                "# Email used for booking:\n" +
-                "# Session details (date, mentor name):\n" +
-                "# Reason for refund:\n\n" +
-                "We typically process refunds within 3-5 business days. \n\nCancel 48 hours in advance for full refund; within 48 hours incurs $5 fee.";
+            botReplyContent = "If you wish to cancel a session, please cancel at least 48 hours in advance for a full refund.\n" +
+                "Cancellations made within 48 hours will incur a $5 processing fee. \n\n" +
+                "To cancel or reschedule, simply go to “My Sessions” under your profile and click the Reschedule or Cancel button for that session.\n";
         } else if (content === "Free Trial Session") {
-            botReplyContent = "We offer a 15-minute Free Trial Session that you can book with any mentor who provides free coffee chats. Each member receives one free trial.";
+            botReplyContent = "We offer a 15-minute Free Trial Session that you can book with any mentor who provides free coffee chats. Each member receives one free trial.\n" +
+                "This session is a great way to talk about your career goals and background, get a sense of the mentor’s experience and communication style, and decide if you’d like to schedule longer, paid sessions afterwards.\n";
         } else if (content === "Career Package") {
             botReplyContent = "Our career packages include:\n\n" +
                 "🎯 **Starter Package** (4 sessions): Basic career guidance\n" +
@@ -141,7 +157,7 @@ export default function ChatWidget() {
                 "Which area are you looking to focus on?";
         } else if (content === "Apply to become a mentor") {
             botReplyContent = "To apply as a mentor, simply click the \"Become a Mentor\" button (top right corner) and fill out the application form.";
-        } else if (content === "Orders or appointments contact") {
+        } else if (content === "Contact") {
             setExpectingEmailType(null);
             botReplyContent = "To help you with your order or appointment, please email us using the template below:\n\n" +
                 "# Your Name:\n" +
@@ -184,7 +200,7 @@ export default function ChatWidget() {
                     initialMessage = "I have a question about contacting support";
                     break;
                 case 'payment':
-                    initialMessage = "Payment methods";
+                    initialMessage = "Payment";
                     break;
                 case 'cancel-refund':
                     initialMessage = "Refund requests";
