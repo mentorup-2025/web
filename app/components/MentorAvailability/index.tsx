@@ -123,7 +123,7 @@ export default function MentorAvailability({
                     const isFreeSelected =
                         !!selectedServiceType && /free coffee chat/i.test(selectedServiceType);
 
-                    // 若传入 forcedDurationMinutes（律师=30）则优先使用；否则 Free=15，默认=60
+                    // 若传入 forcedDurationMinutes（律师=30）优先；否则 Free=15，默认=60
                     const slotMinutes =
                         typeof forcedDurationMinutes === 'number' && forcedDurationMinutes > 0
                             ? forcedDurationMinutes
@@ -145,17 +145,35 @@ export default function MentorAvailability({
                             const endTime = dayjs(end);
                             if (!startTime.isValid() || !endTime.isValid()) return;
 
-                            // 跳过 24 小时内
-                            if (startTime.isBefore(nowPlus24h)) return;
+                            // ★ 先把起点对齐到 15/30 分钟网格（若需要）
+                            const needsGrid = (slotMinutes === 15 || slotMinutes === 30);
+                            if (needsGrid) {
+                                const m = startTime.minute();
+                                const remainder = m % slotMinutes;
+                                if (remainder !== 0) {
+                                    startTime = startTime.add(slotMinutes - remainder, 'minute').second(0);
+                                } else {
+                                    startTime = startTime.second(0);
+                                }
+                            }
 
+                            // ★ 对齐之后再过滤 24h 内的时段（避免误删本该有效的）
+                            if (startTime.isBefore(nowPlus24h)) {
+                                // 若区间起点太近，尝试把起点推进到 24h 之后的第一个网格
+                                if (needsGrid) {
+                                    const minutesTo24h = Math.ceil(nowPlus24h.diff(startTime, 'minute') / slotMinutes) * slotMinutes;
+                                    startTime = startTime.add(minutesTo24h, 'minute');
+                                } else {
+                                    startTime = nowPlus24h;
+                                }
+                            }
+
+                            // 若推进后已不在区间内，跳过
+                            if (!startTime.isBefore(endTime)) return;
+
+                            // 开始分片
                             while (startTime.add(slotMinutes, 'minute').isSameOrBefore(endTime)) {
                                 const nextTime = startTime.add(slotMinutes, 'minute');
-
-                                // ★ 对于 15 或 30 分钟段，只保留“整点开始”的切片（起始分钟 = 0）
-                                if ((slotMinutes === 15 || slotMinutes === 30) && startTime.minute() !== 0) {
-                                    startTime = nextTime;
-                                    continue;
-                                }
 
                                 const dateKey = startTime.format('YYYY-MM-DD');
                                 const raw = `${startTime.format('h:mm A')} - ${nextTime.format('h:mm A')}`;
@@ -403,7 +421,7 @@ export default function MentorAvailability({
                 onPanelChange={handlePanelChange}
                 dateFullCellRender={dateFullCellRender}
                 headerRender={headerRender}
-                value={selectedDate || currentMonth}
+                value={currentMonth}
                 className={styles.calendar}
             />
 

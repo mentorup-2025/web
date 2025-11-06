@@ -198,5 +198,55 @@
 
 .block-dates-dropdown {
     max-width: 92vw;          /* 避免出屏 */
+}/* 主按钮：蓝底白字，圆角 2 */
+.btnPrimary {
+    border-radius: 2px !important;
+    background-color: #1890ff !important;
+    border-color: #1890ff !important;
+    color: #fff !important;
+}
+
+.btnPrimary:hover,
+.btnPrimary:focus {
+    background-color: #1677ff !important;
+    border-color: #1677ff !important;
+    color: #fff !important;
+}
+
+/* disabled 兼容 antd 的属性与类名 */
+.btnPrimary:disabled,
+.btnPrimary[disabled],
+.btnPrimary:global(.ant-btn-disabled) {
+    background-color: #1890ff !important;
+    border-color: #1890ff !important;
+    color: #fff !important;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* 次按钮：白底黑字，浅灰边框，圆角 2 */
+.btnPlain {
+    border-radius: 2px !important;
+    background-color: #fff !important;
+    border: 1px solid #d9d9d9 !important;
+    color: #000 !important;
+}
+
+.btnPlain:hover,
+.btnPlain:focus {
+    border-color: #bfbfbf !important;
+    color: #000 !important;
+    background-color: #fff !important;
+}
+
+/* disabled 兼容 antd 的属性与类名 */
+.btnPlain:disabled,
+.btnPlain[disabled],
+.btnPlain:global(.ant-btn-disabled) {
+    background-color: #fff !important;
+    border-color: #d9d9d9 !important;
+    color: #000 !important;
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 

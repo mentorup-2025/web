@@ -718,10 +718,9 @@ We recommend YOU share a short background covering: education, experience, honor
     const onFinish = async (allValues: any) => {
         try {
             // construct services array from selected services and base price
-            // Price logic: $5 + 45% markup
             const services = (allValues.servicesList || []).map((type: string) => ({
                 type,
-                price: isFreeCoffeeChat(type) ? 0 : allValues.basePrice * 1.45 + 5 || 0,
+                price: isFreeCoffeeChat(type) ? 0 : Number(allValues.basePrice) || 0,
             }));
 
             const mentorData = {
