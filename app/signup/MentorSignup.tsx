@@ -320,7 +320,9 @@ export default function MentorSignup({userId}: MentorSignupProps) {
                         trigger="onChange"
                     >
                         <ReactQuill
-                            placeholder="Example: Hi, I'm Alex..."
+                            placeholder={`Example: Hi, I'm Alex. I studied CS at UC Berkeley and have been working as a SDE for the past 5 years at Oracle, mostly in backend.
+
+We recommend YOU share a short background covering: education, experience, honors, your mentoring style, and how you can support mentees.`}
                             modules={{
                                 toolbar: {
                                     container: [
@@ -340,6 +342,7 @@ export default function MentorSignup({userId}: MentorSignupProps) {
                             }}
                             style={{ height: '200px', marginBottom: '40px' }}
                         />
+
                     </Form.Item>
 
                     {/* ---------- Avatar Upload Modal ---------- */}
