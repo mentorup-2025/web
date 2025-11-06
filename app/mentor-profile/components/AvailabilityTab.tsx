@@ -46,6 +46,11 @@ export default function AvailabilityTab({ userId }: Props) {
     const [blocks, setBlocks] = useState<BlockItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [slotErrors, setSlotErrors] = useState<Record<number, string>>({});
+    const [blockStart, setBlockStart] = useState<Dayjs | null>(null);
+    const [blockEnd, setBlockEnd] = useState<Dayjs | null>(null);
+    const WHOLE_HOUR_MSG = 'Time must be on the hour (e.g., 09:00, 10:00).';
+    const isWholeHour = (d: Dayjs) => d.isValid() && d.minute() === 0;
+    const isWholeHourStr = (s: string) => isWholeHour(dayjs(s, timeFormat));
 
     const dayNames = [
         'Sunday',
@@ -379,7 +384,67 @@ export default function AvailabilityTab({ userId }: Props) {
             message.info('Please keep at least one available time slot.');
         }
     };
+// 不允许选择今天之前
+    const disablePast = (current: Dayjs) =>
+        !!current && current.isBefore(dayjs().startOf('day'));
 
+// End Date 不能早于 Start Date，也不能选今天之前
+    const disableEndDate = (current: Dayjs) => {
+        if (!current) return false;
+        const beforeToday = current.isBefore(dayjs().startOf('day'));
+        if (blockStart) {
+            return beforeToday || current.isBefore(blockStart.startOf('day'));
+        }
+        return beforeToday;
+    };
+
+// 保存 Block 区间：把 [start, end] 按天逐个写入（与原逻辑一致）
+    const handleBlockSave = async () => {
+        if (!blockStart || !blockEnd) {
+            message.error('Please select both start and end dates');
+            return;
+        }
+        if (blockEnd.isBefore(blockStart, 'day')) {
+            message.error('End date must be on or after start date');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const startDay = blockStart.startOf('day');
+            const endDay = blockEnd.startOf('day');
+            const dayCount = endDay.diff(startDay, 'day');
+
+            for (let i = 0; i <= dayCount; i++) {
+                const localDay = startDay.add(i, 'day');
+                const utcStart = localDay.startOf('day').utc().toDate().toISOString();
+                const utcEnd = localDay.endOf('day').utc().toDate().toISOString();
+
+                const res = await fetch(`/api/availability_block/${userId}/insert`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        start_date: utcStart,
+                        end_date: utcEnd,
+                    }),
+                });
+
+                if (!res.ok) {
+                    const text = await res.text().catch(() => '');
+                    throw new Error(text || `HTTP ${res.status}`);
+                }
+            }
+
+            message.success(`Blocked ${dayCount + 1} day${dayCount ? 's' : ''}`);
+            await fetchBlocks();        // 重新拉取列表
+            setBlockStart(null);        // 清空表单
+            setBlockEnd(null);
+        } catch (err: any) {
+            message.error('Failed to add blocked dates: ' + err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
     const handleBlockRangeChange = async (
         dates: ([Dayjs | null, Dayjs | null] | null),
         dateStrings: [string, string]
@@ -441,12 +506,22 @@ export default function AvailabilityTab({ userId }: Props) {
     function getSlotError(slot: Slot, idx: number, all: Slot[]): string | undefined {
         const start = dayjs(slot.start_time, timeFormat);
         const end   = dayjs(slot.end_time,   timeFormat);
+
+        // 必须是合法时间，且 end > start
         if (!start.isValid() || !end.isValid() || !end.isAfter(start)) {
             return 'End time must be after start time';
         }
+
+        // 必须整点（分钟为 00）
+        if (!isWholeHour(start) || !isWholeHour(end)) {
+            return WHOLE_HOUR_MSG;
+        }
+
+        // 至少 1 小时
         if (end.diff(start, 'hour', true) < 1) {
             return 'Slot must be at least 1 hour';
         }
+
         // 同一天不重叠
         for (let j = 0; j < all.length; j++) {
             if (j === idx) continue;
@@ -635,18 +710,59 @@ export default function AvailabilityTab({ userId }: Props) {
             {/* Block Dates：用 DatePicker.RangePicker 来选一个连续的日期区间 */}
             <Card title="Block Dates" loading={loading}>
                 <Space direction="vertical" style={{ width: '100%' }}>
-                    <DateRangePicker
-                        style={{ width: 300 }}
-                        disabledDate={current =>
-                            current && current.isBefore(dayjs().startOf('day'))
-                        }
-                        onChange={handleBlockRangeChange}
-                        dropdownClassName="mobile-range-picker"
-                        placement="bottomLeft"
+                    <Row
+                        gutter={[{ xs: 12, sm: 24, md: 24 }, 12]}
+                        align="middle"
+                        justify="start" // 左对齐
+                    >
+                        <Col xs={24} sm="auto">
+                            <Space direction="vertical" size={4}>
+                                <span style={{ fontWeight: 500 }}>Start Date</span>
+                                <DatePicker
+                                    value={blockStart}
+                                    onChange={(d) => setBlockStart(d)}
+                                    disabledDate={disablePast}
+                                    style={{ width: 220 }}
+                                    placement="bottomLeft"
+                                />
+                            </Space>
+                        </Col>
 
-                    />
+                        <Col xs={24} sm="auto">
+                            <Space direction="vertical" size={4}>
+                                <span style={{ fontWeight: 500 }}>End Date</span>
+                                <DatePicker
+                                    value={blockEnd}
+                                    onChange={(d) => setBlockEnd(d)}
+                                    disabledDate={disableEndDate}
+                                    style={{ width: 220 }}
+                                    placement="bottomLeft"
+                                />
+                            </Space>
+                        </Col>
 
-                    {/* 已屏蔽的单日，用 Tag 展示 */}
+                        <Col xs={24} md="auto">
+                            <Space wrap>
+                                <Button
+                                    type="primary"
+                                    className={styles.btnPrimary}
+                                    onClick={handleBlockSave}
+                                    disabled={!blockStart || !blockEnd || blockEnd.isBefore(blockStart, 'day')}
+                                >
+                                    Save
+                                </Button>
+
+                                <Button
+                                    className={styles.btnPlain}
+                                    onClick={() => { setBlockStart(null); setBlockEnd(null); }}
+                                >
+                                    Reset
+                                </Button>
+                            </Space>
+                        </Col>
+                    </Row>
+
+                    {/* 已屏蔽单日 Tag 展示（保留你原来的实现） */}
                     <div style={{ marginTop: 12 }}>
                         <Space wrap>
                             {blocks

@@ -230,6 +230,7 @@ export default function SearchFilters({
                 'My Company / Role Deep Dive',
             ],
             'Grad School Application Advice': ['Grad School Application Advice'],
+            'Packaged Service': ['Packaged Service'],
         } as const;
 
         return selectedDisplays.flatMap(
@@ -253,6 +254,7 @@ export default function SearchFilters({
                 ],
             },
             { display: 'Grad School Application Advice', values: ['Grad School Application Advice'] },
+            { display: 'Packaged Service', values: ['Packaged Service'] },
         ];
 
         return mapping
@@ -365,6 +367,7 @@ export default function SearchFilters({
                                 ],
                             },
                             { display: 'Grad School Application Advice', values: ['Grad School Application Advice'] },
+                            { display: 'Packaged Service', values: ['Packaged Service'] },
                         ].map((item) => (
                             <label key={item.display} className={styles.filterItem}>
                                 <Checkbox value={item.display} className={styles.filterCheckbox} />
