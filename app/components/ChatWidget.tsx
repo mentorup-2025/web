@@ -13,20 +13,18 @@ const SUGGESTIONS = [
     "Refund requests",
 ];
 
+const PAYMENT_SUGGESTIONS = [
+    "What payment methods do you accept?",
+    "What are the payout methods for mentors?",
+];
+
 const REPLIES: Record<string, string> = {
     "Apply to become a mentor":
         "Click the “Become a Mentor” button at the top-right corner and submit your application. We’ll review it internally and let you know within 1 business day.",
-    "Payment":
-        "For mentees (students):\n\n" +
-        "We currently accept major credit cards and debit cards, and Paypal. Support for WeChat Pay is coming soon.\n\n"+"For mentors (payouts):\n" +
-        "We offer three payout methods:\n" +
-        "USD payout — Biweekly direct deposit to your USD account. If your annual income exceeds $600, we are required to issue you a Form 1099 for tax reporting.\n" +
-        "\n" +
-        "\n" +
-        "WeChat Pay (RMB) — Payouts are processed at the beginning of each month.\n" +
-        "\n" +
-        "\n" +
-        "Alipay (RMB) — Also processed monthly at the beginning of each month.\n",
+    "What payment methods do you accept?":
+        "For mentees (students):\n\nWe currently accept major credit cards and debit cards, and Paypal. Support for WeChat Pay is coming soon.",
+    "What are the payout methods for mentors?":
+        "For mentors (payouts):\nWe offer three payout methods:\nUSD payout — Biweekly direct deposit to your USD account. If your annual income exceeds $600, we are required to issue you a Form 1099 for tax reporting.\n\nWeChat Pay (RMB) — Payouts are processed at the beginning of each month.\n\nAlipay (RMB) — Also processed monthly at the beginning of each month.",
     "Update account details":
         "To update your account details, please email us using the template below:\n\n" +
         "#Your Name:\n" +
@@ -38,6 +36,22 @@ function SuggestionButtons({ onSelect }: { onSelect: (msg: string) => void }) {
     return (
         <div className="mt-4 flex flex-col items-end space-y-3">
             {SUGGESTIONS.map((suggestion) => (
+                <button
+                    key={suggestion}
+                    onClick={() => onSelect(suggestion)}
+                    className="px-4 py-2 bg-white border border-gray-300 rounded-full shadow-sm hover:shadow-md text-[14px] text-black transition-all"
+                >
+                    {suggestion}
+                </button>
+            ))}
+        </div>
+    );
+}
+
+function PaymentSuggestionButtons({ onSelect }: { onSelect: (msg: string) => void }) {
+    return (
+        <div className="mt-4 flex flex-col items-end space-y-3">
+            {PAYMENT_SUGGESTIONS.map((suggestion) => (
                 <button
                     key={suggestion}
                     onClick={() => onSelect(suggestion)}
@@ -68,11 +82,11 @@ function GuestChatContent({
 
     return (
         <div
-            className={`
-        fixed right-6 w-80 h-[500px] bg-white shadow-2xl rounded-xl
+            className={
+                `fixed right-6 w-80 h-[500px] bg-white shadow-2xl rounded-xl
         z-[9999] flex flex-col text-[14px]
-        ${isMentor ? "bottom-40 md:bottom-28" : "bottom-20"}
-      `}
+        ${isMentor ? "bottom-40 md:bottom-28" : "bottom-20"}`
+            }
         >
             <div className="flex-1 p-4 overflow-y-auto space-y-2">
                 {messages.map((msg, i) => (
@@ -93,6 +107,7 @@ function GuestChatContent({
               </span>
                         </div>
                         {msg.role === "system" && <SuggestionButtons onSelect={onSelect} />}
+                        {msg.content === "Payment" && <PaymentSuggestionButtons onSelect={onSelect} />}
                     </div>
                 ))}
                 {/* 底部锚点 */}
@@ -132,23 +147,16 @@ export default function ChatWidget() {
         if (content === "I have a question about contacting support") {
             botReplyContent = "For general inquiries, please email us at contactus@mentorup.info. For urgent matters, you can also reach us through this chat during business hours (9 AM - 6 PM EST).";
         } else if (content === "Payment") {
-            botReplyContent = "For mentees (students):\n\n" +
-                "We currently accept major credit cards and debit cards, and Paypal. Support for WeChat Pay is coming soon.\n\n"+"For mentors (payouts):\n" +
-                "We offer three payout methods:\n" +
-                "USD payout — Biweekly direct deposit to your USD account. If your annual income exceeds $600, we are required to issue you a Form 1099 for tax reporting.\n" +
-                "\n" +
-                "\n" +
-                "WeChat Pay (RMB) — Payouts are processed at the beginning of each month.\n" +
-                "\n" +
-                "\n" +
-                "Alipay (RMB) — Also processed monthly at the beginning of each month.\n";
+            // 当用户点击Payment时，只显示子选项，不显示具体回答
+            setMessages((prev) => [...prev, userMsg]);
+            return;
         } else if (content === "Refund requests") {
             botReplyContent = "If you wish to cancel a session, please cancel at least 48 hours in advance for a full refund.\n" +
                 "Cancellations made within 48 hours will incur a $5 processing fee. \n\n" +
-                "To cancel or reschedule, simply go to “My Sessions” under your profile and click the Reschedule or Cancel button for that session.\n";
+                "To cancel or reschedule, simply go to \"My Sessions\" under your profile and click the Reschedule or Cancel button for that session.\n";
         } else if (content === "Free Trial Session") {
             botReplyContent = "We offer a 15-minute Free Trial Session that you can book with any mentor who provides free coffee chats. Each member receives one free trial.\n" +
-                "This session is a great way to talk about your career goals and background, get a sense of the mentor’s experience and communication style, and decide if you’d like to schedule longer, paid sessions afterwards.\n";
+                "This session is a great way to talk about your career goals and background, get a sense of the mentor's experience and communication style, and decide if you'd like to schedule longer, paid sessions afterwards.\n";
         } else if (content === "Career Package") {
             botReplyContent = "Our career packages include:\n\n" +
                 "🎯 **Starter Package** (4 sessions): Basic career guidance\n" +
@@ -288,12 +296,12 @@ export default function ChatWidget() {
         <>
             <button
                 onClick={() => setOpen(!open)}
-                className={`
-          fixed right-6 w-16 h-16 bg-blue-500 text-white rounded-full shadow-lg
+                className={
+                    `fixed right-6 w-16 h-16 bg-blue-500 text-white rounded-full shadow-lg
           flex items-center justify-center
           z-[9999]
-          ${isMentor ? "bottom-28 md:bottom-6" : "bottom-6"}
-        `}
+          ${isMentor ? "bottom-28 md:bottom-6" : "bottom-6"}`
+                }
             >
                 <img src="/chat-icon.png" alt="Chat" className="w-8 h-8" />
             </button>
@@ -301,11 +309,11 @@ export default function ChatWidget() {
             {open &&
                 (isSignedIn ? (
                     <div
-                        className={`
-              fixed right-6 w-80 h-[500px] bg-white shadow-2xl rounded-xl
+                        className={
+                            `fixed right-6 w-80 h-[500px] bg-white shadow-2xl rounded-xl
               z-[9999] flex flex-col text-[13px]
-              ${isMentor ? "bottom-40 md:bottom-28" : "bottom-20"}
-            `}
+              ${isMentor ? "bottom-40 md:bottom-28" : "bottom-20"}`
+                        }
                     >
                         <div className="flex-1 p-4 overflow-y-auto space-y-2">
                             {messages.map((msg, i) => (
@@ -326,6 +334,7 @@ export default function ChatWidget() {
                                     {(i === 0 || (msg.role === "system" && i !== 0)) && (
                                         <SuggestionButtons onSelect={handleUserInput} />
                                     )}
+                                    {msg.content === "Payment" && <PaymentSuggestionButtons onSelect={handleUserInput} />}
                                 </div>
                             ))}
                             {/* 登录视图的底部锚点 */}

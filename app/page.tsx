@@ -11,7 +11,7 @@ import {
 } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { Button, Space, Drawer, Collapse } from 'antd';
-import { MenuOutlined } from '@ant-design/icons';
+import { MenuOutlined, SearchOutlined, CaretRightOutlined } from '@ant-design/icons';
 import Head from 'next/head';
 import Link from 'next/link';
 import { Switch } from 'antd';
@@ -21,7 +21,6 @@ import { useMentorStatus } from './hooks/useMentorStatus';
 import { Mentor } from "../types";
 import { netToGross } from './services/priceHelper';
 
-// Translation object with all your content
 const translations = {
   en: {
     pageTitle: 'MentorUp - Learn from the Best',
@@ -230,15 +229,11 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
   const { user, isSignedIn } = useUser();
-
   const [mentors, setMentors] = useState<Mentor[]>([]);
-
   const { signOut } = useClerk();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
-
   const { isMentor, loading: isMentorLoading } = useMentorStatus();
-
   const typingRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -341,8 +336,6 @@ export default function Home() {
     );
   };
 
-  
-  // FAQ data (moved inside Home for t access)
   const faqs = [
     {
       q: t('How do I apply to become a mentor?'),
@@ -366,7 +359,6 @@ export default function Home() {
     }
   ];
 
-  // Custom i18n object that mimics the behavior from next-i18next
   const i18n = {
     language,
     changeLanguage: (newLang: 'en' | 'zh') => {
@@ -379,7 +371,6 @@ export default function Home() {
     i18n.changeLanguage(nextLang);
   };
 
-  // MentorSlider component (updated for 5-in-a-row slider)
     function MentorSlider({ mentors }: { mentors: any[] }) {
         const [startIndex, setStartIndex] = useState(0);
         const visibleCount = 3;
@@ -393,7 +384,6 @@ export default function Home() {
             return () => clearInterval(timer);
         }, [total]);
 
-        // 计算可见导师（循环滑动）
         const visibleMentors = [];
         for (let i = 0; i < Math.min(visibleCount, total); i++) {
             visibleMentors.push(mentors[(startIndex + i) % total]);
@@ -458,8 +448,6 @@ export default function Home() {
             </div>
         );
     }
-
-
 
     const handleBecomeMentor = () => {
     router.push('/signup/mentor/' + user?.id);
@@ -616,7 +604,7 @@ export default function Home() {
                       flexDirection: 'column'
                     }}
                   >
-                    {isMentor === false && (
+                    {!isMentor && (
                       <Button type='primary' onClick={handleBecomeMentor}>
                         Become a Mentor
                       </Button>
@@ -669,6 +657,8 @@ export default function Home() {
             </Drawer>
           </div>
         </header>
+
+          {/* HERO SECTION */}
         <section
           className={`relative flex flex-col justify-between h-screen overflow-hidden bg-white ${styles.heroContainer}`}
         >
@@ -707,192 +697,226 @@ export default function Home() {
 
         {/* --- Start max-width wrapper --- */}
         <div className='w-full max-w-6xl mx-auto px-4'>
-          {/* 1. HERO SECTION WITH VIDEO PLACEHOLDER */}
-          {/* <section className='w-full items-center justify-between py-12 gap-8'>
-            <div className='px-4'>
-              <h2 className='text-2xl md:text-3xl font-bold text-black mb-2'>
-                {t('Transform Your Potential With Personalized Support')}
-                <span className='text-blue-500 font-semibold mb-4 text-blue'>
-                  {t('Personalized Support')}
-                </span>
-              </h2>
-            </div>
-            <div className={styles.videoContentWrapper}>
-              <div
-                className={`flex-1 flex items-center justify-center ${styles.videoContent}`}
-              >
-                <div className='w-full h-full  bg-gray-200 rounded-lg flex items-center justify-center'>
-                  <svg
-                    width='48'
-                    height='48'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    stroke='currentColor'
-                    className='text-gray-400'
-                  >
-                    <circle cx='12' cy='12' r='10' strokeWidth='2' />
-                    <polygon points='10,8 16,12 10,16' fill='currentColor' />
-                  </svg>
-                </div>
-              </div>
-              <div className='h-full bg-white border rounded-lg p-4'>
-                <div className='text-black font-bold mb-2'>
-                  {t('We Offer')}:
-                </div>
-                <div className='text-blue-600 underline'>
-                  {t('1v1 Coaching')}
-                </div>
-                <div className='text-blue-600 underline'>
-                  {t('Professional Career')}
-                </div>
-                <div className='font-bold mt-4 mb-2'>
-                  {t('More Features Coming')}:
-                </div>
-                <ul className='text-gray-700 text-sm list-disc ml-5'>
-                  <li>{t('Advice for Every Step')}</li>
-                  <li>{t('AI Resume Review')}</li>
-                  <li>{t('Forum Q&A')}</li>
-                  <li>{t('Office Hour')}</li>
-                </ul>
-              </div>
-            </div>
-          </section> */}
 
           {/* 2. MEET OUR MENTORS SLIDER SECTION */}
           <section className='w-full py-12'>
             <div className='flex items-center justify-between mb-6 px-4'>
-              <h2 className='text-2xl md:text-3xl font-bold text-black'>
-                {t('Meet Our Mentors!')}
-              </h2>
-              <Link href='/mentor-list'>
-                <button className='bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition'>
-                  {t('Meet all mentors')}
-                </button>
-              </Link>
+                <h2 className='text-2xl md:text-3xl font-bold text-black'>
+                    {t('Meet Our')}{' '}
+                    <span className='text-blue-500'>{t('Mentors!')}</span>
+                </h2>
+
+                <Link href='/mentor-list'>
+                    <button className='bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition flex items-center gap-2'>
+                        <SearchOutlined />
+                        {t('Meet all mentors')}
+                    </button>
+                </Link>
             </div>
             {/* Simple slider implementation */}
             <MentorSlider mentors={mentors} />
           </section>
 
-          {/* 3. AFFORDABLE MENTORSHIP/OUTCOMES SECTION */}
-          <section className='w-full py-12 bg-white'>
-            <h2 className='text-2xl md:text-3xl font-bold text-black mb-8'>
-              {t('Affordable Mentorship, Proven Job Outcomes')}
-            </h2>
-            <div className='flex flex-col md:flex-row items-center justify-center gap-6 px-4'>
-              <div className='bg-blue-500 text-white rounded-lg p-8 flex-1 min-w-[220px] text-center'>
-                <div className='text-5xl font-bold mb-2'>$77</div>
-                <div className='font-semibold mb-2'>
-                  {t('Per Mentor Session')}
-                </div>
-                <div className={`text-xs ${styles.MentorshipDescription}`}>
-                  {t('Per Mentor Session description')}
-                </div>
-              </div>
+            {/* AFFORDABLE MENTORSHIP / OUTCOMES SECTION */}
+            <section className="w-full py-16 bg-white">
+                <div className="w-full max-w-6xl mx-auto px-4">
+                    <h2 className="text-2xl md:text-3xl font-bold text-black mb-12 text-left">
+                        {t("Affordable Mentorship, Proven Job Outcomes")}
+                    </h2>
 
-              <div className='bg-blue-200 text-blue-900 rounded-lg p-8 flex-1 min-w-[220px] text-center'>
-                <div className='text-5xl font-bold mb-2'>99%</div>
-                <div className='font-semibold mb-2'>
-                  {t('See Interview Invitations')}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                        {[
+                            { value: "$50+", label: "Per Mentor Session" },
+                            { value: "73%", label: "Interview Invitations" },
+                            { value: "51%", label: "Land Job Offers" },
+                        ].map((item, idx) => (
+                            <div
+                                key={idx}
+                                className="rounded-[18px] shadow-sm bg-gradient-to-br from-[#cfe3ff] via-[#78a9ff] to-[#1766ff] text-white flex flex-col items-center justify-center text-center transition-transform duration-300 hover:scale-[1.015] aspect-[1.1/1]"
+                            >
+                                <div className="text-5xl font-bold mb-2">{item.value}</div>
+                                <div className="text-base font-medium opacity-95">{t(item.label)}</div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
-                <div className={`text-xs ${styles.MentorshipDescription}`}>
-                  {t('See Interview Invitations description')}
-                </div>
-              </div>
-              <div className='bg-blue-900 text-white rounded-lg p-8 flex-1 min-w-[220px] text-center'>
-                <div className='text-5xl font-bold mb-2'>80%</div>
-                <div className='font-semibold mb-2'>{t('Job Offers')}</div>
-                <div className={`text-xs ${styles.MentorshipDescription}`}>
-                  {t('Job Offers description')}
-                </div>
-              </div>
-            </div>
-          </section>
+            </section>
 
-          {/* TESTIMONIAL SECTION */}
-          <section className='w-full py-12 bg-[#f9fbfd]'>
-            <h2 className='text-2xl md:text-3xl font-bold text-black mb-10 px-4 text-center'>
-              {t('Trusted by 1,300+ Students')}
-            </h2>
-            <div className='flex flex-col md:flex-row gap-8 justify-center items-stretch px-4'>
-              {/* Testimonial 1 */}
-              <div className='bg-blue-50 rounded-xl p-8 flex-1 min-w-[300px] flex flex-col justify-between shadow-sm'>
-                <div>
-                  <h3 className='text-lg font-semibold text-blue-700 mb-2'>
-                    {t('No Connection, No Problem')}
-                  </h3>
-                  <div className='text-3xl text-black mb-2'>“</div>
-                  <p className='text-gray-800 mb-4'>{t('testimonial1')}</p>
-                </div>
-                <div className='flex items-center mt-4'>
-                  <img
-                    src='/images/home_student_avatar_1.png'
-                    alt='Yuki'
-                    className='w-10 h-10 rounded-full mr-3 border border-gray-200'
-                  />
-                  <span className='text-gray-600 text-sm'>
-                    {t('James - Ohio State University')}
-                  </span>
-                </div>
-                <div className='text-3xl text-black text-right mt-2'>”</div>
-              </div>
-              {/* Testimonial 2 */}
-              <div className='bg-blue-50 rounded-xl p-8 flex-1 min-w-[300px] flex flex-col justify-between shadow-sm'>
-                <div>
-                  <h3 className='text-lg font-semibold text-blue-700 mb-2'>
-                    {t('From Layoff to Dream Offer')}
-                  </h3>
-                  <div className='text-3xl text-black mb-2'>“</div>
-                  <p className='text-gray-800 mb-4'>{t('testimonial2')}</p>
-                </div>
-                <div className='flex items-center mt-4'>
-                  <img
-                    src='/images/home_student_avatar_2.png'
-                    alt='James'
-                    className='w-10 h-10 rounded-full mr-3 border border-gray-200'
-                  />
-                  <span className='text-gray-600 text-sm'>
-                    {t('Yuki - SDE')}
-                  </span>
-                </div>
-                <div className='text-3xl text-black text-right mt-2'>”</div>
-              </div>
-            </div>
-          </section>
+            {/* TESTIMONIAL SECTION */}
+            <section className="w-full py-16 bg-white">
+                <div className="w-full max-w-6xl mx-auto px-4">
+                    <h2 className="text-2xl md:text-3xl font-bold text-black mb-12 text-left">
+                        {t("Trusted by 1,300+ Students")}
+                    </h2>
 
-          {/* 4. FAQ COLLAPSE SECTION */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+                        {[
+                            {
+                                title: "Landed a Job Despite the Layoffs",
+                                text: "After a tech layoff, my mentor helped me stand out in a crowded market. I accepted a new role with a significant pay increase in just three months.",
+                                author: "Yuki · Ohio State University",
+                                avatar: "/images/home_student_avatar_1.png",
+                            },
+                            {
+                                title: "Negotiated a $50k Higher Offer",
+                                text: "I had a good consulting offer, but my mentor gave me the playbook to negotiate a great one. The confidence alone was worth it.",
+                                author: "James · SDE",
+                                avatar: "/images/home_student_avatar_2.png",
+                            },
+                            {
+                                title: "Real Advice from Real Industry Experts",
+                                text: "Unlike those random internet courses, this was personal, and it made all the difference. My consulting mentor shared the inside scoop that helped me get hired at a great firm. Definitely worth it.",
+                                author: "James · SDE",
+                                avatar: "/images/home_student_avatar_2.png",
+                            },
+                            {
+                                title: "Promoted from Junior to Senior in 18 Months",
+                                text: "I wanted to fast-track my career, and my mentor’s guidance on leadership and communication made it happen. I earned a Senior promotion much sooner than expected and feel ready for what’s next.",
+                                author: "James · SDE",
+                                avatar: "/images/home_student_avatar_2.png",
+                            },
+                            {
+                                title: "Pivoted from Academia to AI.",
+                                text: 'My mentor translated my PhD into industry-ready skills. I successfully pivoted and now work as a Machine Learning Scientist.',
+                                author: "James · SDE",
+                                avatar: "/images/home_student_avatar_2.png",
+                            },
+                            {
+                                title: "Accepted to My Dream MSCS Program",
+                                text: "The competition for top-tier grad programs is insane. My mentor, an alum from my target school, helped me craft a statement of purpose that told a compelling story. Their insight was the differentiator in a hyper-competitive pool.",
+                                author: "Yuki · Carnegie Mellon University",
+                                avatar: "/images/home_student_avatar_1.png",
+                            },
+                        ].map((item, idx) => (
+                            <div
+                                key={idx}
+                                className="bg-[#edf4ff] rounded-xl p-7 flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300"
+                            >
+                                <div>
+                                    <h3 className="text-lg font-semibold text-blue-700 mb-2">
+                                        {item.title}
+                                    </h3>
+                                    <div className="text-3xl text-gray-600 mb-2 leading-none">“</div>
+                                    <p className="text-gray-800 mb-4 leading-relaxed">{item.text}</p>
+                                    <div className="text-3xl text-gray-600 text-right leading-none">”</div>
+                                </div>
+
+                                <div className="flex items-center mt-4">
+                                    <img
+                                        src={item.avatar}
+                                        alt={item.author}
+                                        className="w-10 h-10 rounded-full mr-3 border border-gray-200"
+                                    />
+                                    <span className="text-gray-600 text-sm">{item.author}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* 4. FAQ COLLAPSE SECTION */}
           <section className='w-full py-12'>
             <h2 className='text-2xl md:text-3xl font-bold text-black mb-6 px-4'>
               {t('Got Questions?')}
             </h2>
             <div className=' w-full'>
-              <Collapse accordion>
-                {faqs.map((faq, idx) => (
-                  <Collapse.Panel header={faq.q} key={idx}>
-                    <div className='text-gray-700 text-base'>{faq.a}</div>
-                  </Collapse.Panel>
-                ))}
-              </Collapse>
+                <Collapse
+                    accordion
+                    bordered={false}
+                    expandIcon={({ isActive }) => (
+                        <CaretRightOutlined rotate={isActive ? 90 : 0} style={{ color: "#1677ff" }} />
+                    )}
+                    className="custom-faq-collapse"
+                >
+                    {faqs.map((faq, idx) => (
+                        <Collapse.Panel
+                            header={
+                                <span className="font-medium text-base text-gray-800">
+          <span className="text-blue-500 font-semibold mr-2">
+            Q{idx + 1}.
+          </span>
+                                    {faq.q}
+        </span>
+                            }
+                            key={idx}
+                        >
+                            <div className="text-gray-700 text-base leading-relaxed">{faq.a}</div>
+                        </Collapse.Panel>
+                    ))}
+                </Collapse>
             </div>
           </section>
           {/* --- End max-width wrapper --- */}
         </div>
       </main>
 
+        <style jsx global>{`
+            html,
+            body,
+            #__next {
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+            main,
+            footer {
+                overflow-x: hidden;
+            }
 
-      {/* ✅ 全局样式：防止滚动 */}
-      <style jsx global>{`
-        html,
-        body,
-        #__next {
-          max-width: 100%;
-          overflow-x: hidden;
-        }
-        main,
-        footer {
-          overflow-x: hidden;
-        }
-      `}</style>
+            .custom-faq-collapse {
+                background: #fff !important; /* ✅ 去掉外层灰底 */
+                border: none !important;
+                box-shadow: none !important;
+            }
+
+            .custom-faq-collapse .ant-collapse-item {
+                background: #fff !important;
+                border-radius: 10px;
+                margin-bottom: 12px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            }
+
+            .custom-faq-collapse .ant-collapse-header {
+                font-size: 16px;
+                font-weight: 500;
+                padding: 14px 20px !important;
+            }
+
+            .custom-faq-collapse .ant-collapse-content {
+                background: #fff !important;
+            }
+
+            .custom-faq-collapse .ant-collapse-content-box {
+                padding: 12px 20px;
+                background: #fff !important;
+                border-top: 1px solid #f0f0f0;
+            }
+
+            .custom-faq-collapse .ant-collapse-expand-icon {
+                margin-inline-end: 8px;
+            }
+
+            .custom-faq-collapse .ant-collapse-arrow {
+                color: #1677ff;
+            }
+
+            .custom-faq-collapse .ant-collapse-item {
+                border-radius: 10px !important;
+                overflow: hidden !important;
+            }
+
+            /* ✅ 防止第一个和最后一个被覆盖掉圆角 */
+            .custom-faq-collapse .ant-collapse-item:first-child,
+            .custom-faq-collapse .ant-collapse-item:last-child {
+                border-radius: 10px !important;
+            }
+
+            /* ✅ 去掉边框连接线 */
+            .custom-faq-collapse .ant-collapse-item:not(:last-child) {
+                border-bottom: none !important;
+            }
+        `}</style>
+
     </>
   );
 }
