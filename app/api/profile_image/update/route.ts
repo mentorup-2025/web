@@ -44,7 +44,8 @@ export async function POST(request: NextRequest) {
       // Update the user's profile_url in our database using the UpdateUserInput type
       try {
         await updateUser(userId, {
-          profile_url: newImageUrl
+          profile_url: newImageUrl,
+          timezone: null,
         });
         console.log('Successfully updated user profile_url in database:', newImageUrl);
       } catch (dbError) {

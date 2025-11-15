@@ -51,6 +51,7 @@ export default function AvailabilityTab({ userId }: Props) {
     const WHOLE_HOUR_MSG = 'Time must be on the hour (e.g., 09:00, 10:00).';
     const isWholeHour = (d: Dayjs) => d.isValid() && d.minute() === 0;
     const isWholeHourStr = (s: string) => isWholeHour(dayjs(s, timeFormat));
+    const [userTimezone, setUserTimezone] = useState<string | null>(null);
 
     const dayNames = [
         'Sunday',
@@ -61,16 +62,48 @@ export default function AvailabilityTab({ userId }: Props) {
         'Friday',
         'Saturday',
     ];
-
-    const [tzAbbr, setTzAbbr] = useState<string>('');
-
-    // 取得时区缩写（如 "PDT"、"CST" 等）
     useEffect(() => {
-        const parts = new Date()
-            .toLocaleTimeString('en-US', { timeZoneName: 'short' })
-            .split(' ');
-        setTzAbbr(parts[parts.length - 1]);
-    }, []);
+        if (!userId) return;
+
+        (async () => {
+            const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+            // 先获取 database 现存 timezone
+            const res = await fetch(`/api/user/${userId}`);
+            const json = await res.json();
+            const dbTz = json.data?.timezone;
+
+            // 只有不同才更新
+            if (dbTz !== localTz) {
+                await fetch(`/api/user/${userId}/timezone`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ timezone: localTz }),
+                });
+            }
+        })();
+    }, [userId]);
+
+    useEffect(() => {
+        if (!userId) return;
+
+        (async () => {
+            try {
+                const res  = await fetch(`/api/user/${userId}`, {
+                    method: 'GET'
+                });
+                const json = await res.json();
+
+                // 你的 getUser API 返回 { data: <User> }
+                const timezone = json.data?.timezone ?? null;
+
+                setUserTimezone(timezone);
+            } catch (e) {
+                console.error('Failed to load user timezone', e);
+                setUserTimezone(null);
+            }
+        })();
+    }, [userId]);
 
     // 拉取已屏蔽日期列表
     const fetchBlocks = useCallback(async () => {
@@ -93,89 +126,22 @@ export default function AvailabilityTab({ userId }: Props) {
             fetchBlocks(),
         ])
             .then(([availRes]) => {
-                const fetchedSlots: Slot[] = (availRes.data || []).flatMap((item: any) => {
-                    console.log(
-                        `[Raw slot] UTC weekday=${item.weekday}, ` +
-                        `start_time=${item.start_time}, end_time=${item.end_time}`
-                    );
 
-                    const [sh, sm] = item.start_time.split(':').map(Number);
-                    const [eh, em] = item.end_time.split(':').map(Number);
+                const list = availRes.data?.availabilities || [];  // ← 修复
 
-                    // 1️⃣ 基于 item.weekday 构造本周对应 UTC 日期
-                    const baseUtc = dayjs()
-                        .utc()
-                        .startOf('week')
-                        .add(item.weekday, 'day')
-                        .startOf('day');
-                    console.log(`  → baseUtc (UTC date): ${baseUtc.format('YYYY-MM-DD')}`);
+                const fetchedSlots: Slot[] = list.map((item: any) => {
+                    const start = item.start_time_local.slice(0, 5);
+                    const end   = item.end_time_local.slice(0, 5);
 
-                    // 2️⃣ 设置时分秒
-                    const startUtc = baseUtc.hour(sh).minute(sm).second(0);
-                    const endUtc   = baseUtc.hour(eh).minute(em).second(0);
-                    console.log(
-                        `  → startUtc=${startUtc.format('YYYY-MM-DD HH:mm')}, ` +
-                        `endUtc=${endUtc.format('YYYY-MM-DD HH:mm')}`
-                    );
-
-                    // 3️⃣ 转成本地
-                    let localStart = startUtc.local();
-                    let localEnd   = endUtc.local();
-                    console.log(
-                        `  → local before round: start=${localStart.format('YYYY-MM-DD HH:mm')} ` +
-                        `(day=${localStart.day()}), end=${localEnd.format('YYYY-MM-DD HH:mm')} ` +
-                        `(day=${localEnd.day()})`
-                    );
-
-                    // 4️⃣ 统一向上取整：分钟为 59 → +1 分钟
-                    if (localStart.minute() === 59) {
-                        console.log(`  → rounding localStart from ${localStart.format('HH:mm')} →`);
-                        localStart = localStart.add(1, 'minute');
-                        console.log(`    now ${localStart.format('HH:mm')} (day=${localStart.day()})`);
-                    }
-                    if (localEnd.minute() === 59) {
-                        console.log(`  → rounding localEnd from ${localEnd.format('HH:mm')} →`);
-                        localEnd = localEnd.add(1, 'minute');
-                        console.log(`    now ${localEnd.format('HH:mm')} (day=${localEnd.day()})`);
-                    }
-
-                    // 5️⃣ 单天 or 跨天
-                    if (localEnd.isAfter(localStart)) {
-                        const slot: Slot = {
-                            day_of_week: localStart.day(),
-                            start_time:  localStart.format('HH:mm'),
-                            end_time:    localEnd.format('HH:mm'),
-                        };
-                        console.log(
-                            `  → single slot: [DOW=${slot.day_of_week}] ` +
-                            `${slot.start_time} → ${slot.end_time}`
-                        );
-                        return [slot];
-                    }
-
-                    // 跨天拆分
-                    const s1: Slot = {
-                        day_of_week: localStart.day(),
-                        start_time:  localStart.format('HH:mm'),
-                        end_time:    '23:59',
+                    return {
+                        day_of_week: item.day_of_week,
+                        start_time:  start,
+                        end_time:    end,
                     };
-                    const s2: Slot = {
-                        day_of_week: localEnd.day(),
-                        start_time:  '00:00',
-                        end_time:    localEnd.format('HH:mm'),
-                    };
-                    console.log(
-                        `  → split slot1: [DOW=${s1.day_of_week}] ` +
-                        `${s1.start_time} → ${s1.end_time}`
-                    );
-                    console.log(
-                        `  → split slot2: [DOW=${s2.day_of_week}] ` +
-                        `${s2.start_time} → ${s2.end_time}`
-                    );
-                    return [s1, s2];
                 });
 
-                console.log('✅ final fetchedSlots:', fetchedSlots);
+                console.log("fetchedSlots:", fetchedSlots);
+
                 setSlots(fetchedSlots);
                 setOriginalSlots(fetchedSlots);
             })
@@ -249,63 +215,25 @@ export default function AvailabilityTab({ userId }: Props) {
         }
 
         try {
-            // 1️⃣ 先把所有 slots 转成 UTC availabilities
-            const raw = slotsToSave.flatMap(s => {
-                const [sh, sm] = s.start_time.split(':').map(Number);
-                const [eh, em] = s.end_time.split(':').map(Number);
-                // 本周对应的本地日期
-                const baseLocalDate = dayjs()
-                    .startOf('week')
-                    .add(s.day_of_week, 'day')
-                    .startOf('day');
-
-                const localStart = baseLocalDate.hour(sh).minute(sm);
-                const localEnd   = baseLocalDate.hour(eh).minute(em);
-
-                const startUtc = localStart.utc();
-                const endUtc   = localEnd.utc();
-
-                const startUtcDow = startUtc.day();
-                const endUtcDow   = endUtc.day();
-
-                if (startUtcDow === endUtcDow) {
-                    return [{
-                        day_of_week: startUtcDow,
-                        start_time:  startUtc.format('HH:mm'),
-                        end_time:    endUtc.format('HH:mm'),
-                    }];
-                }
-
-                return [
-                    {
-                        day_of_week: startUtcDow,
-                        start_time:  startUtc.format('HH:mm'),
-                        end_time:    '23:59',
-                    },
-                    {
-                        day_of_week: endUtcDow,
-                        start_time:  '00:00',
-                        end_time:    endUtc.format('HH:mm'),
-                    }
-                ];
-            });
-
-            // 2️⃣ 过滤掉所有 start_time === end_time 的零时长 slot
-            const availabilities = raw.filter(a => a.start_time !== a.end_time);
-
-            console.log('📦 payload.availabilities (filtered):', availabilities);
-
+            // 这里 slotsToSave 已经是「本地时区下」的 day_of_week + HH:mm
+            // 直接传给后端，后端会按用户 timezone 解释
             const payload = {
-                user_id:        userId,
-                availabilities,
+                user_id: userId,
+                availabilities: slotsToSave.map(s => ({
+                    day_of_week: s.day_of_week,
+                    start_time:  s.start_time, // "HH:mm"
+                    end_time:    s.end_time,   // "HH:mm"
+                })),
             };
 
-            // 3️⃣ 发送给后端
+            console.log("📦 payload for /api/availability/update:", payload);
+
             const res = await fetch('/api/availability/update', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body:    JSON.stringify(payload),
             });
+
             if (!res.ok) {
                 const errText = await res.text().catch(() => '');
                 throw new Error(errText || `HTTP ${res.status}`);
@@ -551,7 +479,16 @@ export default function AvailabilityTab({ userId }: Props) {
         <div>
             {/* Weekly Available Hours */}
             <Card
-                title="Weekly Available Hours"
+                title={
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>Weekly Available Hours</span>
+                        {userTimezone && (
+                            <span style={{ fontSize: 12, color: '#999' }}>
+                    All times in {userTimezone}
+                </span>
+                        )}
+                    </div>
+                }
                 loading={loading}
                 style={{ marginBottom: 24 }}
                 bodyStyle={{ paddingBottom: 16 }}
@@ -657,7 +594,7 @@ export default function AvailabilityTab({ userId }: Props) {
                                                                     });
                                                                 }}
                                                             />
-                                                            <span className={styles.tzAbbr}>{tzAbbr}</span>
+
                                                         </div>
 
                                                         <Button
@@ -675,7 +612,7 @@ export default function AvailabilityTab({ userId }: Props) {
 
                                                     {slotErrors[globalIdx] && (
                                                         <div style={{ color: 'red' }}>
-                                                            {slotErrors[globalIdx]}
+                                          T                  {slotErrors[globalIdx]}
                                                         </div>
                                                     )}
                                                 </React.Fragment>
