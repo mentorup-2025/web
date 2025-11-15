@@ -11,7 +11,8 @@ async function saveNewUser(userId: string, email: string, username: string, imag
       user_id: userId,
       email: email,
       username: username,
-      profile_url: image_url
+      profile_url: image_url,
+      timezone: null,
     }
 
     const user = await createUser(userData)

@@ -5,29 +5,26 @@ import { getSupabaseClient } from '@/services/supabase';
 export async function GET(request: NextRequest) {
     try {
         const supabase = getSupabaseClient();
-        
-        // Call the Supabase function to get mentor IDs with availability in next 7 days
-        const { data, error } = await supabase.rpc('get_available_mentor_ids_next_7_days');
+
+        const { data, error } = await supabase.rpc('get_available_mentor_ids_next_7_days_v2');
 
         if (error) {
-            console.error('❌ Error calling get_available_mentor_ids_next_7_days:', error);
-            return respErr('Failed to fetch available mentors');
+            console.error('RPC error:', error);
+            return respErr('Failed to fetch mentors');
         }
 
-        // The function should return an array of user IDs
-        const mentorIds: string[] = data || [];
+        // data: [{ mentor_id: "u1" }, { mentor_id: "u2" }]
+        const mentorIds = (data ?? []).map((row: any) => row.mentor_id);
 
-        console.log('✅ Available mentors fetched successfully:', {
-            count: mentorIds.length,
-            mentorIds: mentorIds.slice(0, 5) // Log first 5 for debugging
-        });
+        console.log('Available mentors:', mentorIds);
 
+        // ➜ 返回纯字符串数组
         return respData(mentorIds);
 
-    } catch (error) {
-        console.error('❌ Error fetching available mentors:', error);
-        return respErr('Failed to fetch available mentors');
+    } catch (err) {
+        console.error('Error:', err);
+        return respErr('Failed to fetch mentors');
     }
 }
 
-export const revalidate = 300; // Cache for 5 minutes since availability changes frequently
+export const revalidate = 300;
