@@ -17,6 +17,8 @@ export interface User {
   profile_url?: string | null; // Optional image URL
   introduction?: string | null; // Optional introduction
   payout_preference?: string | null; // Optional payout preference
+  timezone: string | null;
+
 }
 
 export interface CreateUserInput {
@@ -32,6 +34,7 @@ export interface CreateUserInput {
   profile_url?: string | null; // Optional image URL
   introduction?: string | null; // Optional introduction
   payout_preference?: string | null; // Optional payout preference
+  timezone: string | null;
 }
 
 export interface UpdateUserInput {
@@ -48,6 +51,7 @@ export interface UpdateUserInput {
   profile_url?: string | null; // Optional image URL
   introduction?: string | null; // Optional introduction
   payout_preference?: string | null; // Optional payout preference update
+  timezone: string | null;
 }
 
 export interface UserCredentials {

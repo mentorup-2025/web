@@ -30,7 +30,8 @@ export async function createUser(input: CreateUserInput): Promise<User> {
             created_at: new Date().toISOString(),
             profile_url: input.profile_url,
             introduction: input.introduction,
-            payout_preference: input.payout_preference
+            payout_preference: input.payout_preference,
+            timezone:          input.timezone ?? null,
         };
 
         // Insert user into database
