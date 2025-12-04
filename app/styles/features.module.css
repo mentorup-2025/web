@@ -22,16 +22,20 @@
 }
 
 .backgroundCircle {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 300px;
-  background-color: #dbeafe;
-  border-radius: 100% 100% 0 0;
-  top: 25vh;
-  z-index: 0;
+    position: absolute;
+    top: -22vh; /* 控制椭圆位置 */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 160vw;  /* 不要200vw太宽了 */
+    height: 95vh;  /* 椭圆不会太深 */
+    background: linear-gradient(180deg, #e0f2fe 0%, rgba(219,234,254,0.1) 80%, rgba(255,255,255,0) 100%);
+    border-radius: 50% / 40%;
+    z-index: -1;
+    pointer-events: none;
 }
+
+
+
 
 .heroContainer {
   height:300px;
@@ -108,9 +112,9 @@
     font-size: 1.5rem;
   }
 
-  .backgroundCircle {
-    height: 300px;
-  }
+  /*.backgroundCircle {*/
+  /*  height: 300px;*/
+  /*}*/
 }
 
 /* Standard Monitor (1024px and up) */
@@ -120,9 +124,9 @@
     gap: 2rem;
   }
 
-  .backgroundCircle {
-    height: 270px;
-  }
+  /*.backgroundCircle {*/
+  /*  height: 270px;*/
+  /*}*/
 }
 
 /* Ultrawide Monitor (1440px and up) */
@@ -143,7 +147,7 @@
     font-size: 1.125rem;
   }
 
-  .backgroundCircle {
-    height: 270px;
-  }
+  /*.backgroundCircle {*/
+  /*  height: 270px;*/
+  /*}*/
 } 

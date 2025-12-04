@@ -247,7 +247,7 @@ export default function Home() {
           }
         );
         const data = await res.json()
-        
+
         const filteredMentors = data.data.filter(
          (m: Mentor) => m.mentor?.default_ranking !== 1000
         );
@@ -255,7 +255,7 @@ export default function Home() {
         setMentors(filteredMentors || []);
       } catch (err) {
         console.error("Error fetching mentors:", err);
-      } 
+      }
     }
 
     fetchMentors();
@@ -279,23 +279,23 @@ export default function Home() {
   // Hero section Typing effect logic
   useEffect(() => {
     const roles = translations[language].roles;
-  
+
     let roleIndex = 0;
     let charIndex = 0;
     let isDeleting = false;
     let timeoutId: NodeJS.Timeout;
-  
+
     const typingSpeed = 100;
     const eraseSpeed = 50;
     const delayAfterTyping = 1200; // pause after a word is fully typed
     const delayAfterErasing = 500; // pause after erase before typing next
-  
+
     function type() {
       const typingElement = typingRef.current;
       if (!typingElement) return;
-  
+
       const currentRole = roles[roleIndex];
-  
+
       if (!isDeleting && charIndex <= currentRole.length) {
         // Typing forward
         typingElement.textContent = currentRole.substring(0, charIndex);
@@ -318,9 +318,9 @@ export default function Home() {
         }
       }
     }
-  
+
     type();
-  
+
     return () => {
       // ✅ cleanup any running timeouts when language changes or unmounts
       clearTimeout(timeoutId);
@@ -658,40 +658,88 @@ export default function Home() {
           </div>
         </header>
 
+
+
           {/* HERO SECTION */}
-        <section
-          className={`relative flex flex-col justify-between h-screen overflow-hidden bg-white ${styles.heroContainer}`}
-        >
-          <div
-            className={`flex flex-col justify-center items-center flex-1 text-center z-10`}
-          >
-            {/* ✅ New typing effect block */}
-            <div className='mt-6'>
-              <h1 className='text-blue-600 text-4xl md:text-6xl font-bold mb-4'>
-                {t('1-on-1 Mentorship with')}
-              </h1>
-              <div
-                ref={typingRef}
-                className='text-2xl md:text-3xl font-bold text-gray-800 border-r-2 border-gray-800 inline-block mt-2 min-h-[2.5rem]'
-              ></div>
-            </div>
+          <section className="relative w-full flex flex-col items-center pt-24 pb-40">
 
-            <p className='text-gray-600 text-lg md:text-xl mb-6 max-w-2xl'>
-              {t(
-                'Connect with experienced professionals and accelerate your career.'
-              )}
-            </p>
-            <Link
-              className='px-6 py-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition'
-              href='/mentor-list'
-            >
-              {t('Meet Our Mentors')}
-            </Link>
-          </div>
-        </section>
+              {/* blue circle background  */}
+              <div className={styles.backgroundCircle}></div>
 
-        {/* blue circle background  */}
-        <div className={styles.backgroundCircle}></div>
+              {/* Text Block */}
+              <div className="text-center mt-10">
+                  <h1 className="text-blue-600 font-bold text-4xl md:text-6xl mb-2">
+                      1-on-1 Mentorship
+                  </h1>
+
+                  <h2 className="text-gray-700 text-xl md:text-2xl font-medium">
+                      Personalized guidance to accelerate your career
+                  </h2>
+
+                  <div className="mt-3 text-lg md:text-2xl text-gray-800 font-semibold">
+                      {t("1-on-1 Mentorship with")}{" "}
+                      <span ref={typingRef} className="font-bold text-blue-600"></span>
+                  </div>
+              </div>
+
+              {/* CTA Buttons */}
+              <div className="flex gap-4 mt-6">
+                  <Link
+                      href="/mentor-list"
+                      className="px-6 py-3 bg-blue-600 text-white rounded-full font-medium hover:bg-blue-700 transition"
+                  >
+                      Find Your Mentor
+                  </Link>
+
+                  <Link
+                      href="/booking/free"
+                      className="px-6 py-3 bg-white border border-blue-600 text-blue-600 rounded-full font-medium hover:bg-gray-100 transition"
+                  >
+                      Book a FREE Trial Session Now!
+                  </Link>
+              </div>
+
+              {/* 📱 Device Mockups */}
+              <div className="relative mt-16 w-full flex justify-center">
+
+                  {/* MacBook and iPhone */}
+                  <img
+                      src="/landing page images/123.png"
+                      className="w-[900px] max-w-[90%] drop-shadow-2xl"
+                      alt="MentorUp Video Mentorship"
+                  />
+
+              </div>
+
+              {/* Floating Role Tags */}
+              <div>
+                  {/* Left tags */}
+                  <img src="/landing page images/Frame 1707480479.png"
+                       className="absolute top-[28%] left-[8%] w-[140px] md:w-[180px] floatingTag" />
+                  <img src="/landing page images/Frame 1707480480.png"
+                       className="absolute top-[45%] left-[6%] w-[200px] md:w-[250px] floatingTag delay-100" />
+                  <img src="/landing page images/Frame 1707480484.png"
+                       className="absolute top-[62%] left-[13%] w-[170px] floatingTag delay-200" />
+
+                  {/* Right tags */}
+                  <img src="/landing page images/Frame 1707480482.png"
+                       className="absolute top-[30%] right-[9%] w-[160px] floatingTag delay-300" />
+                  <img src="/landing page images/Frame 1707480483.png"
+                       className="absolute top-[48%] right-[5%] w-[220px] floatingTag delay-400" />
+                  <img src="/landing page images/Frame 1707480486.png"
+                       className="absolute top-[65%] right-[12%] w-[220px] floatingTag delay-500" />
+                  <img src="/landing page images/Frame 1707480485.png"
+                       className="absolute bottom-[8%] right-[15%] w-[160px] floatingTag delay-600" />
+
+                  {/* Dots */}
+                  <img src="/landing page images/Frame 1707480487.png"
+                       className="absolute bottom-[4%] right-[8%] w-[70px] floatingTag delay-700" />
+              </div>
+
+          </section>
+
+
+
 
         <MarqueeSection />
 
